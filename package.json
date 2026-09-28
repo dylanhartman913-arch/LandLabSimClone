@@ -1,0 +1,43 @@
+{
+  "name": "terra-homestead-plugin",
+  "private": true,
+  "version": "0.1.0",
+  "description": "TERRA Homestead Plugin: a top-down homestead planning simulator with a decision-grade engine.",
+  "type": "module",
+  "workspaces": [
+    "packages/catalog",
+    "packages/engine",
+    "packages/cli",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @homestead/web --",
+    "build": "npm run build -w @homestead/web",
+    "preview": "npm run preview -w @homestead/web --",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "catalog:export": "tsx packages/catalog/src/cli/export.ts",
+    "catalog:check": "tsx packages/catalog/src/cli/check.ts",
+    "sim": "tsx packages/cli/src/main.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "1.56.1",
+    "@types/node": "^22.20.4",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^3.2.7"
+  }
+}

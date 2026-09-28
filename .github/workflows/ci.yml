@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Catalog in sync with xlsx
+        run: npm run catalog:check
+      - name: Unit, parity, conservation, determinism
+        run: npx vitest run
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build web
+        run: npm run build
+      - name: End-to-end (vite preview)
+        run: npm run test:e2e
+        env:
+          CI: 'true'
+      - name: Upload Playwright screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots
+          path: |
+            docs/screenshots/
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
