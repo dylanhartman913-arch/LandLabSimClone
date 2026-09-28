@@ -70,3 +70,135 @@ Handoff numbers for the starter design: overall score 48.5%, Heated shelter need
 ### Performance
 
 1,000 balance calls on a 200-instance design: ~75-110 ms in Node (budget 200 ms). Per-catalog lookups (flows by system, formula strings, frozen results for untouched resources) are cached in a `WeakMap` keyed by the catalog object.
+
+## Time mode
+
+Time mode is the game: a daily clock with stocks, storage limits, seasons, curtailment, construction, and people whose health depends on what the design delivers. It lives in `packages/engine/src/time/` and is pure: every function takes a state and returns a new one.
+
+```ts
+initGame(catalog, site, settings, seed): GameState
+canPlace(catalog, state, systemId, x, y): { ok: true } | { ok: false; reason; blockers }
+placeSystem(catalog, state, systemId, x, y, buildMode: 'buy' | 'diy' | 'prebuilt'): { state, instanceId }
+moveSystem(catalog, state, instanceId, x, y) / removeSystem(state, instanceId) / setPriority(state, instanceId, tier)
+placeDesign(catalog, state, counts, buildMode?)   // lay out a balance-mode design (tests, CLI, starter kits)
+stepDay(state, catalog): { state, events, ledger }
+stepDays(state, catalog, n): { state, events, ledgers }
+summarizeLedgers(ledgers, catalog): Summary     // or summarize(state, catalog, { from, to })
+```
+
+The catalog is passed explicitly rather than stored in the state, so a save stays small and the same state can be replayed against an edited catalog.
+
+### State
+
+`GameState` is plain JSON (no Maps, Sets, or classes) so saves are trivial:
+
+| Field | Meaning |
+|---|---|
+| `calendar` | `{ day (0-364), year (0-based), absDay }` on a 365-day engine calendar. Display seasons are the UI's job. |
+| `rng` | 32-bit integer state of the seeded generator (mulberry32). Only the engine advances it. |
+| `cash` | Dollars. The Capital stock. |
+| `stocks` | Amount on hand for every Flow resource, in its canonical unit. |
+| `direct` | Yesterday's output usable today by daytime loads without storage (electricity from panels). |
+| `services` | Yesterday's total output of each Service resource (pollination, pest control), the supply for boosts. |
+| `instances` | `{ id, systemId, x, y, status: 'building' \| 'active', buildMode, paid, setupHoursNeeded, setupHoursDone, materialsDrawn, activeSince, priority, person? }`. Instances are copied only when they change, so a quiet day allocates almost nothing. |
+| `lastDay` | Yesterday's result per group (`systemId\|priority`): satisfaction, the limiting input, boost multiplier, per-instance inputs requested/received, and outputs per instance at full maturity. Cards and the flow overlay read this. |
+| `weather` | The current day's ambient values. |
+| `ledgers` | The last 730 daily ledgers (below). |
+| `settings` | Parcel size, starting cash, weather mode, construction share, and so on. |
+
+### Site and climate
+
+A site (`data/sites/*.json`) gives scalar assumptions (the same keys as the spreadsheet's Assumptions sheet) and 12 monthly *shapes* for HDD, CDD, peak sun hours, precipitation, and a wind capacity-factor multiplier. The engine rescales the shapes so annual totals equal the scalars:
+
+- HDD, CDD, precipitation on day *d* of month *m* = `annual × shape[m] ÷ Σ shape ÷ daysIn(m)`.
+- Peak sun hours and wind CF on day *d* = `annual mean × shape[m] ÷ (day-weighted mean of shape)`.
+
+`front-range` reproduces the spreadsheet's Assumptions exactly; `laramie-wy` and `asheville-nc` are the other presets. Average-year mode (the "80%" model) uses these values directly. Real-weather mode (G9) multiplies them by seeded draws.
+
+### Flow shaping
+
+Every recurring flow's daily amount is `weekly equivalent ÷ 7 × shape(day)`, where each shape averages exactly 1 over the year, so a year of time mode matches balance mode when nothing runs short:
+
+| Shape | Applies to | shape(day) |
+|---|---|---|
+| steady | most flows | 1 |
+| heating | heat-load inputs, Heat outputs, fuel for heating-only systems | day HDD ÷ (annual HDD ÷ 365) |
+| cooling | cool-load inputs, Cooling outputs, power for cooling-only systems | day CDD ÷ (annual CDD ÷ 365) |
+| sun | `sun` and `pv` quantities | day PSH ÷ annual mean PSH |
+| rain | `rain` and `rainCapture` quantities | day precip ÷ (annual ÷ 365) |
+| wind | `wind` quantities | day wind CF ÷ annual CF |
+| growing-season | per-season flows; garden irrigation and weekly garden yields | 365 ÷ season days inside the season, else 0 |
+| window | yearly harvests and applications | 365 ÷ window days inside weeks *start*–*end*, else 0 |
+
+Climate-linked quantity kinds (heat load, PV, rain…) take their shape from the kind; typed constants take it from the flow's catalog `timing`.
+
+### Daily step, in order
+
+1. **Weather** and ambient resources for the day. An ambient resource is available if the site supplies it (`site.ambient`) or an active instance outputs it (e.g. Stream Frontage).
+2. **Construction starts.** A newly placed instance draws its one-time inputs from stocks. Missing materials are brought in and recorded in the ledger as `imported` (the game never blocks on a missing bag of soil, but it tells you).
+3. **Requests.** Each active instance requests every input for today: `weekly ÷ 7 × shape`. Capacity inputs request their nominal amount.
+4. **Labor.** Pool = Σ Human Being labor output today × health factor. Construction gets first call on up to `constructionShare` (default 0.6) of the pool, split across building instances in placement order. The rest is the day's Labor supply for upkeep. Buy-mode placement needs 25% of the setup hours; DIY needs 100%; prebuilt needs none.
+5. **Allocation**, per resource, from the start-of-day stock (outputs arrive at the end of the day, so the step is order-independent):
+   - *Flow and Money:* by priority tier (0 people, 1 animals, 2 everything else; a player can raise or lower an instance), proportional within a tier. A request for Food (kcal) is met from any food-family stock, most perishable first, converted through the Resources factor; direct requests for a food (seed potatoes) are reserved first.
+   - *Direct use:* a resource with `directUseShare` (Electricity: 0.5) can serve up to that share of today's demand from yesterday's output without storage (daytime loads running off the panels). The rest of the output must fit in storage; unused direct supply is lost at day end.
+   - *Capacity:* satisfaction = min(1, available ÷ required), shared by every consumer; nothing is used up. Available = Σ nominal capacity outputs of active instances.
+   - *Service (boost):* the same share rule, with available = Σ yesterday's actual service outputs.
+   - *Ambient:* 1 if available, else 0.
+6. **Production.** An instance's satisfaction is the minimum over its `required`, `capacity`, and `ambient` inputs (Leontief). It consumes only `satisfaction × request` of each required input and returns the rest to stock. `need` inputs (people, shelter heat and cooling) consume what they are given and never curtail output. Outputs = `daily nominal × satisfaction × Π(1 − w × (1 − boost satisfaction)) × maturity(age)`, with `maturity = min(1, age ÷ yearsToFullOutput)`. Human Being outputs scale by health instead.
+7. **People.** Each Human Being tracks the fraction of food, drinking water, heat (the household's delivered ÷ needed shelter heat), and shelter it received over a rolling 7 days. Health = `max(0.3, 1 − Σ weight × (1 − 7-day average))` with weights food 0.35, drinking water 0.45, heat 0.25, shelter 0.20. A hardship event fires when a need stays below 80% for 3 days in a row, and again every 7 days it persists.
+8. **Storage and loss**, at the end of the day:
+   - Non-storable resources (Heat, Cooling, Cooking fuel, Transportation, Sanitation, Labor) that went unused are lost (`spilled`).
+   - Production is added to stocks.
+   - Pooled stocks are capped by their storage (Water storage + 50 gal; Battery storage + 0; Food storage + 10 cu ft pantry). Overflow is `spilled`, shared across the pool's resources in proportion to volume.
+   - Perishables spoil at `spoilPerWeek ÷ 7` a day. The share of food that fits in real food storage (cellar, freezer; not the pantry buffer) spoils 80% slower.
+9. **Money.** Capital outputs add to cash; Capital inputs were allocated from cash in step 5, so a design with no cash curtails its Capital-dependent systems. Placement can push cash below zero (debt); nothing that needs cash runs until it recovers.
+10. **Ledger and events.** The day's ledger records, per resource, `start, produced, consumed, spilled, spoiled, requested, unmet`, per checklist row `provided, needed, delivered` (in row units), cash in and out, and labor. Events: `shortage` (first day a resource goes short, naming the curtailed instances), `shortage-ended`, `spill` (first day of electricity spill), `spoilage` (weekly total), `harvest`, `built`, `hardship`, `health`.
+
+Conservation holds for every storable resource, every day: `start + produced − consumed − spilled − spoiled = end` (tested to 1e-9).
+
+### Constants
+
+| Constant | Value | Where |
+|---|---|---|
+| Buy setup fraction | 0.25 | `time/constants.ts` |
+| DIY setup fraction | 1.0 | |
+| Construction share of labor | 0.6 (setting) | |
+| Refund on removal | 25% of what was paid if built, 100% if still building | |
+| Health weights | food 0.35, drinking water 0.45, heat 0.25, shelter 0.20 | |
+| Health floor | 0.3 | |
+| Hardship | below 80% for 3+ days; repeats every 7 days | |
+| Cold-storage spoilage cut | 80% for the stored share | |
+| Boost weight (default) | 0.15 | catalog default rule |
+| Arrival supplies | 28,000 kcal Food, 20 gal Drinking water, 100 gal Water (setting) | |
+
+### Groups
+
+Active instances of the same system at the same priority make identical requests and receive identical shares, so each day is computed once per group (system × priority). Only maturity (plants) and health (people) are applied per instance. This is what keeps a 200-instance year fast.
+
+### Balance agreement
+
+Two tests in `test/time-invariants.test.ts` compare year 2 of time mode (front-range, average year, everything prebuilt) with balance mode:
+
+1. **With every input supplied** (`settings.unlimitedSupply`: requests always met, shortfalls recorded as `supplied`, no storage caps), provided and needed agree within 5% on every row for the starter, off-grid cabin, and suburban designs; in practice they agree to 0.00%, which shows the seasonal shapes preserve annual totals.
+2. **With real supply**, the starter design's needed column agrees on every row, and six rows' provided column differs by more than 5%. Each difference is a curtailment chain the balance sheet cannot see (it assumes every system runs at its rated flow), and the test checks each cause:
+
+| Row | Time vs balance | Why |
+|---|---|---|
+| Water | 0 vs 1,000 gal/wk | The Well needs 3 kWh/wk. One panel with no battery gives only daytime power, and people (tier 0) use it first, so the Well (tier 2) never runs. Raising the Well's priority or adding a battery fixes it. |
+| Food | ~350 vs 4,979 kcal/wk | With no water, the hens and the raised beds are curtailed (Leontief on Water). |
+| Sanitation | ~3 vs 35 lbs/wk | The Composting Outhouse needs Carbon (cover material) and nothing in the design makes any. |
+| Transportation | 0 vs 50 mi/wk | The Cargo Bike needs its rider's calories (2,000 kcal/wk of Food); the household eats first. |
+| Cooled shelter | ~16 vs 10,000 BTU/wk | The Poplar's shade cooling needs summer water. |
+| Est. Required Labor | 15 vs 50 h/wk | With no drinking water, heat, or food, health falls to the 0.3 floor and labor with it. |
+
+Electricity's provided column agrees (14 kWh/wk); only its delivery is storage-limited (29% of need vs 58% in balance mode). Heated shelter, Drinking water, Cooking fuel, and Shelter agree.
+
+### Performance
+
+One simulated year of a 196-instance design: ~40-55 ms in plain Node (budget 150 ms). The test bundles `bench/year.ts` with esbuild and times it in a child Node process, so the test runner's module transform is not in the measurement. Splitting the daily step into one function per phase matters: as a single 500-line function V8's optimizing compiler gave up on it and a year took ~140 ms.
+
+### Known simplifications
+
+- One allocation pass. An instance that is short of one input returns the unused share of its other inputs to stock, but that returned stock is not re-offered to other consumers until tomorrow.
+- A day-long buffer is the only battery model: electricity produced today is usable tomorrow up to battery capacity. With no battery, all solar output spills. Within-day timing (solar noon vs. night load) is not modeled.
+- Input requests are not reduced for immature plants.

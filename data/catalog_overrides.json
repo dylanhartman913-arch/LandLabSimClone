@@ -1,1 +1,138 @@
-{ "version": 1, "systems": {}, "resources": {} }
+{
+  "version": 1,
+  "systems": {},
+  "resources": {},
+  "flows": {
+    "F0088": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Fowl eat mostly feed; greens, grubs, scraps, and bedding raise yield but are not essential."
+    },
+    "F0089": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Fowl eat mostly feed; greens, grubs, scraps, and bedding raise yield but are not essential."
+    },
+    "F0090": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Fowl eat mostly feed; greens, grubs, scraps, and bedding raise yield but are not essential."
+    },
+    "F0249": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Fowl eat mostly feed; greens, grubs, scraps, and bedding raise yield but are not essential."
+    },
+    "F0256": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Fowl eat mostly feed; greens, grubs, scraps, and bedding raise yield but are not essential."
+    },
+    "F0257": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Fowl eat mostly feed; greens, grubs, scraps, and bedding raise yield but are not essential."
+    },
+    "F0260": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Fowl eat mostly feed; greens, grubs, scraps, and bedding raise yield but are not essential."
+    },
+    "F0365": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Fowl eat mostly feed; greens, grubs, scraps, and bedding raise yield but are not essential."
+    },
+    "F0366": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Fowl eat mostly feed; greens, grubs, scraps, and bedding raise yield but are not essential."
+    },
+    "F0367": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Fowl eat mostly feed; greens, grubs, scraps, and bedding raise yield but are not essential."
+    },
+    "F0368": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Fowl eat mostly feed; greens, grubs, scraps, and bedding raise yield but are not essential."
+    },
+    "F0106": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Bikes and tools work without a shed; storage keeps them in better shape."
+    },
+    "F0289": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Bikes and tools work without a shed; storage keeps them in better shape."
+    },
+    "F0374": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Bikes and tools work without a shed; storage keeps them in better shape."
+    },
+    "F0706": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Bikes and tools work without a shed; storage keeps them in better shape."
+    },
+    "F0734": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Bikes and tools work without a shed; storage keeps them in better shape."
+    },
+    "F0739": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Bikes and tools work without a shed; storage keeps them in better shape."
+    },
+    "F0744": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Bikes and tools work without a shed; storage keeps them in better shape."
+    },
+    "F0170": {
+      "inputRole": "boost",
+      "boostWeight": 0.15,
+      "note": "Liquid fertilizer and biochar improve beds and compost but are not required."
+    },
+    "F0385": {
+      "inputRole": "boost",
+      "boostWeight": 0.15,
+      "note": "Liquid fertilizer and biochar improve beds and compost but are not required."
+    },
+    "F0577": {
+      "inputRole": "boost",
+      "boostWeight": 0.15,
+      "note": "Liquid fertilizer and biochar improve beds and compost but are not required."
+    },
+    "F0083": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Coffee grounds are a supplement for worms and black soldier fly larvae."
+    },
+    "F0715": {
+      "inputRole": "boost",
+      "boostWeight": 0.1,
+      "note": "Coffee grounds are a supplement for worms and black soldier fly larvae."
+    },
+    "F0670": {
+      "inputRole": "boost",
+      "boostWeight": 0.15,
+      "note": "Hay is the staple for ruminants and rabbits; fresh forage supplements it."
+    },
+    "F0677": {
+      "inputRole": "boost",
+      "boostWeight": 0.15,
+      "note": "Hay is the staple for ruminants and rabbits; fresh forage supplements it."
+    },
+    "F0683": {
+      "inputRole": "boost",
+      "boostWeight": 0.15,
+      "note": "Hay is the staple for ruminants and rabbits; fresh forage supplements it."
+    }
+  },
+  "adjacencyRules": []
+}

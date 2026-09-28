@@ -117,4 +117,39 @@ describe('engine-only default rules', () => {
     expect(s.provenance.priorityTier).toBe('default-rule');
     expect(s.spriteKey).toBe(`system:${s.id}`);
   });
+
+  it('treats people’s inputs and shelter heating as needs that never switch a system off', () => {
+    expect(flow('F0349')).toMatchObject({ resource: 'Food', inputRole: 'need' }); // Human Being
+    expect(flow('F0353')).toMatchObject({ resource: 'Shelter', inputRole: 'capacity' });
+    expect(flow('F0041')).toMatchObject({ resource: 'Heat', inputRole: 'need' }); // Bell Tent
+  });
+
+  it('shapes heating by degree-days and irrigation by the growing season', () => {
+    expect(flow('F0328').timing).toEqual({ kind: 'heating' }); // Tiny Wood Stove heat
+    expect(flow('F0327').timing).toEqual({ kind: 'steady' }); // …its wood (it also cooks)
+    expect(
+      catalog.flows.find((f) => f.systemId === sys('Raised Beds (24 sq ft)').id && f.resource === 'Water')!
+        .timing,
+    ).toEqual({ kind: 'growing-season' });
+  });
+
+  it('knows heat cannot be stored, solar can run daytime loads, and food can stand in for food', () => {
+    const res = (n: string) => catalog.resources.find((r) => r.name === n)!;
+    expect(res('Heat').storable).toBe(false);
+    expect(res('Woody biomass').storable).toBe(true);
+    expect(res('Electricity').directUseShare).toBe(0.5);
+    expect(res('Food').satisfiedBy[0]).toBe('Fish'); // most perishable first
+    expect(res('Food').satisfiedBy.at(-1)).toBe('Food');
+  });
+
+  it('lets coops sit on pasture: large plantings are a ground layer', () => {
+    expect(sys('Pasture (1 acre)').layer).toBe('ground');
+    expect(sys('Chicken Coop (12 hens)').layer).toBe('object');
+    expect(sys('Human Being').layer).toBe('none');
+  });
+
+  it('applies the committed boost overrides with their notes', () => {
+    expect(flow('F0366')).toMatchObject({ resource: 'Grubs', inputRole: 'boost', boostWeight: 0.1 });
+    expect(flow('F0366').provenance.inputRole).toBe('override');
+  });
 });

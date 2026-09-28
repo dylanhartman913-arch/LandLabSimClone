@@ -10,3 +10,4 @@ export { evalQtyExpr, describeQtyExpr, qtyAssumptionKeys, type QtySystemParams }
 export const catalog = catalogJson as unknown as Catalog;
 /** Cached spreadsheet values for the starter design (the parity contract). */
 export const goldens = goldensJson as unknown as Goldens;
+export { SITES, DEFAULT_SITE_ID, getSite } from './sites.ts';

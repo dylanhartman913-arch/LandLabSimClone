@@ -58,7 +58,7 @@ describe('performance', () => {
     );
     const big = { counts };
     for (let i = 0; i < 200; i++) balance(catalog, catalog.assumptions, big); // warm up the JIT
-    // Best of three batches: other test files run in parallel threads and add noise.
+    // Best of three batches: other test files run in parallel and add noise.
     let ms = Infinity;
     for (let batch = 0; batch < 3; batch++) {
       const t0 = performance.now();

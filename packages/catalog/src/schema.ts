@@ -37,7 +37,15 @@ export type Period = z.infer<typeof PeriodSchema>;
 export const DirectionSchema = z.enum(['in', 'out']);
 export type Direction = z.infer<typeof DirectionSchema>;
 
-export const InputRoleSchema = z.enum(['required', 'capacity', 'boost', 'ambient']);
+/**
+ * How an input limits its consumer in time mode.
+ * - required: Leontief; output scales with the least-satisfied required input.
+ * - capacity: occupied, not used up; satisfaction = available ÷ required.
+ * - boost: a yield modifier; output × (1 − weight × (1 − satisfaction)).
+ * - ambient: set by site and weather; never depleted.
+ * - need: consumed and tracked (checklist, health) but never curtails output (people, shelter heat/cooling).
+ */
+export const InputRoleSchema = z.enum(['required', 'capacity', 'boost', 'ambient', 'need']);
 export type InputRole = z.infer<typeof InputRoleSchema>;
 
 /**
@@ -78,6 +86,10 @@ export const TimingSchema = z.discriminatedUnion('kind', [
     startWeek: z.number().int().min(1).max(52),
     endWeek: z.number().int().min(1).max(52),
   }),
+  /** Follows the day's heating degree-days (annual total preserved). */
+  z.object({ kind: z.literal('heating') }),
+  /** Follows the day's cooling degree-days (annual total preserved). */
+  z.object({ kind: z.literal('cooling') }),
 ]);
 export type Timing = z.infer<typeof TimingSchema>;
 
@@ -121,6 +133,15 @@ export const ResourceSchema = z.object({
   // engine-only
   spoilPerWeek: z.number().min(0).max(1),
   storedIn: StorageRuleSchema.nullable(),
+  /** False for services that cannot be kept (heat, cooling, labor): unused supply is lost at day end. */
+  storable: z.boolean(),
+  /**
+   * Share of each day's output that daytime loads can use directly without storage (solar power
+   * running daytime loads). It serves at most the same share of demand; unused, it is lost.
+   */
+  directUseShare: z.number().min(0).max(1),
+  /** Other resources that can meet a request for this one, in draw order, converted through `factorToNeed`. */
+  satisfiedBy: z.array(z.string()),
   provenance: z.record(z.string(), ProvenanceSourceSchema),
 });
 export type Resource = z.infer<typeof ResourceSchema>;
@@ -151,6 +172,8 @@ export const SystemSchema = z.object({
   priorityTier: z.number().int().min(0).max(2),
   yearsToFullOutput: z.number().nonnegative(),
   spriteKey: z.string(),
+  /** Map layer: `none` (no footprint), `ground` (large plantings others may sit on), `object`. */
+  layer: z.enum(['none', 'ground', 'object']),
   provenance: z.record(z.string(), ProvenanceSourceSchema),
 });
 export type System = z.infer<typeof SystemSchema>;
@@ -229,6 +252,7 @@ export const OverridesSchema = z
           priorityTier: z.number().int().min(0).max(2).optional(),
           yearsToFullOutput: z.number().nonnegative().optional(),
           spriteKey: z.string().optional(),
+          layer: z.enum(['none', 'ground', 'object']).optional(),
         })
         .strict(),
     ),
@@ -238,6 +262,9 @@ export const OverridesSchema = z
         .object({
           spoilPerWeek: z.number().min(0).max(1).optional(),
           storedIn: StorageRuleSchema.nullable().optional(),
+          storable: z.boolean().optional(),
+          directUseShare: z.number().min(0).max(1).optional(),
+          satisfiedBy: z.array(z.string()).optional(),
         })
         .strict(),
     ),
@@ -249,6 +276,8 @@ export const OverridesSchema = z
             inputRole: InputRoleSchema.optional(),
             boostWeight: z.number().min(0).max(1).optional(),
             timing: TimingSchema.optional(),
+            /** Why this override exists (documentation only). */
+            note: z.string().optional(),
           })
           .strict(),
       )
@@ -292,3 +321,33 @@ export const GoldensSchema = z.object({
   ),
 });
 export type Goldens = z.infer<typeof GoldensSchema>;
+
+const Monthly = z.array(z.number().nonnegative()).length(12);
+
+/** A climate preset (`data/sites/*.json`). Monthly arrays are shapes; scalars set the annual totals. */
+export const SiteSchema = z.object({
+  schema: z.literal('homestead.site.v1'),
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  latitude: z.number(),
+  elevationFt: z.number(),
+  assumptions: AssumptionsSchema,
+  monthly: z.object({ hdd: Monthly, cdd: Monthly, psh: Monthly, precipIn: Monthly, windCfMult: Monthly }),
+  /** 1-based days of year of last spring frost and first fall frost. */
+  growingSeason: z.object({
+    startDay: z.number().int().min(1).max(365),
+    endDay: z.number().int().min(1).max(365),
+  }),
+  /** Which ambient resources the land supplies with no system placed. */
+  ambient: z.record(z.string(), z.boolean()),
+  terrain: z.object({
+    slopePct: z.number(),
+    aspect: z.string(),
+    stream: z.object({ points: z.array(z.tuple([z.number(), z.number()])), widthFt: z.number() }).nullable(),
+    existingTrees: z.array(z.object({ x: z.number(), y: z.number(), species: z.string() })),
+    coordinates: z.string().optional(),
+  }),
+  notes: z.string(),
+});
+export type Site = z.infer<typeof SiteSchema>;

@@ -27,9 +27,12 @@ import { evalQtyExpr } from '../qty.ts';
 import { CatalogExportError } from './errors.ts';
 import { recognizeFormula } from './formulas.ts';
 import {
+  DEFAULT_DIRECT_USE,
   DEFAULT_SPOIL_PER_WEEK,
   defaultInputRole,
+  defaultLayer,
   defaultPriorityTier,
+  NON_STORABLE,
   defaultStorage,
   defaultTiming,
   defaultYearsToFullOutput,
@@ -193,7 +196,10 @@ function readResources(t: Table, problems: string[]) {
     'Factor to checklist unit',
     'Notes',
   ]);
-  const out: Omit<Resource, 'spoilPerWeek' | 'storedIn' | 'provenance'>[] = [];
+  const out: Omit<
+    Resource,
+    'spoilPerWeek' | 'storedIn' | 'storable' | 'directUseShare' | 'satisfiedBy' | 'provenance'
+  >[] = [];
   const seen = new Set<string>();
   for (const r of t.rows) {
     const name = str(r.cells['Resource']);
@@ -251,7 +257,7 @@ const SYSTEM_HEADERS = [
   'Notes',
 ];
 
-type RawSystem = Omit<System, 'priorityTier' | 'yearsToFullOutput' | 'spriteKey' | 'provenance'>;
+type RawSystem = Omit<System, 'priorityTier' | 'yearsToFullOutput' | 'spriteKey' | 'layer' | 'provenance'>;
 
 function readSystems(t: Table, categories: Category[], problems: string[]): RawSystem[] {
   requireHeaders(t, SYSTEM_HEADERS);
@@ -495,6 +501,7 @@ function applyEngineFields(
         defaultYearsToFullOutput(s.name, s.categories),
       ),
       spriteKey: pick('spriteKey', o.spriteKey, `system:${s.id}`),
+      layer: pick('layer', o.layer, defaultLayer(s.footprintSqft, s.categories)),
       provenance,
     };
   });
@@ -505,13 +512,39 @@ function applyEngineFields(
     for (const k of Object.keys(r)) provenance[k] = 'xlsx';
     provenance.spoilPerWeek = o.spoilPerWeek !== undefined ? 'override' : 'default-rule';
     provenance.storedIn = o.storedIn !== undefined ? 'override' : 'default-rule';
+    provenance.storable = o.storable !== undefined ? 'override' : 'default-rule';
+    provenance.satisfiedBy = o.satisfiedBy !== undefined ? 'override' : 'default-rule';
+    provenance.directUseShare = o.directUseShare !== undefined ? 'override' : 'default-rule';
     return {
       ...r,
       spoilPerWeek: o.spoilPerWeek ?? DEFAULT_SPOIL_PER_WEEK[r.name] ?? 0,
       storedIn: o.storedIn !== undefined ? o.storedIn : defaultStorage(r.name, r.needsRow),
+      storable: o.storable ?? (r.class === 'Flow' || r.class === 'Money' ? !NON_STORABLE.has(r.name) : false),
+      directUseShare: o.directUseShare ?? DEFAULT_DIRECT_USE[r.name] ?? 0,
+      satisfiedBy: o.satisfiedBy ?? [],
       provenance,
     };
   });
+  // A request for Food (kcal) can be met from any food-family stock, most perishable first.
+  const food = resources.find((r) => r.name === 'Food');
+  if (food && food.provenance.satisfiedBy === 'default-rule') {
+    food.satisfiedBy = resources
+      .filter((r) => r.needsRow === 'Food' && r.name !== 'Food')
+      .sort((a, b) => b.spoilPerWeek - a.spoilPerWeek || a.name.localeCompare(b.name))
+      .map((r) => r.name)
+      .concat('Food');
+  }
+  for (const r of resources) {
+    for (const sub of r.satisfiedBy) {
+      const other = resources.find((x) => x.name === sub);
+      if (!other) problems.push(`Resource "${r.name}": satisfiedBy "${sub}" is not a resource`);
+      else if (sub !== r.name && (other.factorToNeed === undefined || other.needsRow !== r.needsRow)) {
+        problems.push(
+          `Resource "${r.name}": satisfiedBy "${sub}" must feed the same checklist row with a factor`,
+        );
+      }
+    }
+  }
   const resClass = new Map(resources.map((r) => [r.name, r.class]));
   for (const r of resources) {
     if (r.storedIn && resClass.get(r.storedIn.capacityResource) !== 'Capacity') {
@@ -521,13 +554,23 @@ function applyEngineFields(
     }
   }
 
+  const sysById = new Map(rawSystems.map((s) => [s.id, s]));
+  const outputsBySystem = new Map<string, Set<string>>();
+  for (const f of rawFlows) {
+    if (f.direction !== 'out') continue;
+    const set = outputsBySystem.get(f.systemId) ?? new Set<string>();
+    set.add(f.resource);
+    outputsBySystem.set(f.systemId, set);
+  }
+  const foodFamily = new Set(resources.filter((r) => r.needsRow === 'Food').map((r) => r.name));
   const flows: Flow[] = rawFlows.map((f) => {
     const o = overrides.flows[f.id] ?? {};
+    const sys = sysById.get(f.systemId)!;
     const provenance: Record<string, ProvenanceSource> = {};
     for (const k of Object.keys(f)) provenance[k] = 'xlsx';
     const flow: Flow = { ...f, inputRole: null, timing: { kind: 'steady' }, provenance };
     if (f.direction === 'in') {
-      const def = defaultInputRole(f.resource, resClass.get(f.resource)!);
+      const def = defaultInputRole(f.resource, resClass.get(f.resource)!, sys.name);
       flow.inputRole = o.inputRole ?? def.role;
       provenance.inputRole = o.inputRole ? 'override' : 'default-rule';
       if (flow.inputRole === 'boost') {
@@ -535,7 +578,14 @@ function applyEngineFields(
         provenance.boostWeight = o.boostWeight !== undefined ? 'override' : 'default-rule';
       }
     }
-    flow.timing = o.timing ?? defaultTiming(f.period, f.direction, f.resource);
+    flow.timing =
+      o.timing ??
+      defaultTiming(f.period, f.direction, f.resource, {
+        systemName: sys.name,
+        categories: sys.categories,
+        outputs: outputsBySystem.get(f.systemId) ?? new Set(),
+        isFood: (r) => foodFamily.has(r),
+      });
     provenance.timing = o.timing ? 'override' : 'default-rule';
     return flow;
   });

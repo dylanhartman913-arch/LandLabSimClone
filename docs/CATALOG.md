@@ -41,6 +41,9 @@ Columns are found by header text, not position; a missing header fails the expor
 | `note` | Resources!M |
 | `spoilPerWeek` | default rule / override |
 | `storedIn` | default rule / override |
+| `storable` | default rule / override |
+| `directUseShare` | default rule / override |
+| `satisfiedBy` | default rule / override |
 
 ## Systems
 
@@ -58,7 +61,7 @@ Columns are found by header text, not position; a missing header fails the expor
 | `starterCount` | Systems!R, "Count in design" |
 | `gameListedInputs`, `gameListedOutputs` | Systems!U, V |
 | `confidence`, `notes` | Systems!W, X |
-| `priorityTier`, `yearsToFullOutput`, `spriteKey` | default rule / override |
+| `priorityTier`, `yearsToFullOutput`, `spriteKey`, `layer` | default rule / override |
 
 Systems!I (cheapest build), S and T (input/output counts) are formulas derived from other columns and are not exported.
 
@@ -117,10 +120,14 @@ Defaults live in `packages/catalog/src/exporter/defaults.ts`. Anything in `data/
 
 | Field | Default rule |
 |---|---|
-| `flow.inputRole` (inputs only) | Labor → `required`; Capacity class → `capacity`; Service → `boost` with `boostWeight` 0.15; Ambient → `ambient`; everything else (including Capital) → `required` |
+| `flow.inputRole` (inputs only) | Capacity class → `capacity`; Human Being inputs and shelter Heat/Cooling inputs → `need` (consumed and tracked, never curtails output: an unheated tent is still a tent); Labor → `required`; Service → `boost` with `boostWeight` 0.15; Ambient → `ambient`; everything else (including Capital) → `required` |
 | `system.priorityTier` | Human Being 0; any of Livestock / Fowl / Insects 1; everything else 2 |
 | `system.yearsToFullOutput` | Food forest 7; coppice 3; a Plants or Biomass system named *tree*, *bush*, or *hedgerow* 5; everything else 0 |
-| `flow.timing` | Yearly outputs are harvest windows: wood weeks 44-48, honey 30-35, everything else weeks 34-43 (Sept-Oct). Yearly inputs (orchard compost) weeks 12-16. Per-season flows spread over the site's growing season. Everything else steady. |
+| `flow.timing` | Yearly outputs are harvest windows: wood weeks 44-48, honey 30-35, everything else weeks 34-43 (Sept-Oct). Yearly inputs (orchard compost) weeks 12-16. Per-season flows spread over the site's growing season. Heat outputs follow heating degree-days and Cooling outputs cooling degree-days; fuel for heating-only systems (category Heating, not Cooking) follows HDD and power for cooling-only systems follows CDD. Weekly irrigation (Water inputs) and weekly food yields of Garden and Plants systems happen only in the growing season (greenhouses and cold frames excepted). Everything else steady. Climate-linked quantity kinds (heat load, PV, rain…) take their shape from the kind. Every shape keeps the annual total. |
+| `resource.storable` | False for Heat, Cooling, Cooking fuel, Transportation, Sanitation, Labor (services: unused supply is lost at day end); true for other Flow resources |
+| `resource.directUseShare` | Electricity 0.5 (daytime loads can run straight off panels); others 0 |
+| `resource.satisfiedBy` | Food (kcal) ← every food-family resource, most perishable first, then Food itself; others none |
+| `system.layer` | No footprint → `none`; footprint ≥ 1,000 sq ft in Land, Biomass, Plants, Biodiversity, Garden, or Food System → `ground` (other systems may sit on it); else `object` |
 | `resource.spoilPerWeek` | Vegetables 0.10, Eggs 0.03, Milk 0.30, Meat 0.20, Fish 0.30, Mushrooms 0.25, Root crops 0.02, Grain / Nuts / Honey 0.002; others 0 |
 | `resource.storedIn` | Water, Drinking water → Water storage, 50 gal buffer. Electricity → Battery storage, no buffer (unstored surplus spills). Food family → Food storage, 10 cu ft pantry buffer, with packing densities (units per cu ft): Food 48,000 kcal, vegetables 20 lb, root crops 35 lb, grain 45 lb, eggs 120, honey 80 lb, meat 40 lb, milk 7.5 gal, fish 40 lb, nuts 35 lb, mushrooms 10 lb. The buffer belongs to the storage pool; when several resources share a pool the engine uses the largest buffer. |
 | `system.spriteKey` | `system:<id>`; the web app generates a placeholder until art exists |
@@ -133,12 +140,14 @@ Defaults live in `packages/catalog/src/exporter/defaults.ts`. Anything in `data/
   "version": 1,
   "systems":   { "S078": { "yearsToFullOutput": 0, "priorityTier": 2, "spriteKey": "raised-bed" } },
   "resources": { "Eggs": { "spoilPerWeek": 0.03, "storedIn": null } },
-  "flows":     { "F0390": { "inputRole": "boost", "boostWeight": 0.2, "timing": { "kind": "steady" } } },
+  "flows":     { "F0390": { "inputRole": "boost", "boostWeight": 0.2, "timing": { "kind": "steady" }, "note": "why" } },
   "adjacencyRules": []
 }
 ```
 
 Systems are keyed by ID, resources by name, flows by ID. Unknown keys and non-engine fields are rejected.
+
+The committed overrides turn clearly supplementary inputs into boosts, each with a `note`: fowl greens, grubs, scraps, and bedding; shed Storage space for bikes and tools; liquid fertilizer and biochar; coffee grounds for worms and larvae; fresh forage where hay is the staple. Without them one missing supplement would switch off a coop entirely under the Leontief rule.
 
 ## How to add a system
 

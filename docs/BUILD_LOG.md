@@ -64,3 +64,33 @@ Newest entries at the bottom. Each session appends: what shipped, test counts, d
 
 **Known gaps**
 - The suburban baseline covers only 58% of its heat need: the catalog's Heat Pump (Mini-Split) output is sized for one small zone, not a 2,000 sq ft house. That is a spreadsheet fact, not an engine bug.
+
+---
+
+## G3 — Time engine: daily clock, stocks, allocation, seasons (2026-09-28)
+
+**Shipped**
+- `docs/ENGINE.md` time section written first (API, state, climate, flow shapes, the 10-step daily order, every constant, groups, balance agreement, performance, known simplifications).
+- `packages/engine/src/time/`: `initGame`, `canPlace`, `placeSystem` (buy / DIY / prebuilt), `moveSystem`, `removeSystem` (25% / 100% refunds), `setPriority`, `placeDesign`, `stepDay`, `stepDays`, `summarizeLedgers` / `summarize`. Pure functions over plain-JSON state with a seeded mulberry32 RNG.
+- Daily step: weather → construction materials (shortfalls imported and logged) → labor pool (construction first, up to 60%) → requests → tiered proportional allocation (Food met from any food-family stock, most perishable first) → Leontief satisfaction with boosts and maturity → people (7-day needs, health floor 0.3, hardship after 3 days below 80%) → storage pools, direct-use electricity, spoilage (80% slower in cold storage) → cash → events and ledger.
+- Site presets `data/sites/{front-range,laramie-wy,asheville-nc}.json` (monthly shapes rescaled to scalar annual totals; front-range equals the spreadsheet's Assumptions), with growing seasons, ambient availability (Asheville has a stream), and terrain for G7.
+- Catalog engine fields added through default rules: input role `need`, timing `heating`/`cooling` (plus garden irrigation in season), `storable`, `directUseShare` (Electricity 0.5), `satisfiedBy` (Food ← food family), `layer` (ground plantings). `data/catalog_overrides.json` now turns 26 clearly supplementary inputs into boosts, each with a note.
+- Validation setting `unlimitedSupply` for checking time mode against balance mode.
+- CLI: `npm run sim -- run designs/starter.json --years 3 --site laramie-wy` prints monthly coverage per checklist row, health, and the three biggest shortages with the systems they curtail.
+
+**Tests:** 88 unit total. New: 18 scenarios (no stove in January → heat hardship on day 3; 3 panels no battery → noon surplus spilled, exactly half of demand met; raised bed with no water → zero yield, named in the Water shortage event; priority, substitution, spoilage, construction, maturity, placement), conservation over 3 designs + validation mode + construction/removal (1e-9), balance agreement (unlimited supply: 0.00% on every row for 3 designs; starter with real supply: six documented curtailment chains, each cause asserted), determinism (committed digests), immutability, performance.
+
+**Digests (one year, seed 42, plus a DIY yurt):** starter `2f421ff10477d7a9`, off-grid cabin `c0da08bb643e8161`, suburban `84e47ac086416c3f`.
+
+**Performance:** one year of a 196-instance design: ~40-55 ms in plain Node (budget 150 ms). As one 500-line function the step never got TurboFan-optimized (~140 ms); split into phases it does.
+
+**Decisions (creative license, all documented)**
+- Human Being inputs and shelter Heat/Cooling are `need` inputs: shortfalls hurt health and the checklist but do not switch the consumer off.
+- Electricity `directUseShare` 0.5: daytime loads can use yesterday's solar without a battery (the roadmap's "night demand unmet" scenario implies this).
+- Non-storable services (heat, cooling, cooking fuel, transport, sanitation) carry over one day, then spill; labor is recomputed each morning from health.
+- Missing construction materials are brought in and logged rather than blocking construction.
+
+**Known gaps**
+- Real-weather mode is a stub until G9 (`weatherFor` returns the average day; frost tags only).
+- One allocation pass (returned stock is not re-offered the same day).
+- The starter design is harsh in time mode (23-24% overall on laramie-wy): its well has no battery and loses the daytime power to the household. That is the lesson the year report (G6) should surface.

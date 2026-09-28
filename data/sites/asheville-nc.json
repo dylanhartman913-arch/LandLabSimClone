@@ -1,0 +1,145 @@
+{
+  "schema": "homestead.site.v1",
+  "id": "asheville-nc",
+  "name": "Blue Ridge valley, North Carolina",
+  "description": "A humid mountain valley: mild winters, warm wet summers, less sun, and about 47 inches of rain. A creek runs along the parcel.",
+  "latitude": 35.6,
+  "elevationFt": 2100,
+  "assumptions": {
+    "hdd": 3760,
+    "cdd": 1000,
+    "psh": 4.5,
+    "pvDerate": 0.8,
+    "precipIn": 47,
+    "galPerSqftIn": 0.623,
+    "windCf": 0.1,
+    "hydroCf": 0.85,
+    "seasonsPerYear": 1
+  },
+  "monthly": {
+    "hdd": [
+      760,
+      620,
+      500,
+      260,
+      90,
+      10,
+      0,
+      0,
+      40,
+      250,
+      520,
+      710
+    ],
+    "cdd": [
+      0,
+      0,
+      0,
+      0,
+      60,
+      200,
+      310,
+      280,
+      130,
+      20,
+      0,
+      0
+    ],
+    "psh": [
+      3.0,
+      3.7,
+      4.5,
+      5.4,
+      5.6,
+      5.8,
+      5.6,
+      5.2,
+      4.7,
+      4.3,
+      3.3,
+      2.8
+    ],
+    "precipIn": [
+      3.7,
+      3.8,
+      4.3,
+      3.9,
+      4.2,
+      4.4,
+      4.3,
+      4.3,
+      3.8,
+      3.2,
+      3.5,
+      3.6
+    ],
+    "windCfMult": [
+      1.2,
+      1.2,
+      1.2,
+      1.1,
+      0.95,
+      0.85,
+      0.8,
+      0.8,
+      0.85,
+      0.95,
+      1.05,
+      1.15
+    ]
+  },
+  "growingSeason": {
+    "startDay": 110,
+    "endDay": 293
+  },
+  "ambient": {
+    "Sunlight": true,
+    "Rainfall": true,
+    "Wind": true,
+    "Stream flow": true
+  },
+  "terrain": {
+    "slopePct": 12,
+    "aspect": "south",
+    "stream": {
+      "points": [
+        [
+          0.0,
+          0.718
+        ],
+        [
+          0.287,
+          0.789
+        ],
+        [
+          0.574,
+          0.766
+        ],
+        [
+          1.0,
+          0.837
+        ]
+      ],
+      "widthFt": 8
+    },
+    "existingTrees": [
+      {
+        "x": 0.096,
+        "y": 0.096,
+        "species": "Tulip poplar"
+      },
+      {
+        "x": 0.191,
+        "y": 0.167,
+        "species": "White oak"
+      },
+      {
+        "x": 0.909,
+        "y": 0.191,
+        "species": "Red maple"
+      }
+    ],
+    "coordinates": "fractions of the parcel side (0-1), so terrain scales with parcel size"
+  },
+  "notes": "Approximate NOAA normals for Asheville Regional Airport. The stream enables micro-hydro (Stream flow is site-supplied)."
+}
