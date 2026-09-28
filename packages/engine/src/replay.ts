@@ -107,6 +107,8 @@ export function gameDigest(s: GameState): string {
     direct: s.direct,
     instances: s.instances,
     settings: s.settings,
+    // Real weather: the year draws are part of the game's substance (average-mode digests are unchanged).
+    ...(s.weatherLog ? { weatherLog: s.weatherLog } : {}),
   });
 }
 
@@ -127,13 +129,52 @@ export interface SaveFile {
   state: GameState;
 }
 
-export function validateSave(x: unknown): SaveFile {
-  const f = x as Partial<SaveFile>;
-  if (!f || typeof f !== 'object') throw new Error('Not a save file');
-  if (f.schema !== SAVE_SCHEMA) throw new Error(`Unsupported save schema: ${String(f.schema)}`);
+/**
+ * Everything wrong with a save file, in plain language (empty when it looks loadable).
+ * With a catalog, also checks that every placed system still exists in it.
+ */
+export function saveProblems(x: unknown, catalog?: Catalog): string[] {
+  const f = x as Partial<SaveFile> | null;
+  if (!f || typeof f !== 'object' || Array.isArray(f)) return ['The file is not a save (it has no fields).'];
+  const out: string[] = [];
+  if (f.schema !== SAVE_SCHEMA) out.push(`It is not a ${SAVE_SCHEMA} file (schema: ${String(f.schema)}).`);
   for (const k of ['init', 'actions', 'absDay', 'digest', 'state'] as const) {
-    if (f[k] === undefined) throw new Error(`Save file is missing "${k}"`);
+    if (f[k] === undefined) out.push(`It is missing "${k}".`);
   }
-  if (!Array.isArray(f.actions)) throw new Error('Save file actions must be a list');
-  return f as SaveFile;
+  if (f.actions !== undefined && !Array.isArray(f.actions)) out.push('Its action log is not a list.');
+  if (f.init && (typeof f.init !== 'object' || typeof f.init.siteId !== 'string' || typeof f.init.seed !== 'number'))
+    out.push('Its starting settings (site and seed) are unreadable.');
+  const st = f.state as Partial<GameState> | undefined;
+  if (st !== undefined) {
+    if (!st || typeof st !== 'object') out.push('Its game snapshot is unreadable.');
+    else {
+      if (st.schema !== 'homestead.game.v1') out.push('Its game snapshot has an unknown format.');
+      if (!st.calendar || typeof st.calendar.absDay !== 'number') out.push('Its game snapshot has no date.');
+      if (!Array.isArray(st.instances)) out.push('Its game snapshot has no list of placed systems.');
+      if (!st.stocks || typeof st.stocks !== 'object') out.push('Its game snapshot has no stocks.');
+      if (!st.site || typeof st.site !== 'object' || typeof st.site.id !== 'string')
+        out.push('Its game snapshot has no site.');
+      if (!Array.isArray(st.ledgers)) out.push('Its game snapshot has no daily ledgers.');
+      if (catalog && Array.isArray(st.instances)) {
+        const ids = new Set(catalog.systems.map((s) => s.id));
+        const unknown = [...new Set(st.instances.map((i) => i?.systemId).filter((id) => !ids.has(id)))];
+        if (unknown.length) out.push(`It places systems this catalog doesn't have: ${unknown.join(', ')}.`);
+      }
+    }
+  }
+  return out;
+}
+
+export function validateSave(x: unknown, catalog?: Catalog): SaveFile {
+  const problems = saveProblems(x, catalog);
+  if (problems.length) throw new SaveError(problems);
+  return x as SaveFile;
+}
+
+/** A save that can't be loaded, with every problem found. */
+export class SaveError extends Error {
+  constructor(readonly problems: string[]) {
+    super(problems.join(' '));
+    this.name = 'SaveError';
+  }
 }

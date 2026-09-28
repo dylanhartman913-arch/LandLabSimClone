@@ -15,7 +15,7 @@ import {
   type PersonNeed,
 } from './constants.ts';
 import { dailyAmount, getPlans, type FlowPlan, type Plans, type SystemPlan } from './plans.ts';
-import { weatherFor } from './weather.ts';
+import { drawYearWeather, weatherFor, type YearWeather } from './weather.ts';
 import { computeSpatial, groupKeyOf, type InstanceSpatial } from './spatial.ts';
 import type {
   DayLedger,
@@ -105,6 +105,7 @@ interface Day {
   upkeepRequested: number;
   capitalUsed: number;
   produced: Record<string, number>;
+  bought: Record<string, number>;
   services: Record<string, number>;
   lastDay: GameState['lastDay'];
   cashIn: number;
@@ -494,7 +495,10 @@ function produce(d: Day): void {
       const amount = base[k]! * multSum;
       if (o.needsRow) d.needs[o.needsRow].provided += amount * o.needFactor;
       if (o.cls === 'Money') d.cashIn += amount;
-      else if (o.cls === 'Flow') d.produced[o.resource] = (d.produced[o.resource] ?? 0) + amount;
+      else if (o.cls === 'Flow') {
+        d.produced[o.resource] = (d.produced[o.resource] ?? 0) + amount;
+        if (p.bought && amount > 0) d.bought[o.resource] = (d.bought[o.resource] ?? 0) + amount;
+      }
       else if (o.cls === 'Service') d.services[o.resource] = (d.services[o.resource] ?? 0) + amount;
       if (o.shape === 'window' && d.day === o.window!.first && amount > 0) {
         const key = `${p.system.id}|${o.resource}`;
@@ -731,6 +735,8 @@ function buildLedger(d: Day): DayLedger {
     laborBySystem: d.laborBySystem,
     curtailed,
     weather: d.weather,
+    bought: d.bought,
+    hardships: d.events.filter((e) => e.kind === 'hardship').length,
     health: d.people ? d.healthSum / d.people : 1,
   };
 }
@@ -744,7 +750,16 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   const table = climateTable(prev.site);
   const { day, year, absDay } = prev.calendar;
   // Step 1: weather and ambient resources.
-  const [weather, rng] = weatherFor(prev.site, table, day, prev.settings.weatherMode, prev.rng);
+  let rng = prev.rng;
+  let yearWeather = prev.yearWeather;
+  let weatherLog = prev.weatherLog;
+  if (prev.settings.weatherMode === 'real' && yearWeather?.year !== year) {
+    let yw: YearWeather;
+    [yw, rng] = drawYearWeather(prev.site, year, rng);
+    yearWeather = yw;
+    weatherLog = [...(weatherLog ?? []), yw];
+  }
+  const weather = weatherFor(prev.site, table, day, prev.settings.weatherMode, yearWeather);
   const res: Record<string, ResourceDay> = {};
   for (const r of plans.flowResources) res[r] = newResourceDay((prev.stocks[r] ?? 0) + (prev.direct[r] ?? 0));
   const needs = {} as Record<NeedKey, NeedDay>;
@@ -787,6 +802,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     upkeepRequested: 0,
     capitalUsed: 0,
     produced: {},
+    bought: {},
     services: {},
     lastDay: {},
     cashIn: 0,
@@ -828,6 +844,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     instances: d.instances,
     weather,
     ledgers,
+    ...(yearWeather ? { yearWeather, weatherLog } : {}),
     pendingCash: { purchases: 0, refunds: 0 },
     flags,
   };

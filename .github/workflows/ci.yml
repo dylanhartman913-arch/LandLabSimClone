@@ -8,7 +8,7 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,8 +26,22 @@ jobs:
         run: npx vitest run
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
+      - name: Find Chromium for Lighthouse
+        id: chrome
+        run: echo "path=$(node -e "console.log(require('playwright').chromium.executablePath())")" >> "$GITHUB_OUTPUT"
       - name: Build web
         run: npm run build
+      - name: Upload preview build (download the artifact and open index.html, or serve the folder)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-build-pr-${{ github.event.pull_request.number }}
+          path: apps/web/dist
+          retention-days: 14
+      - name: Lighthouse budget (first load, accessibility)
+        run: npx --yes @lhci/cli@0.15.1 autorun
+        env:
+          CHROME_PATH: ${{ steps.chrome.outputs.path }}
       - name: End-to-end (vite preview)
         run: npm run test:e2e
         env:
@@ -41,4 +55,5 @@ jobs:
             docs/screenshots/
             test-results/
             playwright-report/
+            .lighthouseci/
           if-no-files-found: ignore

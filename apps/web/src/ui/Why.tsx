@@ -35,7 +35,7 @@ export function WhyNum({
         const r = e.currentTarget.getBoundingClientRect();
         show({ title, value, ...(unit ? { unit } : {}), x: r.left, y: r.bottom + 6 });
       }}
-      aria-label={`${title}: ${format(d.value)}${d.unit ? ` ${d.unit}` : ''}. Why?`}
+      aria-label={`${format(d.value)}${d.unit ? ` ${d.unit}` : ''}: ${title}. Why?`}
       data-testid={testId}
       data-value={value.value}
     >

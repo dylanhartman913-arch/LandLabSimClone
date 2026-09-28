@@ -217,6 +217,8 @@ Screenshots are in `docs/screenshots/g8/`.
 
 ## Status at the end of the first run (G0–G8)
 
+_Superseded by "Status at the end of the roadmap" below._
+
 ### Done
 
 | Session | State | Handoff condition met? |
@@ -335,3 +337,237 @@ Screenshots are in `docs/screenshots/g8/`.
 - The perf test checks the CPU frame budget everywhere and the 60 fps interval only when a hardware GPU is present.
 - The year-performance test runs outside Vitest's transform, as an esbuild bundle in a child Node process.
 - The session branch `claude/gifted-hypatia-x158zw` holds all sessions, one commit per session, since the cloud session was pinned to it.
+
+
+---
+
+## G9 — Real weather, scenarios, weather risk (Monte Carlo), sensitivity, exports (2026-09-28)
+
+**Shipped**
+- **Real weather (the "90%" model).** `drawYearWeather` draws one set of values per game year from the game's seeded RNG, always 12 draws, so one outcome never shifts the next year's. `docs/ENGINE.md` → Real weather documents every distribution; the constants are in `REAL_WEATHER`.
+  - Precipitation: lognormal with mean 1. CV 0.25 on arid sites (under 20 in a year), 0.15 otherwise.
+  - Degree days: one warm or cold swing of up to ±8% (HDD down when CDD up).
+  - Late frost: 30% of years, delaying the season 21–30 days.
+  - Heat waves: 0–2 per summer, 5–10 days each.
+  - Hail: 15% of years, taking out a week of growing-season output.
+  - Draws are kept in `state.weatherLog`, which is in the save's snapshot and in `gameDigest`. Weather tags (dry year, heat wave, hail, last frost N days late) show in the HUD and the almanac.
+  - Average mode draws nothing, so every G2–G8 digest is unchanged.
+- **Monte Carlo ("Weather risk").** `monteCarloRun` builds a design, runs it for N years in real weather for one seed, and records per checklist row the worst weekly coverage, hardship months, yearly scores, and rain multipliers. `aggregateMonteCarlo` gives min / P10 / median / P90 / mean and a histogram per row, the chance of any hardship month, and a digest.
+  - The app runs it in up to four Web Workers, with seeds dealt round-robin and put back in order, so the worker count can't change the numbers. It has a progress bar and Cancel, which terminates the workers.
+  - The CLI is `npm run sim -- montecarlo <design> --site --years --seeds --seed [--json]`.
+  - Both print `monteCarloTable` strings, and the app shows the exact CLI command and offers the design file to reproduce its numbers.
+- **Design files with layouts.** `designFromGame` / `gameFromDesign`: a design file can carry `parcelAcres` and every placement (position, scale, priority, roof and paddock links). Monte Carlo, scenarios, and the CLI then see the same shade and links as the game. Files without a layout lay out automatically as before.
+- **Scenario compare** (Plan → Scenarios): pin up to three designs (Duplicate as scenario, or add a design file), each on any site. Side by side:
+  - The average-year ("80%") coverage per row next to the weather-risk "bad week" ("90%", the P10 of worst weeks), and the overall score next to the 1-in-10 year.
+  - Purchase cost, cheapest build, labor needed and available, land used, days of stored water and battery, cash per year, and the chance of a hardship month.
+  - Every value is `Explained` (click for why). Pinned scenarios persist in localStorage.
+- **Sensitivity** (Plan → Sensitivity): a tornado chart of the average-year score with each of the 9 site assumptions at ±20%, largest swing first. Below it, the ten flows whose ±20% moves the weakest row the most, where the weakest row is the one the design provides anything for.
+- **Exports** (Plan → Export):
+  - The design file.
+  - A per-year flow record (`homestead.flow_record.v1`): land by use; monthly electricity bought, made, spilled, peak day, and unmet; water drawn vs used up; food grown, bought, and eaten; fuel by type; spending, cash, and labor; hardship months.
+  - Daily ledgers as CSV.
+  - A PNG of the map.
+  - The CLI adds `run … --flow-record out.json --csv out.csv [--weather real]`.
+- **Ledger additions:** `bought` (Flow output of Conventional systems paid in Capital, such as grid power, city water, and groceries) and `hardships` (people entering hardship that day). Neither affects any existing summary or digest.
+- New design `designs/rain-fed-yurt.json` (Laramie), a design that lives or dies by the year's rain.
+- The HUD has a **Plan** button, and `P` opens the panel. The HUD also shows "real weather" when it's on.
+
+**Tests:** 156 unit at the end of G9 (+23).
+- `real-weather.test.ts` (9):
+  - Draw statistics over 4,000 years: rain mean ≈ 1, CV ≈ 0.25 arid and 0.15 humid; ±8% degree-days; about 30% late frosts of 21–30 days; heat waves in summer, hail in season.
+  - Late frost delays the garden.
+  - Average mode leaves the RNG alone.
+  - Same seed gives the same weather and digest.
+  - Hail zeroes a week of raised-bed harvest.
+  - A real-weather game replays to its digest.
+- `montecarlo.test.ts` (5):
+  - Determinism: running one seed alone equals its place in the batch.
+  - The rain-fed design's water spreads in real weather and not at all in average weather.
+  - Distribution invariants and quantiles.
+  - **The CLI, run as a child process, prints the same table and JSON digest as the engine.**
+- `exports.test.ts` (10):
+  - Suburban buys grid power and the off-grid cabin buys none; hardship months by name; CSV shape.
+  - Layout round-trip including links.
+  - Scenario summary equals balance mode; different sites score differently.
+  - The tornado ranks sun hours and PV derate first for a solar design; flows are capped at ten; no swing at 0%.
+
+New e2e `decision.spec.ts` (6):
+- **The roadmap handoff:** the app runs weather risk (2 years × 6 seeds from seed 11) on a placed layout. The test downloads the design file, runs the CLI command the app shows, and every table cell and the digest match to the digit.
+- A 10 × 400 run shows progress and cancels cleanly.
+- Two scenarios (one moved to Asheville) show "avg year" and "bad week" together, their numbers explain themselves, and they survive a reload.
+- Sensitivity has 9 bars and the flow table.
+- All four exports have the right content, and the exported design runs in the CLI.
+- A real-weather game from the wizard records two years of different draws.
+
+Screenshots are in `docs/screenshots/g9/`.
+
+**Digests:** none changed.
+
+**Decisions not in the roadmap**
+- "Worst-week coverage" per run is the lowest non-overlapping 7-day window over the whole run, the same windows as `summarizeLedgers`.
+- A "hardship month" is a calendar month in which anyone entered hardship.
+- The scenario view's "90%" number is the P10 of worst weeks, meaning one run in ten does worse.
+- Sun hours and wind are not varied in real weather, because the roadmap names no distribution for them.
+- Heat waves are modeled as CDD × 2 + 6 per day.
+- Monte Carlo runs the design built and mature from day 0 (the question is "does this design hold up", not "can I build it in time"), on 5 acres unless the design file says otherwise.
+- The flow record's electricity "export" is surplus that spilled, because no net metering is modeled.
+- The app's presets are Quick (3 × 40) and Full (10 × 200, the roadmap's).
+
+**Known gaps**
+- A Full run (2,000 simulated years) takes about 1.5 CPU-minutes, spread over at most four workers. Nothing is cached between runs.
+- Only the P10 is shown in scenarios, not the whole distribution. The Weather risk tab has the histogram for the current layout only.
+- Pinned scenarios live in localStorage, not in save files.
+
+---
+
+## G10 — Performance, resilience, responsive layout, deploy, docs (2026-09-28)
+
+**Shipped**
+- **Performance budget, measured.**
+  - 500 instances: the perf spec now places 500 instances. Scene work is 0.16 ms and render submission 1.0 ms per frame, so the CPU side fits 60 fps about 14× over. The 60 fps frame interval is asserted only on a hardware GPU.
+  - First load: map ready in ~0.4 s here; the e2e budget is 2.5 s.
+  - A simulated year through the store takes ~0.1 s (budget 1 s).
+  - Lighthouse CI (`lighthouserc.json`, a CI step) asserts FCP and LCP ≤ 2.5 s, accessibility ≥ 0.9, and colour contrast. Run here, with no throttling and software WebGL, it gave FCP ≈ 0.6 s, LCP ≈ 0.6 s, accessibility 1.0, best practices 1.0, and performance ≈ 0.9.
+  - Time to Interactive is deliberately not a budget. The map redraws every frame, and on software WebGL those frames are long tasks, so the main thread never goes quiet for 5 s (TTI read 9–25 s). LCP is the honest first-load number for a canvas game.
+- **Accessibility fixes from Lighthouse:**
+  - A favicon (no console 404), and heading order in the quest card.
+  - "Why" buttons and drawer tiles now have accessible names that start with their visible text.
+  - The drawer toggle is a 24 px target.
+- **Error boundaries** around every region: top bar, drawer, map, status bar, quest card, flow legend, system card, checklist, each panel, plan, notifications, the "why" popover, and the wizard.
+  - A crash shows "<Panel> ran into a problem", the message, Try again, Close, and details for a bug report.
+  - The clock, map, and saves keep working.
+- **Damaged saves.** `saveProblems` / `SaveError` in the engine list everything wrong with a file: not a save, missing fields, an unreadable snapshot, or systems the catalog no longer has.
+  - Importing, loading a slot, rewinding, and restoring on start-up all go through `tryLoadSave`. On failure, the game is unchanged and a dialog lists the problems and offers **Load the last good autosave**.
+  - Autosave keeps the previous one as `autosave-prev`, only when that one itself passes the checks, so a damaged autosave on start-up falls back to the one before it.
+- **Responsive:** under 900 px the drawer becomes a bottom sheet (42% of the height, collapsible to a 26 px handle, full width) with auto-fill tiles. Panels and cards take the full width, and the HUD wraps onto two rows.
+- **Deploy:**
+  - `.github/workflows/pages.yml` builds and deploys the static game to GitHub Pages on every push to `main` (and on demand).
+  - CI uploads the built app as a `preview-build-pr-<n>` artifact on every PR and runs the Lighthouse budget.
+  - The build uses relative paths (`base: './'`), so it works under a Pages subpath.
+- **Modding handoff:** `packages/catalog/test/modding.test.ts` adds a system (a solar food dehydrator, with three flows) to a copy of the workbook the way `docs/MODDING.md` says, and checks that it exports. `apps/web/src/lib/modding.test.ts` checks that it appears in the drawer's list, search, and category counts, has a card, and places and runs in the engine. No code names it.
+- **Docs:**
+  - `docs/PLAYING.md`, the player guide: first fifteen minutes, controls, panels, placement, planning tools, saving, settings, weather.
+  - `docs/MODDING.md`: add a system, overrides, resources, sites, art, the CLI.
+  - `docs/ENGINE.md`: real weather, Monte Carlo, scenarios and exports, damaged saves; corrected the no-battery line.
+  - `README.md` links all of these.
+
+**Tests:** 160 unit in 20 files (+4: modding ×3, damaged-save problems). 30 e2e in 9 files.
+- New `ship.spec.ts` (4):
+  - At 820 × 1180 the drawer is a bottom sheet under the map, a yurt is found, carded, and placed, and the sheet collapses.
+  - A damaged report crashes only its panel, while the clock still runs and Close works.
+  - An imported damaged save lists its problems ("no daily ledgers", "catalog doesn't have: S999") and loading the last good autosave restores its day.
+  - A damaged autosave on reload falls back to `autosave-prev`.
+- `perf.spec.ts` is now 500 instances, plus first load and a year of ticks.
+
+Screenshots are in `docs/screenshots/g10/`.
+
+**Git:** the GitHub App was fixed during this run, and `claude/gifted-hypatia-x158zw` pushes now. CI only runs on PRs and `main`, so it has still never run.
+
+
+---
+
+## Status at the end of the roadmap (G0–G10)
+
+This replaces "Status at the end of the first run" above, which is kept for history.
+
+### Done
+
+| Session | Handoff condition | Met? |
+|---|---|---|
+| G0 | Workspace, CI, and engine purity lint | Yes (CI has not run on GitHub yet; see "Where to pick up") |
+| G1 | `catalog:check` clean; broken fixtures rejected | Yes |
+| G2 | Spreadsheet parity to 1e-9 | Yes |
+| G3 | Scenarios, conservation, determinism, balance agreement | Yes |
+| G4 | Playfield flow and 300 instances | Yes (500 instances since G10) |
+| G5 | Every Average-year checklist value equals balance mode; every "why" opens | Yes |
+| G6 | Export → import in a fresh browser → replay to the same digest | Yes |
+| G7 | Shade, roof links, wizard, site comparison | Yes |
+| G8 | First three quests with the keyboard only | Yes |
+| G9 | Monte Carlo in-app and CLI agree to the digit; 80% and 90% shown together | Yes |
+| G10 | Public URL loads; a new player finishes the tutorial; a system added in the xlsx appears with no code change | **Partly.** The deploy workflow exists but can't run until Pages is enabled and the code is on `main`. The tutorial is covered by `keyboard.spec.ts`. The modding path is covered by tests on a programmatic copy of the workbook, not an edit made in Excel. |
+
+### Half-done or not started
+
+- **Never run on GitHub:** `ci.yml` (typecheck, lint, catalog, unit, e2e, Lighthouse, PR preview artifact) and `pages.yml` (deploy). Everything they run passes in this sandbox.
+- **Only measured on software WebGL:** 60 fps at 500 instances. The CPU side is verified; the frame interval is asserted only when a hardware GPU is present.
+- **Art:** placeholder vector glyphs only. `sprites/manifest.json` and `manifestEntry` exist, but real images aren't drawn from them yet.
+- **Sound:** none. No ambient sound toggle either, since there is no original audio yet.
+- **Engine simplifications, documented in ENGINE.md:**
+  - One allocation pass a day.
+  - A day-long battery buffer.
+  - Spatial effects don't ramp with maturity.
+  - Sun and wind don't vary in real weather.
+  - No net metering.
+- **Other smaller gaps:**
+  - Share links carry counts, not positions (design files carry positions).
+  - Per-instance history is not kept.
+  - Pinned scenarios live in localStorage, not in saves.
+  - Replay cost grows with game length.
+- **Web bundle:** ~1.2 MB (≈257 KB gzipped), most of it the catalog with provenance. The Monte Carlo worker carries its own copy (≈580 KB). FCP and LCP are ~0.6 s here, so it isn't urgent. Splitting provenance out of the web build would be the next step.
+- **Accessibility:** Lighthouse accessibility is 1.0 and every flow can be played with the keyboard, but nobody has tested with a screen reader.
+
+### Tests
+
+**Unit (Vitest), 160 tests in 20 files**
+- Catalog:
+  - `export` (18): templates, defaults, overrides, sync.
+  - `validation` (14): mutated copies of the real workbook.
+  - `modding` (1): add a system in the workbook.
+- Engine:
+  - `parity` (9): the spreadsheet goldens.
+  - `balance-designs` (6): the designs, their digests, balance performance.
+  - `time-scenarios` (18): the roadmap situations.
+  - `time-invariants` (9): conservation, balance agreement, determinism, immutability, year performance in a child process.
+  - `views` (7).
+  - `replay` (4): replay, save round-trip, damaged saves.
+  - `report` (3): root-cause chains.
+  - `spatial` (10).
+  - `kits` (2).
+  - `quests` (6).
+  - `real-weather` (9).
+  - `montecarlo` (5): includes the CLI parity check.
+  - `exports` (10): flow record, CSV, layouts, scenarios, sensitivity.
+  - `purity` (4) and `version` (1).
+- Web:
+  - `search` (5).
+  - `modding` (2): the new system reaches the drawer and runs.
+- Digests: `packages/engine/test/digests.json` (4 balance, 3 time). The time digests were re-recorded once, in G7, for spatial effects; nothing changed in G8–G10.
+
+**End-to-end (Playwright, Chromium with SwiftShader, one worker), 30 tests in 9 files**
+- `smoke` (1).
+- `playfield` (5).
+- `perf` (2): 500 instances; first load and a year of ticks.
+- `information` (1).
+- `gameloop` (5).
+- `space` (4).
+- `keyboard` (2).
+- `decision` (6): weather risk matches the CLI, cancel, scenarios, sensitivity, exports, real weather.
+- `ship` (4): tablet, panel crash, damaged save, damaged autosave.
+
+**Other checks:**
+- `npm run lint` (with the engine-purity rules), `npm run typecheck`, `npm run catalog:check`, `npm run build`.
+- Lighthouse CI (`lighthouserc.json`).
+- Screenshots for each session in `docs/screenshots/g0…g10/`.
+
+**Last verification:** each new G9/G10 spec file passed when run on its own, and so did lint, typecheck, catalog check, build, and all 160 unit tests. The full 30-test browser run was still in progress when this entry was committed; its result is recorded below.
+
+### Where to pick up: steps to run on your own machine
+
+The cloud sandbox has no GPU, no screen, no spreadsheet program, and can't change repository settings. These steps need a real machine (Claude Code in a local terminal, or you), roughly in this order:
+
+1. **Open a PR from `claude/gifted-hypatia-x158zw` to `main` and let CI run.** This is the first time `ci.yml` runs on GitHub. Two things to watch:
+   - The two timing-sensitive e2e specs (`information`, and `playfield`'s speed test) timed out once under load here and passed on rerun. CI retries once.
+   - The Lighthouse step downloads `@lhci/cli` with `npx`.
+
+   Claude Code in the cloud can open the PR and fix CI; that doesn't need your machine.
+2. **Enable GitHub Pages** (Settings → Pages → Source: GitHub Actions), then merge to `main`. `pages.yml` deploys, and the public URL is the last G10 handoff item.
+3. **Play it in a real browser on a real GPU:** `npm ci && npm run dev`, then open http://localhost:5173.
+   - Check the feel (animations, readability, pacing at 1×/3×/10×). So far that has only been judged from screenshots.
+   - Run `npx playwright test tests/e2e/perf.spec.ts --headed`. With hardware WebGL it also asserts the 60 fps frame interval at 500 instances.
+4. **Lighthouse on a mid laptop:** `npm run build && npx @lhci/cli@0.15.1 autorun`. The 2.5 s first-load budget was measured here without throttling.
+5. **Add a system in Excel or LibreOffice** by following `docs/MODDING.md`, then run `npm run catalog:export && npm test && npm run dev`. The tests prove the path programmatically; a real edit with formula recalculation hasn't been done yet.
+6. **A full Monte Carlo in the browser** (Plan → Weather risk → Full, 10 × 200). It hasn't been run end to end here (the cancel test starts one and stops it). Expect about 1.5 CPU-minutes spread over the workers.
+7. **Tablet and screen reader:** touch (pinch-zoom, the bottom-sheet drawer) on a real tablet, and a VoiceOver or NVDA pass. Only emulated viewports and automated audits have covered these.
+8. **Art and audio** need original assets. Wiring `manifestEntry` into `MapScene` sprite creation is a small code task once images exist.
+
+A new cloud session can do the code-only follow-ups: splitting the bundle, drawing art from the manifest, putting pinned scenarios into saves, varying sun and wind in real weather, and a second allocation pass.

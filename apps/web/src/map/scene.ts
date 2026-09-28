@@ -819,6 +819,15 @@ export class MapScene {
   }
 
   /** World point under the pointer (for paste). */
+  /** The map as it is drawn now, as a PNG. */
+  async snapshotPng(): Promise<Blob> {
+    this.app.render();
+    const canvas = this.app.renderer.extract.canvas(this.app.stage) as HTMLCanvasElement;
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('The map could not be captured'))), 'image/png');
+    });
+  }
+
   pointerWorld(): { x: number; y: number } {
     return { x: this.pointer.wx, y: this.pointer.wy };
   }

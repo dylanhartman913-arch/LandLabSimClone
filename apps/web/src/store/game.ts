@@ -108,6 +108,9 @@ export interface GameStore {
   /** Days since the last autosave (the app autosaves weekly). */
   daysSinceAutosave: number;
   storageWarning: string | null;
+  /** A save that could not be loaded, and why (shown with the last good autosave to fall back to). */
+  saveProblem: { source: string; problems: string[]; file?: unknown } | null;
+  setSaveProblem(p: GameStore['saveProblem']): void;
 
   loadGame(
     init: GameInit,
@@ -267,6 +270,7 @@ export const useGame = create<GameStore>()((set, get) => {
     prefs,
     daysSinceAutosave: 0,
     storageWarning: null,
+    saveProblem: null,
     progress: EMPTY_PROGRESS,
     kbCursor: null,
 
@@ -669,6 +673,9 @@ export const useGame = create<GameStore>()((set, get) => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
     },
 
+    setSaveProblem(p) {
+      set({ saveProblem: p });
+    },
     setStorageWarning(storageWarning) {
       set({ storageWarning });
     },

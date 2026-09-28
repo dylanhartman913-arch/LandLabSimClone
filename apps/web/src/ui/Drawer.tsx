@@ -26,7 +26,9 @@ export function Drawer() {
         aria-label={open ? 'Collapse drawer' : 'Expand drawer'}
         data-testid="drawer-toggle"
       >
-        {open ? '‹' : '›'}
+        <span className="drawer-toggle-glyph" aria-hidden="true">
+          {open ? '‹' : '›'}
+        </span>
       </button>
       {open && (
         <>
@@ -131,7 +133,6 @@ function SystemsTab() {
               setTip({ id: s.id, x: r.right + 8, y: r.top });
             }}
             onBlur={() => setTip(null)}
-            aria-label={s.name}
             data-testid={`tile-${s.id}`}
             data-name={s.name}
           >

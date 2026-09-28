@@ -8,3 +8,4 @@ export * from './flows.ts';
 export * from './calendar.ts';
 export * from './report.ts';
 export * from './quests.ts';
+export * from './scenario.ts';

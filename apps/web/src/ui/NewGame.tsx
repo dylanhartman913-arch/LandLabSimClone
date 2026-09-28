@@ -126,7 +126,7 @@ export function NewGame() {
           </label>
           <label>
             Weather
-            <select value={weather} onChange={(e) => setWeather(e.target.value as 'average' | 'real')}>
+            <select value={weather} onChange={(e) => setWeather(e.target.value as 'average' | 'real')} data-testid="wizard-weather">
               <option value="average">Average years</option>
               <option value="real">Real weather (varies year to year)</option>
             </select>

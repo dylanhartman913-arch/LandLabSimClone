@@ -1,13 +1,17 @@
+import { writeFileSync } from 'node:fs';
 import { catalog, getSite, NEED_KEYS, type NeedKey } from '@homestead/catalog';
 import {
-  initGame,
+  flowRecord,
+  gameFromDesign,
+  ledgersCsv,
   MONTH_NAMES,
   monthOfDay,
-  placeDesign,
   stepDays,
   summarizeLedgers,
   type DayLedger,
   type Design,
+  type DesignFile,
+  type WeatherMode,
 } from '@homestead/engine';
 import { pct, table } from '../table.ts';
 
@@ -29,13 +33,33 @@ export interface RunOptions {
   site: string;
   years: number;
   seed: number;
+  weatherMode?: WeatherMode;
+  /** Write one flow record per year here (JSON array). */
+  flowRecordPath?: string;
+  /** Write the daily ledgers here (CSV). */
+  csvPath?: string;
 }
 
 /** Run a design (prebuilt) for N years and print monthly coverage and the biggest shortages. */
-export function runTime(design: Design, name: string, opts: RunOptions): string {
+export function runTime(file: DesignFile, _design: Design, opts: RunOptions): string {
+  const name = file.name;
   const site = getSite(opts.site);
-  const start = placeDesign(catalog, initGame(catalog, site, { parcelAcres: 5 }, opts.seed), design.counts);
-  const { ledgers, state } = stepDays(start, catalog, 365 * opts.years);
+  const start = gameFromDesign(catalog, file, {
+    siteId: site.id,
+    seed: opts.seed,
+    weatherMode: opts.weatherMode ?? 'average',
+  });
+  const records = [];
+  let state = start;
+  const ledgers: DayLedger[] = [];
+  for (let y = 0; y < opts.years; y++) {
+    const r = stepDays(state, catalog, 365);
+    state = r.state;
+    ledgers.push(...r.ledgers);
+    records.push(flowRecord(catalog, state, r.ledgers));
+  }
+  if (opts.flowRecordPath) writeFileSync(opts.flowRecordPath, `${JSON.stringify(records, null, 2)}\n`);
+  if (opts.csvPath) writeFileSync(opts.csvPath, ledgersCsv(catalog, ledgers));
   const lines = [
     `${name} on ${site.name}, ${opts.years} year${opts.years === 1 ? '' : 's'} (seed ${opts.seed})`,
     '',

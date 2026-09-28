@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { AUTOSAVE, loadSave, openSharedDesign, readSave } from '../lib/saves.ts';
+import { AUTOSAVE, openSharedDesign, readSave, tryLoadSave } from '../lib/saves.ts';
 import { useGame } from '../store/game.ts';
 import { loadPref } from '../store/persist.ts';
 
@@ -31,12 +31,8 @@ export function useStartup() {
         if (!loadPref('seenWizard', false)) st.setWizard(true);
         return;
       }
-      try {
-        loadSave(save, { verify: false });
+      if (tryLoadSave(save, 'Your autosave', { verify: false }))
         st.toast(`Welcome back: continued from your autosave (day ${save.absDay}).`);
-      } catch {
-        st.toast('Your autosave could not be read, so this is a new game.', 'warn');
-      }
     });
   }, []);
 }

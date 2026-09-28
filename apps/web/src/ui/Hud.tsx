@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { designBalance, displayDate, ENGINE_VERSION, hudMetrics } from '@homestead/engine';
 import { fmtMoney, fmtNum } from '../lib/format.ts';
 import { useGame, type Speed } from '../store/game.ts';
+import { usePlan } from '../store/plan.ts';
 import { ScoreRing } from './ScoreRing.tsx';
 import { WhyNum } from './Why.tsx';
 import { weatherKind, WeatherIcon } from './Weather.tsx';
@@ -23,6 +24,7 @@ export function Hud() {
   const panel = useGame((s) => s.panel);
   const reportCount = useGame((s) => s.reports.length);
   const readOnly = useGame((s) => s.readOnly);
+  const planOpen = usePlan((s) => s.open);
   const st = useGame.getState();
   const setSpeed = useGame((s) => s.setSpeed);
   const zoomToFit = useGame((s) => s.zoomToFit);
@@ -42,6 +44,7 @@ export function Hud() {
           </span>
           <div className="hud-land">
             {game.site.name}
+            {game.settings.weatherMode === 'real' ? ' · real weather' : ''}
             {readOnly ? ' · shared design (read only)' : ''}
           </div>
         </div>
@@ -99,6 +102,15 @@ export function Hud() {
       </button>
       <div className="hud-spacer" />
       <nav className="hud-group" aria-label="Panels">
+        <button
+          className={`btn ghost ${planOpen ? 'on' : ''}`}
+          onClick={() => usePlan.getState().setOpen(!planOpen)}
+          title="Scenarios, weather risk, sensitivity, and exports (P)"
+          aria-pressed={planOpen}
+          data-testid="open-plan"
+        >
+          Plan
+        </button>
         <button
           className="btn ghost"
           onClick={() => st.setPanel(panel === 'almanac' ? null : 'almanac')}

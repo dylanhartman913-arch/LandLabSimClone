@@ -26,7 +26,9 @@ export function QuestCard() {
           Skip tutorial
         </button>
       </div>
-      <h3 data-testid="quest-title">{q.title}</h3>
+      <h2 className="quest-title" data-testid="quest-title">
+        {q.title}
+      </h2>
       <p className="small">{q.hint}</p>
       <div className="bar" role="progressbar" aria-valuenow={Math.round(st.progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Quest progress">
         <div className="bar-fill" style={{ width: fmtPct(st.progress) }} />

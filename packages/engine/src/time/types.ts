@@ -1,6 +1,7 @@
 import type { NeedKey, Site } from '@homestead/catalog';
 import type { PersonNeed } from './constants.ts';
 import type { DayWeather } from './climate.ts';
+import type { YearWeather } from './weather.ts';
 
 export type BuildMode = 'buy' | 'diy' | 'prebuilt';
 export type WeatherMode = 'average' | 'real';
@@ -119,6 +120,10 @@ export interface DayLedger {
   /** Systems running below full satisfaction today, with the input that limited them. */
   curtailed: { systemId: string; count: number; sat: number; limitedBy: string | null }[];
   weather: DayWeather;
+  /** Flow output bought from outside today (grid power, city water, groceries), by resource. */
+  bought: Record<string, number>;
+  /** Household members who entered hardship today. */
+  hardships: number;
   /** Average household health today. */
   health: number;
 }
@@ -149,6 +154,9 @@ export interface GameState {
    * the systems it curtails; whether electricity is spilling.
    */
   flags: { short: Record<string, string[]>; spilling: boolean };
+  /** Real weather only: this year's draws, and every year's draws so far (kept in saves). */
+  yearWeather?: YearWeather;
+  weatherLog?: YearWeather[];
 }
 
 export type GameEvent =

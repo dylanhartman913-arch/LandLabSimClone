@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useGame } from '../store/game.ts';
+import { usePlan } from '../store/plan.ts';
 
 const DIRS: Record<string, [number, number]> = {
   w: [0, -1],
@@ -64,6 +65,7 @@ export function useKeyboard() {
             s.setKbCursor(null);
           }
           else if (s.checklistOpen) s.setChecklist(false);
+          else if (usePlan.getState().open) usePlan.getState().setOpen(false);
           else if (s.panel) s.setPanel(null);
           else if (s.cardSystemId) s.openCard(null);
           else s.select([]);
@@ -83,6 +85,10 @@ export function useKeyboard() {
         case 'n':
         case 'N':
           s.setChecklist(!s.checklistOpen);
+          break;
+        case 'p':
+        case 'P':
+          usePlan.getState().setOpen(!usePlan.getState().open);
           break;
         case 'l':
         case 'L':

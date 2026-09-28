@@ -113,7 +113,7 @@ A site (`data/sites/*.json`) gives scalar assumptions (the same keys as the spre
 - HDD, CDD, precipitation on day *d* of month *m* = `annual × shape[m] ÷ Σ shape ÷ daysIn(m)`.
 - Peak sun hours and wind CF on day *d* = `annual mean × shape[m] ÷ (day-weighted mean of shape)`.
 
-`front-range` reproduces the spreadsheet's Assumptions exactly; `laramie-wy` and `asheville-nc` are the other presets. Average-year mode (the "80%" model) uses these values directly. Real-weather mode (G9) multiplies them by seeded draws.
+`front-range` reproduces the spreadsheet's Assumptions exactly; `laramie-wy` and `asheville-nc` are the other presets. Average-year mode (the "80%" model) uses these values directly. Real-weather mode (the "90%" model, below) multiplies them by seeded draws.
 
 ### Flow shaping
 
@@ -200,7 +200,7 @@ One simulated year of a 196-instance design: ~40-55 ms in plain Node (budget 150
 ### Known simplifications
 
 - One allocation pass. An instance that is short of one input returns the unused share of its other inputs to stock, but that returned stock is not re-offered to other consumers until tomorrow.
-- A day-long buffer is the only battery model: electricity produced today is usable tomorrow up to battery capacity. With no battery, all solar output spills. Within-day timing (solar noon vs. night load) is not modeled.
+- A day-long buffer is the only battery model: electricity produced today is usable tomorrow up to battery capacity. With no battery, daytime loads can still use up to half their demand directly (`directUseShare` 0.5) and the rest spills. Within-day timing (solar noon vs. night load) is not modeled.
 - Input requests are not reduced for immature plants.
 
 ## Saves and replay
@@ -217,7 +217,9 @@ type Action = { at: number } & (
 
 Undo and redo are logged as the `insert` / `delete` / `moveMany` / `priority` / `settings` actions they perform, so replay never needs the undo stack. `replay(catalog, init, actions, untilAbsDay)` starts a game from `{ siteId, seed, settings }`, steps days between actions, and applies each on its day. `gameDigest(state)` fingerprints calendar, cash, RNG, stocks, instances, and settings.
 
-A `.homestead.json` save (`homestead.save.v1`) holds the init, the action log, the day, the digest, a state snapshot for fast loading, the engine version, and the catalog's sha256. Loading replays the log and compares digests: a match is "Replay verified"; a mismatch (for example after the catalog changed) falls back to the snapshot and says so.
+A `.homestead.json` save (`homestead.save.v1`) holds the init, the action log, the day, the digest, a state snapshot for fast loading, the engine version, and the catalog's sha256. Loading replays the log and compares digests: a match is "Replay verified"; a mismatch (for example after the catalog changed) falls back to the snapshot and says so. In real weather the digest also covers `weatherLog`, every year's draws.
+
+**Damaged saves (G10).** `saveProblems(file, catalog)` lists everything wrong with a file in plain language (not a save, missing fields, an unreadable snapshot with no date, stocks, site, or ledgers, systems the catalog no longer has); `validateSave` throws a `SaveError` carrying that list. The app never replaces the running game with a file that fails these checks: it shows the list and offers the newest autosave that passes them. It keeps two autosaves (`autosave`, and `autosave-prev`, which is only overwritten by an autosave that itself passes the checks), so one damaged autosave always leaves a good one behind.
 
 ## Reports and root causes
 
@@ -240,3 +242,41 @@ Each shortage gets a root-cause chain from `rootCauseChain`: start at the system
 - **Balance mode:** `designBalance` passes each system's average multiplier as `design.adjust`; matching flow terms carry `adjust` and the row's provenance lists the reasons ("Shade trees within 30 ft … In range: Oak Tree (i8)"). Spreadsheet parity uses no adjustments and is unchanged.
 - **Household scale:** an instance's `scale` (children 0.6) multiplies its requests, outputs, and labor.
 - **Links:** `setLink` / action `link` choose a provider for an assigned capacity (undoable).
+
+
+## Real weather (G9)
+
+`settings.weatherMode: 'real'` draws one set of values per game year from the game's seeded RNG (`drawYearWeather` in `time/weather.ts`; every constant is in `REAL_WEATHER`). Average mode draws nothing, so its games, digests, and RNG state are unchanged.
+
+| Draw | Distribution | Effect |
+|---|---|---|
+| Precipitation | Lognormal, mean 1, CV 0.25 on arid sites (< 20 in/yr, e.g. Laramie), 0.15 otherwise (Box-Muller from two uniforms) | Every day's precipitation × the multiplier (rain catchment, ponds, swales, pasture). Tagged "dry year" below 0.8 and "wet year" above 1.2 |
+| Degree days | u ~ Uniform(−1, 1); HDD × (1 − 0.08u), CDD × (1 + 0.08u) | A warm year needs less heat and more cooling, within ±8% |
+| Late frost | 30% of years; 21–30 days (uniform integer) | The growing season starts that many days late ("last frost (N days late)"); growing-season flows are zero until then |
+| Heat waves | 0, 1, or 2 per summer with probabilities 0.5 / 0.35 / 0.15; 5–10 days each, starting June 1 – August 31, not overlapping | Each day's CDD becomes base × 2 + 6 |
+| Hail | 15% of years; a day inside the (possibly shortened) growing season | Growing-season flows × 0 for 7 days (`DayWeather.growMult`): a week of garden output lost |
+
+Each year always consumes exactly 12 RNG values, whatever happens, so one outcome never shifts the draws of the next. The year's draws live in `state.yearWeather`, and every year's are appended to `state.weatherLog`, which is part of the save's state snapshot and of `gameDigest` (so an imported real-weather save is checked against its replayed weather). Sun hours and wind are not varied (the roadmap names no distribution for them).
+
+`Math.log`, `cos`, `exp`, and `sqrt` are used for the draws. The app, its workers, and the CLI all run on V8, so results agree to the bit; another JavaScript engine could differ in the last digit.
+
+## Monte Carlo (G9)
+
+`monteCarloRun(catalog, spec, k)` builds the design (`gameFromDesign`: prebuilt and mature, at the layout's exact positions when the design file has one, else laid out automatically on 5 acres), runs it for `spec.years` years in real weather with seed `baseSeed + k`, and records per checklist row the lowest 7-day coverage over the run (non-overlapping weeks, as `summarizeLedgers`), the number of months with any hardship event, each year's overall score, and each year's precipitation multiplier.
+
+`aggregateMonteCarlo(spec, runs)` turns runs (in seed order) into per-row min / P10 / median / P90 / mean (linear-interpolated quantiles) and a 10-bin histogram, the share of runs with any hardship month, hardship months per year, mean and P10 of yearly scores, and a digest of all of it. `monteCarloTable(result)` formats the table to one decimal place; the app and the CLI both print those strings.
+
+- **CLI:** `npm run sim -- montecarlo designs/x.json --site laramie-wy --years 10 --seeds 200 [--seed 1] [--json out.json]`.
+- **App:** Plan → Weather risk runs the layout on the map in Web Workers (up to four; seeds dealt round-robin, results put back in seed order before aggregating). It shows progress, can be cancelled (workers are terminated), and offers the exact design file and CLI command that reproduce its numbers.
+- **Parity:** each seed is independent and pure, so the worker count cannot change the result. `montecarlo.test.ts` runs the CLI in a child process and compares its JSON and printed table with the engine's; `decision.spec.ts` does the same with the numbers the app shows.
+- **Cost:** ~40–55 ms per simulated year for the shipped designs, so 10 years × 200 seeds is ~1.5 minutes of CPU, spread over the workers. The Quick preset (3 × 40) takes a few seconds.
+
+## Scenarios, sensitivity, and exports (G9)
+
+- **Design files with layouts.** `DesignFile` gains optional `parcelAcres` and `layout` (system, x, y, scale, priority, and assigned-capacity links by layout index). `designFromGame` writes one from the current game; `gameFromDesign` rebuilds it. Files without a layout behave as before.
+- **Scenario compare.** `scenarioSummary(catalog, file, siteId)` is balance mode for the design with its layout's spatial effects (`designForBalance`): the checklist, overall score, purchase and cheapest cost, labor needed and available, land used, days of stored water and battery, and cash per year (capital net × 52). All `Explained`. The app pins up to three and adds each one's Monte Carlo P10 worst week beside the average year: the "80%" and "90%" views together.
+- **Sensitivity.** `sensitivity(catalog, assumptions, design, 0.2)`: the overall score with each site assumption at −20% and +20%, sorted by swing (the tornado); then, for the weakest row the design provides anything for, the ten flows whose ±20% moves that row's coverage most (each flow's term in the row's provided or needed sum, varied alone).
+- **Ledger additions.** `DayLedger.bought` is Flow output from systems that buy from outside (a Conventional system with a Capital input: grid power, city water, groceries), and `DayLedger.hardships` counts people entering hardship that day. Neither changes any existing summary or digest.
+- **Flow record** (`homestead.flow_record.v1`, `flowRecord` / `flowRecords`): per game year, land by use (footprint by first category), monthly electricity bought / made on site / spilled (no net metering is modeled, so "export" is surplus with nowhere to go) / peak single-day demand / unmet, water drawn (all Water produced) vs used up (Water consumed − Greywater produced), food grown vs bought vs eaten (kcal), fuel used by type (Propane, Gasoline, Woody biomass, Wood pellets, Wood chips), spending, cash, labor, and the months anyone entered hardship. CLI: `run … --flow-record records.json`.
+- **Daily CSV** (`ledgersCsv`): one row per day with health, cash, labor, weather, each checklist row's needed and delivered, and stock / produced / consumed / unmet for every flow resource that moved. CLI: `run … --csv ledgers.csv`.
+- **Map PNG** is the app's (`MapScene.snapshotPng`).

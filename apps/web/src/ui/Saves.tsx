@@ -4,10 +4,10 @@ import {
   AUTOSAVE,
   copySharedDesign,
   downloadSave,
-  loadSave,
   readSave,
   shareLink,
   SLOTS,
+  tryLoadSave,
   writeSave,
 } from '../lib/saves.ts';
 import { useGame } from '../store/game.ts';
@@ -71,8 +71,8 @@ export function Saves() {
               className="btn"
               disabled={!slots[k]}
               onClick={() => {
-                const r = loadSave(slots[k]);
-                st.toast(r.message, r.verified ? 'info' : 'warn');
+                const r = tryLoadSave(slots[k], `Slot ${i + 1}`);
+                if (r) st.toast(r.message, r.verified ? 'info' : 'warn');
               }}
               data-testid={`load-${k}`}
             >
@@ -88,9 +88,8 @@ export function Saves() {
             className="btn"
             disabled={!slots[AUTOSAVE]}
             onClick={() => {
-              const r = loadSave(slots[AUTOSAVE], { verify: false });
-              st.toast(`Rewound to the last autosave (day ${slots[AUTOSAVE]?.absDay}).`);
-              void r;
+              if (tryLoadSave(slots[AUTOSAVE], 'The autosave', { verify: false }))
+                st.toast(`Rewound to the last autosave (day ${slots[AUTOSAVE]?.absDay}).`);
             }}
             data-testid="rewind"
           >
@@ -121,15 +120,19 @@ export function Saves() {
           onChange={async (e) => {
             const f = e.target.files?.[0];
             if (!f) return;
+            let parsed: unknown;
             try {
-              const r = loadSave(JSON.parse(await f.text()));
-              st.toast(r.message, r.verified ? 'info' : 'warn');
+              parsed = JSON.parse(await f.text());
             } catch (err) {
-              st.toast(
-                `That file couldn't be loaded: ${err instanceof Error ? err.message : String(err)}`,
-                'warn',
-              );
+              st.setSaveProblem({
+                source: f.name,
+                problems: [`It isn't valid JSON (${err instanceof Error ? err.message : String(err)}).`],
+              });
+              e.target.value = '';
+              return;
             }
+            const r = tryLoadSave(parsed, f.name);
+            if (r) st.toast(r.message, r.verified ? 'info' : 'warn');
             e.target.value = '';
           }}
         />

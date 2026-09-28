@@ -5,4 +5,6 @@ export default defineConfig({
   plugins: [react()],
   base: './',
   build: { target: 'es2022', chunkSizeWarningLimit: 2000 },
+  // Monte Carlo runs in module workers that share the engine code.
+  worker: { format: 'es' },
 });

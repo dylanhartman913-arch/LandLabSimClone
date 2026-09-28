@@ -10,3 +10,6 @@ export * from './time/index.ts';
 export * from './views/index.ts';
 export * from './replay.ts';
 export * from './kits.ts';
+export * from './scenario.ts';
+export * from './montecarlo.ts';
+export * from './exports.ts';

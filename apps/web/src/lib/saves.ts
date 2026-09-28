@@ -5,6 +5,8 @@ import {
   initGame,
   placeDesign,
   replay,
+  saveProblems,
+  SaveError,
   resolveDesign,
   SAVE_SCHEMA,
   validateSave,
@@ -18,6 +20,8 @@ import { idbGet, idbSet } from './idb.ts';
 
 export const SLOTS = ['slot-1', 'slot-2', 'slot-3'] as const;
 export const AUTOSAVE = 'autosave';
+/** The autosave before the latest, kept only if it was loadable (the "last good" fallback). */
+export const AUTOSAVE_PREV = 'autosave-prev';
 
 export function makeSave(name: string): SaveFile & { progress: Progress } {
   const s = useGame.getState();
@@ -47,6 +51,40 @@ export async function writeSave(key: string, name: string): Promise<boolean> {
   return true;
 }
 
+/** Autosave, keeping the previous autosave as a fallback if it still loads. */
+export async function writeAutosave(): Promise<boolean> {
+  const cur = await idbGet<unknown>(AUTOSAVE);
+  if (cur.ok && cur.value !== undefined && saveProblems(cur.value, catalog).length === 0) {
+    await idbSet(AUTOSAVE_PREV, cur.value);
+  }
+  return writeSave(AUTOSAVE, 'Autosave');
+}
+
+/** The newest autosave that passes every check, if any (never `exclude`, the one that just failed). */
+export async function lastGoodAutosave(exclude?: unknown): Promise<{ key: string; save: SaveFile } | null> {
+  for (const key of [AUTOSAVE, AUTOSAVE_PREV]) {
+    const r = await idbGet<unknown>(key);
+    if (!r.ok || r.value === undefined || r.value === null) continue;
+    if (exclude !== undefined && JSON.stringify(r.value) === JSON.stringify(exclude)) continue;
+    if (saveProblems(r.value, catalog).length === 0) return { key, save: r.value as SaveFile };
+  }
+  return null;
+}
+
+/**
+ * Try to load a save; on failure, show what failed and offer the last good autosave
+ * (the save problem dialog). Returns the load result, or null if it failed.
+ */
+export function tryLoadSave(file: unknown, source: string, opts: { verify?: boolean } = {}): LoadResult | null {
+  try {
+    return loadSave(file, opts);
+  } catch (e) {
+    const problems = e instanceof SaveError ? e.problems : [e instanceof Error ? e.message : String(e)];
+    useGame.getState().setSaveProblem({ source, problems, file });
+    return null;
+  }
+}
+
 export async function readSave(key: string): Promise<SaveFile | null> {
   const r = await idbGet<SaveFile>(key);
   if (!r.ok) {
@@ -67,7 +105,7 @@ export interface LoadResult {
  * snapshot is used and the player is told.
  */
 export function loadSave(file: unknown, opts: { verify?: boolean } = {}): LoadResult {
-  const save = validateSave(file);
+  const save = validateSave(file, catalog);
   let state: GameState = save.state;
   let verified = false;
   let message = `Loaded “${save.name}”.`;

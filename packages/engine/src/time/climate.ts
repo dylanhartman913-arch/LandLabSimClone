@@ -10,6 +10,8 @@ export interface DayWeather {
   windCf: number;
   /** Whether today is inside the site's growing season. */
   growing: boolean;
+  /** Real weather only: multiplier on growing-season flows (0 during a week of hail damage). */
+  growMult?: number;
   /** Labels for the UI and almanac (e.g. "frost", "heat wave"). */
   tags: string[];
 }

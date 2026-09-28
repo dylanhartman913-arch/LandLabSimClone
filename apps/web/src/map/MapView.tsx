@@ -15,6 +15,8 @@ declare global {
       digest(): string;
       /** Balance mode for the current layout (tests compare the checklist against it). */
       balance(): { need: string; provided: number; needed: number; pct: number }[];
+      /** performance.now() when the map first became ready (the load-time test reads it). */
+      readyAt: number;
     };
   }
 }
@@ -62,6 +64,7 @@ export function MapView() {
         sceneRef.current = scene;
         ro.observe(el);
         window.__homestead = {
+          readyAt: performance.now(),
           store: useGame,
           scene,
           worldToClient(x, y) {

@@ -6,6 +6,8 @@ import {
   startGame,
   stepDays,
   validateSave,
+  saveProblems,
+  SaveError,
   type Action,
   type ActionBody,
   type GameInit,
@@ -74,7 +76,33 @@ describe('saves replay exactly', () => {
   });
 
   it('rejects a file that is not a save', () => {
-    expect(() => validateSave({ schema: 'something-else' })).toThrow(/Unsupported save schema/);
+    expect(() => validateSave({ schema: 'something-else' })).toThrow(/not a homestead\.save\.v1 file/);
     expect(() => validateSave({ schema: 'homestead.save.v1' })).toThrow(/missing "init"/);
+    expect(saveProblems(null)).toEqual(['The file is not a save (it has no fields).']);
+  });
+
+  it('a damaged save lists every problem, including systems the catalog no longer has', () => {
+    const init: GameInit = { siteId: 'front-range', seed: 5, settings: {} };
+    const g = applyAction(catalog, startGame(catalog, init), {
+      at: 0,
+      kind: 'place',
+      systemId: sysId('Yurt'),
+      x: 50,
+      y: 50,
+      mode: 'prebuilt',
+      id: 'i1',
+    });
+    const damaged = {
+      schema: 'homestead.save.v1',
+      init,
+      actions: [],
+      absDay: 0,
+      digest: 'x',
+      state: { ...g, ledgers: 'oops', instances: [{ ...g.instances[0], systemId: 'S999' }] },
+    };
+    const problems = saveProblems(damaged, catalog);
+    expect(problems).toContain('Its game snapshot has no daily ledgers.');
+    expect(problems).toContain("It places systems this catalog doesn't have: S999.");
+    expect(() => validateSave(damaged, catalog)).toThrow(SaveError);
   });
 });

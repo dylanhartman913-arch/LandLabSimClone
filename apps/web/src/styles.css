@@ -124,8 +124,8 @@ select {
 .hud {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 6px 14px;
+  gap: 10px;
+  padding: 6px 12px;
   background: var(--panel);
   border-bottom: 1px solid var(--line);
   min-height: 58px;
@@ -173,6 +173,10 @@ select {
 
 .hud-spacer {
   flex: 1;
+}
+
+.hud nav .btn {
+  padding: 5px 8px;
 }
 
 .hud select {
@@ -235,9 +239,9 @@ select {
 
 .drawer-toggle {
   position: absolute;
-  right: -16px;
+  right: -24px;
   top: 12px;
-  width: 16px;
+  width: 24px;
   height: 44px;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -653,14 +657,7 @@ select {
   font-size: 0.9em;
 }
 
-@media (max-width: 900px) {
-  .drawer {
-    width: 260px;
-  }
-  .card {
-    width: calc(100% - 24px);
-  }
-}
+
 
 /* "Why" numbers and popover ------------------------------------------------------ */
 
@@ -1425,6 +1422,7 @@ table.mini .bad {
   border-left-color: var(--warn);
 }
 
+.quest h2,
 .quest h3 {
   margin: 4px 0;
   font-size: 1em;
@@ -1465,4 +1463,271 @@ table.mini .bad {
 .hint-list {
   margin: 4px 0 0;
   padding-left: 16px;
+}
+
+/* Plan: scenarios, weather risk, sensitivity, exports ------------------------ */
+.plan .panel-head {
+  flex-wrap: wrap;
+}
+.plan .tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+.plan .tab {
+  white-space: nowrap;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--ink-2);
+  padding: 6px 10px;
+  cursor: pointer;
+  font: inherit;
+}
+.plan .tab.on {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+  align-items: center;
+}
+.btn.small {
+  padding: 3px 8px;
+  font-size: 0.9em;
+}
+.warn-text {
+  color: var(--warn);
+}
+.compare-wrap {
+  overflow-x: auto;
+}
+.compare {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.92em;
+}
+.compare th,
+.compare td {
+  border-bottom: 1px solid var(--line);
+  padding: 5px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.compare th[scope='row'] {
+  color: var(--ink-2);
+  font-weight: normal;
+  white-space: nowrap;
+}
+.scenario-head {
+  min-width: 190px;
+}
+.scenario-head .name-input,
+.scenario-head select {
+  width: 100%;
+  margin-bottom: 4px;
+}
+.mc-cell {
+  display: block;
+  font-size: 0.9em;
+}
+.mc-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+.mc-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9em;
+  color: var(--ink-2);
+}
+.mc-form input {
+  width: 90px;
+}
+.mc-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+.progress {
+  height: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+}
+.reduced-motion .progress-fill {
+  transition: none;
+}
+.mc-table,
+.flows-table,
+.tornado {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.92em;
+}
+.mc-table th,
+.mc-table td,
+.flows-table th,
+.flows-table td,
+.tornado th,
+.tornado td {
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.mc-table td,
+.num {
+  font-variant-numeric: tabular-nums;
+}
+.tornado th {
+  font-weight: normal;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.hist-bar,
+.bar-up {
+  fill: var(--good);
+}
+.bar-down {
+  fill: var(--warn);
+}
+.cb .hist-bar,
+.cb .bar-up {
+  fill: #4ea3ff;
+}
+.cb .bar-down {
+  fill: #ff9f40;
+}
+.axis {
+  fill: var(--line);
+}
+.base-line {
+  fill: var(--ink);
+}
+.mc-lines {
+  padding-left: 18px;
+}
+pre.cli {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 0.85em;
+}
+.export-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.export-list li {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+/* Error boundaries ------------------------------------------------------------ */
+.panel-error {
+  border-color: var(--bad);
+}
+.panel-error.inline {
+  background: var(--panel);
+  border: 1px solid var(--bad);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px;
+  max-width: 460px;
+  z-index: 20;
+  position: relative;
+}
+.panel-error pre {
+  max-height: 160px;
+  overflow: auto;
+}
+
+/* Tablet and narrow windows: the drawer becomes a bottom sheet ------------------ */
+@media (max-width: 900px) {
+  .hud {
+    gap: 8px;
+    padding: 4px 8px;
+  }
+  .hud .hud-land {
+    display: none;
+  }
+  .main {
+    flex-direction: column;
+  }
+  .stage {
+    order: 1;
+    flex: 1;
+    min-height: 0;
+  }
+  .drawer {
+    order: 2;
+    width: 100%;
+    height: 42vh;
+    border-right: none;
+    border-top: 1px solid var(--line);
+    transition: height 0.15s ease;
+  }
+  .drawer.closed {
+    width: 100%;
+    height: 26px;
+  }
+  .drawer-toggle {
+    position: static;
+    width: 100%;
+    height: 24px;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    flex: none;
+  }
+  .drawer-toggle-glyph {
+    display: inline-block;
+    transform: rotate(-90deg);
+  }
+  .tile-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+  .card,
+  .panel {
+    width: calc(100% - 24px);
+    max-height: calc(100% - 24px);
+  }
+  .side-stack {
+    width: min(300px, calc(100% - 24px));
+  }
+  .legend {
+    max-width: calc(100% - 24px);
+  }
+  .minimap {
+    bottom: 12px;
+  }
+  .status {
+    max-width: calc(100% - 24px);
+  }
+  .export-list li {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer {
+    transition: none;
+  }
 }

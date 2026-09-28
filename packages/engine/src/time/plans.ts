@@ -37,6 +37,11 @@ export interface FlowPlan {
 export interface SystemPlan {
   system: System;
   isHuman: boolean;
+  /**
+   * Buys its outputs from outside the homestead (a Conventional system paid in Capital:
+   * grid power, city water, groceries). Its Flow outputs are recorded as `bought` in the ledger.
+   */
+  bought: boolean;
   /** Recurring inputs (excluding one-time materials). */
   inputs: FlowPlan[];
   outputs: FlowPlan[];
@@ -101,6 +106,9 @@ export function getPlans(catalog: Catalog, site: Site): Plans {
     bySystem.set(system.id, {
       system,
       isHuman: system.name === 'Human Being',
+      bought:
+        system.categories.includes('Conventional') &&
+        catalog.flows.some((f) => f.systemId === system.id && f.direction === 'in' && f.resource === 'Capital'),
       inputs: [],
       outputs: [],
       materials: [],
@@ -176,7 +184,7 @@ export function shapeValue(plan: FlowPlan, day: number, w: DayWeather, t: Climat
     case 'wind':
       return a.windCf > 0 ? w.windCf / a.windCf : 0;
     case 'growing':
-      return w.growing ? 365 / t.seasonDays : 0;
+      return w.growing ? (365 / t.seasonDays) * (w.growMult ?? 1) : 0;
     case 'window': {
       const win = plan.window!;
       return day >= win.first && day <= win.last ? 365 / win.days : 0;

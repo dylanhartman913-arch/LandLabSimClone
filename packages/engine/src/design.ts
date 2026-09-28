@@ -23,7 +23,25 @@ export interface DesignFile {
   name: string;
   description?: string;
   site?: string;
+  /** Parcel size for time mode (default 5 acres). */
+  parcelAcres?: number;
   counts: Record<string, number>;
+  /**
+   * Optional placements (from "Export design" in the app). When present, time mode
+   * and Monte Carlo place exactly these, prebuilt; counts stay for balance mode.
+   */
+  layout?: DesignPlacement[];
+}
+
+export interface DesignPlacement {
+  /** System ID or exact name. */
+  system: string;
+  x: number;
+  y: number;
+  scale?: number;
+  priority?: number;
+  /** Assigned-capacity links: resource → index of the provider in `layout`. */
+  links?: Record<string, number>;
 }
 
 /** Resolve a design whose counts may be keyed by system name into one keyed by ID. */

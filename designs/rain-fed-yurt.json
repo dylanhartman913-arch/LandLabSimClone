@@ -1,0 +1,18 @@
+{
+  "schema": "homestead.design.v1",
+  "name": "Rain-fed yurt",
+  "description": "Two people in a yurt whose water all comes off the roof: a design that lives or dies by the year's rain.",
+  "site": "laramie-wy",
+  "parcelAcres": 1,
+  "counts": {
+    "Human Being": 2,
+    "Yurt": 1,
+    "Rainwater Collection System + Cistern (550 Gallons)": 2,
+    "Rainfall": 1,
+    "Sunlight": 1,
+    "Land Title ($50k)": 1,
+    "Raised Beds (24 sq ft)": 4,
+    "500W Photovoltaic Panels": 4,
+    "LiFePO4 Battery Bank (10 kWh)": 1
+  }
+}
