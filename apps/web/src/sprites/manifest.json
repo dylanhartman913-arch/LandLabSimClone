@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "note": "Maps a catalog spriteKey (system:<id>) to real art. Anything missing uses the generated placeholder. Entries: { \"image\": \"path.png\", \"scale\": 1, \"anchor\": [0.5, 0.5], \"frames\": [] }.",
+  "sprites": {}
+}

@@ -94,3 +94,25 @@ Newest entries at the bottom. Each session appends: what shipped, test counts, d
 - Real-weather mode is a stub until G9 (`weatherFor` returns the average day; frost tags only).
 - One allocation pass (returned stock is not re-offered the same day).
 - The starter design is harsh in time mode (23-24% overall on laramie-wy): its well has no battery and loses the daytime power to the household. That is the lesson the year report (G6) should surface.
+
+---
+
+## G4 — The playfield: map, drawer, placement (2026-09-28)
+
+**Shipped**
+- `apps/web`: Vite + React 19 + PixiJS 8 + Zustand 5. The store (`store/game.ts`) wraps the engine; undo/redo lives in the store as commands with exact inverses (`store/commands.ts`, engine `insertInstance` / `deleteInstance`), so undo works while the clock runs and time itself is never undone.
+- Map (`map/scene.ts`): 1 world unit = 1 ft; parcel sized from acres with a shaded outside and soft boundary; seasonal grass (baked texture, spring/summer/fall tints, snow dusting in winter); the site's existing trees and stream; systems as placeholder sprites scaled to footprint (ground-layer plantings under objects); people as small figures on a seeded cosmetic random walk; scaffolding and a progress ring while building.
+- Interactions: pan (drag, right/middle drag, WASD/arrows), zoom (wheel around cursor, pinch, +/−, 0 to fit), minimap with click-to-jump; placement ghost (green valid / red overlap or off-parcel), click to place, Shift-click to keep placing, Esc to cancel, snap 1/5/10 ft; click / Shift-click / Shift-drag box select; drag to move (snaps back if invalid); Delete (25% refund if built, 100% while building); Ctrl/Cmd-C/V duplicate at the pointer; Ctrl/Cmd-Z/Y undo/redo; double-click opens the card.
+- Drawer (collapsible, remembered in localStorage with try/catch): Systems tab (All / My with counts, 24 categories alphabetical with counts, fuzzy search over name, category, and resources made or used, tile grid with hover card showing cost and top two outputs, click opens the card, drag onto the map places); Inputs tab (supplied / needed this week with shortage bars, "shortages only", click to highlight producers green and consumers amber on the map); Outputs tab (used / stored / spilled / spoiled).
+- HUD: land name, date and season, weather glyph with a text label, cash, labor used / available this week, off-grid score ring (balance mode, average year), speed buttons and keys (Space, 1, 2, 3), snap, zoom to fit.
+- A first System Card: description, category pills, Buy vs Build it yourself with both costs and setup hours, inputs and outputs per period (G5 extends it).
+- Engine views so React does no arithmetic: `hudMetrics`, `designCounts`, `designBalance`, `resourceWeek`, `systemFlows` (all values `Explained`).
+- Placeholder art: original vector glyphs per category drawn by Pixi (map) and SVG (drawer), with a sprite manifest (`sprites/manifest.json`) keyed by `spriteKey` so real art drops in.
+
+**Tests:** 93 unit (5 new: drawer search, e.g. "eggs" finds chickens, ducks, quail). 7 e2e: the roadmap flow (yurt, well, three panels; overlap rejected; move; undo; redo; delete with full refund; undo delete), drag from drawer, box select + copy/paste + keyboard camera, speed and construction progress, drawer filters / My / remembered collapse, 300-instance performance, smoke. Screenshots: `docs/screenshots/g4/01…12`.
+
+**Performance (300 instances, scripted pan + zoom):** scene work 0.05 ms and render submission 0.6 ms per frame, so the CPU side fits a 60 fps budget ~25× over. The sandbox (and GitHub's runners) have no GPU: Chromium rasterizes WebGL with SwiftShader, and the frame interval there is ~47 ms at 1440×900, bound by software fill rate (an empty map is ~30-45 ms). The test asserts the CPU budget everywhere and the 60 fps interval only when a hardware GPU is present. Not verified: 60 fps on real hardware.
+
+**Known gaps**
+- The web bundle is ~1.1 MB (225 KB gzipped), mostly the catalog JSON with provenance; code-splitting is G10.
+- The default new game (two people, a bell tent, two months of groceries) is a stopgap until the G7 new-game wizard and starting kits.

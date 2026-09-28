@@ -7,3 +7,4 @@ export * from './qty.ts';
 export * from './digest.ts';
 export * from './balance/index.ts';
 export * from './time/index.ts';
+export * from './views/index.ts';

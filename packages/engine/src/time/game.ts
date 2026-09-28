@@ -47,7 +47,7 @@ export function initGame(
     rng: seedState(seed),
     site,
     settings: s,
-    calendar: { day: 0, year: 0, absDay: 0 },
+    calendar: { day: s.startDay ?? 0, year: 0, absDay: 0 },
     cash: s.startingCash,
     stocks,
     direct: {},
@@ -55,7 +55,7 @@ export function initGame(
     lastDay: {},
     instances: [],
     nextInstanceId: 1,
-    weather: climateTable(site).days[0]!,
+    weather: climateTable(site).days[s.startDay ?? 0]!,
     ledgers: [],
     pendingCash: { purchases: 0, refunds: 0 },
     flags: { short: {}, spilling: false },
@@ -287,4 +287,43 @@ export function placeDesign(
     }
   }
   return s;
+}
+
+// --- Exact inverses for the UI's undo stack ----------------------------------
+
+/** Put an instance back exactly as it was (undo of a removal, redo of a placement). */
+export function insertInstance(
+  state: GameState,
+  inst: Instance,
+  cashDelta: number,
+  index?: number,
+): GameState {
+  if (state.instances.some((i) => i.id === inst.id)) throw new Error(`Instance ${inst.id} already exists`);
+  const instances = state.instances.slice();
+  instances.splice(index ?? instances.length, 0, inst);
+  const n = Number(inst.id.slice(1));
+  return {
+    ...state,
+    instances,
+    cash: state.cash + cashDelta,
+    nextInstanceId: Math.max(state.nextInstanceId, Number.isFinite(n) ? n + 1 : state.nextInstanceId),
+    pendingCash: adjustPending(state.pendingCash, cashDelta),
+  };
+}
+
+/** Take an instance out with an explicit cash adjustment (undo of a placement: the full price back). */
+export function deleteInstance(state: GameState, instanceId: string, cashDelta: number): GameState {
+  if (!state.instances.some((i) => i.id === instanceId)) throw new Error(`No instance ${instanceId}`);
+  return {
+    ...state,
+    instances: state.instances.filter((i) => i.id !== instanceId),
+    cash: state.cash + cashDelta,
+    pendingCash: adjustPending(state.pendingCash, cashDelta),
+  };
+}
+
+function adjustPending(p: GameState['pendingCash'], cashDelta: number): GameState['pendingCash'] {
+  return cashDelta >= 0
+    ? { ...p, refunds: p.refunds + cashDelta }
+    : { ...p, purchases: p.purchases - cashDelta };
 }

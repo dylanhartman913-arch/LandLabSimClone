@@ -11,6 +11,8 @@ export interface GameSettings {
   weatherMode: WeatherMode;
   /** Share of each day's labor pool that construction may use first. */
   constructionShare: number;
+  /** Day of year the game starts on (0 = Jan 1). */
+  startDay?: number;
   /** Stocks on day one (arrival supplies). */
   startingStocks: Record<string, number>;
   /**
