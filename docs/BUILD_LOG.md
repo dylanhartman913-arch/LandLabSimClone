@@ -45,3 +45,22 @@ Newest entries at the bottom. Each session appends: what shipped, test counts, d
 
 **Known gaps**
 - `catalog.json` is ~720 KB raw because every record carries its provenance map; fine for now (≈90 KB gzipped).
+
+---
+
+## G2 — Balance engine and spreadsheet parity (2026-09-28)
+
+**Shipped**
+- `packages/engine`: `evalQty`, `weeklyFactor` / `weeklyEquivalent`, `balance(catalog, assumptions, design)` returning resource balances, the 11-row Needs Checklist, overall score, and all 21 Design Summary metrics, each as `Explained { value, explain: { formula, terms, refs?, assumptions?, notes? } }` built during computation.
+- Parity suite: every per-flow qty and weekly equivalent (797), checklist cell, summary metric, and resource balance row matches the spreadsheet's cached values within 1e-9 relative. Starter: 48.5% overall, 697,846 BTU/wk heat need, 4,979 of 16,000 kcal/wk food.
+- Designs: `designs/starter.json` (from the xlsx), `offgrid-cabin-family.json`, `suburban-baseline.json`, `tent-and-nothing.json` (design files may key counts by system name or ID).
+- Digests (`packages/engine/test/digests.json`): starter `82321850e103bf29`, off-grid cabin `c1329b2231f72a22`, suburban `82727e99a8118796`, tent `6e161d1468e09ba2`.
+- CLI: `npm run sim -- balance designs/starter.json` prints the checklist table and a summary.
+- `docs/ENGINE.md` balance section.
+
+**Tests:** 50 unit total (18 new in engine: parity 9, designs/digests/scenarios 8, performance 1).
+
+**Performance:** 1,000 balance calls on a 200-instance design, best of three batches: ~75-85 ms under Vitest, ~100 ms standalone (budget 200 ms).
+
+**Known gaps**
+- The suburban baseline covers only 58% of its heat need: the catalog's Heat Pump (Mini-Split) output is sized for one small zone, not a 2,000 sq ft house. That is a spreadsheet fact, not an engine bug.
