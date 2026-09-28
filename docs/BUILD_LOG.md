@@ -549,7 +549,7 @@ This replaces "Status at the end of the first run" above, which is kept for hist
 - Lighthouse CI (`lighthouserc.json`).
 - Screenshots for each session in `docs/screenshots/g0…g10/`.
 
-**Last verification:** each new G9/G10 spec file passed when run on its own, and so did lint, typecheck, catalog check, build, and all 160 unit tests. The full 30-test browser run was still in progress when this entry was committed; its result is recorded below.
+**Last verification:** each new G9/G10 spec file passed when run on its own, and so did lint, typecheck, catalog check, build, and all 160 unit tests. The full browser run on a fresh build then passed: **30 of 30 in 5.6 minutes**, with no retries.
 
 ### Where to pick up: steps to run on your own machine
 
