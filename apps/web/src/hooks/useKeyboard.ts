@@ -1,12 +1,29 @@
 import { useEffect } from 'react';
 import { useGame } from '../store/game.ts';
 
+const DIRS: Record<string, [number, number]> = {
+  w: [0, -1],
+  W: [0, -1],
+  ArrowUp: [0, -1],
+  s: [0, 1],
+  S: [0, 1],
+  ArrowDown: [0, 1],
+  a: [-1, 0],
+  A: [-1, 0],
+  ArrowLeft: [-1, 0],
+  d: [1, 0],
+  D: [1, 0],
+  ArrowRight: [1, 0],
+};
+
+const NON_TEXT_INPUTS = new Set(['checkbox', 'radio', 'range', 'button', 'submit', 'color', 'file']);
+
+/** True while the player is typing in a text field (shortcuts stay out of the way). */
 function typing(e: KeyboardEvent): boolean {
   const t = e.target as HTMLElement | null;
-  return (
-    !!t &&
-    (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)
-  );
+  if (!t) return false;
+  if (t.tagName === 'INPUT') return !NON_TEXT_INPUTS.has((t as HTMLInputElement).type);
+  return t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable;
 }
 
 /** Global keyboard shortcuts (ignored while typing in a field). */
@@ -41,9 +58,39 @@ export function useKeyboard() {
       if (mod) return;
       switch (k) {
         case 'Escape':
-          if (s.tool.kind !== 'select') s.cancelTool();
+          if (s.why) s.showWhy(null);
+          else if (s.tool.kind !== 'select') {
+            s.cancelTool();
+            s.setKbCursor(null);
+          }
+          else if (s.checklistOpen) s.setChecklist(false);
+          else if (s.panel) s.setPanel(null);
           else if (s.cardSystemId) s.openCard(null);
           else s.select([]);
+          break;
+        case '/': {
+          // Jump to the drawer's search.
+          e.preventDefault();
+          if (!s.drawerOpen) s.setDrawer(true);
+          s.setDrawerTab('systems');
+          setTimeout(() => {
+            const el = document.querySelector<HTMLInputElement>('[data-testid="system-search"]');
+            el?.focus();
+            el?.select(); // typing replaces the last search
+          }, 0);
+          break;
+        }
+        case 'n':
+        case 'N':
+          s.setChecklist(!s.checklistOpen);
+          break;
+        case 'l':
+        case 'L':
+          s.setPanel(s.panel === 'almanac' ? null : 'almanac');
+          break;
+        case 'f':
+        case 'F':
+          s.setOverlay({ on: !s.overlay.on });
           break;
         case 'Delete':
         case 'Backspace':
@@ -65,26 +112,39 @@ export function useKeyboard() {
         case 'w':
         case 'W':
         case 'ArrowUp':
-          e.preventDefault();
-          s.setCamera({ cy: s.camera.cy - pan });
-          break;
         case 's':
         case 'S':
         case 'ArrowDown':
-          e.preventDefault();
-          s.setCamera({ cy: s.camera.cy + pan });
-          break;
         case 'a':
         case 'A':
         case 'ArrowLeft':
-          e.preventDefault();
-          s.setCamera({ cx: s.camera.cx - pan });
-          break;
         case 'd':
         case 'D':
-        case 'ArrowRight':
+        case 'ArrowRight': {
           e.preventDefault();
-          s.setCamera({ cx: s.camera.cx + pan });
+          const dir = DIRS[k]!;
+          if (s.tool.kind === 'place' && k.startsWith('Arrow')) {
+            // Keyboard placement: arrows move the placement cursor, Enter places.
+            const step = (e.shiftKey ? 10 : 1) * Math.max(5, s.prefs.snap);
+            const c = s.kbCursor ?? { x: s.camera.cx, y: s.camera.cy };
+            s.setKbCursor({ x: c.x + dir[0] * step, y: c.y + dir[1] * step });
+          } else if (s.selection.length && k.startsWith('Arrow')) {
+            // Arrow keys nudge the selection (Shift for 10×).
+            const step = (e.shiftKey ? 10 : 1) * Math.max(1, s.prefs.snap);
+            s.moveSelection(dir[0] * step, dir[1] * step);
+          } else {
+            s.setCamera({ cx: s.camera.cx + dir[0] * pan, cy: s.camera.cy + dir[1] * pan });
+          }
+          break;
+        }
+        case 'Enter':
+          if (s.tool.kind === 'place') {
+            e.preventDefault();
+            const c = s.kbCursor ?? { x: s.camera.cx, y: s.camera.cy };
+            const r = s.placeAt(c.x, c.y, e.shiftKey);
+            if (!r.ok) s.toast(r.reason ?? 'Can’t place that here', 'warn');
+            else s.toast('Placed.');
+          }
           break;
         case '+':
         case '=':

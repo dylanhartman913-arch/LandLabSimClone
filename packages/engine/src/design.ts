@@ -4,6 +4,17 @@ import { indexCatalog } from './catalog-index.ts';
 /** A balance-mode design: how many of each system, keyed by system ID. */
 export interface Design {
   counts: Record<string, number>;
+  /**
+   * Optional spatial adjustments (G7): per system, the average multiplier its placed
+   * instances get on a resource's inputs or outputs, with the reasons. Balance mode
+   * multiplies matching flows by it and lists the reasons in provenance.
+   */
+  adjust?: Record<string, { in?: Record<string, FlowAdjust>; out?: Record<string, FlowAdjust> }>;
+}
+
+export interface FlowAdjust {
+  factor: number;
+  notes: string[];
 }
 
 /** On-disk design file (`designs/*.json`). Keys may be system IDs or exact system names. */

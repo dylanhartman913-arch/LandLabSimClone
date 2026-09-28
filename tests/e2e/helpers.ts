@@ -12,8 +12,22 @@ export async function openApp(page: Page) {
   page.on('pageerror', (e) => {
     throw e;
   });
-  await page.goto('/');
+  await page.goto('/?new');
   await page.waitForSelector('[data-testid="map"][data-ready="true"]');
+  // Tests that run the clock shouldn't be stopped by auto-pause (gameloop.spec covers it).
+  await page.evaluate(() =>
+    window.__homestead!.store.getState().setPrefs({
+      autoPause: {
+        shortage: false,
+        hardship: false,
+        built: false,
+        harvest: false,
+        frost: false,
+        cash: false,
+        season: false,
+      },
+    }),
+  );
 }
 
 export async function instances(page: Page): Promise<InstanceLite[]> {
@@ -65,6 +79,7 @@ export async function choose(page: Page, query: string, systemId: string, mode: 
   await page.getByTestId('system-search').fill(query);
   await page.getByTestId(`tile-${systemId}`).click();
   await expect(page.getByTestId('system-card')).toBeVisible();
+  await page.getByTestId(mode === 'buy' ? 'choose-buy' : 'choose-diy').click();
   await page.getByTestId(mode === 'buy' ? 'add-buy' : 'add-diy').click();
   await expect(page.getByTestId('status')).toContainText('Placing');
 }

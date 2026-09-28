@@ -16,6 +16,7 @@ import {
 } from './constants.ts';
 import { dailyAmount, getPlans, type FlowPlan, type Plans, type SystemPlan } from './plans.ts';
 import { weatherFor } from './weather.ts';
+import { computeSpatial, groupKeyOf, type InstanceSpatial } from './spatial.ts';
 import type {
   DayLedger,
   GameEvent,
@@ -43,6 +44,9 @@ interface Group {
   tier: number;
   members: number[]; // indices into instances
   n: number;
+  /** Σ scale of the members (a child counts 0.6). Amounts scale with this, not with n. */
+  w: number;
+  spatial: InstanceSpatial;
   sat: number;
   limitedBy: string | null;
   boostMult: number;
@@ -92,10 +96,12 @@ interface Day {
   boostReq: Map<string, number>;
   capInputs: SideInput[];
   boostInputs: SideInput[];
+  assignedInputs: (SideInput & { share: number })[];
   capAvail: Map<string, number>;
   capSat: Map<string, number>;
   boostSat: Map<string, number>;
   laborUsed: number;
+  laborBySystem: Record<string, number>;
   upkeepRequested: number;
   capitalUsed: number;
   produced: Record<string, number>;
@@ -159,31 +165,34 @@ function allocateByTier(reqs: Request[], available: number): void {
 // --- Phases ------------------------------------------------------------------
 
 /** Group active instances by system and priority; note ambient resources they supply. */
-function groupInstances(d: Day): void {
-  const byKey = new Map<string, Map<number, Group>>();
+function groupInstances(d: Day, spatial: Map<string, InstanceSpatial>): void {
+  const byKey = new Map<string, Group>();
   for (let i = 0; i < d.instances.length; i++) {
     const inst = d.instances[i]!;
     if (inst.status !== 'active') continue;
-    let byTier = byKey.get(inst.systemId);
-    if (!byTier) byKey.set(inst.systemId, (byTier = new Map()));
-    let g = byTier.get(inst.priority);
+    const sp = spatial.get(inst.id)!;
+    const key = groupKeyOf(inst, sp);
+    let g = byKey.get(key);
     if (!g) {
       g = {
         plan: d.plans.bySystem.get(inst.systemId)!,
-        key: `${inst.systemId}|${inst.priority}`,
+        key,
         tier: inst.priority,
         members: [],
         n: 0,
+        w: 0,
+        spatial: sp,
         sat: 1,
         limitedBy: null,
         boostMult: 1,
         inputs: {},
       };
-      byTier.set(inst.priority, g);
+      byKey.set(key, g);
       d.groups.push(g);
     }
     g.members.push(i);
     g.n++;
+    g.w += inst.scale ?? 1;
   }
   for (const g of d.groups)
     for (const o of g.plan.outputs) if (o.cls === 'Ambient') d.ambient[o.resource] = true;
@@ -224,7 +233,10 @@ function laborPool(d: Day): void {
   let pool = 0;
   for (const g of d.groups) {
     if (!g.plan.isHuman) continue;
-    for (const i of g.members) pool += (g.plan.laborWeekly / 7) * (d.instances[i]!.person?.health ?? 1);
+    for (const i of g.members) {
+      const inst = d.instances[i]!;
+      pool += (g.plan.laborWeekly / 7) * (inst.person?.health ?? 1) * (inst.scale ?? 1);
+    }
   }
   d.pool = pool;
   d.res['Labor']!.produced = pool;
@@ -248,7 +260,13 @@ function laborPool(d: Day): void {
 function buildRequests(d: Day): void {
   for (const g of d.groups) {
     for (const plan of g.plan.inputs) {
-      const amount = dailyAmount(plan, d.day, d.weather, d.table) * g.n;
+      const amount =
+        dailyAmount(plan, d.day, d.weather, d.table) * g.w * (g.spatial.inMult[plan.resource] ?? 1);
+      const assigned = plan.role === 'capacity' ? g.spatial.assigned[plan.resource] : undefined;
+      if (assigned) {
+        d.assignedInputs.push({ g, plan, amount, share: d.unlimited ? 1 : assigned.share });
+        continue;
+      }
       switch (plan.role) {
         case 'capacity':
           d.capReq.set(plan.resource, (d.capReq.get(plan.resource) ?? 0) + amount);
@@ -277,9 +295,11 @@ function buildRequests(d: Day): void {
       if (o.cls !== 'Capacity') continue;
       if (mat < 0) {
         mat = 0;
-        for (const i of g.members) mat += maturity(d.instances[i]!, g.plan, d.absDay);
+        for (const i of g.members)
+          mat += maturity(d.instances[i]!, g.plan, d.absDay) * (d.instances[i]!.scale ?? 1);
       }
-      d.capAvail.set(o.resource, (d.capAvail.get(o.resource) ?? 0) + o.qty * mat);
+      const m = g.spatial.outMult[o.resource] ?? 1;
+      d.capAvail.set(o.resource, (d.capAvail.get(o.resource) ?? 0) + o.qty * mat * m);
     }
   }
 }
@@ -327,12 +347,13 @@ function allocate(d: Day): void {
   }
 }
 
-function record(g: Group, r: string, requested: number, received: number): void {
+function record(g: Group, r: string, requested: number, received: number, granted = received): void {
   const cur = g.inputs[r];
   if (cur) {
     cur.requested += requested / g.n;
+    cur.granted += granted / g.n;
     cur.received += received / g.n;
-  } else g.inputs[r] = { requested: requested / g.n, received: received / g.n };
+  } else g.inputs[r] = { requested: requested / g.n, granted: granted / g.n, received: received / g.n };
 }
 
 /** Step 6a: Leontief satisfaction over required, capacity, and ambient inputs; boosts. */
@@ -360,8 +381,21 @@ function satisfy(d: Day): void {
       n.delivered += c.amount * s * c.plan.needFactor;
     }
   }
+  for (const a of d.assignedInputs) {
+    record(a.g, a.plan.resource, a.amount, a.amount * a.share);
+    if (a.share < a.g.sat) {
+      a.g.sat = a.share;
+      a.g.limitedBy = a.plan.resource;
+    }
+    if (a.plan.needsRow) {
+      const n = d.needs[a.plan.needsRow];
+      n.needed += a.amount * a.plan.needFactor;
+      n.delivered += a.amount * a.share * a.plan.needFactor;
+    }
+  }
   for (const b of d.boostInputs) {
-    const s = d.boostSat.get(b.plan.resource)!;
+    const gate = b.g.spatial.gated[b.plan.resource];
+    const s = gate === false && !d.unlimited ? 0 : d.boostSat.get(b.plan.resource)!;
     record(b.g, b.plan.resource, b.amount, b.amount * s);
     b.g.boostMult *= 1 - b.plan.boostWeight * (1 - s);
   }
@@ -379,7 +413,11 @@ function consume(d: Day): void {
       totalUse += use;
       requested += q.amount;
       granted += q.grant;
-      record(q.group, resource, q.amount, use);
+      record(q.group, resource, q.amount, use, q.grant);
+      if (resource === 'Labor') {
+        const sid = q.group.plan.system.id;
+        d.laborBySystem[sid] = (d.laborBySystem[sid] ?? 0) + use;
+      }
       if (q.plan.needsRow) {
         const n = d.needs[q.plan.needsRow];
         n.needed += q.amount * q.plan.needFactor;
@@ -690,6 +728,7 @@ function buildLedger(d: Day): DayLedger {
       upkeepDelivered: d.laborUsed,
       unused: Math.max(0, d.laborForUpkeep - d.laborUsed),
     },
+    laborBySystem: d.laborBySystem,
     curtailed,
     weather: d.weather,
     health: d.people ? d.healthSum / d.people : 1,
@@ -739,10 +778,12 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     boostReq: new Map(),
     capInputs: [],
     boostInputs: [],
+    assignedInputs: [],
     capAvail: new Map(),
     capSat: new Map(),
     boostSat: new Map(),
     laborUsed: 0,
+    laborBySystem: {},
     upkeepRequested: 0,
     capitalUsed: 0,
     produced: {},
@@ -754,7 +795,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     spoiledToday: {},
   };
 
-  groupInstances(d);
+  groupInstances(d, computeSpatial(catalog, prev));
   startConstruction(d); // 2
   laborPool(d); // 4 (people work before anything else runs)
   buildRequests(d); // 3

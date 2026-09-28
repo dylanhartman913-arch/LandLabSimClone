@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { designBalance, ENGINE_VERSION, hudMetrics } from '@homestead/engine';
+import { designBalance, displayDate, ENGINE_VERSION, hudMetrics } from '@homestead/engine';
 import { fmtMoney, fmtNum } from '../lib/format.ts';
 import { useGame, type Speed } from '../store/game.ts';
 import { ScoreRing } from './ScoreRing.tsx';
+import { WhyNum } from './Why.tsx';
 import { weatherKind, WeatherIcon } from './Weather.tsx';
 
 const SPEEDS: { s: Speed; label: string; key: string }[] = [
@@ -18,9 +19,12 @@ export function Hud() {
   const game = useGame((s) => s.game);
   const catalog = useGame((s) => s.catalog);
   const speed = useGame((s) => s.speed);
+  const overlayOn = useGame((s) => s.overlay.on);
+  const panel = useGame((s) => s.panel);
+  const reportCount = useGame((s) => s.reports.length);
+  const readOnly = useGame((s) => s.readOnly);
+  const st = useGame.getState();
   const setSpeed = useGame((s) => s.setSpeed);
-  const snap = useGame((s) => s.snap);
-  const setSnap = useGame((s) => s.setSnap);
   const zoomToFit = useGame((s) => s.zoomToFit);
   const bal = useMemo(() => designBalance(game, catalog), [game.instances, game.site, catalog]); // eslint-disable-line react-hooks/exhaustive-deps
   const m = hudMetrics(game, catalog, bal);
@@ -36,68 +40,99 @@ export function Hud() {
           <span className="sr-only" data-testid="engine-version">
             Engine {ENGINE_VERSION}
           </span>
-          <div className="hud-land">{game.site.name}</div>
+          <div className="hud-land">
+            {game.site.name}
+            {readOnly ? ' · shared design (read only)' : ''}
+          </div>
         </div>
       </div>
       <div className="hud-group" aria-label="Date">
         <WeatherIcon kind={wk} />
         <div>
           <div className="hud-strong" data-testid="hud-date">
-            {m.date}
+            {displayDate(game.calendar.day, game.calendar.year).label}
           </div>
-          <div className="hud-sub">
-            {SEASON_LABEL[m.season]}
+          <div className="hud-sub" data-testid="hud-real-date">
+            {m.date.replace(/, year \d+$/, '')} · {SEASON_LABEL[m.season]}
             {m.weather.tags.length ? ` · ${m.weather.tags.join(', ')}` : ''}
           </div>
         </div>
       </div>
-      <div className="hud-group" title={m.cash.explain.formula}>
+      <div className="hud-group">
         <div>
           <div className="hud-sub">Cash</div>
           <div className={`hud-strong ${m.cash.value < 0 ? 'neg' : ''}`} data-testid="hud-cash">
-            {fmtMoney(m.cash.value)}
-          </div>
-        </div>
-      </div>
-      <div
-        className="hud-group"
-        title={`${m.laborUsedWeek.explain.formula} / ${m.laborAvailableWeek.explain.formula}`}
-      >
-        <div>
-          <div className="hud-sub">Labor this week</div>
-          <div className="hud-strong" data-testid="hud-labor">
-            {fmtNum(m.laborUsedWeek.value)} / {fmtNum(m.laborAvailableWeek.value)} h
+            <WhyNum value={m.cash} title="Cash" format={fmtMoney} />
           </div>
         </div>
       </div>
       <div className="hud-group">
+        <div>
+          <div className="hud-sub">Labor this week</div>
+          <div className="hud-strong" data-testid="hud-labor">
+            <WhyNum value={m.laborUsedWeek} title="Labor used this week" format={fmtNum} /> /{' '}
+            <WhyNum value={m.laborAvailableWeek} title="Labor available this week" format={fmtNum} unit="h" />
+          </div>
+        </div>
+      </div>
+      <button
+        className="hud-group hud-score"
+        onClick={() => useGame.getState().setChecklist(true)}
+        title="Open the needs checklist (N)"
+        data-testid="open-checklist"
+      >
         <ScoreRing score={m.score} label="Off-grid score (average year)" />
-        <div className="hud-sub">
+        <span className="hud-sub">
           Off-grid
           <br />
           score
-        </div>
-      </div>
+        </span>
+      </button>
+      <button
+        className={`btn ghost ${overlayOn ? 'on' : ''}`}
+        onClick={() => useGame.getState().setOverlay({ on: !overlayOn })}
+        title="Show flows (F)"
+        aria-pressed={overlayOn}
+        data-testid="toggle-flows"
+      >
+        Flows
+      </button>
       <div className="hud-spacer" />
-      <div className="hud-group" role="group" aria-label="Grid snap">
-        <label className="hud-sub" htmlFor="snap">
-          Snap
-        </label>
-        <select
-          id="snap"
-          value={snap}
-          onChange={(e) => setSnap(Number(e.target.value) as 0 | 1 | 5 | 10)}
-          aria-label="Grid snap"
+      <nav className="hud-group" aria-label="Panels">
+        <button
+          className="btn ghost"
+          onClick={() => st.setPanel(panel === 'almanac' ? null : 'almanac')}
+          title="Almanac (L)"
+          data-testid="open-almanac"
         >
-          <option value={0}>Off</option>
-          <option value={1}>1 ft</option>
-          <option value={5}>5 ft</option>
-          <option value={10}>10 ft</option>
-        </select>
-        <button className="btn ghost" onClick={zoomToFit} title="Zoom to fit (0)" aria-label="Zoom to fit">
-          ⤢
+          Almanac
         </button>
-      </div>
+        <button
+          className="btn ghost"
+          onClick={() => st.setPanel(panel === 'report' ? null : 'report')}
+          data-testid="open-reports"
+        >
+          Reports{reportCount ? ` (${reportCount})` : ''}
+        </button>
+        <button
+          className="btn ghost"
+          onClick={() => st.setPanel(panel === 'saves' ? null : 'saves')}
+          data-testid="open-saves"
+        >
+          Save
+        </button>
+        <button
+          className="btn ghost"
+          onClick={() => st.setPanel(panel === 'settings' ? null : 'settings')}
+          aria-label="Settings"
+          data-testid="open-settings"
+        >
+          ⚙
+        </button>
+      </nav>
+      <button className="btn ghost" onClick={zoomToFit} title="Zoom to fit (0)" aria-label="Zoom to fit">
+        ⤢
+      </button>
       <div className="speed" role="group" aria-label="Game speed">
         {SPEEDS.map((x) => (
           <button

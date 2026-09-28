@@ -157,3 +157,20 @@ The committed overrides turn clearly supplementary inputs into boosts, each with
 4. Run `npm run catalog:export`, then `npm test`. Commit the xlsx and the regenerated files together. The system appears in the game's drawer with no code change.
 
 To add a resource, add a Resources row (name, unit, class, checklist row and factor if it feeds one) before using it in a flow.
+
+## Spatial rules (G7)
+
+All spatial behavior is data in `data/catalog_overrides.json`, exported to the catalog's top level.
+
+**`adjacencyRules`**: `{ from, to, radiusFt, effect: { resource, multiplier, floor?, mode: 'scale' | 'require', direction: 'in' | 'out', stack: 'each' | 'once' }, note }`. `from` and `to` are a system ID, `category:<Category>`, or (for `from`) `terrain:tree`, the site's existing trees. Distances are edge to edge between footprints. Shipped rules:
+
+| Rule | Effect |
+|---|---|
+| Hardwood, Oak, Poplar, Apple trees and existing trees within 30 ft of a Shelter | its Cooling need × 0.9 per tree, never below 0.7 |
+| Beehive, Pollinators, Mason Bee House within 300 ft of Plants or Garden systems | Pollination only reaches systems with one in range (`require`) |
+| Chicken or Chicken Coop within 20 ft of Compost Piles | Compost × 1.1 (once) |
+| Trees within 150 ft of a Small Wind Turbine | Electricity × 0.7 (once) |
+
+**`assignedCapacities`**: `{ resource, maxDistanceFt | null, note }`. Instead of pooling, each consumer is linked to one provider: the player's link if valid, otherwise the nearest provider with room. Shipped: Roofing area (rain catchment within 50 ft of a shelter's roof) and Fenced paddock (no distance limit).
+
+**`terrainRules`**: `{ to, resource, direction, perSlopePct, min, max, note }`; multiplier = clamp(1 + perSlopePct × site slope %, min, max). Shipped: swales +4% water per percent of slope (to 1.5×); ponds −3% water and storage per percent (to 0.5×).

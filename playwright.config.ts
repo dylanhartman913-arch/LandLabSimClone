@@ -8,6 +8,9 @@ export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 60_000,
   fullyParallel: false,
+  // One worker: the map renders in software (no GPU in CI or the sandbox), so parallel
+  // browsers starve each other and make timing-based steps flaky.
+  workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {

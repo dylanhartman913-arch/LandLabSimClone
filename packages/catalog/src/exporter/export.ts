@@ -594,7 +594,9 @@ function applyEngineFields(
   const catNames = new Set(rawSystems.flatMap((s) => s.categories));
   for (const rule of adjacencyRules) {
     for (const end of [rule.from, rule.to]) {
-      const ok = end.startsWith('category:') ? catNames.has(end.slice(9)) : sysIds.has(end);
+      const ok = end.startsWith('category:')
+        ? catNames.has(end.slice(9))
+        : end === 'terrain:tree' || sysIds.has(end);
       if (!ok)
         problems.push(`catalog_overrides.json: adjacency endpoint "${end}" is not a system ID or category`);
     }
@@ -602,7 +604,20 @@ function applyEngineFields(
       problems.push(`catalog_overrides.json: adjacency resource "${rule.effect.resource}" is not a resource`);
     }
   }
-  return { systems, resources, flows, adjacencyRules };
+  const assignedCapacities = overrides.assignedCapacities;
+  for (const a of assignedCapacities) {
+    if (resClass.get(a.resource) !== 'Capacity') {
+      problems.push(`catalog_overrides.json: assigned capacity "${a.resource}" is not a Capacity resource`);
+    }
+  }
+  const terrainRules = overrides.terrainRules;
+  for (const t of terrainRules) {
+    if (!sysIds.has(t.to))
+      problems.push(`catalog_overrides.json: terrain rule target "${t.to}" is not a system ID`);
+    if (!resNames.has(t.resource))
+      problems.push(`catalog_overrides.json: terrain rule resource "${t.resource}" is not a resource`);
+  }
+  return { systems, resources, flows, adjacencyRules, assignedCapacities, terrainRules };
 }
 
 // ---------------------------------------------------------------------------
@@ -709,6 +724,8 @@ export function exportCatalog(input: ExportInput): ExportResult {
     systems: merged.systems,
     flows: merged.flows,
     adjacencyRules: merged.adjacencyRules,
+    assignedCapacities: merged.assignedCapacities,
+    terrainRules: merged.terrainRules,
   });
   const goldens = GoldensSchema.parse({ schemaVersion: 1, source, ...g, flows: cached });
   return { catalog, goldens };

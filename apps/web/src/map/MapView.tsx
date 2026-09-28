@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Application } from 'pixi.js';
-import { getSystem } from '@homestead/engine';
+import { designBalance, gameDigest, getSystem } from '@homestead/engine';
 import { useGame, worldToScreen } from '../store/game.ts';
 import { MapScene } from './scene.ts';
 
@@ -11,6 +11,10 @@ declare global {
       scene: MapScene | null;
       /** Client (page) coordinates of a world point. */
       worldToClient(x: number, y: number): { x: number; y: number };
+      /** Digest of the current game (the replay test compares it with a save's). */
+      digest(): string;
+      /** Balance mode for the current layout (tests compare the checklist against it). */
+      balance(): { need: string; provided: number; needed: number; pct: number }[];
     };
   }
 }
@@ -49,6 +53,7 @@ export function MapView() {
         app.canvas.setAttribute('aria-label', 'Homestead map');
         app.canvas.setAttribute('role', 'application');
         app.canvas.dataset.testid = 'map-canvas';
+        app.canvas.tabIndex = 0; // keyboard players can Tab to the map (arrows pan, or place with arrows + Enter)
         const r = el.getBoundingClientRect();
         useGame.getState().setViewport(r.width, r.height);
         useGame.getState().zoomToFit();
@@ -64,6 +69,18 @@ export function MapView() {
             const p = worldToScreen(s.camera, s.viewport, x, y);
             const cr = app.canvas.getBoundingClientRect();
             return { x: cr.left + p.x, y: cr.top + p.y };
+          },
+          digest() {
+            return gameDigest(useGame.getState().game);
+          },
+          balance() {
+            const s = useGame.getState();
+            return designBalance(s.game, s.catalog).checklist.map((r) => ({
+              need: r.need,
+              provided: r.provided.value,
+              needed: r.needed.value,
+              pct: r.pct.value,
+            }));
           },
         };
         el.dataset.ready = 'true';

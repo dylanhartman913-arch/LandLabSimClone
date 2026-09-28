@@ -32,6 +32,9 @@ export interface PersonState {
 
 export interface InstanceInputRecord {
   requested: number;
+  /** What allocation offered (supply available to this consumer). */
+  granted: number;
+  /** What the consumer actually used (less than granted when another input limits it). */
   received: number;
 }
 
@@ -55,6 +58,10 @@ export interface Instance {
   priority: number;
   /** Present only for Human Being instances. */
   person?: PersonState;
+  /** Player-chosen providers for assigned capacities (resource → provider instance id). */
+  links?: Record<string, string>;
+  /** Share of a full system this instance is (a child is 0.6 of a Human Being). Default 1. */
+  scale?: number;
 }
 
 /** Yesterday's result for one group (all active instances of a system at one priority). */
@@ -107,6 +114,8 @@ export interface DayLedger {
     upkeepDelivered: number;
     unused: number;
   };
+  /** Upkeep hours worked per system today (construction is in labor.construction). */
+  laborBySystem: Record<string, number>;
   /** Systems running below full satisfaction today, with the input that limited them. */
   curtailed: { systemId: string; count: number; sat: number; limitedBy: string | null }[];
   weather: DayWeather;

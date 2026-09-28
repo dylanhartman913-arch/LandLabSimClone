@@ -13,7 +13,9 @@ export interface Term {
   factor: number;
   /** Unit conversion into the row's unit (checklist rows only, e.g. 70 kcal per egg). */
   needFactor?: number;
-  /** qty × factor × count (× needFactor). */
+  /** Spatial adjustment (shade, slope, neighbors) applied to this flow, if any. */
+  adjust?: number;
+  /** qty × factor × count (× adjust) (× needFactor). */
   value: number;
 }
 

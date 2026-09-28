@@ -94,7 +94,10 @@ export const TimingSchema = z.discriminatedUnion('kind', [
 export type Timing = z.infer<typeof TimingSchema>;
 
 export const AdjacencyRuleSchema = z.object({
-  /** A system ID or `category:<Category>`; the system that projects the effect. */
+  /**
+   * What projects the effect: a system ID, `category:<Category>`, or `terrain:tree`
+   * (the site's existing trees, which the player cannot move).
+   */
   from: z.string(),
   /** A system ID or `category:<Category>`; the system that receives the effect. */
   to: z.string(),
@@ -108,10 +111,35 @@ export const AdjacencyRuleSchema = z.object({
     /** `require`: the receiver's flow only works if a source is in range. */
     mode: z.enum(['scale', 'require']).default('scale'),
     direction: DirectionSchema.default('in'),
+    /** `each`: every source in range applies the multiplier; `once`: any number of sources apply it once. */
+    stack: z.enum(['each', 'once']).default('each'),
   }),
   note: z.string().default(''),
 });
 export type AdjacencyRule = z.infer<typeof AdjacencyRuleSchema>;
+
+/**
+ * A Capacity resource that is *assigned* rather than pooled: each consumer is linked to one
+ * provider (nearest with room by default, or the player's choice) within `maxDistanceFt`.
+ */
+export const AssignedCapacitySchema = z.object({
+  resource: z.string(),
+  maxDistanceFt: z.number().positive().nullable(),
+  note: z.string().default(''),
+});
+export type AssignedCapacity = z.infer<typeof AssignedCapacitySchema>;
+
+/** How the site's slope changes a system's flow: multiplier = clamp(1 + perSlopePct × slope%, min, max). */
+export const TerrainRuleSchema = z.object({
+  to: z.string(),
+  resource: z.string(),
+  direction: DirectionSchema.default('out'),
+  perSlopePct: z.number(),
+  min: z.number().nonnegative(),
+  max: z.number().nonnegative(),
+  note: z.string().default(''),
+});
+export type TerrainRule = z.infer<typeof TerrainRuleSchema>;
 
 export const StorageRuleSchema = z.object({
   /** The Capacity resource that bounds this stock (e.g. `Water storage`). */
@@ -238,6 +266,8 @@ export const CatalogSchema = z.object({
   flows: z.array(FlowSchema),
   /** Spatial rules (G7). Every rule is from `catalog_overrides.json`. */
   adjacencyRules: z.array(AdjacencyRuleSchema),
+  assignedCapacities: z.array(AssignedCapacitySchema),
+  terrainRules: z.array(TerrainRuleSchema),
 });
 export type Catalog = z.infer<typeof CatalogSchema>;
 
@@ -284,6 +314,8 @@ export const OverridesSchema = z
       .default({}),
     /** Rules applied to every matching system; checked against system IDs and categories at export. */
     adjacencyRules: z.array(AdjacencyRuleSchema).default([]),
+    assignedCapacities: z.array(AssignedCapacitySchema).default([]),
+    terrainRules: z.array(TerrainRuleSchema).default([]),
   })
   .strict();
 export type Overrides = z.infer<typeof OverridesSchema>;

@@ -3,16 +3,33 @@ import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import type { Catalog, System } from '@homestead/catalog';
 import {
   canPlace,
+  computeSpatial,
+  FLOW_GROUPS,
+  flowLinks,
   footprintSideFt,
   getSystem,
   nextRandom,
   parcelSideFt,
   seasonOf,
+  type FlowGroup,
+  type FlowLink,
   type GameState,
 } from '@homestead/engine';
 import { personTexture, systemTexture } from '../sprites/placeholder.ts';
 import { screenToWorld, snapTo, useGame, type GameStore } from '../store/game.ts';
 import { bakeTiled, grassTexture, SEASON_TINT, snowTexture } from './grass.ts';
+
+export const FLOW_COLORS: Record<FlowGroup, number> = {
+  water: 0x4f93c9,
+  power: 0xf2c641,
+  food: 0x8fd35a,
+  heat: 0xe0803d,
+  waste: 0xa67c52,
+  labor: 0xe8dcc0,
+};
+export const FLOW_SHORT = 0xe0523d;
+/** Colorblind-safe "short" (orange against the blue/yellow flows). */
+export const FLOW_SHORT_CB = 0xff8c1a;
 
 /** Minimum on-screen size for tiny systems, in feet (a filter is still clickable). */
 const MIN_VISUAL_FT = 3;
@@ -39,6 +56,7 @@ interface Walker {
   wait: number;
   rng: number;
   phase: number;
+  crate?: Graphics;
 }
 
 type Drag =
@@ -67,7 +85,14 @@ export class MapScene {
   private ghostSprite = new Sprite();
   private ghostOutline = new Graphics();
   private boxGfx = new Graphics();
+  /** Dawn and dusk light over the whole view (1× only, never with reduced motion). */
+  private light = new Graphics();
   private highlight = new Graphics();
+  /** Effect radius and assigned-capacity links for the selected system. */
+  private spatialGfx = new Graphics();
+  private flowLines = new Graphics();
+  private flowDots = new Graphics();
+  private links: { link: FlowLink; color: number; width: number; len: number }[] = [];
   private views = new Map<string, InstanceView>();
   private walkers = new Map<string, Walker>();
   private pointer = { sx: 0, sy: 0, wx: 0, wy: 0, inside: false };
@@ -79,6 +104,10 @@ export class MapScene {
   private lastSeason = '';
   hovered: string | null = null;
   onHover: (id: string | null, sx: number, sy: number) => void = () => {};
+  private pops: { root: Container; t0: number }[] = [];
+  private floats: { g: Graphics; t0: number; x: number; y: number }[] = [];
+  /** Absolute day of the last harvest: people carry crates for a few days after. */
+  private lastHarvestDay = -99;
   /** Frame timestamps (ms) for the performance test hook. */
   frameTimes: number[] = [];
   /** Milliseconds of scene work per frame (camera, people), for the performance test hook. */
@@ -91,11 +120,18 @@ export class MapScene {
     this.snow = new Sprite(bakeTiled(snowTexture(), 'snow', 8));
     this.snow.visible = false;
     this.world.addChild(this.grass, this.snow, this.parcel, this.terrain, this.ground, this.objects);
-    this.world.addChild(this.peopleLayer, this.highlight, this.overlay, this.ghost);
+    this.world.addChild(
+      this.peopleLayer,
+      this.highlight,
+      this.flowLines,
+      this.flowDots,
+      this.overlay,
+      this.ghost,
+    );
     this.ghost.addChild(this.ghostSprite, this.ghostOutline);
     this.ghostSprite.anchor.set(0.5);
     this.ghost.visible = false;
-    app.stage.addChild(this.world, this.boxGfx);
+    app.stage.addChild(this.world, this.light, this.boxGfx);
 
     this.unsub = useGame.subscribe((s, prev) => this.onStore(s, prev));
     this.onStore(useGame.getState(), null);
@@ -112,10 +148,157 @@ export class MapScene {
 
   private onStore(s: GameStore, prev: GameStore | null): void {
     if (!prev || s.game !== prev.game) this.syncGame(s.game);
-    if (!prev || s.selection !== prev.selection || s.game !== prev.game) this.syncSelection(s.selection);
+    if (!prev || s.selection !== prev.selection || s.game !== prev.game) {
+      this.syncSelection(s.selection);
+      this.syncSpatial(s);
+    }
     if (!prev || s.highlightResource !== prev.highlightResource || s.game !== prev.game)
       this.syncHighlight(s);
     if (!prev || s.tool !== prev.tool) this.syncTool(s);
+    if (prev && s.kbCursor !== prev.kbCursor) this.updateGhost();
+    if (prev && s.events !== prev.events) this.onEvents(s, prev);
+    if (!prev || s.overlay !== prev.overlay || s.game !== prev.game || s.selection !== prev.selection)
+      this.syncFlows(s);
+  }
+
+  /** Recompute overlay links from yesterday's engine results. */
+  private syncFlows(s: GameStore): void {
+    const lines = this.flowLines.clear();
+    this.links = [];
+    if (!s.overlay.on) {
+      this.flowDots.clear();
+      return;
+    }
+    const byRes = new Map<string, number>();
+    const groupOf = new Map<string, FlowGroup>();
+    for (const g of s.overlay.groups) for (const r of FLOW_GROUPS[g].resources) groupOf.set(r, g);
+    const links = flowLinks(s.game, this.catalog, {
+      resources: [...groupOf.keys()],
+      ...(s.selection.length === 1 ? { instanceId: s.selection[0]! } : {}),
+      maxLinks: 250,
+    });
+    for (const l of links) byRes.set(l.resource, Math.max(byRes.get(l.resource) ?? 0, l.amount));
+    const pos = new Map(s.game.instances.map((i) => [i.id, i]));
+    for (const l of links) {
+      const a = pos.get(l.from);
+      const b = pos.get(l.to);
+      if (!a || !b) continue;
+      const short = s.prefs.colorblind ? FLOW_SHORT_CB : FLOW_SHORT;
+      const color: number = l.short ? short : FLOW_COLORS[groupOf.get(l.resource) ?? 'water'];
+      const max = byRes.get(l.resource) || 1;
+      const width = 0.5 + 2.5 * Math.sqrt(l.amount / max);
+      if (l.from === l.to) {
+        // A consumer with no producer at all: a dashed red ring.
+        for (let k = 0; k < 12; k += 2) {
+          lines
+            .arc(b.x, b.y, 6, (k * Math.PI) / 6, ((k + 1) * Math.PI) / 6)
+            .stroke({ width: 1, color: FLOW_SHORT });
+        }
+        continue;
+      }
+      const len = Math.hypot(b.x - a.x, b.y - a.y);
+      if (l.short) {
+        // Red dashes where the consumer is short.
+        const dash = 3;
+        for (let d = 0; d < len; d += dash * 2) {
+          const t0 = d / len;
+          const t1 = Math.min(1, (d + dash) / len);
+          lines
+            .moveTo(a.x + (b.x - a.x) * t0, a.y + (b.y - a.y) * t0)
+            .lineTo(a.x + (b.x - a.x) * t1, a.y + (b.y - a.y) * t1)
+            .stroke({ width, color, alpha: 0.85 });
+        }
+      } else {
+        lines.moveTo(a.x, a.y).lineTo(b.x, b.y).stroke({ width, color, alpha: 0.45 });
+      }
+      this.links.push({ link: l, color, width, len });
+    }
+  }
+
+  /** New harvests float a little crop mark up from the plants (not with reduced motion). */
+  private onEvents(s: GameStore, prev: GameStore): void {
+    const fresh = s.events.slice(prev.events.length > s.events.length ? 0 : prev.events.length);
+    for (const e of fresh) {
+      if (e.kind !== 'harvest') continue;
+      this.lastHarvestDay = e.absDay;
+      if (s.prefs.reducedMotion) continue;
+      for (const id of e.instanceIds.slice(0, 12)) {
+        const inst = s.game.instances.find((i) => i.id === id);
+        if (!inst) continue;
+        const g = new Graphics();
+        g.circle(0, 0, 2.2).fill({ color: 0xf2c641 });
+        g.circle(-0.7, -0.7, 0.8).fill({ color: 0xffffff, alpha: 0.7 });
+        this.overlay.addChild(g);
+        this.floats.push({ g, t0: performance.now(), x: inst.x, y: inst.y });
+      }
+    }
+  }
+
+  private animateFeel(now: number): void {
+    this.pops = this.pops.filter((p) => {
+      if (p.root.destroyed) return false;
+      const t = Math.min(1, (now - p.t0) / 220);
+      const k = 1 - (1 - t) ** 3;
+      p.root.scale.set(0.4 + 0.6 * k + Math.sin(t * Math.PI) * 0.12);
+      if (t >= 1) p.root.scale.set(1);
+      return t < 1;
+    });
+    this.floats = this.floats.filter((f) => {
+      const t = (now - f.t0) / 1200;
+      f.g.position.set(f.x, f.y - t * 12);
+      f.g.alpha = Math.max(0, 1 - t);
+      if (t >= 1) f.g.destroy();
+      return t < 1;
+    });
+    // People carry crates for three days after a harvest.
+    const carrying = useGame.getState().game.calendar.absDay - this.lastHarvestDay <= 3;
+    for (const w of this.walkers.values()) {
+      if (carrying && !w.crate) {
+        w.crate = new Graphics().rect(-1, -3.2, 2, 1.4).fill({ color: 0x9a6b3a }).stroke({ width: 0.2, color: 0x3a2a18 });
+        w.sprite.parent?.addChild(w.crate);
+      }
+      if (w.crate) {
+        w.crate.visible = carrying;
+        w.crate.position.set(w.sprite.x, w.sprite.y);
+      }
+    }
+  }
+
+  /** Warm light at dawn, dusk blue at the end of each day; only at 1× and never with reduced motion. */
+  private drawLight(s: GameStore, now: number): void {
+    const g = this.light.clear();
+    if (s.speed !== 1 || s.prefs.reducedMotion || !s.lastTickAt) return;
+    const phase = Math.min(1, Math.max(0, (now - s.lastTickAt) / 1000));
+    let color = 0;
+    let alpha = 0;
+    if (phase < 0.18) {
+      color = 0xffa05a;
+      alpha = 0.16 * (1 - phase / 0.18);
+    } else if (phase > 0.8) {
+      color = 0x2b3170;
+      alpha = 0.22 * ((phase - 0.8) / 0.2);
+    }
+    if (alpha > 0.005) g.rect(0, 0, s.viewport.width, s.viewport.height).fill({ color, alpha });
+  }
+
+  /** Moving dots along overlay links show direction (producer → consumer). */
+  private animateFlows(still = false): void {
+    const g = this.flowDots.clear();
+    if (!this.links.length) return;
+    const s = useGame.getState();
+    const pos = new Map(s.game.instances.map((i) => [i.id, i]));
+    const t = still ? 0 : performance.now() / 1000;
+    const spacing = 12;
+    for (const { link, color, width, len } of this.links) {
+      if (len < 1) continue;
+      const a = pos.get(link.from)!;
+      const b = pos.get(link.to)!;
+      const offset = (t * 10) % spacing;
+      for (let d = offset; d < len; d += spacing) {
+        const k = d / len;
+        g.circle(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, Math.max(0.6, width * 0.6)).fill({ color });
+      }
+    }
   }
 
   private syncGame(g: GameState): void {
@@ -225,6 +408,10 @@ export class MapScene {
     selected.visible = false;
     root.addChild(sprite, selected);
     (sys.layer === 'ground' ? this.ground : this.objects).addChild(root);
+    if (this.lastGame && !useGame.getState().prefs.reducedMotion) {
+      root.scale.set(0.4);
+      this.pops.push({ root, t0: performance.now() });
+    }
     return { id, systemId: sys.id, root, sprite, scaffold: null, ring: null, selected, lastProgress: -1 };
   }
 
@@ -294,6 +481,35 @@ export class MapScene {
     }
   }
 
+  /** For one selected system: the radius of effects it projects and the provider it is linked to. */
+  private syncSpatial(s: GameStore): void {
+    const g = this.spatialGfx.clear();
+    if (s.selection.length !== 1) return;
+    const inst = s.game.instances.find((i) => i.id === s.selection[0]);
+    if (!inst) return;
+    const sys = getSystem(this.catalog, inst.systemId);
+    const half = footprintSideFt(sys.footprintSqft) / 2;
+    const radii = new Set<number>();
+    for (const r of this.catalog.adjacencyRules) {
+      const src = r.from.startsWith('category:')
+        ? sys.categories.includes(r.from.slice(9))
+        : r.from === sys.id;
+      if (src) radii.add(r.radiusFt);
+    }
+    for (const r of radii) {
+      g.roundRect(inst.x - half - r, inst.y - half - r, (half + r) * 2, (half + r) * 2, r)
+        .fill({ color: 0xfff4d6, alpha: 0.05 })
+        .stroke({ width: 0.8, color: 0xfff4d6, alpha: 0.6 });
+    }
+    const sp = computeSpatial(this.catalog, s.game).get(inst.id);
+    for (const a of Object.values(sp?.assigned ?? {})) {
+      const p = a.providerId ? s.game.instances.find((i) => i.id === a.providerId) : null;
+      if (!p) continue;
+      g.moveTo(inst.x, inst.y).lineTo(p.x, p.y).stroke({ width: 1.2, color: 0x8fd3ff, alpha: 0.9 });
+      g.circle(p.x, p.y, 2).fill({ color: 0x8fd3ff });
+    }
+  }
+
   private syncHighlight(s: GameStore): void {
     const g = this.highlight.clear();
     const res = s.highlightResource;
@@ -335,19 +551,21 @@ export class MapScene {
 
   private updateGhost(): void {
     const s = useGame.getState();
-    if (s.tool.kind !== 'place' || !this.pointer.inside) {
+    const kb = s.kbCursor;
+    if (s.tool.kind !== 'place' || (!this.pointer.inside && !kb)) {
       this.ghost.visible = false;
       return;
     }
     const sys = getSystem(this.catalog, s.tool.systemId);
-    const x = snapTo(this.pointer.wx, s.snap);
-    const y = snapTo(this.pointer.wy, s.snap);
+    const x = snapTo(kb ? kb.x : this.pointer.wx, s.prefs.snap);
+    const y = snapTo(kb ? kb.y : this.pointer.wy, s.prefs.snap);
     const ok = canPlace(this.catalog, s.game, sys.id, x, y).ok;
     this.ghost.visible = true;
     this.ghost.position.set(x, y);
     const real = footprintSideFt(sys.footprintSqft);
     const h = Math.max(real, 1) / 2;
-    const color = ok ? 0x7ed957 : 0xe0523d;
+    const cb = s.prefs.colorblind;
+    const color = ok ? (cb ? 0x3aa0ff : 0x7ed957) : cb ? 0xff8c1a : 0xe0523d;
     this.ghostOutline
       .clear()
       .rect(-h, -h, h * 2, h * 2)
@@ -366,7 +584,10 @@ export class MapScene {
     const { camera: c, viewport: v } = s;
     this.world.scale.set(c.zoom);
     this.world.position.set(v.width / 2 - c.cx * c.zoom, v.height / 2 - c.cy * c.zoom);
-    this.animatePeople(s, this.app.ticker.deltaMS / 1000);
+    if (!s.prefs.reducedMotion) this.animatePeople(s, this.app.ticker.deltaMS / 1000);
+    this.animateFeel(now);
+    if (s.overlay.on) this.animateFlows(s.prefs.reducedMotion);
+    this.drawLight(s, now);
     this.frameWork.push(performance.now() - now);
     if (this.frameWork.length > 240) this.frameWork.shift();
   }
@@ -430,7 +651,7 @@ export class MapScene {
       const id = this.hit(e);
       if (id) {
         const inst = useGame.getState().game.instances.find((i) => i.id === id);
-        if (inst) useGame.getState().openCard(inst.systemId);
+        if (inst) useGame.getState().openCard(inst.systemId, inst.id);
       }
     });
     on('contextmenu', (e: Event) => e.preventDefault());
@@ -518,6 +739,7 @@ export class MapScene {
     const { sx, sy } = this.local(e);
     const w = this.toWorld(sx, sy);
     this.pointer = { sx, sy, wx: w.x, wy: w.y, inside: true };
+    if (useGame.getState().kbCursor) useGame.getState().setKbCursor(null);
     if (this.pinch.has(e.pointerId)) this.pinch.set(e.pointerId, { x: sx, y: sy });
     if (this.pinch.size === 2 && this.pinchStart) {
       const [a, b] = [...this.pinch.values()] as [{ x: number; y: number }, { x: number; y: number }];
@@ -553,7 +775,8 @@ export class MapScene {
     for (const id of s.selection) {
       const v = this.views.get(id);
       const inst = s.game.instances.find((i) => i.id === id);
-      if (v && inst) v.root.position.set(snapTo(inst.x + dx, s.snap), snapTo(inst.y + dy, s.snap));
+      if (v && inst)
+        v.root.position.set(snapTo(inst.x + dx, s.prefs.snap), snapTo(inst.y + dy, s.prefs.snap));
     }
   }
 

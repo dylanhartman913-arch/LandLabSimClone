@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { catalog, getSite, type NeedKey } from '@homestead/catalog';
 import {
   balance,
+  designAdjust,
   digest,
   initGame,
   placeDesign,
@@ -92,7 +93,8 @@ describe('time mode agrees with balance mode', () => {
     const y1 = stepDays(gameFor(file, { unlimited }), catalog, 365);
     const y2 = stepDays(y1.state, catalog, 365);
     const t = summarizeLedgers(y2.ledgers, catalog);
-    const b = balance(catalog, catalog.assumptions, design);
+    // Balance mode with the same spatial adjustments (shade, slope…) as the laid-out design.
+    const b = balance(catalog, catalog.assumptions, { ...design, adjust: designAdjust(y2.state, catalog) });
     return { t, b, ledgers: y2.ledgers };
   };
   const rel = (a: number, e: number) => Math.abs(a - e) / Math.max(1e-9, Math.abs(e));

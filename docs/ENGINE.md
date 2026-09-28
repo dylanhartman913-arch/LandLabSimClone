@@ -202,3 +202,41 @@ One simulated year of a 196-instance design: ~40-55 ms in plain Node (budget 150
 - One allocation pass. An instance that is short of one input returns the unused share of its other inputs to stock, but that returned stock is not re-offered to other consumers until tomorrow.
 - A day-long buffer is the only battery model: electricity produced today is usable tomorrow up to battery capacity. With no battery, all solar output spills. Within-day timing (solar noon vs. night load) is not modeled.
 - Input requests are not reduced for immature plants.
+
+## Saves and replay
+
+Every design change in the app goes through one engine function, `applyAction(catalog, state, action)`, and is appended to an action log with the absolute day it happened on:
+
+```ts
+type Action = { at: number } & (
+  | { kind: 'place'; systemId; x; y; mode; id }   | { kind: 'remove'; id }
+  | { kind: 'move'; id; x; y }                      | { kind: 'moveMany'; moves }
+  | { kind: 'priority'; id; priority }              | { kind: 'settings'; settings }
+  | { kind: 'insert'; instance; cashDelta; index? } | { kind: 'delete'; id; cashDelta });
+```
+
+Undo and redo are logged as the `insert` / `delete` / `moveMany` / `priority` / `settings` actions they perform, so replay never needs the undo stack. `replay(catalog, init, actions, untilAbsDay)` starts a game from `{ siteId, seed, settings }`, steps days between actions, and applies each on its day. `gameDigest(state)` fingerprints calendar, cash, RNG, stocks, instances, and settings.
+
+A `.homestead.json` save (`homestead.save.v1`) holds the init, the action log, the day, the digest, a state snapshot for fast loading, the engine version, and the catalog's sha256. Loading replays the log and compares digests: a match is "Replay verified"; a mismatch (for example after the catalog changed) falls back to the snapshot and says so.
+
+## Reports and root causes
+
+`buildReport(state, catalog, 'season' | 'year', ledgers, title)` summarizes a range: coverage by month per checklist row, the top three shortages, cash in / out / purchases / refunds, labor hours by system (the ledger records upkeep hours per system each day), construction hours, spoilage, spilled power, and average health.
+
+Each shortage gets a root-cause chain from `rootCauseChain`: start at the system most often curtailed by the short resource (or, for needs that never curtail, the system that asked for it), then walk upstream: among the resource's producers in the design, find one that was itself mostly limited by something (≥25% of days) and recurse. The chain ends at a terminal cause:
+
+- nothing in the design makes the resource;
+- the producers' output is seasonal and this range is ≥15% below their annual average ("500W Photovoltaic Panels produces 42% less Electricity in winter");
+- more than 20% of what was made spilled for lack of storage;
+- otherwise, the producers simply make too little.
+
+`suggestFixes` lists catalog systems that make the resource and that the player can afford, cheapest per unit of weekly output, with what else each needs.
+
+## Space (G7)
+
+`computeSpatial(catalog, state)` turns the catalog's spatial rules (see `docs/CATALOG.md`) into per-instance effects: input and output multipliers, `require` gates, and assigned-capacity links, each with a plain-language note. It is cached on a key of positions, status, links, and scale. Instances with identical effects share a group, so the daily step stays fast.
+
+- **Time mode:** requests × input multipliers; outputs (and capacity provided) × output multipliers; a boost with no source in range gets 0; an assigned capacity is satisfied by the linked provider's share, not the pool. Buildings still under construction project and provide nothing.
+- **Balance mode:** `designBalance` passes each system's average multiplier as `design.adjust`; matching flow terms carry `adjust` and the row's provenance lists the reasons ("Shade trees within 30 ft … In range: Oak Tree (i8)"). Spreadsheet parity uses no adjustments and is unchanged.
+- **Household scale:** an instance's `scale` (children 0.6) multiplies its requests, outputs, and labor.
+- **Links:** `setLink` / action `link` choose a provider for an assigned capacity (undoable).

@@ -36,7 +36,10 @@ export function StatusBar() {
         {names.length === 1 && (
           <button
             className="btn ghost"
-            onClick={() => s.openCard(game.instances.find((i) => i.id === selection[0])!.systemId)}
+            onClick={() =>
+              s.openCard(game.instances.find((i) => i.id === selection[0])!.systemId, selection[0])
+            }
+            data-testid="selection-details"
           >
             Details
           </button>

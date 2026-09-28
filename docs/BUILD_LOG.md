@@ -116,3 +116,222 @@ Newest entries at the bottom. Each session appends: what shipped, test counts, d
 **Known gaps**
 - The web bundle is ~1.1 MB (225 KB gzipped), mostly the catalog JSON with provenance; code-splitting is G10.
 - The default new game (two people, a bell tent, two months of groceries) is a stopgap until the G7 new-game wizard and starting kits.
+
+---
+
+## G5 — Information surfaces: System Card, Needs Checklist, flow overlay (2026-09-28)
+
+**Shipped**
+- **"Why" everywhere.** `WhyNum` makes every number on the checklist, the cards, and the HUD a button that opens a popover built from the engine's provenance: the formula, the flow-level terms (system, flow ID, qty × weekly factor × count × unit factor), named refs, the site assumptions used with their values, notes (e.g. the curtailment behind a time-mode shortfall), and the catalog confidence of the systems involved.
+- **System Card** (drawer click, double-click an instance, or Details on a selection): category pills, description, Buy vs Build it yourself as a choice showing both costs and setup hours, then Add. Inputs with supplied / needed bars in the flow's own period and a role tag (required, boost, capacity, site, need). From the catalog, bars show what the current design supplied last week; for a placed instance they show that instance's live supply yesterday, with its satisfaction, the input limiting it, maturity, construction progress, and a priority control (serve sooner / later, undoable). Outputs with produced per period and where the resource went last week. Labor block. Collapsible Details: lifespan, footprint, years to full output, confidence, source, notes, and the catalog rows (system ID and every flow ID, with the provenance of its role and timing) in place of an outbound link.
+- **Needs Checklist** (N, or click the score ring): the 11 rows with provided, needed for N humans, % covered, covered/short (icon plus text), overall ring and a plain-language summary. Views: Average year (balance mode, the same objects, so it equals the parity-tested numbers exactly), This season, and Worst week this year (time-mode ledgers; the worst 7-day window). A sparkline per row over the last 52 weeks. Design summary strip: Inputs (n), Systems (n), Outputs (n), clickable.
+- **Flow overlay** (F, or the Flows button): lines from producers to consumers sized by flow, moving dots for direction, red dashes where a consumer was offered less than it asked for, a dashed red ring where nothing in the design makes what it needs; a legend toggling Water, Power, Food, Heat, Waste, Labor; with one system selected, only its flows. Stocks are pooled in the engine, so each consumer's receipt is split across producers in proportion to their output: an honest picture of a shared pool, not of pipes.
+- Engine views: `systemCard`, `checklistView`, `sparklines`, `flowLinks`, `FLOW_GROUPS`. The engine now records, per input, what allocation offered (`granted`) separately from what the consumer used (`received`), so a bed limited by seeds is not shown as short of water.
+
+**Tests:** 95 unit (7 new for the views). 8 e2e (new: card with Buy/DIY switch and details, a card "why" showing HDD from the site, every Average-year checklist value equal to balance mode via `data-value`, all 33 checklist "why" popovers open with a formula, season and worst-week views, an instance card, the overlay and legend). Screenshots: `docs/screenshots/g5/01…10`.
+
+**Known gaps**
+- Per-instance history is not kept (only yesterday's group results), so an instance card's bars are "yesterday", not "last week".
+- The overlay caps at 250 links for legibility.
+
+---
+
+## G6 — Clock, saves, almanac, reports (2026-09-28)
+
+**Shipped**
+- **Calendar:** the HUD shows a display calendar of four 28-day seasons ("Spring 12, year 1") mapped onto the engine's real 365 days (`displayDate`; spring Mar 1, summer Jun 1, fall Sep 1, winter Dec 1), with the real date underneath. Days tick at 1/3/10 per second; at 1× the map gets a warm dawn and a blue dusk within each day (off with reduced motion).
+- **Auto-pause** (each toggleable): first shortage of a household need, hardship, construction complete, harvest, first frost, cash below a month of running costs, end of season. The toast says why.
+- **Almanac (L):** every event newest first with filters (shortages, harvests, builds, people, weather, money), each linked to its instance ("Show on map" selects it and centers the camera).
+- **Toasts** for builds, harvests, hardships, and shortages, stacked (three at most, de-duplicated), dismissable, with "Show on map".
+- **Season and year reports** open automatically: coverage by month, the top shortages with their root-cause chains and affordable catalog fixes, money, labor by system, construction hours, spoilage, spilled power. The starter design's year report reads, e.g., "Bell Tent short on Heat because nothing in the design makes Heat"; the engine test asserts "… short on Water because Well short on Electricity because …".
+- **Saves:** three slots and an autosave every in-game week in IndexedDB (every call wrapped; a visible warning if storage is blocked), Rewind to the last autosave, export/import `.homestead.json` with the seed and full action log (replayed and digest-checked on import), restore-on-reload, and `?design=` links that open a shared layout read only (edits refused, "Make a copy to edit"). `?new` starts fresh.
+- **Undo/redo** now covers placement, removal, moves, priority, and the one game setting (work split), and every undo/redo is logged as actions.
+- **Settings:** units (imperial/metric, display only), resume speed, auto-pause toggles, grid snap, colorblind-safe palette (blue/orange, also on the map), reduced motion (people and flow dots stand still, no dawn/dusk), UI scale, and the household work split.
+- Engine: `Action`, `applyAction`, `replay`, `gameDigest`, `SaveFile`, `validateSave`, `moveInstances`, `displayDate`, `buildReport`, `rootCauseChain`, `suggestFixes`; ledgers gain `laborBySystem`. `docs/ENGINE.md` gains "Saves and replay" and "Reports and root causes".
+
+**Tests:** 106 unit (new: two years of scripted play replay to the same digest, save round-trip, schema errors; report chains for the starter's water, winter solar, and "nothing makes it"). e2e (new file `gameloop.spec.ts`): export after two years → import into a fresh browser context → "Replay verified" and identical digest; autosave written after a week and restored after reload; storage-blocked warning; shared starter design read only with a year report containing a "because" chain; auto-pause, almanac, settings, undoable work split. Playwright now runs one worker (software rendering makes parallel browsers starve each other). Screenshots: `docs/screenshots/g6/`.
+
+**Known gaps**
+- Replay cost grows with game length (a two-year game replays in well under a second).
+- The share link carries counts only (it lays the design out automatically), not positions.
+
+---
+
+## G7 — Space matters: adjacency, terrain, sites, new-game wizard (2026-09-28)
+
+**Shipped**
+- Catalog: adjacency rules gain `stack` and a `terrain:tree` source; new `assignedCapacities` and `terrainRules` sections, validated at export. `data/catalog_overrides.json` ships the roadmap's starter rules: shade (30 ft, ×0.9 each, floor 0.7, existing trees included), pollination within 300 ft, chickens by compost +10%, trees within 150 ft of a turbine −30%, rain catchment on a roof within 50 ft (assigned), paddocks (assigned), swales +4%/pond −3% per percent of slope.
+- Engine: `computeSpatial` (edge-to-edge distances, cached by a content key), grouping by spatial signature, per-instance roof/paddock assignment with player links (`setLink`, action `link`), `require` gates, household `scale` (children 0.6), and `designAdjust` feeding balance mode so the Average-year checklist and its "why" show placement effects.
+- Kits and wizard: `newGameFromOptions` builds a game and its day-0 actions (so it replays) for empty land, a tent camp, or a suburban home to convert, placing each system at the nearest valid spot. The New game wizard (first visit, or Saves → Start a new homestead) picks site, parcel (¼, 1, 5 acres), cash, adults and children, weather (average or real; real weather arrives in G9), and kit.
+- UI: the System Card's "Where it sits" lists placement effects and a roof/paddock picker ("Nearest with room" or a specific provider in range); selecting a tree, hive, or coop draws its effect radius, and a collector draws a line to its roof; "why" rows show the × placement factor. Checklist time-mode rows carry the site values behind them (HDD, CDD, precipitation, sun, and growing-season days) so two sites can be compared.
+- Terrain is read-only: the stream and existing trees draw on the map (fractions of the parcel side, so they scale) and existing trees shade and disturb wind.
+
+**Tests:** 126 unit (new: spatial rules 9, two sites one design, kits 10). e2e `space.spec.ts`: dragging a tree beside a cabin lowers the cooling need and the popover names the shade and the Oak Tree; a rain collector links to the nearest roof and the card switches it to the yurt (undoable); the wizard sets up Asheville on ¼ acre with two children and a suburban kit; the same design on Laramie vs Asheville shows 9,140 vs 3,760 HDD in the heat "why". Screenshots `docs/screenshots/g7/`.
+
+**Digests re-recorded (intended):** `time:starter.json` `d3c7db5705dadb12`, `time:offgrid-cabin-family.json` `b80456dd705d9f94`; placed layouts now feel shade from the site's existing trees. Balance digests and spreadsheet parity are unchanged. Time-mode agreement tests now compare with balance mode plus the same spatial adjustments.
+
+**Known gaps**
+- Terrain water (the stream) is decorative for collision; systems may sit on it.
+- Real-weather mode is selectable but behaves as average until G9.
+- Effects are recomputed when layout changes, not when a source matures (a sapling shades like a tree once built).
+
+---
+
+## G8 — Goals, guidance, feel, accessibility (2026-09-28)
+
+**Shipped**
+- **Tutorial quests** (`QUESTS` in `packages/engine/src/views/quests.ts`), one at a time, pinned top-right, skippable ("Skip tutorial"). The six the roadmap lists, in order: Shelter two people; Drinking water every day for a week; Cook without buying fuel; Make it through January warm; Grow 10% of your calories; Close a loop (food waste into compost into vegetables). Each quest names its checklist row, has a hint line, and returns `{done, progress, detail}` from game state, so the card shows a progress bar and one line of status ("4 of 7 days in a row").
+- **Milestones** (`MILESTONES`): first harvest, 30 days without a household shortage, first closed loop, net-positive cash for a 91-day season, 50% / 75% / 90% off-grid score over a full year. They show as quiet badges under the quest card with the day earned: no sound, no popup beyond one toast.
+- **Hints** (`shortageHints`): when a flow resource has been short on each of the last 7 days, a hint card lists up to 3 catalog systems that make it, ranked by cost per unit of the week's shortfall they would cover (`min(weekly output, shortfall)`), each with "also needs …" (its required inputs) and an Add button that opens its System Card. One hint card shows at a time (the largest shortfall first); dismissing it silences that resource for 28 days.
+- Progress (`quests`, `milestones`, `tutorialSkipped`, `dismissedHints`) lives in the store, is updated after every tick (`updateProgress`), and is saved in slots, autosaves, and exports.
+- **Feel:** new systems pop in with a small scale ease; harvests float a crop mark up from the plants; people carry crates for three days after a harvest; seasonal grass tints and winter snow (from G4); dawn and dusk light at 1× (from G6). With reduced motion, none of these animate. Reduced motion now defaults to the OS setting (`prefers-reduced-motion`) until the player changes it.
+- **Keyboard play:**
+  - `/` opens the drawer and focuses search, selecting any old text.
+  - Tab moves through tiles, and Enter opens a card. The card focuses its Add button (or Close if there is none), and Enter adds.
+  - In place mode, arrows move a visible keyboard cursor (a ghost) in steps of at least 5 ft, Shift for 10×. Enter places, Shift+Enter keeps placing, and Esc cancels.
+  - With a selection, arrows nudge it (undoable).
+  - L opens the almanac, N the checklist, F the flow overlay, and Space, 1, 2, 3 set the speed.
+  - Shortcuts ignore text fields but not checkboxes or sliders.
+- **Accessibility:** a `:focus-visible` ring on every control, ARIA labels on icon-only buttons and regions (HUD, drawer, map, badges, quests), a text label alongside every weather glyph and shortage icon, and a colorblind-safe palette (G6). Contrast was checked by eye against AA for the default theme; no automated contrast audit yet.
+
+**Tests:** 132 unit across 15 files. New in `quests.test.ts` (6):
+- A tent alone does not shelter two people, but adding a yurt does.
+- A week of city water completes the water quest.
+- A solar oven counts toward cooking without bought fuel, but a propane range does not.
+- Every quest names a real checklist row.
+- A tent camp earns no milestones in a week.
+- A week with no water produces a hint that offers systems.
+
+New e2e `keyboard.spec.ts` (2):
+- **The roadmap's handoff condition, "first 15 minutes, keyboard only":** a yurt, a municipal water hookup, and a solar oven are placed using only `/`, typing, Tab, Enter, and arrows. At 10× speed, the first three quests complete.
+- Arrow keys move a selected system, and focus stays visible.
+
+Screenshots are in `docs/screenshots/g8/`.
+
+**Known gaps**
+- There is no ambient sound toggle yet. The roadmap says to ship no audio until original audio exists, so the setting was left out rather than shipped as a dead toggle.
+- Contrast AA is not verified by a tool (axe or Lighthouse). That belongs with the G10 Lighthouse CI step.
+- Two e2e specs (`information`, `playfield` speed) timed out once during a full-suite run under load and passed on rerun. That points to timing sensitivity with software rendering, not a logic bug, but it is worth watching in CI.
+
+---
+
+## Status at the end of the first run (G0–G8)
+
+### Done
+
+| Session | State | Handoff condition met? |
+|---|---|---|
+| G0 Scaffold, CI, purity lint | Done | Yes (locally; CI has never run remotely, see below) |
+| G1 Catalog exporter | Done | Yes: `catalog:check` is clean, and the validators reject the broken fixtures |
+| G2 Balance engine | Done | Yes: parity with the spreadsheet to 1e-9 on every flow, checklist cell, and summary metric |
+| G3 Time engine | Done | Yes: scenarios, conservation, determinism, balance agreement, performance |
+| G4 Playfield | Done | Yes: the yurt, well, and panels flow, plus 300 instances. 60 fps on real GPUs is not verified |
+| G5 Information surfaces | Done | Yes: every checklist value equals balance mode, and every "why" opens |
+| G6 Clock, saves, reports | Done | Yes: export, import in a fresh browser, replay to the same digest |
+| G7 Space matters | Done | Yes: shade, roof links, the wizard, and site comparison |
+| G8 Goals and feel | Done | Yes: the first three quests complete with keyboard only |
+
+### Half-done or not started
+
+- **Push and CI:** every `git push` from the sandbox returned 403, because the Claude GitHub App has no access to the repo. All work is committed locally on `claude/gifted-hypatia-x158zw`. Until access is fixed and a push succeeds, `.github/workflows/ci.yml` has never run on GitHub.
+- **G9 (not started):**
+  - Real weather is selectable in the wizard but behaves as the average year: `weatherFor` returns the average day, with frost tags only.
+  - Not built: scenario compare, Monte Carlo in a Web Worker, CLI `montecarlo` parity, sensitivity or tornado charts, flow-record, CSV, and PNG exports.
+- **G10 (not started):**
+  - Lighthouse budget, error boundaries, the bottom-sheet layout under 900 px, the GitHub Pages deploy, `docs/PLAYING.md`, and the modding guide.
+  - The web bundle is about 1.18 MB (247 KB gzipped), mostly the catalog with provenance, and is not code-split.
+- **Partial within finished sessions:**
+  - Per-instance history is not kept, so an instance card shows "yesterday", not "last week".
+  - Share links carry counts, not positions.
+  - Terrain water does not block placement.
+  - Spatial effects do not ramp with maturity: a sapling shades like a full tree once it is built.
+  - Allocation makes one pass, so returned stock is not re-offered the same day.
+  - Replay cost grows with game length.
+  - The ambient sound toggle and an automated contrast audit are missing (see G8).
+- **Art:** everything is original placeholder vector glyphs. `apps/web/src/sprites/manifest.json` keys sprites by `spriteKey`, so real art can drop in without code changes.
+
+### Tests
+
+**Unit (Vitest), 132 tests in 15 files**
+
+- `packages/catalog/test/`:
+  - `export.test.ts`: templates, defaults, overrides, and the committed files staying in sync.
+  - `validation.test.ts`: broken copies of the real workbook generated inside the test.
+- `packages/engine/test/`:
+  - `parity.test.ts`: spreadsheet goldens to 1e-9.
+  - `balance-designs.test.ts`: the four designs, their digests, and balance performance.
+  - `time-scenarios.test.ts`: the roadmap scenarios, plus priority, substitution, spoilage, construction, maturity, and placement.
+  - `time-invariants.test.ts`: conservation, agreement with balance mode, determinism and time digests, immutability, and the year-performance check (a child process running an esbuild bundle).
+  - `views.test.ts`: the checklist, card, flow overlay, and HUD, all with provenance.
+  - `replay.test.ts`: replay to the same digest, save round-trip, schema errors.
+  - `report.test.ts`: root-cause chains and fixes.
+  - `spatial.test.ts`: shade, pollination, chickens by compost, turbine wake, roof and paddock links, slope, and one design on two sites.
+  - `kits.test.ts`: the new-game kits.
+  - `quests.test.ts`: quests, milestones, hints.
+  - `purity.test.ts`: proves the engine lint rules fire.
+  - `version.test.ts`.
+- Digests: `packages/engine/test/digests.json`, holding 4 balance and 3 time digests. The time digests were re-recorded in G7 because of spatial effects.
+
+**End-to-end (Playwright, Chromium with SwiftShader, one worker), 19 tests in 7 files**
+
+- `smoke.spec.ts` (1).
+- `playfield.spec.ts` (5): place, move, undo, redo, delete; drag from the drawer; box select and copy/paste; speed and construction; drawer filters.
+- `perf.spec.ts` (1): 300 instances, CPU frame budget.
+- `information.spec.ts` (1): the card, the checklist compared with balance mode, all "why" popovers, the flow overlay.
+- `gameloop.spec.ts` (5): export → import → replay verified; autosave and restore; storage blocked; read-only share link and report; auto-pause, almanac, settings.
+- `space.spec.ts` (4): shade from a tree, roof links, the wizard on Asheville, Laramie vs Asheville HDD.
+- `keyboard.spec.ts` (2): the first 15 minutes played keyboard-only; nudging with arrows and visible focus.
+
+**Other checks**
+- `npm run lint` (with the engine-purity rules).
+- `npm run typecheck`.
+- `npm run catalog:check`.
+- `npm run build`.
+- Screenshots for each session in `docs/screenshots/g0…g8/`.
+
+### Decisions not in the roadmap (creative license)
+
+**Game and presentation**
+- The name TERRA Homestead Plugin is in the title, the HUD, and `package.json` (`terra-homestead-plugin`). The workspace packages stay `@homestead/*`.
+- The display calendar has four 28-day seasons laid over the engine's real 365-day year. Spring starts Mar 1, summer Jun 1, fall Sep 1, winter Dec 1. Engine math always uses real days.
+- Placeholder art is drawn in code: Pixi vector glyphs on the map, SVG in the drawer, one glyph per category, and a baked seasonal grass texture. No third-party assets.
+- Flow overlay:
+  - Stocks are pooled, so each consumer's receipt is split across producers in proportion to their output.
+  - The overlay is capped at 250 links.
+  - Consumers with no producer get a dashed red ring.
+- The quest card shows one quest at a time, with a progress bar and a status line. Milestones are silent badges with a single toast. Only the largest shortfall's hint shows, and dismissing it silences that resource for 28 days.
+- Existing trees are drawn with a 28 ft crown, and terrain features are placed as fractions of the parcel side so they scale with acreage.
+
+**Engine rules**
+- Human needs and shelter heating/cooling are `need` inputs. A shortfall hurts health and the checklist but never switches the consumer off.
+- Health floor is 0.3, and hardship starts after 3 days below 80% coverage.
+- Up to 60% of the day's labor goes to construction first.
+- Electricity has `directUseShare` 0.5: half of daytime demand can use solar without a battery.
+- Non-storable services (heat, cooling, cooking fuel, transport, sanitation) carry over one day, then spill.
+- Food requests are met from any food-family stock, most perishable first. Cold storage slows spoilage by 80%.
+- Missing construction materials are imported and logged instead of blocking the build.
+- Refunds: 25% for removing a finished system, 100% while it is still under construction.
+- Instances are grouped by system, priority, spatial signature, and household scale, which is what makes a 196-instance year run in about 40–55 ms.
+- The daily step is split into phase functions so V8 optimizes it (as one function it took about 140 ms per year).
+
+**Catalog overrides and defaults** (all in `data/catalog_overrides.json` or in `docs/CATALOG.md` default rules, with a note on each)
+- 26 inputs are marked as boosts.
+- Food storage packing densities.
+- Distances between footprints are measured edge to edge, not center to center.
+- Shade is ×0.9 per source with a floor of 0.7 and stacks. A `once` effect applies a single time however many rules reach it.
+- A child counts as 0.6 of an adult.
+- Roofs serve rain collectors within 50 ft; paddocks have no distance limit.
+- Slope: swales +4% per percent of slope, ponds −3% per percent.
+
+**Saves and sharing**
+- The save format is `homestead.save.v1`: seed, action log, progress, and a digest.
+- On import, the whole log is replayed and checked against the digest.
+- The autosave runs weekly in IndexedDB, and every storage call is wrapped so a blocked storage shows a warning instead of crashing.
+- `?design=` opens a layout read only, with "Make a copy to edit". `?new` starts fresh.
+
+**Tooling**
+- Packages export TypeScript source directly, so there is no build step for packages.
+- Playwright runs one worker, because software WebGL starves parallel browsers.
+- The perf test checks the CPU frame budget everywhere and the 60 fps interval only when a hardware GPU is present.
+- The year-performance test runs outside Vitest's transform, as an esbuild bundle in a child Node process.
+- The session branch `claude/gifted-hypatia-x158zw` holds all sessions, one commit per session, since the cloud session was pinned to it.

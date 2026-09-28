@@ -113,6 +113,7 @@ test('box select, copy and paste, and keyboard camera', async ({ page }) => {
 });
 
 test('time runs at the chosen speed and construction shows progress', async ({ page }) => {
+  test.setTimeout(120_000);
   await openApp(page);
   await choose(page, 'yurt', YURT, 'diy');
   await clickWorld(page, 60, 60);

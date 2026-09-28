@@ -208,6 +208,7 @@ export function balance(catalog: Catalog, assumptions: Assumptions, design: Desi
   const needOut = new Map<NeedKey, Term[]>();
   const needIn = new Map<NeedKey, Term[]>();
   const assumptionsByResource = new Map<string, Set<AssumptionKey>>();
+  const adjustNotes = new Map<string, Set<string>>();
   for (const k of NEED_KEYS) {
     needOut.set(k, []);
     needIn.set(k, []);
@@ -221,7 +222,7 @@ export function balance(catalog: Catalog, assumptions: Assumptions, design: Desi
       const flow = fs.flow;
       const qty = evalQtyExpr(flow.qty, sys, assumptions);
       const factor = factors[flow.period];
-      const weekly = qty * factor * count; // (E × weekly factor) × count, as Flows!H then J
+      let weekly = qty * factor * count; // (E × weekly factor) × count, as Flows!H then J
       const term: Term = {
         flowId: flow.id,
         systemId: sys.id,
@@ -231,6 +232,16 @@ export function balance(catalog: Catalog, assumptions: Assumptions, design: Desi
         factor,
         value: weekly,
       };
+      const adj = design.adjust?.[sys.id]?.[fs.out ? 'out' : 'in']?.[flow.resource];
+      if (adj && adj.factor !== 1) {
+        // Spatial adjustment (G7): shade, slope, or neighbors change this flow.
+        weekly *= adj.factor;
+        term.adjust = adj.factor;
+        term.value = weekly;
+        let set = adjustNotes.get(flow.resource);
+        if (!set) adjustNotes.set(flow.resource, (set = new Set<string>()));
+        for (const n of adj.notes) set.add(n);
+      }
       const bucket = fs.out ? outTerms : inTerms;
       const list = bucket.get(flow.resource);
       if (list) list.push(term);
@@ -265,7 +276,11 @@ export function balance(catalog: Catalog, assumptions: Assumptions, design: Desi
     const consumed = i ? sum(i) : 0;
     const net = produced - consumed;
     const assumptionKeys = [...(assumptionsByResource.get(r.name) ?? [])];
-    const extra = assumptionKeys.length ? { assumptions: assumptionKeys } : {};
+    const rn = adjustNotes.get(r.name);
+    const extra = {
+      ...(assumptionKeys.length ? { assumptions: assumptionKeys } : {}),
+      ...(rn ? { notes: [...rn] } : {}),
+    };
     resources[r.name] = {
       resource: r.name,
       unit: r.unit,
@@ -288,7 +303,11 @@ export function balance(catalog: Catalog, assumptions: Assumptions, design: Desi
     const pct = n === 0 ? 0 : Math.min(1, p / n);
     const feeding = st.feeding.get(need)!;
     const keys = uniq(feeding.flatMap((r) => [...(assumptionsByResource.get(r) ?? [])]));
-    const extra = keys.length ? { assumptions: keys } : {};
+    const rowNotes = feeding.flatMap((r) => [...(adjustNotes.get(r) ?? [])]);
+    const extra = {
+      ...(keys.length ? { assumptions: keys } : {}),
+      ...(rowNotes.length ? { notes: rowNotes } : {}),
+    };
     const unit = CHECKLIST_UNITS[need];
     return {
       need,

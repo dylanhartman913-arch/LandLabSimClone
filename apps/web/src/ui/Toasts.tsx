@@ -9,6 +9,11 @@ export function Toasts() {
         <div key={t.id} className={`toast ${t.tone}`} role="status">
           {t.tone === 'warn' && <span aria-hidden="true">⚠ </span>}
           {t.text}
+          {t.instanceId && (
+            <button className="link" onClick={() => useGame.getState().focusInstance(t.instanceId!)}>
+              Show on map
+            </button>
+          )}
           <button className="btn ghost" onClick={() => dismiss(t.id)} aria-label="Dismiss">
             ✕
           </button>

@@ -4,20 +4,53 @@ import { explained, type Explained } from '../provenance.ts';
 import { dateLabel, monthOfDay } from '../time/calendar.ts';
 import { siteAssumptions } from './site.ts';
 import type { GameState } from '../time/types.ts';
+import type { Design } from '../design.ts';
+import { computeSpatial } from '../time/spatial.ts';
 
-/** Counts of every placed system (built or building), for balance mode and the "My" drawer. */
+/** Counts of every placed system (built or building; a child counts 0.6), for balance mode and "My". */
 export function designCounts(state: GameState, opts: { activeOnly?: boolean } = {}): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const i of state.instances) {
     if (opts.activeOnly && i.status !== 'active') continue;
-    counts[i.systemId] = (counts[i.systemId] ?? 0) + 1;
+    counts[i.systemId] = (counts[i.systemId] ?? 0) + (i.scale ?? 1);
   }
   return counts;
 }
 
-/** Balance mode for the current layout on the game's site ("Average year"). */
+/** Per-system average spatial multipliers for balance mode, with the reasons. */
+export function designAdjust(state: GameState, catalog: Catalog): NonNullable<Design['adjust']> {
+  const spatial = computeSpatial(catalog, state);
+  const sums: Record<
+    string,
+    { n: number; in: Record<string, number>; out: Record<string, number>; notes: Set<string> }
+  > = {};
+  for (const i of state.instances) {
+    const sp = spatial.get(i.id);
+    const bag = (sums[i.systemId] ??= { n: 0, in: {}, out: {}, notes: new Set() });
+    bag.n += 1;
+    if (!sp) continue;
+    for (const [r, m] of Object.entries(sp.inMult)) bag.in[r] = (bag.in[r] ?? 0) + (m - 1);
+    for (const [r, m] of Object.entries(sp.outMult)) bag.out[r] = (bag.out[r] ?? 0) + (m - 1);
+    for (const n of sp.notes) bag.notes.add(n);
+  }
+  const adjust: NonNullable<Design['adjust']> = {};
+  for (const [id, b] of Object.entries(sums)) {
+    const conv = (x: Record<string, number>) =>
+      Object.fromEntries(
+        Object.entries(x).map(([r, d]) => [r, { factor: 1 + d / b.n, notes: [...b.notes] }]),
+      );
+    if (Object.keys(b.in).length || Object.keys(b.out).length)
+      adjust[id] = { in: conv(b.in), out: conv(b.out) };
+  }
+  return adjust;
+}
+
+/** Balance mode for the current layout on the game's site ("Average year"), with spatial effects. */
 export function designBalance(state: GameState, catalog: Catalog): BalanceResult {
-  return balance(catalog, siteAssumptions(state.site), { counts: designCounts(state) });
+  return balance(catalog, siteAssumptions(state.site), {
+    counts: designCounts(state),
+    adjust: designAdjust(state, catalog),
+  });
 }
 
 export type Season = 'spring' | 'summer' | 'fall' | 'winter';

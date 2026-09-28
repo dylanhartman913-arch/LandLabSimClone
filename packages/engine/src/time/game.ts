@@ -163,6 +163,7 @@ export function placeSystem(
   x: number,
   y: number,
   buildMode: BuildMode,
+  opts: { scale?: number } = {},
 ): { state: GameState; instanceId: string } {
   const check = canPlace(catalog, state, systemId, x, y);
   if (!check.ok) throw new Error(check.reason);
@@ -186,6 +187,7 @@ export function placeSystem(
     priority: sys.priorityTier,
   };
   if (sys.name === 'Human Being') inst.person = newPerson();
+  if (opts.scale !== undefined && opts.scale !== 1) inst.scale = opts.scale;
   return {
     instanceId: id,
     state: {
@@ -326,4 +328,38 @@ function adjustPending(p: GameState['pendingCash'], cashDelta: number): GameStat
   return cashDelta >= 0
     ? { ...p, refunds: p.refunds + cashDelta }
     : { ...p, purchases: p.purchases - cashDelta };
+}
+
+/** Set several positions at once (a group move the UI has already validated as a whole). */
+export function moveInstances(
+  state: GameState,
+  moves: readonly { id: string; x: number; y: number }[],
+): GameState {
+  const byId = new Map(moves.map((m) => [m.id, m]));
+  return {
+    ...state,
+    instances: state.instances.map((i) => {
+      const m = byId.get(i.id);
+      return m ? { ...i, x: m.x, y: m.y } : i;
+    }),
+  };
+}
+
+/** Link a consumer to a provider for an assigned capacity (null returns it to nearest-with-room). */
+export function setLink(
+  state: GameState,
+  instanceId: string,
+  resource: string,
+  providerId: string | null,
+): GameState {
+  return {
+    ...state,
+    instances: state.instances.map((i) => {
+      if (i.id !== instanceId) return i;
+      const links = { ...(i.links ?? {}) };
+      if (providerId) links[resource] = providerId;
+      else delete links[resource];
+      return { ...i, links };
+    }),
+  };
 }

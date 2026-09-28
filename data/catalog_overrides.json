@@ -134,5 +134,286 @@
       "note": "Hay is the staple for ruminants and rabbits; fresh forage supplements it."
     }
   },
-  "adjacencyRules": []
+  "adjacencyRules": [
+    {
+      "from": "S047",
+      "to": "category:Shelter",
+      "radiusFt": 30,
+      "effect": {
+        "resource": "Cooling",
+        "multiplier": 0.9,
+        "floor": 0.7,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "each"
+      },
+      "note": "Shade trees within 30 ft cut a shelter's cooling load by 10% each (to at most 30% off)."
+    },
+    {
+      "from": "S065",
+      "to": "category:Shelter",
+      "radiusFt": 30,
+      "effect": {
+        "resource": "Cooling",
+        "multiplier": 0.9,
+        "floor": 0.7,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "each"
+      },
+      "note": "Shade trees within 30 ft cut a shelter's cooling load by 10% each (to at most 30% off)."
+    },
+    {
+      "from": "S077",
+      "to": "category:Shelter",
+      "radiusFt": 30,
+      "effect": {
+        "resource": "Cooling",
+        "multiplier": 0.9,
+        "floor": 0.7,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "each"
+      },
+      "note": "Shade trees within 30 ft cut a shelter's cooling load by 10% each (to at most 30% off)."
+    },
+    {
+      "from": "S130",
+      "to": "category:Shelter",
+      "radiusFt": 30,
+      "effect": {
+        "resource": "Cooling",
+        "multiplier": 0.9,
+        "floor": 0.7,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "each"
+      },
+      "note": "Shade trees within 30 ft cut a shelter's cooling load by 10% each (to at most 30% off)."
+    },
+    {
+      "from": "terrain:tree",
+      "to": "category:Shelter",
+      "radiusFt": 30,
+      "effect": {
+        "resource": "Cooling",
+        "multiplier": 0.9,
+        "floor": 0.7,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "each"
+      },
+      "note": "Shade trees within 30 ft cut a shelter's cooling load by 10% each (to at most 30% off)."
+    },
+    {
+      "from": "S016",
+      "to": "category:Plants",
+      "radiusFt": 300,
+      "effect": {
+        "resource": "Pollination",
+        "multiplier": 1,
+        "mode": "require",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Bees and pollinators only pollinate within 300 ft."
+    },
+    {
+      "from": "S016",
+      "to": "category:Garden",
+      "radiusFt": 300,
+      "effect": {
+        "resource": "Pollination",
+        "multiplier": 1,
+        "mode": "require",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Bees and pollinators only pollinate within 300 ft."
+    },
+    {
+      "from": "S052",
+      "to": "category:Plants",
+      "radiusFt": 300,
+      "effect": {
+        "resource": "Pollination",
+        "multiplier": 1,
+        "mode": "require",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Bees and pollinators only pollinate within 300 ft."
+    },
+    {
+      "from": "S052",
+      "to": "category:Garden",
+      "radiusFt": 300,
+      "effect": {
+        "resource": "Pollination",
+        "multiplier": 1,
+        "mode": "require",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Bees and pollinators only pollinate within 300 ft."
+    },
+    {
+      "from": "S137",
+      "to": "category:Plants",
+      "radiusFt": 300,
+      "effect": {
+        "resource": "Pollination",
+        "multiplier": 1,
+        "mode": "require",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Bees and pollinators only pollinate within 300 ft."
+    },
+    {
+      "from": "S137",
+      "to": "category:Garden",
+      "radiusFt": 300,
+      "effect": {
+        "resource": "Pollination",
+        "multiplier": 1,
+        "mode": "require",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Bees and pollinators only pollinate within 300 ft."
+    },
+    {
+      "from": "S018",
+      "to": "S035",
+      "radiusFt": 20,
+      "effect": {
+        "resource": "Compost",
+        "multiplier": 1.1,
+        "mode": "scale",
+        "direction": "out",
+        "stack": "once"
+      },
+      "note": "Chickens scratching within 20 ft turn compost faster: +10% compost."
+    },
+    {
+      "from": "S075",
+      "to": "S035",
+      "radiusFt": 20,
+      "effect": {
+        "resource": "Compost",
+        "multiplier": 1.1,
+        "mode": "scale",
+        "direction": "out",
+        "stack": "once"
+      },
+      "note": "Chickens scratching within 20 ft turn compost faster: +10% compost."
+    },
+    {
+      "from": "S047",
+      "to": "S093",
+      "radiusFt": 150,
+      "effect": {
+        "resource": "Electricity",
+        "multiplier": 0.7,
+        "mode": "scale",
+        "direction": "out",
+        "stack": "once"
+      },
+      "note": "Trees within 150 ft disturb the wind: a turbine loses 30%."
+    },
+    {
+      "from": "S065",
+      "to": "S093",
+      "radiusFt": 150,
+      "effect": {
+        "resource": "Electricity",
+        "multiplier": 0.7,
+        "mode": "scale",
+        "direction": "out",
+        "stack": "once"
+      },
+      "note": "Trees within 150 ft disturb the wind: a turbine loses 30%."
+    },
+    {
+      "from": "S077",
+      "to": "S093",
+      "radiusFt": 150,
+      "effect": {
+        "resource": "Electricity",
+        "multiplier": 0.7,
+        "mode": "scale",
+        "direction": "out",
+        "stack": "once"
+      },
+      "note": "Trees within 150 ft disturb the wind: a turbine loses 30%."
+    },
+    {
+      "from": "S130",
+      "to": "S093",
+      "radiusFt": 150,
+      "effect": {
+        "resource": "Electricity",
+        "multiplier": 0.7,
+        "mode": "scale",
+        "direction": "out",
+        "stack": "once"
+      },
+      "note": "Trees within 150 ft disturb the wind: a turbine loses 30%."
+    },
+    {
+      "from": "terrain:tree",
+      "to": "S093",
+      "radiusFt": 150,
+      "effect": {
+        "resource": "Electricity",
+        "multiplier": 0.7,
+        "mode": "scale",
+        "direction": "out",
+        "stack": "once"
+      },
+      "note": "Trees within 150 ft disturb the wind: a turbine loses 30%."
+    }
+  ],
+  "assignedCapacities": [
+    {
+      "resource": "Roofing area",
+      "maxDistanceFt": 50,
+      "note": "Rain catchment uses the roof of a shelter within 50 ft (nearest with room, unless you link one)."
+    },
+    {
+      "resource": "Fenced paddock",
+      "maxDistanceFt": null,
+      "note": "Grazing animals are assigned to a fenced paddock (nearest with room, unless you link one)."
+    }
+  ],
+  "terrainRules": [
+    {
+      "to": "S107",
+      "resource": "Water",
+      "direction": "out",
+      "perSlopePct": 0.04,
+      "min": 1,
+      "max": 1.5,
+      "note": "Swales on sloped land catch more runoff: +4% per percent of slope, up to +50%."
+    },
+    {
+      "to": "S105",
+      "resource": "Water",
+      "direction": "out",
+      "perSlopePct": -0.03,
+      "min": 0.5,
+      "max": 1,
+      "note": "Ponds on steep ground hold less: \u22123% per percent of slope, to at most half."
+    },
+    {
+      "to": "S105",
+      "resource": "Water storage",
+      "direction": "out",
+      "perSlopePct": -0.03,
+      "min": 0.5,
+      "max": 1,
+      "note": "Ponds on steep ground hold less: \u22123% per percent of slope, to at most half."
+    }
+  ]
 }

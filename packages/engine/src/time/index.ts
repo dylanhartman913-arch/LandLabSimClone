@@ -7,3 +7,4 @@ export * from './plans.ts';
 export * from './game.ts';
 export * from './step.ts';
 export * from './summarize.ts';
+export * from './spatial.ts';
