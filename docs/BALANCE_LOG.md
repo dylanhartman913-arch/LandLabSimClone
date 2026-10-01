@@ -48,3 +48,46 @@ Catalog quantities are never tuned.
 | Greenfield Standard idle | Asheville | day 52 (food) | day 70 | ≥ 50 | ✓ |
 | Greenfield Gentle idle | all three | day 77 | day 116 or later | — | ✓ (≥ 90) |
 | Adapt Standard idle, 2 years | all three | none | none | 100 | ✓ (wellbeing ≥ 70, self-reliance < 5%) |
+
+## G16: the tuning loop
+
+The bots (`packages/cli/bots/`) played every gate on 3 sites × 3 seeds (`npm run test:pacing`). Each row below is one change, in the order it was made, with what it fixed. Every change is to data or a wellbeing-adjacent constant, except the four engine fixes, which are bugs the bots found rather than tuning.
+
+### Engine fixes the bots found (not tuning)
+
+| Fix | Symptom in the bot runs |
+|---|---|
+| Upkeep is job priority 1, not 3 (`time/gather.ts`). | While the coop and the mass heater were being built, construction plus survival gathering took the whole labor pool. The water filter and the toilet got no upkeep for 10 days, and wellbeing fell 30 points to a summer plateau of 57. |
+| Flow boosts draw on stock (`time/step.ts`). | Boost inputs that are Flows (the coop's scraps, greens, and carbon) were measured against Service output only, so they were always 0%. Every coop in every design laid about a third fewer eggs. |
+| Seed is kept from meals (`seedReserve`). | People ate the potato patch's 25 lbs of seed potatoes before planting season. A planted or being-planted system's per-season food seed is now held back. |
+| Weekly bills include running costs (house, cars). | "Weekly bills" counted only groceries and utilities. The adapt tutorial's last lever (a part-time job, one car) didn't show at all. Cash accounting is unchanged: running costs were always cash out. |
+
+### Data changes
+
+| # | Change | Kind | Why |
+|---|---|---|---|
+| 1 | Greenfield stockpile: no seed potatoes. Quest 2's reward gives 25 lbs instead ("Ruth splits her seed potatoes"). | start config, quest reward | They would be eaten before a patch existed to reserve them. |
+| 2 | Quest 3's steps also plant a Potato Patch, and buy 250 lbs of compost. | quest content | The only planting that can carry a quarter of the food in the first season. |
+| 3 | Quest 4 uses a Bokashi Bucket, not Compost Piles. | quest content | The pile took all the wild greens, so the hens got none. The bucket composts kitchen scraps under leaf litter, which matches the title. |
+| 4 | Quest 5's standing grocery order keeps above 14,000 kcal (half a week), up to 42,000. | quest content | Below one week of food, the auto-forage rule works the meadow between deliveries. |
+| 5 | Quest 6 adds 20 hours a week of foraging. | quest content | 5.9 hours a day of labor sat idle. Greens feed the hens (their boost) and the table. |
+| 6 | Quest 7: cold-snap threshold HDD 22 (was 30); a standing firewood order; a reward of $600 and 600 lbs of oak. | quest goal, content, reward | Asheville never reaches HDD 30. Deadfall can't carry three fires through a winter (about 7,800 lbs a year). |
+| 7 | Rewards: water $200 + 10 gal; firewood $300; bed $300 + 200 lbs compost; compost $200 + 50 lbs feed; auto-water 80,000 kcal; hens $500. | quest rewards | $8,000 doesn't buy a year of groceries, firewood, and feed (about $160 a week) plus builds. Without these, cash ran out in late winter on every site. |
+| 8 | Wild greens: produce by-product 0.5 → 1.0 lb per hour, regrowth 3 → 5 lbs a day. | node yields | Home-grown food stuck at 22–24%. |
+| 9 | Asheville: a second wild-greens patch. | site nodes | The wettest site had fewer greens than the Front Range. |
+| 10 | Springs: 25 gal per hour (Front Range was 15, Laramie 12), the roadmap's table value. | node yields | In a dry real-weather Laramie spring, the spring couldn't keep up once the beds and potatoes drank. The filter starved, and people went to town by day 59. |
+| 11 | Adapt quest 8: sell the second car, and put the commute and the grocery run first. | quest content | With a part-time job, one car (250 miles) covers the commute and groceries. Leisure miles take the cut (a comfort drift). |
+
+### Gate results after tuning (`npm run test:pacing`, seeds 1–3)
+
+| Gate | Front Range | Laramie | Asheville |
+|---|---|---|---|
+| Greenfield Standard idle: first hardship ≥ 28, nobody leaves < 60 | hardship day 53–54, nobody leaves | same | same |
+| Greenfield Standard tutorialFollower: every month ≥ 60; home-grown ≥ 25% by frost | lowest month 78; 31% | 78; 32% | 77; 29% |
+| Greenfield Gentle idle: nobody leaves < 90 | ✓ | ✓ | ✓ |
+| Greenfield Real weather tutorialFollower: survives in ≥ 2 of 3 | 3 of 3 | 3 of 3 | 3 of 3 |
+| Adapt Standard adaptUpgrader: bills −20%, wellbeing ≥ 70 | $807 → $627 (−22%), lowest 76 | −22%, 76 | −22%, 76 |
+
+**Open for the designer:**
+- Real weather doesn't bite: all 9 seeds survive year 1. The roadmap hoped it would ("difficulty should bite"), but the gate only asks for at least 2 of 3. Raising `wellbeingMult` for Real weather to 1.25, or making its stockpile smaller, would make it bite.
+- The tutorial follower lands on 77–78 for its lowest month. Comfort drift (no hot water, no car, a crowded tent) holds a camp at about 80, which is the intended "you can live like this, but you'd want more".

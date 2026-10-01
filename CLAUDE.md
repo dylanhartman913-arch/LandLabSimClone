@@ -34,6 +34,8 @@ A top-down homestead planning simulator. Players place systems (shelters, panels
 - `npm run typecheck` / `npm run lint`
 - `npm run catalog:export` / `npm run catalog:check`
 - `npm run sim -- <balance|run|montecarlo> <design.json> [--site <id>] [--years N] [--seed N]`
+- `npm run test:pacing` — the playtest bots' pacing gates (3 seeds × 3 sites)
+- `python3 scripts/catalog_patch.py data/catalog_patches/<patch>.json` — add catalog systems as xlsx rows
 
 ## Layout
 - `packages/catalog` — xlsx exporter, zod schema, validators, generated catalog and goldens
@@ -41,7 +43,9 @@ A top-down homestead planning simulator. Players place systems (shelters, panels
 - `packages/cli` — headless runner
 - `apps/web` — Vite + React + PixiJS + Zustand UI
 - `tests/e2e` — Playwright specs
-- `data/sites` — climate presets
+- `data/sites` — climate presets and natural nodes
+- `data/starts`, `data/quests` — the two starts and their tutorial quest lines
+- `packages/cli/bots` — playtest bots and pacing gates
 
 ## Conventions
 - TypeScript strict. Named exports. Pure functions take state and return new state.

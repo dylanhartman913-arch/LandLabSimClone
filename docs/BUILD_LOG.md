@@ -787,3 +787,52 @@ Screenshots are in `docs/screenshots/g15/`.
 
 **For the user to check**
 - Open `data/source/LandLab_Sim_Systems_v2.xlsx` in Excel. The 8 new rows are at Systems 170–177, Flows 799–819, and Matrix 170–177. The summary is in `docs/catalog_patches/g15-diff.md`. The Shelter category now counts 21 systems, so its "Within target?" cell reads No (the retrofit carries the Shelter tag).
+
+## G16 — Tutorials and pacing gates (2026-10-01)
+
+**Shipped**
+- **Quest lines as data** (`data/quests/greenfield.json`, `adapt.json`): 8 quests each, in the roadmap's order and words. Each has a goal, the cheapest steps, a "show me" target, the checklist row it moves, and a neighbor's reward (Ruth on the next ridge; Dale across the street).
+  - The engine evaluates goals (`tutorial.ts`) and pays rewards at the end of the day, inside `stepDay`, so tutorials replay exactly.
+- **Quest card:** pinned, with progress, the goal's detail line, **Show me** (opens the drawer item and its card, focuses a node, opens a resource page, or opens a panel), the reward's sender, and Skip (a logged action). Opening the Market panel completes "Read your weekly bills". Quest-done toasts carry the neighbor's line.
+- **Bots** (`packages/cli/bots/`): idle, tutorialFollower, greedy, adaptUpgrader, plus `playBot`.
+- **Pacing gates:** all 5 of the roadmap's gates on 3 sites × 3 seeds, in three places:
+  - a Vitest suite;
+  - `npm run test:pacing` (a table, exit 1 on a miss);
+  - a **separate CI job**, "Pacing gates (playtest bots)".
+  - All 45 runs take about 3 seconds.
+- **The tuning loop**, recorded change by change with results in `docs/BALANCE_LOG.md`. It found four engine bugs, now fixed:
+  - upkeep starved by construction;
+  - Flow boosts always 0;
+  - seed potatoes eaten;
+  - running costs missing from the bills.
+
+**Tests:** 218 unit tests, including 7 pacing tests: the 5 gates, bot determinism, and the greedy bot.
+
+e2e `tutorial.spec.ts` (1): the first five greenfield quests through the UI, with Show me, the Work panel, the market, and placing. Screenshots are in `docs/screenshots/g16/`. Two G14/G12 unit tests were updated for the new upkeep priority and running costs.
+
+**Digests:** the time digests were re-recorded, for upkeep priority 1, Flow boosts, and the seed reserve. Balance digests and goldens are unchanged.
+
+**Decisions not in the roadmap**
+- **"Survives year 1"** = nobody goes to town during the year.
+- **"At least one food row ≥ 25% actual by autumn"** = home-grown food eaten (not bought) is at least 25% of the household's need over some 30-day window that ends by the site's first fall frost. Bought food would make "actual" trivially 100%.
+- **"Bills fall ≥ 20%"** compares the average week of weeks 2–5 with the last 4 weeks of the year.
+- **Rewards land at the end of a day**, as part of the engine state, not as UI actions. A bot and a player get identical rewards, and replays match.
+- **The greedy bot** ranks by cost per unit of the worst row's weekly output and skips anything costing more than half its cash. It has no gate; the roadmap gives it none.
+- **Old games keep the old quest line.** The G8 quests still run for custom games; only games from a start use the new lines.
+
+## Status at the end of the playability roadmap (G11–G16)
+
+All six sessions are done and pushed to `claude/gifted-hypatia-x158zw`, with no irreconcilable snags. The roadmap's "What to check when it comes back":
+- [x] The GoSun Fan test exists and passes (`truthful.test.ts`, `truthful.spec.ts`), and no checklist path calls `balancePotential` (only `balance/` and parity tests do).
+- [x] Spreadsheet goldens are untouched. Parity targets `balancePotential`. The G15 patch changed only the source hash and added 21 flow entries.
+- [x] The xlsx diff from `catalog_patch.py` adds rows only: `docs/catalog_patches/g15-diff.md`, 0 typed values changed.
+- [x] Pacing gates are real CI jobs, not skipped. `BALANCE_LOG.md` shows each tuned number and why.
+- [ ] **Greenfield idle at 1× in the browser:** count the days to the first hardship toast. The engine says day 53–54 on every site (the gate wants ≥ 28). Worth a look by eye.
+
+### Where to pick up locally
+1. **Review the workbook in Excel** (`data/source/LandLab_Sim_Systems_v2.xlsx`): Systems 170–177, Flows 799–819, Matrix 170–177. Re-running the patch script needs `pip install openpyxl` and LibreOffice Calc.
+2. **Play both starts for real.** The bots prove the gates, not the fun. The open questions are in `BALANCE_LOG.md`:
+   - Real weather currently survives 9 of 9 seeds;
+   - camps settle around wellbeing 80.
+3. **Run the full suites on your machine:** `npm test`, `npm run test:pacing`, and `npm run test:e2e`. CI runs them all; the pacing job is separate and fast.
+4. Open the PR when you're happy. This branch carries G11–G16. Per CLAUDE.md's "one session = one branch", you may prefer to split it.

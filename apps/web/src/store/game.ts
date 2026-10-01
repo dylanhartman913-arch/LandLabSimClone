@@ -333,6 +333,12 @@ export const useGame = create<GameStore>()((set, get) => {
     kbCursor: null,
 
     skipTutorial() {
+      const g = get().game;
+      if (g.tutorial && !get().readOnly) {
+        // The quest line lives in the game (G16): skipping is a logged action.
+        const r = apply(g, { kind: 'tutorial', skip: true });
+        set((s) => ({ game: r.game, actions: [...s.actions, r.action] }));
+      }
       set((s) => ({ progress: { ...s.progress, tutorialSkipped: true } }));
     },
 
@@ -784,6 +790,12 @@ export const useGame = create<GameStore>()((set, get) => {
 
     setPanel(panel) {
       set({ panel, why: null, ...(panel ? { checklistOpen: false } : {}) });
+      const g = get().game;
+      // A quest can ask the player to look at something ("read your weekly bills").
+      if (panel && g.tutorial && !g.tutorial.ui.includes(panel) && !get().readOnly) {
+        const r = apply(g, { kind: 'ui', panel });
+        set((s) => ({ game: r.game, actions: [...s.actions, r.action] }));
+      }
     },
 
     setOverlay(o) {
@@ -886,7 +898,8 @@ function updateProgress(): void {
   const quests = { ...p.quests };
   const milestones = { ...p.milestones };
   let changed = false;
-  const current = QUESTS.find((q) => quests[q.id] === undefined);
+  // Games from a start run their own quest line in the engine (G16); the old line is for custom games.
+  const current = s.game.tutorial ? undefined : QUESTS.find((q) => quests[q.id] === undefined);
   if (current && !p.tutorialSkipped && current.check(s.game, s.catalog).done) {
     quests[current.id] = day;
     changed = true;
@@ -928,6 +941,9 @@ function toastForEvent(e: GameEvent): void {
     }
     case 'harvest':
       s.toast(`Harvest: ${name(e.systemId)} → ${e.resource}.`, 'info', e.instanceIds[0]);
+      break;
+    case 'quest':
+      s.toast(`Quest done: ${e.title}. ${e.reward}`, 'info');
       break;
     case 'hardship':
       s.toast(

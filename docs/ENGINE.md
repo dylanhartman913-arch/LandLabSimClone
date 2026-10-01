@@ -487,3 +487,28 @@ The stockpile view (`stockpileView`) shows days of food (every food in kcal), dr
 A system can change another system's flow (`systems.<id>.modifies` in the overrides). The exporter turns each modifier into an adjacency rule with `scope`:
 - `host`: the modifier sits on the receiver, with its centre inside the footprint. Example: the Home Weatherization Retrofit placed on a house scales the house's Heat request by 0.7.
 - `parcel`: anywhere on the parcel. Example: a Clothesline scales each person's Electricity request by 20/21, about 1 kWh a week less each.
+
+## Tutorials, bots, and pacing gates (G16)
+
+**Quest lines** are data (`data/quests/<line>.json`, validated by `QuestLineSchema`). A start names its line in `tutorial`. Each quest has:
+- a title, a one-line reason, and the checklist row it moves;
+- a **goal**: have N of a system; a system made X yesterday; gathered X since the quest began; a stock; an auto-gather setting; N cold days warm enough; home-grown food share over N days; a modifier in effect; a system gone; N days passed; or a panel opened;
+- **steps**: the cheapest way to do it, which the tutorial-following bot does;
+- a **show me** target: a drawer item, a node, a resource page, or a panel;
+- a **reward** from a neighbor: cash, or a stockpile top-up.
+
+The tutorial's state lives in the game (`state.tutorial`). At the end of each day, `stepDay` checks the current quest. When it is done, the reward lands between days (cash as a refund; stock straight in), the next quest begins, and a `quest` event fires. Rewards therefore replay exactly. Opening a panel a quest asks for, and skipping the tutorial, are logged actions (`ui`, `tutorial`).
+
+**Engine rules added while tuning:**
+- **Upkeep** is job priority 1, alongside survival gathering. Construction is 2.
+- **Flow boosts** (scraps, greens, carbon for hens) draw on stock left after direct requests. They used to read 0.
+- **Seed is kept from meals:** a planted system's per-season food seed (a potato patch's seed potatoes) is held back from the household.
+- **Weekly bills** include each system's running cost (house, cars) as its own line.
+
+**Bots** (`packages/cli/bots/`) are deterministic policies, and each logs its moves as replayable actions:
+- `idle`: does nothing;
+- `tutorialFollower`: does the current quest's steps once, then waits;
+- `greedy`: weekly, builds the cheapest system per unit of the worst row it can afford;
+- `adaptUpgrader`: one adapt project a month, in order.
+
+`playBot` runs a start with a bot. `GATES` and `runGates` are the five pacing gates. They run in Vitest (`packages/cli/test/pacing.test.ts`), through `npm run test:pacing` (a table; exits 1 on a miss), and as their own CI job.
