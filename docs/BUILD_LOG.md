@@ -806,7 +806,7 @@ Screenshots are in `docs/screenshots/g15/`.
   - seed potatoes eaten;
   - running costs missing from the bills.
 
-**Tests:** 218 unit tests, including 7 pacing tests: the 5 gates, bot determinism, and the greedy bot.
+**Tests:** 218 unit tests, including 7 pacing tests: the 5 gates, bot determinism, and the greedy bot. Full e2e suite: 44 of 44 pass.
 
 e2e `tutorial.spec.ts` (1): the first five greenfield quests through the UI, with Show me, the Work panel, the market, and placing. Screenshots are in `docs/screenshots/g16/`. Two G14/G12 unit tests were updated for the new upkeep priority and running costs.
 
