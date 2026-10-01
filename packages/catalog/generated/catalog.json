@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "source": {
     "file": "LandLab_Sim_Systems_v2.xlsx",
-    "sha256": "b8d81357c7828864e2edc99034e165ca76220e1eff29abbf5eb39df0cae334e0"
+    "sha256": "e0996b519474e9f2b3ec7218ba88d098a6adb40a22dbcb16c18a4654ad82b7a7"
   },
   "assumptions": {
     "hdd": 6000,
@@ -11875,6 +11875,437 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S168",
       "layer": "ground",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S169",
+      "name": "Rain Barrel (55 gal)",
+      "categories": [
+        "Water-System",
+        "Storage"
+      ],
+      "source": "New (G15 patch)",
+      "description": "A 55-gallon barrel under a small catchment of its own: a shed roof, a tarp, or a gutter off a tent fly.",
+      "costBuy": 120,
+      "costDiy": 60,
+      "setupLaborHrs": 1,
+      "weeklyUpkeepHrs": 0.1,
+      "footprintSqft": 4,
+      "lifespanYrs": 10,
+      "catchmentSqft": 100,
+      "captureEff": 0.8,
+      "confidence": "medium",
+      "notes": "Water out = catchment x rainfall x 0.623 gal/sq ft-in x efficiency. Brings its own 100 sq ft catchment, so it needs no Roofing area.",
+      "starterCount": 0,
+      "gameListedInputs": "Rainfall",
+      "gameListedOutputs": "Water",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S169",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "catchmentSqft": "xlsx",
+        "captureEff": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S170",
+      "name": "Pellet Mill (small)",
+      "categories": [
+        "Biomass",
+        "Energy"
+      ],
+      "source": "New (G15 patch)",
+      "description": "A small flat-die mill that presses dry wood chips into stove pellets.",
+      "costBuy": 2500,
+      "setupLaborHrs": 4,
+      "weeklyUpkeepHrs": 2,
+      "footprintSqft": 16,
+      "lifespanYrs": 10,
+      "confidence": "low",
+      "notes": "About 100 lbs of pellets a week from 120 lbs of chips; the rest is moisture and fines.",
+      "starterCount": 0,
+      "gameListedInputs": "Wood chips; Electricity",
+      "gameListedOutputs": "Wood pellets",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S170",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S171",
+      "name": "Part-Time Job (20 hrs)",
+      "categories": [
+        "Conventional"
+      ],
+      "source": "New (G15 patch)",
+      "description": "Twenty hours a week at median hourly pay, with a shorter commute.",
+      "costBuy": 0,
+      "setupLaborHrs": 0,
+      "weeklyUpkeepHrs": 0,
+      "footprintSqft": 0,
+      "lifespanYrs": 40,
+      "confidence": "medium",
+      "notes": "Trades income for about 20 hours a week of homestead labor.",
+      "starterCount": 0,
+      "gameListedInputs": "Labor; Transportation",
+      "gameListedOutputs": "Capital",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S171",
+      "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S172",
+      "name": "Remote Job (40 hrs)",
+      "categories": [
+        "Conventional"
+      ],
+      "source": "New (G15 patch)",
+      "description": "A full-time job worked from home: no commute.",
+      "costBuy": 0,
+      "setupLaborHrs": 0,
+      "weeklyUpkeepHrs": 0,
+      "footprintSqft": 0,
+      "lifespanYrs": 40,
+      "confidence": "medium",
+      "notes": "Pays a little less than the average job but needs no transportation.",
+      "starterCount": 0,
+      "gameListedInputs": "Labor",
+      "gameListedOutputs": "Capital",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S172",
+      "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S173",
+      "name": "Sheet-Mulch Lawn Conversion (500 sq ft)",
+      "categories": [
+        "Garden"
+      ],
+      "source": "New (G15 patch)",
+      "description": "Cardboard and browns laid over lawn and topped with compost; the grass rots into planting soil.",
+      "costBuy": 400,
+      "costDiy": 100,
+      "setupLaborHrs": 6,
+      "weeklyUpkeepHrs": 0.25,
+      "footprintSqft": 500,
+      "lifespanYrs": 3,
+      "confidence": "low",
+      "notes": "Builds about 40 cu ft of soil over a growing season.",
+      "starterCount": 0,
+      "gameListedInputs": "Carbon; Compost",
+      "gameListedOutputs": "Soil",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S173",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S174",
+      "name": "Home Weatherization Retrofit",
+      "categories": [
+        "Shelter",
+        "Heating"
+      ],
+      "source": "New (G15 patch)",
+      "description": "Air sealing, attic insulation, and weatherstripping on an existing home.",
+      "costBuy": 3000,
+      "costDiy": 1200,
+      "setupLaborHrs": 30,
+      "weeklyUpkeepHrs": 0.05,
+      "footprintSqft": 0,
+      "lifespanYrs": 30,
+      "confidence": "medium",
+      "notes": "Cuts the host shelter's heat loss by about 30% (engine modifier, catalog_overrides.json).",
+      "starterCount": 0,
+      "gameListedInputs": "Labor",
+      "gameListedOutputs": "(modifies its host shelter)",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S174",
+      "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S175",
+      "name": "Suburban Lot (1/4 acre)",
+      "categories": [
+        "Land"
+      ],
+      "source": "New (G15 patch)",
+      "description": "A quarter-acre suburban lot, usually bought with the house on it.",
+      "costBuy": 100000,
+      "setupLaborHrs": 0,
+      "weeklyUpkeepHrs": 0,
+      "footprintSqft": 0,
+      "lifespanYrs": 100,
+      "confidence": "medium",
+      "notes": "Lot rules (setbacks, animal limits) vary by town.",
+      "starterCount": 0,
+      "gameListedInputs": "N/A",
+      "gameListedOutputs": "Land area",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S175",
+      "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S176",
+      "name": "Clothesline",
+      "categories": [
+        "Tools"
+      ],
+      "source": "New (G15 patch)",
+      "description": "A line and two posts: sun-dried laundry instead of the electric dryer.",
+      "costBuy": 40,
+      "costDiy": 15,
+      "setupLaborHrs": 1,
+      "weeklyUpkeepHrs": 0.5,
+      "footprintSqft": 20,
+      "lifespanYrs": 10,
+      "confidence": "medium",
+      "notes": "Saves about 1 kWh per person a week of dryer power (engine modifier, catalog_overrides.json).",
+      "starterCount": 0,
+      "gameListedInputs": "Labor",
+      "gameListedOutputs": "Wellbeing",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S176",
+      "layer": "object",
       "outdoor": false,
       "backstop": false,
       "backstopFee": 0,
@@ -33167,6 +33598,563 @@
         "note": "xlsx",
         "timing": "default-rule"
       }
+    },
+    {
+      "id": "F0798",
+      "systemId": "S169",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.1
+      },
+      "period": "Weekly",
+      "note": "Weekly upkeep hours (Systems column K).",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0799",
+      "systemId": "S169",
+      "direction": "in",
+      "resource": "Rainfall",
+      "qty": {
+        "kind": "rain"
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "ambient",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0800",
+      "systemId": "S169",
+      "direction": "out",
+      "resource": "Water",
+      "qty": {
+        "kind": "rainCapture"
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0801",
+      "systemId": "S169",
+      "direction": "out",
+      "resource": "Water storage",
+      "qty": {
+        "kind": "const",
+        "value": 55
+      },
+      "period": "Capacity",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0802",
+      "systemId": "S170",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 2
+      },
+      "period": "Weekly",
+      "note": "Weekly upkeep hours (Systems column K).",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0803",
+      "systemId": "S170",
+      "direction": "in",
+      "resource": "Wood chips",
+      "qty": {
+        "kind": "const",
+        "value": 120
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0804",
+      "systemId": "S170",
+      "direction": "in",
+      "resource": "Electricity",
+      "qty": {
+        "kind": "const",
+        "value": 15
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0805",
+      "systemId": "S170",
+      "direction": "out",
+      "resource": "Wood pellets",
+      "qty": {
+        "kind": "const",
+        "value": 100
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0806",
+      "systemId": "S171",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 20
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0807",
+      "systemId": "S171",
+      "direction": "in",
+      "resource": "Transportation",
+      "qty": {
+        "kind": "const",
+        "value": 75
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0808",
+      "systemId": "S171",
+      "direction": "out",
+      "resource": "Capital",
+      "qty": {
+        "kind": "const",
+        "value": 575
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0809",
+      "systemId": "S172",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 40
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0810",
+      "systemId": "S172",
+      "direction": "out",
+      "resource": "Capital",
+      "qty": {
+        "kind": "const",
+        "value": 1000
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0811",
+      "systemId": "S173",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.25
+      },
+      "period": "Weekly",
+      "note": "Weekly upkeep hours (Systems column K).",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0812",
+      "systemId": "S173",
+      "direction": "in",
+      "resource": "Carbon",
+      "qty": {
+        "kind": "const",
+        "value": 100
+      },
+      "period": "One-time",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0813",
+      "systemId": "S173",
+      "direction": "in",
+      "resource": "Compost",
+      "qty": {
+        "kind": "const",
+        "value": 200
+      },
+      "period": "One-time",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0814",
+      "systemId": "S173",
+      "direction": "out",
+      "resource": "Soil",
+      "qty": {
+        "kind": "const",
+        "value": 40
+      },
+      "period": "Per season",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "growing-season"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0815",
+      "systemId": "S174",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.05
+      },
+      "period": "Weekly",
+      "note": "Weekly upkeep hours (Systems column K): a yearly check of seals and weatherstripping.",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0816",
+      "systemId": "S175",
+      "direction": "out",
+      "resource": "Land area",
+      "qty": {
+        "kind": "const",
+        "value": 10890
+      },
+      "period": "Capacity",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0817",
+      "systemId": "S176",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.5
+      },
+      "period": "Weekly",
+      "note": "Weekly upkeep hours (Systems column K): hanging and folding.",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0818",
+      "systemId": "S176",
+      "direction": "out",
+      "resource": "Wellbeing",
+      "qty": {
+        "kind": "const",
+        "value": 2
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
     }
   ],
   "adjacencyRules": [
@@ -33408,6 +34396,34 @@
         "stack": "once"
       },
       "note": "Trees within 150 ft disturb the wind: a turbine loses 30%."
+    },
+    {
+      "from": "S174",
+      "to": "category:Shelter",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Heat",
+        "multiplier": 0.7,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Weatherization cuts its house's heat loss by 30%."
+    },
+    {
+      "from": "S176",
+      "to": "S074",
+      "radiusFt": 0,
+      "scope": "parcel",
+      "effect": {
+        "resource": "Electricity",
+        "multiplier": 0.952381,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "A clothesline replaces the dryer: about 1 kWh less per person a week (21 to 20)."
     }
   ],
   "assignedCapacities": [

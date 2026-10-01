@@ -48,6 +48,32 @@
     "S114": {
       "backstop": true,
       "note": "Backstop (G12): fills whatever the homestead doesn't make, at its price per unit."
+    },
+    "S174": {
+      "modifies": [
+        {
+          "to": "category:Shelter",
+          "resource": "Heat",
+          "direction": "in",
+          "multiplier": 0.7,
+          "scope": "host",
+          "note": "Weatherization cuts its house's heat loss by 30%."
+        }
+      ],
+      "note": "Place it on the house it retrofits (G15)."
+    },
+    "S176": {
+      "modifies": [
+        {
+          "to": "S074",
+          "resource": "Electricity",
+          "direction": "in",
+          "multiplier": 0.952381,
+          "scope": "parcel",
+          "note": "A clothesline replaces the dryer: about 1 kWh less per person a week (21 to 20)."
+        }
+      ],
+      "note": "G15: household electricity -2 kWh/week for two people."
     }
   },
   "resources": {

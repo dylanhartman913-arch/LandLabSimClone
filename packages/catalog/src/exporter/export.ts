@@ -629,7 +629,21 @@ function applyEngineFields(
     return flow;
   });
 
-  const adjacencyRules: AdjacencyRule[] = overrides.adjacencyRules;
+  // G15 modifiers become adjacency rules (scope host: on the receiver; parcel: anywhere).
+  const modifierRules: AdjacencyRule[] = [];
+  for (const [id, o] of Object.entries(overrides.systems)) {
+    for (const m of o.modifies ?? []) {
+      modifierRules.push({
+        from: id,
+        to: m.to,
+        radiusFt: 0,
+        scope: m.scope,
+        effect: { resource: m.resource, multiplier: m.multiplier, mode: 'scale', direction: m.direction, stack: 'once' },
+        note: m.note,
+      });
+    }
+  }
+  const adjacencyRules: AdjacencyRule[] = [...overrides.adjacencyRules, ...modifierRules];
   const catNames = new Set(rawSystems.flatMap((s) => s.categories));
   for (const rule of adjacencyRules) {
     for (const end of [rule.from, rule.to]) {

@@ -139,9 +139,13 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
         notes: [],
         once: new Set<number>(),
       };
-      const inRange = sourcesFor(rule).filter(
-        (src) => src !== undefined && gapFt(src.x, src.y, src.half, recv.x, recv.y, rh) <= rule.radiusFt,
-      );
+      const inRange = sourcesFor(rule).filter((src) => {
+        if (src === undefined) return false;
+        if (rule.scope === 'parcel') return true;
+        // A host modifier (a retrofit) sits on its house: its centre is inside the footprint.
+        if (rule.scope === 'host') return Math.abs(src.x - recv.x) <= rh + 1e-6 && Math.abs(src.y - recv.y) <= rh + 1e-6;
+        return gapFt(src.x, src.y, src.half, recv.x, recv.y, rh) <= rule.radiusFt;
+      });
       if (inRange.length) {
         c.any = true;
         if (e.stack === 'once') {

@@ -101,7 +101,13 @@ export const AdjacencyRuleSchema = z.object({
   from: z.string(),
   /** A system ID or `category:<Category>`; the system that receives the effect. */
   to: z.string(),
-  radiusFt: z.number().positive(),
+  /** Feet between footprints (0: touching or on top of it). Ignored for scope `parcel`. */
+  radiusFt: z.number().nonnegative(),
+  /**
+   * `radius` (default): sources within radiusFt. `host`: the source sits on the receiver (G15
+   * modifiers such as a weatherization retrofit on a house). `parcel`: anywhere on the parcel.
+   */
+  scope: z.enum(['radius', 'host', 'parcel']).optional(),
   effect: z.object({
     resource: z.string(),
     /** Per-source multiplier applied to the receiver's flow of `resource`. */
@@ -309,6 +315,24 @@ export const OverridesSchema = z
           backstop: z.boolean().optional(),
           backstopFee: z.number().nonnegative().optional(),
           backstopPrices: z.record(z.string(), z.number().nonnegative()).optional(),
+          /**
+           * G15 modifiers: this system changes another system's flow (a retrofit cuts its house's
+           * heat loss; a clothesline cuts household electricity). Exported as adjacency rules.
+           */
+          modifies: z
+            .array(
+              z
+                .object({
+                  to: z.string(),
+                  resource: z.string(),
+                  direction: DirectionSchema.default('in'),
+                  multiplier: z.number().nonnegative(),
+                  scope: z.enum(['host', 'parcel']),
+                  note: z.string(),
+                })
+                .strict(),
+            )
+            .optional(),
           note: z.string().optional(),
         })
         .strict(),

@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs';
 import * as XLSX from 'xlsx';
 import { DEFAULT_OVERRIDES, DEFAULT_XLSX, exportCatalog } from '../src/exporter/index.ts';
 
+/** The next free system ID after the shipped catalog (S176 after the G15 patch). */
+export const NEW_SYSTEM_ID = 'S177';
+
 export const realXlsx = new Uint8Array(readFileSync(DEFAULT_XLSX));
 export const realOverrides: unknown = JSON.parse(readFileSync(DEFAULT_OVERRIDES, 'utf8'));
 
@@ -43,7 +46,7 @@ export function withNewSystem(wb: XLSX.WorkBook): void {
   const r = XLSX.utils.decode_range(sys['!ref']!).e.r + 2; // next 1-based row
   const name = 'Solar Food Dehydrator';
   const row: Record<string, XLSX.CellObject> = {
-    A: { t: 's', v: 'S169' },
+    A: { t: 's', v: NEW_SYSTEM_ID },
     B: { t: 's', v: name },
     C: { t: 's', v: 'Food System; Solar' },
     D: { t: 's', v: '' },
@@ -81,8 +84,8 @@ export function withNewSystem(wb: XLSX.WorkBook): void {
     at('N', { t: 's', v: '' });
     fr++;
   };
-  addFlow('F0798', 'Input', 'Labor', 0.5, 'hours');
-  addFlow('F0799', 'Input', 'Vegetables fruit fiber herbs', 3, 'lbs');
-  addFlow('F0800', 'Output', 'Vegetables fruit fiber herbs', 2.4, 'lbs');
+  addFlow('F0819', 'Input', 'Labor', 0.5, 'hours');
+  addFlow('F0820', 'Input', 'Vegetables fruit fiber herbs', 3, 'lbs');
+  addFlow('F0821', 'Output', 'Vegetables fruit fiber herbs', 2.4, 'lbs');
   flows['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: fr - 2, c: 13 } });
 }
