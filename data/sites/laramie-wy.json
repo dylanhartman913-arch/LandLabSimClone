@@ -105,5 +105,135 @@
     "existingTrees": [],
     "coordinates": "fractions of the parcel side (0-1), so terrain scales with parcel size"
   },
-  "notes": "Approximate NOAA normals for Laramie Regional Airport; wind capacity factor reflects one of the windiest sites in the lower 48."
+  "notes": "Approximate NOAA normals for Laramie Regional Airport; wind capacity factor reflects one of the windiest sites in the lower 48.",
+  "nodes": [
+    {
+      "id": "deadfall-1",
+      "type": "deadfall",
+      "x": 0.25,
+      "y": 0.3,
+      "resource": "Woody biomass",
+      "yieldPerHour": 40,
+      "stock": 600,
+      "maxStock": 600,
+      "regrowPerDay": 1.6,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "spring-1",
+      "type": "spring",
+      "x": 0.8,
+      "y": 0.75,
+      "resource": "Water",
+      "yieldPerHour": 12,
+      "stock": null,
+      "maxStock": null,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "untreated": true,
+      "droughtSensitive": true
+    },
+    {
+      "id": "greens-1",
+      "type": "wild-greens",
+      "x": 0.35,
+      "y": 0.85,
+      "resource": "Green biomass",
+      "yieldPerHour": 6,
+      "extra": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "perHour": 0.5
+        }
+      ],
+      "stock": 120,
+      "maxStock": 120,
+      "regrowPerDay": 3,
+      "months": [
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "id": "clay-1",
+      "type": "clay-bank",
+      "x": 0.1,
+      "y": 0.55,
+      "resource": "Soil",
+      "yieldPerHour": 3,
+      "stock": null,
+      "maxStock": null,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "pools-1",
+      "type": "rain-pools",
+      "x": 0.55,
+      "y": 0.6,
+      "resource": "Water",
+      "yieldPerHour": 10,
+      "stock": 0,
+      "maxStock": 200,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "untreated": true,
+      "rainFill": 150,
+      "evaporatePerDay": 0.25
+    }
+  ]
 }

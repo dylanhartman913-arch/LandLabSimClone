@@ -389,6 +389,47 @@ export type Goldens = z.infer<typeof GoldensSchema>;
 
 const Monthly = z.array(z.number().nonnegative()).length(12);
 
+export const NodeTypeSchema = z.enum([
+  'deadfall',
+  'creek',
+  'spring',
+  'wild-greens',
+  'berry-thicket',
+  'clay-bank',
+  'leaf-litter',
+  'rain-pools',
+]);
+export type NodeType = z.infer<typeof NodeTypeSchema>;
+
+/** A natural node (G14). Yields are per hour of work at the node, not counting the walk. */
+export const NodeSchema = z.object({
+  id: z.string(),
+  type: NodeTypeSchema,
+  /** Fractions of the parcel side (0-1). */
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+  resource: z.string(),
+  yieldPerHour: z.number().positive(),
+  /** Smaller by-products per hour (wild greens give a little food besides biomass). */
+  extra: z.array(z.object({ resource: z.string(), perHour: z.number().positive() })).default([]),
+  /** Units on hand at the start (null: unlimited, like a creek or a clay bank). */
+  stock: z.number().nonnegative().nullable(),
+  /** Most it can hold (null with an unlimited stock). */
+  maxStock: z.number().nonnegative().nullable(),
+  /** Units it regrows per day in its active months. */
+  regrowPerDay: z.number().nonnegative(),
+  /** Months (1-12) it can be worked; regrowth happens only then. */
+  months: z.array(z.number().int().min(1).max(12)).min(1),
+  /** Untreated water: drink it only after a filter or boiling. */
+  untreated: z.boolean().default(false),
+  /** Rain refills it (gallons per inch of rain), and it dries up (share lost per day). */
+  rainFill: z.number().nonnegative().default(0),
+  evaporatePerDay: z.number().min(0).max(1).default(0),
+  /** Yield falls with a dry year in real weather (creeks, springs). */
+  droughtSensitive: z.boolean().default(false),
+});
+export type ResourceNode = z.infer<typeof NodeSchema>;
+
 /** A climate preset (`data/sites/*.json`). Monthly arrays are shapes; scalars set the annual totals. */
 export const SiteSchema = z.object({
   schema: z.literal('homestead.site.v1'),
@@ -413,6 +454,11 @@ export const SiteSchema = z.object({
     existingTrees: z.array(z.object({ x: z.number(), y: z.number(), species: z.string() })),
     coordinates: z.string().optional(),
   }),
+  /**
+   * Natural resource nodes on the land (G14): worked with labor, depleted, and regrown.
+   * Positions are fractions of the parcel side, like terrain.
+   */
+  nodes: z.array(NodeSchema).default([]),
   notes: z.string(),
 });
 export type Site = z.infer<typeof SiteSchema>;

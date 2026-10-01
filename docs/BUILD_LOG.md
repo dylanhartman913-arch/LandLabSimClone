@@ -697,3 +697,38 @@ Screenshots are in `docs/screenshots/g13/`.
 - The page's "spare capacity" is shown as headroom: what a producer could add if its own inputs were met. A resource's surplus already shows as spilled, under Outputs.
 - "Sell" isn't modeled (there is no buyer in the engine), so "Where it goes" ends with what happens to the unused rest: spills, spoils, or piles up.
 - The pellet-stove walk the roadmap describes (pellet stove → Wood pellets → pellet mill → its wood-chip input → plan) needs the G15 pellet mill. It is in G15's e2e.
+
+## G14 — The land provides: gathering (2026-10-01)
+
+**Shipped**
+- **Natural nodes** as site data (`nodes` in `data/sites/*.json`, validated by `SiteSchema`): deadfall, creek, spring, wild greens, berry thicket, clay bank, leaf litter, and rain pools. Each node has a stock, regrowth, a season, by-products, an untreated-water flag, rain fill, and drought sensitivity. Asheville is wood- and creek-rich; Laramie has little wood and a weak spring.
+- **Jobs and the work panel** (J, or the HUD's Work button):
+  - seven jobs, each with a 1–5 priority and a weekly hour cap;
+  - labor goes by priority, then proportionally; "last week" hours per job;
+  - every job's hours land in `ledger.labor.byJob`.
+- **Auto-gather rules:** keep water above N days, firewood above N weeks, and food above N weeks. These are editable in the Work panel and off by default; G15's greenfield start turns them on. Each rule restocks at most 2 days of use per day and takes at most 40% of the day's labor.
+- **Gathering:** the nearest node is worked first; walking costs labor (1 min per 50 ft each way per trip). By-products come along, stocks deplete and regrow, and drought cuts creek and spring yields (floor 20%) in real-weather mode.
+- **Boiling:** with no filter, untreated water is boiled over the cooking fire (4 gal per fuel-hour, 0.05 h labor per gal).
+- **Map:** nodes draw as original sprites (log piles, a water line, bushes, a clay patch, leaves, puddles) that shrink as they deplete. Hovering shows the stock, yield, distance, and season. A resource page's "On your land" entries focus the node.
+- **Why:** the checklist notes gathering, for example "Drinking water: 6.2 gal from the spring via boiling, 0.3 h labor", and "Woody biomass: 40 lbs from deadfall, 1.2 h labor (0.2 walking)".
+
+**Tests:** 190 unit (`gather.test.ts`, 5).
+- A tent camp with a tiny stove lives off the spring and the deadfall for a spring month on the Front Range, by auto-gather alone: no hardship, drinking water and heat never short of wood.
+- A creek yields less in a drought year.
+- Gathering competes with construction through priorities.
+- A weekly cap holds a job to its hours, and a cap alone sets standing hours.
+- Deadfall regrows slowly; untouched nodes aren't tracked.
+
+e2e `gather.spec.ts` (1): work priorities, auto-gather on, a season passes, depleted nodes on the map, and the "why" mentions gathering. Screenshots are in `docs/screenshots/g14/`.
+
+**Digests:**
+- `time:starter` and `time:offgrid-cabin-family` re-recorded. The labor refactor moved a sum by 3.7e‑14 gal (floating-point reordering); no behavior changed, because those designs have no auto-gather.
+- Balance digests and goldens are unchanged.
+
+**Decisions not in the roadmap**
+- The Firepit is `outdoor` (G11), so it never heats a tent. The roadmap's "tent and firepit" test uses the catalog's Tiny Wood Stove for heat, and asserts the stove is never short of wood. The catalog's stove is too small to fully heat a canvas tent on April nights, and that is a catalog fact.
+- Both the 40% labor cap and the 2-day restock limit exist because, without them, food foraging at priority 1 starved upkeep and the camp's systems decayed.
+- The water rule counts both Water and Drinking water. Boiling only happens when no system in the design turns Water into Drinking water.
+- There is no "market trip" job: G12's daily trip costs transport, not labor. Each system's upkeep is one "Look after systems" job rather than one job per system, to keep the panel short.
+- Gathered food is Vegetables fruit fiber herbs, which counts toward Food through the existing factor.
+- Rain pools fill at 150 gal per inch of rain on a 200 gal cap and evaporate 25% a day.

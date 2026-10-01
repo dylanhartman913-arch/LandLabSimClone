@@ -16,6 +16,23 @@ import {
 } from './constants.ts';
 import { dailyAmount, getPlans, type FlowPlan, type Plans, type SystemPlan } from './plans.ts';
 import { drawYearWeather, weatherFor, type YearWeather } from './weather.ts';
+import {
+  BOIL_GAL_PER_FUEL_HOUR,
+  BOIL_LABOR_PER_GAL,
+  homeOf,
+  inSeason,
+  jobCap,
+  jobHours,
+  jobPriority,
+  JOBS,
+  NODE_JOB,
+  nodePosition,
+  nodeStockOf,
+  nodeYield,
+  regrowNodes,
+  walkPerTrip,
+  type JobId,
+} from './gather.ts';
 import { computeSpatial, groupKeyOf, type InstanceSpatial } from './spatial.ts';
 import type {
   DayLedger,
@@ -24,6 +41,7 @@ import type {
   Instance,
   InstanceInputRecord,
   DaySpend,
+  GatherRecord,
   NeedDay,
   ResourceDay,
 } from './types.ts';
@@ -118,6 +136,14 @@ interface Day {
   spend: DaySpend;
   market: GameState['market'];
   broke: boolean;
+  /** Hours by job (G14) and what was gathered. */
+  byJob: Partial<Record<JobId, number>>;
+  gatherUsed: number;
+  gathered: GatherRecord[];
+  boiled: { gal: number; fuelHours: number; laborHours: number } | null;
+  nodeStock: Record<string, number> | undefined;
+  /** Systems that provide Shelter (where the household lives). */
+  shelterIds: ReadonlySet<string>;
 }
 
 const newResourceDay = (start: number): ResourceDay => ({
@@ -238,7 +264,174 @@ function startConstruction(d: Day): void {
   }
 }
 
-/** Step 4: the labor pool, with construction served first up to its share. */
+/** Planned gathering for one job today (G14 auto-gather rules). */
+interface GatherPlan {
+  /** Units wanted, by resource. */
+  want: Record<string, number>;
+  /** Gallons to boil into drinking water (water job, no filter). */
+  boil: number;
+  /** Hours the plan needs, walking and boiling included. */
+  hours: number;
+}
+
+/** Nodes of a job that can give `resource` today, nearest to home first. */
+function nodesFor(d: Day, job: JobId, resource: string) {
+  const home = homeOf(d.prev, d.shelterIds);
+  return d.prev.site.nodes
+    .filter((n) => NODE_JOB[n.type] === job && inSeason(n, d.day) && (n.resource === resource || n.extra.some((e) => e.resource === resource)))
+    .map((n) => {
+      const p = nodePosition(d.prev, n);
+      const dist = Math.hypot(p.x - home.x, p.y - home.y);
+      const rate = n.resource === resource ? nodeYield(n, d.prev.yearWeather, d.prev.settings.weatherMode) : n.extra.find((e) => e.resource === resource)!.perHour;
+      const walk = walkPerTrip(dist);
+      return { n, dist, rate, walk, eff: rate / (1 + walk) };
+    })
+    .sort((a, b) => a.dist - b.dist || a.n.id.localeCompare(b.n.id));
+}
+
+function stockAt(d: Day, id: string): number {
+  const n = d.prev.site.nodes.find((x) => x.id === id)!;
+  const tracked = d.nodeStock?.[id];
+  return tracked !== undefined ? tracked : nodeStockOf(d.prev, n);
+}
+
+/** Hours to gather `amount` of a resource for a job, nearest nodes first (Infinity hours: not enough there). */
+function hoursFor(d: Day, job: JobId, resource: string, amount: number): number {
+  let left = amount;
+  let hours = 0;
+  for (const x of nodesFor(d, job, resource)) {
+    if (left <= EPS) break;
+    const primary = x.n.resource === resource;
+    const avail = primary ? stockAt(d, x.n.id) : (stockAt(d, x.n.id) / x.n.yieldPerHour) * x.rate;
+    const take = Math.min(left, avail);
+    if (take <= EPS) continue;
+    hours += take / x.eff;
+    left -= take;
+  }
+  return hours;
+}
+
+/** An auto-gather rule tops up at most this many days of use per day, so it never monopolizes labor. */
+const RESTOCK_DAYS = 2;
+/** …and each auto-gather job takes at most this share of the day's labor. */
+export const MAX_GATHER_SHARE = 0.4;
+
+/** Auto-gather rules (G14): what each gathering job should fetch today, and the hours it takes. */
+function planGathering(d: Day): Map<JobId, GatherPlan> {
+  const out = new Map<JobId, GatherPlan>();
+  const ag = d.prev.settings.autoGather;
+  if (!ag || !d.prev.site.nodes.length) return out;
+  const req = (r: string) => (d.byResource.get(r) ?? []).reduce((a, q) => a + q.amount, 0);
+  const stock = (r: string) => d.stocks[r] ?? 0;
+  if ((ag.waterDays ?? 0) > 0) {
+    const days = ag.waterDays!;
+    const daily = req('Water') + req('Drinking water');
+    const gap = Math.min(RESTOCK_DAYS * daily, Math.max(0, days * daily - stock('Water') - stock('Drinking water')));
+    const drinkGap = Math.min(
+      RESTOCK_DAYS * req('Drinking water'),
+      Math.max(0, days * req('Drinking water') - stock('Drinking water')),
+    );
+    const filter = d.groups.some(
+      (g) => g.plan.inputs.some((i) => i.resource === 'Water') && g.plan.outputs.some((o) => o.resource === 'Drinking water'),
+    );
+    const boil = filter ? 0 : Math.min(drinkGap, stock('Cooking fuel') * BOIL_GAL_PER_FUEL_HOUR);
+    const want = gap + boil;
+    const h = want > EPS ? hoursFor(d, 'gather-water', 'Water', want) : 0;
+    if (h > EPS || boil > EPS) out.set('gather-water', { want: { Water: want }, boil, hours: h + boil * BOIL_LABOR_PER_GAL });
+  }
+  if ((ag.woodWeeks ?? 0) > 0) {
+    const gap = Math.min(
+      RESTOCK_DAYS * req('Woody biomass'),
+      Math.max(0, ag.woodWeeks! * 7 * req('Woody biomass') - stock('Woody biomass')),
+    );
+    const h = gap > EPS ? hoursFor(d, 'gather-wood', 'Woody biomass', gap) : 0;
+    if (h > EPS) out.set('gather-wood', { want: { 'Woody biomass': gap }, boil: 0, hours: h });
+  }
+  if ((ag.foodWeeks ?? 0) > 0) {
+    const veg = d.meta.get('Vegetables fruit fiber herbs')!;
+    let have = 0;
+    for (const r of d.plans.foodFamily) have += stock(r) * (d.meta.get(r)!.factorToNeed ?? 1);
+    const gapKcal = Math.min(RESTOCK_DAYS * req('Food'), Math.max(0, ag.foodWeeks! * 7 * req('Food') - have));
+    const lbs = gapKcal / (veg.factorToNeed ?? 1);
+    const h = lbs > EPS ? hoursFor(d, 'gather-food', veg.name, lbs) : 0;
+    if (h > EPS) out.set('gather-food', { want: { [veg.name]: lbs }, boil: 0, hours: h });
+  }
+  return out;
+}
+
+/** Spend `hours` on a gathering job: nearest nodes first, depleting them; extras come along. */
+function gather(d: Day, job: JobId, hours: number, plan: GatherPlan | undefined): void {
+  if (hours <= EPS) return;
+  let left = hours;
+  const scale = plan && plan.hours > EPS ? Math.min(1, hours / plan.hours) : 1;
+  const boilHours = plan ? plan.boil * BOIL_LABOR_PER_GAL * scale : 0;
+  left -= boilHours;
+  const wants = plan ? Object.entries(plan.want) : [];
+  const resources = wants.length ? wants.map(([r]) => r) : [...new Set(d.prev.site.nodes.filter((n) => NODE_JOB[n.type] === job).map((n) => n.resource))];
+  for (const resource of resources) {
+    let want = plan ? (plan.want[resource] ?? 0) : Infinity;
+    for (const x of nodesFor(d, job, resource)) {
+      if (left <= EPS || want <= EPS) break;
+      // Working the node yields its main resource; by-products (food from wild greens) come along.
+      const primaryEff = x.n.resource === resource ? x.eff : nodeYield(x.n, d.prev.yearWeather, d.prev.settings.weatherMode) / (1 + x.walk);
+      const stock = stockAt(d, x.n.id);
+      if (stock <= EPS) continue;
+      const h = Math.min(left, want / x.eff, stock / primaryEff);
+      const amount = h * primaryEff;
+      if (amount <= EPS) continue;
+      left -= h;
+      want -= h * x.eff;
+      if (Number.isFinite(stock)) (d.nodeStock ??= {})[x.n.id] = stock - amount;
+      const walkHours = (h * x.walk) / (1 + x.walk);
+      const land = (r: string, units: number) => {
+        d.stocks[r] = (d.stocks[r] ?? 0) + units;
+        const led = d.res[r];
+        if (led) led.produced += units;
+        const m = d.meta.get(r)!;
+        if (m.needsRow) {
+          d.needs[m.needsRow].provided += units * (m.factorToNeed ?? 1);
+          d.needs[m.needsRow].potential += units * (m.factorToNeed ?? 1);
+        }
+        d.gathered.push({ job, nodeId: x.n.id, nodeType: x.n.type, resource: r, amount: units, hours: h, walkHours });
+      };
+      land(x.n.resource, amount);
+      for (const e of x.n.extra) land(e.resource, (h / (1 + x.walk)) * e.perHour);
+      d.gatherUsed += h;
+      d.byJob[job] = (d.byJob[job] ?? 0) + h;
+    }
+  }
+  // Boil untreated water into drinking water over the day's cooking fire.
+  if (plan && plan.boil > EPS) {
+    const fuel = d.stocks['Cooking fuel'] ?? 0;
+    const gal = Math.min(plan.boil * scale, d.stocks['Water'] ?? 0, fuel * BOIL_GAL_PER_FUEL_HOUR);
+    if (gal > EPS) {
+      const fuelHours = gal / BOIL_GAL_PER_FUEL_HOUR;
+      d.stocks['Water'] = (d.stocks['Water'] ?? 0) - gal;
+      d.res['Water']!.consumed += gal;
+      d.stocks['Cooking fuel'] = fuel - fuelHours;
+      d.res['Cooking fuel']!.consumed += fuelHours;
+      d.stocks['Drinking water'] = (d.stocks['Drinking water'] ?? 0) + gal;
+      d.res['Drinking water']!.produced += gal;
+      d.needs['Water'].needed += gal;
+      d.needs['Water'].delivered += gal;
+      d.needs['Cooking fuel'].needed += fuelHours;
+      d.needs['Cooking fuel'].delivered += fuelHours;
+      d.needs['Drinking water'].provided += gal;
+      d.needs['Drinking water'].potential += gal;
+      const labor = gal * BOIL_LABOR_PER_GAL;
+      d.gatherUsed += labor;
+      d.byJob[job] = (d.byJob[job] ?? 0) + labor;
+      d.boiled = { gal, fuelHours, laborHours: labor };
+    }
+  }
+}
+
+/**
+ * Step 4: the labor pool and the jobs it goes to (G14). Each job's demand: construction (up to
+ * its share of the pool), system upkeep (their Labor requests), and gathering (auto-gather rules,
+ * or a job's weekly cap as standing hours). Labor goes to priority 1 first, proportionally within
+ * a priority; weekly caps limit a job. With no gathering, construction comes before upkeep as before.
+ */
 function laborPool(d: Day): void {
   let pool = 0;
   for (const g of d.groups) {
@@ -250,7 +443,41 @@ function laborPool(d: Day): void {
   }
   d.pool = pool;
   d.res['Labor']!.produced = pool;
-  let cap = pool * d.prev.settings.constructionShare;
+  const settings = d.prev.settings;
+  const demand = new Map<JobId, number>();
+  let remaining = 0;
+  for (const inst of d.instances) if (inst.status === 'building') remaining += Math.max(0, inst.setupHoursNeeded - inst.setupHoursDone);
+  demand.set('construction', Math.min(remaining, pool * settings.constructionShare));
+  let upkeep = 0;
+  for (const q of d.byResource.get('Labor') ?? []) upkeep += q.amount;
+  demand.set('upkeep', upkeep);
+  const plans = planGathering(d);
+  // An auto-gather job may claim at most this share of the day, so survival foraging can't starve upkeep.
+  for (const [job, p] of plans) demand.set(job, Math.min(p.hours, pool * MAX_GATHER_SHARE));
+  for (const j of JOBS) {
+    if (!j.id.startsWith('gather') || plans.has(j.id)) continue;
+    const cap = jobCap(settings, j.id);
+    if (cap !== null && cap > 0 && d.prev.site.nodes.some((n) => NODE_JOB[n.type] === j.id)) demand.set(j.id, cap / 7);
+  }
+  for (const [job, dm] of demand) {
+    const cap = jobCap(settings, job);
+    if (cap !== null) demand.set(job, Math.min(dm, Math.max(0, cap - jobHours(d.prev.ledgers, job, 6))));
+  }
+  // Priority 1 first, proportionally within a priority.
+  const granted = new Map<JobId, number>();
+  let avail = pool;
+  const levels = [...new Set([...demand.keys()].map((j) => jobPriority(settings, j)))].sort((a, b) => a - b);
+  for (const lv of levels) {
+    const jobs = [...demand.entries()].filter(([j]) => jobPriority(settings, j) === lv);
+    const total = jobs.reduce((a, [, v]) => a + v, 0);
+    if (total <= 0) continue;
+    const share = total <= avail ? 1 : avail / total;
+    // A lone job short of labor gets exactly what is left (no rounding from total × avail ÷ total).
+    for (const [j, v] of jobs) granted.set(j, share < 1 && jobs.length === 1 ? avail : v * share);
+    avail = share < 1 ? 0 : Math.max(0, avail - total);
+  }
+  // Construction, in placement order.
+  let cap = granted.get('construction') ?? 0;
   let used = 0;
   for (let i = 0; i < d.instances.length; i++) {
     if (d.instances[i]!.status !== 'building') continue;
@@ -262,8 +489,10 @@ function laborPool(d: Day): void {
     if (inst.setupHoursNeeded - inst.setupHoursDone <= EPS) d.completed.push(i);
   }
   d.constructionUsed = used;
-  d.res['Labor']!.consumed += used;
-  d.laborForUpkeep = pool - used;
+  if (used > 0) d.byJob.construction = used;
+  d.laborForUpkeep = granted.get('upkeep') ?? 0;
+  for (const j of JOBS) if (j.id.startsWith('gather')) gather(d, j.id, granted.get(j.id) ?? 0, plans.get(j.id));
+  d.res['Labor']!.consumed += used + d.gatherUsed;
 }
 
 /** Step 3: each group's requests for today, and the capacity it provides. */
@@ -786,7 +1015,7 @@ function storeAndSpoil(d: Day): void {
     const led = res[r]!;
     const p = d.produced[r] ?? 0;
     if (r === 'Labor') {
-      led.spilled = Math.max(0, d.laborForUpkeep - d.laborUsed); // unused hours; labor never stocks
+      led.spilled = Math.max(0, d.pool - d.constructionUsed - d.gatherUsed - d.laborUsed); // unused hours; labor never stocks
       stocks[r] = 0;
       continue;
     }
@@ -934,8 +1163,13 @@ function buildLedger(d: Day): DayLedger {
       construction: d.constructionUsed,
       upkeepRequested: d.upkeepRequested,
       upkeepDelivered: d.laborUsed,
-      unused: Math.max(0, d.laborForUpkeep - d.laborUsed),
+      unused: Math.max(0, d.pool - d.constructionUsed - d.gatherUsed - d.laborUsed),
+      ...(Object.keys(d.byJob).length || d.laborUsed > 0
+        ? { byJob: { ...d.byJob, ...(d.laborUsed > 0 ? { upkeep: d.laborUsed } : {}) } }
+        : {}),
     },
+    ...(d.gathered.length ? { gathered: d.gathered } : {}),
+    ...(d.boiled ? { boiled: d.boiled } : {}),
     laborBySystem: d.laborBySystem,
     curtailed,
     weather: d.weather,
@@ -970,6 +1204,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   const needs = {} as Record<NeedKey, NeedDay>;
   for (const k of NEED_KEYS) needs[k] = { provided: 0, potential: 0, needed: 0, delivered: 0, bought: 0 };
 
+  const shelterIds = shelterSet(catalog, plans);
   const d: Day = {
     prev,
     meta: indexCatalog(catalog).resourceByName,
@@ -1017,13 +1252,19 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     spend: { backstop: {}, market: {}, fees: 0, delivery: 0 },
     market: prev.market,
     broke: false,
+    byJob: {},
+    gatherUsed: 0,
+    gathered: [],
+    boiled: null,
+    nodeStock: prev.nodeStock,
+    shelterIds,
   };
 
   groupInstances(d, computeSpatial(catalog, prev));
   startConstruction(d); // 2
   marketTrip(d); // 2b
-  laborPool(d); // 4 (people work before anything else runs)
   buildRequests(d); // 3
+  laborPool(d); // 4: labor by job priority, gathering included (G14)
   allocate(d); // 5
   dispatchBackstops(d); // 5b
   satisfy(d); // 6
@@ -1058,10 +1299,21 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     ledgers,
     ...(yearWeather ? { yearWeather, weatherLog } : {}),
     ...(d.market ? { market: d.market } : {}),
+    ...(d.nodeStock ? { nodeStock: regrowNodes(prev.site, d.nodeStock, day, d.weather.precipIn) } : {}),
     pendingCash: { purchases: 0, refunds: 0 },
     flags,
   };
   return { state, events: d.events, ledger };
+}
+
+const shelterSets = new WeakMap<Plans, Set<string>>();
+function shelterSet(_catalog: Catalog, plans: Plans): Set<string> {
+  let set = shelterSets.get(plans);
+  if (!set) {
+    set = new Set([...plans.bySystem.values()].filter((p) => p.outputs.some((o) => o.resource === 'Shelter' && o.isCapacity)).map((p) => p.system.id));
+    shelterSets.set(plans, set);
+  }
+  return set;
 }
 
 /** Validation mode: top up a stock so a request can be met in full, recorded as `supplied`. */

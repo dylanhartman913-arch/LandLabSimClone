@@ -2,6 +2,7 @@ import type { NeedKey, Site } from '@homestead/catalog';
 import type { PersonNeed } from './constants.ts';
 import type { DayWeather } from './climate.ts';
 import type { YearWeather } from './weather.ts';
+import type { JobId } from './gather.ts';
 
 export type BuildMode = 'buy' | 'diy' | 'prebuilt';
 export type WeatherMode = 'average' | 'real';
@@ -21,6 +22,13 @@ export interface GameSettings {
    * and nothing is capped by storage. Used to check time mode against balance mode.
    */
   unlimitedSupply?: boolean;
+  /** Work priorities (G14): per job, a priority 1 (first) to 5, and an optional cap in hours a week. */
+  work?: { priorities?: Partial<Record<JobId, number>>; caps?: Partial<Record<JobId, number | null>> };
+  /**
+   * Auto-gather rules (G14): keep water above N days of use, firewood above N weeks, food above
+   * N weeks, by gathering from the land's natural nodes. Absent or 0: off.
+   */
+  autoGather?: { waterDays?: number; woodWeeks?: number; foodWeeks?: number };
 }
 
 export interface PersonState {
@@ -128,7 +136,13 @@ export interface DayLedger {
     upkeepRequested: number;
     upkeepDelivered: number;
     unused: number;
+    /** Hours worked per job today (G14): gathering, construction, upkeep. */
+    byJob?: Partial<Record<JobId, number>>;
   };
+  /** What people gathered from the land today (G14). */
+  gathered?: GatherRecord[];
+  /** Untreated water boiled into drinking water today (G14). */
+  boiled?: { gal: number; fuelHours: number; laborHours: number };
   /** Upkeep hours worked per system today (construction is in labor.construction). */
   laborBySystem: Record<string, number>;
   /** Systems running below full satisfaction today, with the input that limited them. */
@@ -153,6 +167,18 @@ export interface DaySpend {
   fees: number;
   /** Market delivery charges (when no transport was available for the trip). */
   delivery: number;
+}
+
+/** One node's haul today (G14). */
+export interface GatherRecord {
+  job: JobId;
+  nodeId: string;
+  nodeType: string;
+  resource: string;
+  amount: number;
+  /** Hours at the node plus the walk there and back. */
+  hours: number;
+  walkHours: number;
 }
 
 /** A market purchase waiting for the next trip (G12). */
@@ -194,6 +220,8 @@ export interface GameState {
    * the systems it curtails; whether electricity is spilling.
    */
   flags: { short: Record<string, string[]>; spilling: boolean; broke?: boolean };
+  /** Natural node stocks (G14), once someone has worked a node; untouched nodes are full. */
+  nodeStock?: Record<string, number>;
   /** The market (G12): one-off orders for the next trip, and standing orders. Absent until used. */
   market?: { orders: MarketOrder[]; standing: StandingOrder[] };
   /** Real weather only: this year's draws, and every year's draws so far (kept in saves). */

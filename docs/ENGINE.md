@@ -393,3 +393,38 @@ Validation mode (`unlimitedSupply`) keeps backstops as fixed producers, so time-
 - `supplyChain(state, catalog, systemId, depth = 3)` covers required, capacity, and ambient inputs (not labor or money). For each one it gives whether the average year already covers it, the market price, and the three cheapest non-conventional producers, each expanded to its own inputs.
 - "Plan this branch" (UI) takes, for every unmet input, the producer already in the design or else the cheapest, recursively.
 - `planTotals(catalog, items)` gives the cost and setup hours of a build plan, with terms.
+
+## The land provides: nodes and gathering (G14)
+
+**Natural nodes** are site data (`data/sites/<id>.json`, `nodes`), not catalog systems. Each node has a type, a position (as a fraction of the parcel's side), a resource, a yield per labor hour, optional by-products (`extra`), a stock and a maximum stock (both `null` means unlimited), regrowth per day, the months it regrows in, and three optional flags:
+- `untreated`: the water needs a filter or boiling before anyone drinks it;
+- `rainFill` and `evaporatePerDay`: a rain pool, filled by precipitation and drying out;
+- `droughtSensitive`: in a dry real-weather year (G9), yield × max(0.2, precipitation multiplier).
+
+Stocks are tracked lazily in `state.nodeStock`. A node nobody has worked costs nothing to track: it is full, or a rain pool follows the last 10 days of rain. Once worked, it regrows by `regrowPerDay` in its months, up to `maxStock`.
+
+**Jobs** (`time/gather.ts`): fetch water, gather firewood, forage, build, look after systems (upkeep), dig clay, rake leaves. Each has a priority 1–5 and an optional weekly hour cap (`settings.work`). The defaults are:
+- gathering water, wood, and food: 1;
+- construction: 2;
+- upkeep: 3;
+- clay and leaves: 4.
+
+The labor pool goes to priority 1 first, then proportionally within a priority. A cap limits a job to what is left of its hours over the last 7 days. With no nodes or rules, labor behaves as before G14: construction, then upkeep.
+
+**Auto-gather rules** (`settings.autoGather`): "keep water above N days" (`waterDays`), "firewood above N weeks" (`woodWeeks`), "food above N weeks" (`foodWeeks`). Each day a rule asks for the gap, limited two ways:
+- at most 2 days of use per day (`RESTOCK_DAYS`);
+- at most 40% of the labor pool per job (`MAX_GATHER_SHARE`).
+
+This keeps survival foraging from starving upkeep. A gathering job with a weekly cap and no rule works its cap as standing hours (for example, dig 7 hours of clay a week).
+
+**Gathering** works the nearest node first, depleting it. Walking costs labor: 1 minute per 50 ft each way per hour-long trip, so a node 300 ft away yields 1/(1 + 0.2) of its rate per labor hour. By-products come along: wild greens yield Green biomass plus a little Vegetables fruit fiber herbs. Every haul is a `GatherRecord` on the day's ledger (node, resource, amount, hours, walking hours).
+
+**Boiling:** with no filter in the design, untreated water short of the drinking-water rule is boiled over the cooking fire:
+- 4 gallons per hour of cooking fuel (`BOIL_GAL_PER_FUEL_HOUR`);
+- 0.05 labor hours per gallon (`BOIL_LABOR_PER_GAL`).
+
+The ledger records `boiled`, and the checklist's "why" says, for example, "Drinking water: 6 gal from the spring via boiling, 0.3 h labor."
+
+**Views:**
+- `nodeOptions(state, resource)` lists the nodes for a resource page (distance, yield, stock).
+- `workView(state)` lists jobs, priorities, caps, and last week's hours.

@@ -141,5 +141,224 @@
     ],
     "coordinates": "fractions of the parcel side (0-1), so terrain scales with parcel size"
   },
-  "notes": "Approximate NOAA normals for Asheville Regional Airport. The stream enables micro-hydro (Stream flow is site-supplied)."
+  "notes": "Approximate NOAA normals for Asheville Regional Airport. The stream enables micro-hydro (Stream flow is site-supplied).",
+  "nodes": [
+    {
+      "id": "deadfall-1",
+      "type": "deadfall",
+      "x": 0.15,
+      "y": 0.2,
+      "resource": "Woody biomass",
+      "yieldPerHour": 40,
+      "stock": 2500,
+      "maxStock": 2500,
+      "regrowPerDay": 7,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "deadfall-2",
+      "type": "deadfall",
+      "x": 0.7,
+      "y": 0.15,
+      "resource": "Woody biomass",
+      "yieldPerHour": 40,
+      "stock": 2500,
+      "maxStock": 2500,
+      "regrowPerDay": 7,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "deadfall-3",
+      "type": "deadfall",
+      "x": 0.85,
+      "y": 0.6,
+      "resource": "Woody biomass",
+      "yieldPerHour": 40,
+      "stock": 1500,
+      "maxStock": 1500,
+      "regrowPerDay": 4,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "creek-1",
+      "type": "creek",
+      "x": 0.574,
+      "y": 0.766,
+      "resource": "Water",
+      "yieldPerHour": 25,
+      "stock": null,
+      "maxStock": null,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "untreated": true,
+      "droughtSensitive": true
+    },
+    {
+      "id": "greens-1",
+      "type": "wild-greens",
+      "x": 0.3,
+      "y": 0.8,
+      "resource": "Green biomass",
+      "yieldPerHour": 6,
+      "extra": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "perHour": 0.5
+        }
+      ],
+      "stock": 200,
+      "maxStock": 200,
+      "regrowPerDay": 3,
+      "months": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "berries-1",
+      "type": "berry-thicket",
+      "x": 0.55,
+      "y": 0.88,
+      "resource": "Vegetables fruit fiber herbs",
+      "yieldPerHour": 2,
+      "stock": 0,
+      "maxStock": 120,
+      "regrowPerDay": 2.5,
+      "months": [
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "berries-2",
+      "type": "berry-thicket",
+      "x": 0.1,
+      "y": 0.7,
+      "resource": "Vegetables fruit fiber herbs",
+      "yieldPerHour": 2,
+      "stock": 0,
+      "maxStock": 120,
+      "regrowPerDay": 2.5,
+      "months": [
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "clay-1",
+      "type": "clay-bank",
+      "x": 0.9,
+      "y": 0.9,
+      "resource": "Soil",
+      "yieldPerHour": 3,
+      "stock": null,
+      "maxStock": null,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "leaves-1",
+      "type": "leaf-litter",
+      "x": 0.2,
+      "y": 0.1,
+      "resource": "Carbon",
+      "yieldPerHour": 20,
+      "stock": 0,
+      "maxStock": 1500,
+      "regrowPerDay": 25,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "id": "leaves-2",
+      "type": "leaf-litter",
+      "x": 0.75,
+      "y": 0.25,
+      "resource": "Carbon",
+      "yieldPerHour": 20,
+      "stock": 0,
+      "maxStock": 800,
+      "regrowPerDay": 15,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    }
+  ]
 }

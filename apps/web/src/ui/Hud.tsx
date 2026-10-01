@@ -115,6 +115,14 @@ export function Hud() {
         </button>
         <button
           className="btn ghost"
+          onClick={() => st.setPanel(panel === 'work' ? null : 'work')}
+          title="Work priorities and auto-gather (J)"
+          data-testid="open-work"
+        >
+          Work
+        </button>
+        <button
+          className="btn ghost"
           onClick={() => st.setPanel(panel === 'market' ? null : 'market')}
           title="Market and weekly bills (M)"
           data-testid="open-market"

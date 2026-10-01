@@ -3,6 +3,7 @@ import type { BlockedSystem } from '../balance/balance.ts';
 import { statusText, type FeasibleResult } from '../balance/feasible.ts';
 import { getSystem } from '../catalog-index.ts';
 import { computeSpatial } from '../time/spatial.ts';
+import { NODE_LABEL } from '../time/gather.ts';
 import { explained, type Explained } from '../provenance.ts';
 import { summarizeLedgers } from '../time/summarize.ts';
 import type { DayLedger, GameState } from '../time/types.ts';
@@ -236,6 +237,52 @@ export function checklistView(
     return out.sort((a, b) => a.satisfaction - b.satisfaction || a.name.localeCompare(b.name));
   };
   const feeding = (need: NeedKey) => catalog.resources.filter((r) => r.needsRow === need).map((r) => r.name);
+  // Gathering (G14): what came from the land, with the labor it took, for the "why" popovers.
+  const fmt = (x: number) => (x >= 100 ? Math.round(x).toLocaleString('en-US') : x.toFixed(x >= 10 ? 0 : 1));
+  const gatherNotes = (need: NeedKey): string[] => {
+    const out: string[] = [];
+    const byRes = new Map<string, Map<string, { amount: number; hours: number }>>();
+    let waterGal = 0;
+    let waterHours = 0;
+    const waterFrom = new Map<string, number>();
+    for (const l of window) {
+      for (const h of l.gathered ?? []) {
+        const m = byRes.get(h.resource) ?? new Map<string, { amount: number; hours: number }>();
+        const e = m.get(h.nodeType) ?? { amount: 0, hours: 0 };
+        e.amount += h.amount;
+        e.hours += h.hours;
+        m.set(h.nodeType, e);
+        byRes.set(h.resource, m);
+        if (h.resource === 'Water') {
+          waterGal += h.amount;
+          waterHours += h.hours;
+          waterFrom.set(h.nodeType, (waterFrom.get(h.nodeType) ?? 0) + h.amount);
+        }
+      }
+    }
+    const label = (t: string) => NODE_LABEL[t as keyof typeof NODE_LABEL]?.toLowerCase() ?? t;
+    for (const res of feeding(need)) {
+      const unit = catalog.resources.find((x) => x.name === res)?.unit ?? '';
+      for (const [type, e] of byRes.get(res) ?? []) {
+        out.push(`${res}: ${fmt(e.amount)} ${unit} gathered from the ${label(type)}, ${fmt(e.hours)} h labor (walking included).`);
+      }
+    }
+    if (need === 'Drinking water') {
+      let gal = 0;
+      let boilHours = 0;
+      for (const l of window) {
+        gal += l.boiled?.gal ?? 0;
+        boilHours += l.boiled?.laborHours ?? 0;
+      }
+      if (gal > 1e-9) {
+        const src = [...waterFrom].sort((a, b) => b[1] - a[1])[0]?.[0];
+        const fetch = waterGal > 0 ? (waterHours * gal) / waterGal : 0;
+        out.push(`Drinking water: ${fmt(gal)} gal from the ${src ? label(src) : 'land'} via boiling, ${fmt(fetch + boilHours)} h labor.`);
+      }
+    }
+    return out;
+  };
+
   const rows: ChecklistRowView[] = sum.checklist.map((r) => {
     const notes: string[] = [];
     for (const res of feeding(r.need)) {
@@ -266,6 +313,7 @@ export function checklistView(
         `actual: average weekly output of resources feeding ${r.need} that reached its users over ${label} (time mode)`,
         {
           refs: { ...refs, potential: r.potential },
+          notes: gatherNotes(r.need),
         },
       ),
       potential: explained(

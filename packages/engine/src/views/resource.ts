@@ -5,6 +5,7 @@ import { costFor, setupHoursFor } from '../time/game.ts';
 import { getPlans } from '../time/plans.ts';
 import { computeSpatial, groupKeyOf } from '../time/spatial.ts';
 import type { GameState } from '../time/types.ts';
+import { JOBS, NODE_JOB, NODE_LABEL, jobCap, jobHours, jobPriority, nodeStockOf, nodeYield, type JobId } from '../time/gather.ts';
 import { designBalance } from './hud.ts';
 
 /** A system in the design that makes the resource. */
@@ -317,9 +318,52 @@ export function supplyChain(state: GameState, catalog: Catalog, systemId: string
   return expand(systemId, 1, new Set());
 }
 
-/** Natural nodes on the land that yield a resource (G14 fills this in from the site). */
-export function nodeOptions(_state: GameState, _resource: string): NodeOption[] {
-  return [];
+/** Natural nodes on the land that yield a resource, nearest first (G14). */
+export function nodeOptions(state: GameState, resource: string): NodeOption[] {
+  const side = Math.sqrt(state.settings.parcelAcres * 43_560);
+  return state.site.nodes
+    .filter((n) => n.resource === resource || n.extra.some((e) => e.resource === resource))
+    .map((n) => ({
+      id: n.id,
+      type: NODE_LABEL[n.type],
+      distanceFt: Math.hypot(n.x * side - side / 2, n.y * side - side / 2),
+      yieldPerHour: n.resource === resource ? nodeYield(n, state.yearWeather, state.settings.weatherMode) : n.extra.find((e) => e.resource === resource)!.perHour,
+      stock: n.resource === resource ? nodeStockOf(state, n) : Infinity,
+    }))
+    .sort((a, b) => a.distanceFt - b.distanceFt);
+}
+
+export interface WorkRow {
+  job: JobId;
+  label: string;
+  priority: number;
+  /** Weekly cap in hours (null: none). */
+  cap: number | null;
+  /** Hours worked over the last 7 days. */
+  hoursWeek: Explained;
+  /** Gathering jobs only: nodes on this land that this job works. */
+  nodes: number;
+}
+
+/** The work priorities panel (G14): every job, its priority and cap, and the week's hours. */
+export function workView(state: GameState): { rows: WorkRow[]; auto: { waterDays: number; woodWeeks: number; foodWeeks: number }; poolWeek: Explained } {
+  const week = state.ledgers.slice(-7);
+  const rows = JOBS.map((j) => ({
+    job: j.id,
+    label: j.label,
+    priority: jobPriority(state.settings, j.id),
+    cap: jobCap(state.settings, j.id),
+    hoursWeek: explained(jobHours(state.ledgers, j.id, 7), `hours worked on "${j.label}" over the last ${week.length} days`),
+    nodes: state.site.nodes.filter((n) => NODE_JOB[n.type] === j.id).length,
+  }));
+  const ag = state.settings.autoGather ?? {};
+  return {
+    rows,
+    auto: { waterDays: ag.waterDays ?? 0, woodWeeks: ag.woodWeeks ?? 0, foodWeeks: ag.foodWeeks ?? 0 },
+    poolWeek: explained(week.reduce((a, l) => a + l.labor.pool, 0), 'Σ household labor × health over the last 7 days', {
+      refs: { days: week.length },
+    }),
+  };
 }
 
 /** Cost and setup labor of a build plan (G13), each with its terms. */

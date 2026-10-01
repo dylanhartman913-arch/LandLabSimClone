@@ -12,6 +12,7 @@ import { Drawer } from './ui/Drawer.tsx';
 import { ErrorBoundary as EB } from './ui/ErrorBoundary.tsx';
 import { FlowLegend } from './ui/FlowLegend.tsx';
 import { Market } from './ui/Market.tsx';
+import { Work } from './ui/Work.tsx';
 import { NewGame } from './ui/NewGame.tsx';
 import { Plan } from './ui/Plan.tsx';
 import { BuildPlanCard } from './ui/BuildPlan.tsx';
@@ -35,6 +36,7 @@ const PANEL_NAMES: Record<string, string> = {
   saves: 'Saves',
   settings: 'Settings',
   market: 'The market',
+  work: 'Work priorities',
 };
 
 const st = () => useGame.getState();
@@ -114,6 +116,7 @@ export function App() {
             {panel === 'saves' && <Saves />}
             {panel === 'settings' && <Settings />}
             {panel === 'market' && <Market />}
+            {panel === 'work' && <Work />}
           </EB>
           <EB name="The plan" onClose={() => usePlan.getState().setOpen(false)}>
             <Plan />

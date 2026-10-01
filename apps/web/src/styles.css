@@ -1917,3 +1917,29 @@ pre.cli {
   padding: 3px;
   font-size: 0.85em;
 }
+
+/* Work priorities (G14) ------------------------------------------------------------ */
+.prio {
+  display: flex;
+  gap: 2px;
+}
+.prio-btn {
+  width: 26px;
+  height: 24px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.prio-btn.on {
+  background: var(--accent);
+  color: #1b1f16;
+  font-weight: 700;
+  border-color: var(--accent);
+}
+.work-table input {
+  width: 80px;
+}
+.work-table th[scope='row'] {
+  font-weight: normal;
+}

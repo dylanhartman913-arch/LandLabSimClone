@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Application } from 'pixi.js';
-import { designBalance, gameDigest, getSystem } from '@homestead/engine';
+import { designBalance, gameDigest, getSystem, NODE_LABEL, nodeStockOf, type GameState } from '@homestead/engine';
+import { fmtNum } from '../lib/format.ts';
 import { useGame, worldToScreen } from '../store/game.ts';
 import { MapScene } from './scene.ts';
 
@@ -22,6 +23,20 @@ declare global {
 }
 
 /** The playfield: a PixiJS canvas driven by the store. */
+/** Tooltip text for every natural node on the land (G14). */
+function nodeOptionsAll(g: GameState): { id: string; label: string; text: string }[] {
+  return g.site.nodes.map((n) => {
+    const stock = nodeStockOf(g, n);
+    const unit = useGame.getState().catalog.resources.find((r) => r.name === n.resource)?.unit ?? '';
+    const amount = Number.isFinite(stock) ? `${fmtNum(stock)} ${unit} left` : 'plenty';
+    return {
+      id: n.id,
+      label: NODE_LABEL[n.type],
+      text: `${n.resource}: ${amount} · ${fmtNum(n.yieldPerHour)} ${unit} per hour of work${n.untreated ? ' · untreated: filter or boil it' : ''}`,
+    };
+  });
+}
+
 export function MapView() {
   const host = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<MapScene | null>(null);
@@ -96,10 +111,18 @@ export function MapView() {
     };
   }, [catalog]);
 
-  const inst = hover ? useGame.getState().game.instances.find((i) => i.id === hover.id) : null;
+  const nodeId = hover?.id.startsWith('node:') ? hover.id.slice(5) : null;
+  const node = nodeId ? nodeOptionsAll(useGame.getState().game).find((n) => n.id === nodeId) : null;
+  const inst = hover && !nodeId ? useGame.getState().game.instances.find((i) => i.id === hover.id) : null;
   const sys = inst ? getSystem(catalog, inst.systemId) : null;
   return (
     <div className="map-host" ref={host} data-testid="map">
+      {hover && node && (
+        <div className="map-tip" style={{ left: hover.x + 14, top: hover.y + 10 }} role="tooltip" data-testid="node-tip">
+          <strong>{node.label}</strong>
+          <span className="tip-sub">{node.text}</span>
+        </div>
+      )}
       {hover && sys && inst && (
         <div className="map-tip" style={{ left: hover.x + 14, top: hover.y + 10 }} role="tooltip">
           <strong>{sys.name}</strong>

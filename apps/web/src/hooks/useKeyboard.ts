@@ -87,6 +87,10 @@ export function useKeyboard() {
         case 'N':
           s.setChecklist(!s.checklistOpen);
           break;
+        case 'j':
+        case 'J':
+          s.setPanel(s.panel === 'work' ? null : 'work');
+          break;
         case 'm':
         case 'M':
           s.setPanel(s.panel === 'market' ? null : 'market');

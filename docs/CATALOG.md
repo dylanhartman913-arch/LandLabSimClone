@@ -214,3 +214,24 @@ All spatial behavior is data in `data/catalog_overrides.json`, exported to the c
 | Farm & Feed Store | 0 | feed, hay, pellets, seeds, seedlings at market prices |
 
 The default price rule is: an override, else the resource's market price, else the system's weekly Capital (less its fee) ÷ its first output. The exporter rejects a backstop that sells nothing, prices on outputs it doesn't have, and prices or a fee on a system that isn't a backstop. The grid and city-water prices reproduce roughly the catalog's own weekly bills at the catalog's output.
+
+## Natural nodes (G14, site data)
+
+Nodes live in `data/sites/<id>.json` under `nodes` and are parsed by `SiteSchema` (`packages/catalog/src/schema.ts`). They are not catalog systems, so they never touch parity.
+
+| Type | Resource | Yield / labor hour | Stock | Regrowth | Notes |
+|---|---|---|---|---|---|
+| deadfall | Woody biomass | 40 lbs | 600–2,500 lbs | 1.6–7 lbs/day (refills in about a year) | finite early wood |
+| creek / spring | Water | 25 (creek) / 12–15 (spring) gal | unlimited | — | untreated; drought-sensitive |
+| wild-greens | Green biomass (+0.5 lb produce) | 6 lbs | 120–200 lbs | 3 lbs/day, in the growing months | |
+| berry-thicket | Vegetables fruit fiber herbs | 2 lbs | starts empty | 2.5 lbs/day, July–September | Asheville |
+| clay-bank | Soil | 3 cu ft | unlimited | — | |
+| leaf-litter | Carbon | 20 lbs | starts empty | 15–25 lbs/day, September–November | |
+| rain-pools | Water | 10 gal | fills with rain (150 gal per inch), 25%/day evaporation | — | untreated |
+
+Each site has its own mix:
+- Asheville: three deadfall nodes, a creek, and two berry thickets.
+- Front Range: two deadfall nodes and a spring.
+- Laramie: one small deadfall, a weak spring, and rain pools.
+
+Node yields are **tunable data** (G16's tuning loop may change them; record each change in `docs/BALANCE_LOG.md`).

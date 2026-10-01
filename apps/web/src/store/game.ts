@@ -45,7 +45,7 @@ export interface PlanItem {
   y: number;
 }
 
-export type Panel = null | 'almanac' | 'saves' | 'settings' | 'report' | 'market';
+export type Panel = null | 'almanac' | 'saves' | 'settings' | 'report' | 'market' | 'work';
 
 export interface Camera {
   /** World point (ft) at the center of the view. */
@@ -743,8 +743,12 @@ export const useGame = create<GameStore>()((set, get) => {
       return added.length;
     },
 
-    focusNode(_id) {
-      // G14: natural nodes.
+    focusNode(id) {
+      const st = get();
+      const n = st.game.site.nodes.find((x) => x.id === id);
+      if (!n) return;
+      const side = Math.sqrt(st.game.settings.parcelAcres * 43_560);
+      set({ camera: { ...st.camera, cx: n.x * side, cy: n.y * side, zoom: Math.max(st.camera.zoom, 2) }, resourcePage: null });
     },
 
     planRemove(key) {

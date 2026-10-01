@@ -9,3 +9,4 @@ export * from './step.ts';
 export * from './summarize.ts';
 export * from './spatial.ts';
 export * from './weather.ts';
+export * from './gather.ts';

@@ -9,6 +9,7 @@ import {
   footprintSideFt,
   getSystem,
   instanceStatuses,
+  nodeStockOf,
   nextRandom,
   parcelSideFt,
   seasonOf,
@@ -19,6 +20,7 @@ import {
 import { personTexture, systemTexture } from '../sprites/placeholder.ts';
 import { screenToWorld, snapTo, useGame, type GameStore } from '../store/game.ts';
 import { makeBadge } from './badges.ts';
+import { drawNode, NODE_HOVER_FT } from './nodes.ts';
 import { bakeTiled, grassTexture, SEASON_TINT, snowTexture } from './grass.ts';
 
 export const FLOW_COLORS: Record<FlowGroup, number> = {
@@ -79,6 +81,9 @@ export class MapScene {
   private snow!: Sprite;
   private parcel = new Graphics();
   private terrain = new Container();
+  /** Natural nodes (G14): deadfall, springs, greens… redrawn as they deplete and regrow. */
+  private nodes = new Container();
+  private nodeFill = new Map<string, number>();
   private ground = new Container();
   private objects = new Container();
   private peopleLayer = new Container();
@@ -127,7 +132,7 @@ export class MapScene {
     this.grass = new Sprite(bakeTiled(grassTexture(), 'grass', 8));
     this.snow = new Sprite(bakeTiled(snowTexture(), 'snow', 8));
     this.snow.visible = false;
-    this.world.addChild(this.grass, this.snow, this.parcel, this.terrain, this.ground, this.objects);
+    this.world.addChild(this.grass, this.snow, this.parcel, this.terrain, this.nodes, this.ground, this.objects);
     this.world.addChild(
       this.planGhosts,
       this.peopleLayer,
@@ -326,6 +331,7 @@ export class MapScene {
       this.snow.alpha = 0.55;
       this.lastSeason = season;
     }
+    this.syncNodes(g, side);
     const seen = new Set<string>();
     for (const inst of g.instances) {
       const sys = getSystem(this.catalog, inst.systemId);
@@ -367,6 +373,42 @@ export class MapScene {
       }
     }
     this.lastGame = g;
+  }
+
+  /** Natural nodes, fuller or sparser with their stock (only redrawn when the fill changes visibly). */
+  private syncNodes(g: GameState, side: number): void {
+    const siteChanged = !this.lastGame || this.lastGame.site !== g.site || parcelSideFt(this.lastGame.settings) !== side;
+    if (siteChanged) {
+      this.nodes.removeChildren().forEach((c) => c.destroy({ children: true }));
+      this.nodeFill.clear();
+    }
+    g.site.nodes.forEach((n, k) => {
+      const stock = nodeStockOf(g, n);
+      const fill = n.maxStock === null || !Number.isFinite(stock) ? 1 : n.maxStock > 0 ? stock / n.maxStock : 0;
+      const q = Math.round(fill * 10) / 10;
+      if (!siteChanged && this.nodeFill.get(n.id) === q) return;
+      this.nodeFill.set(n.id, q);
+      const view = drawNode(n, q);
+      view.position.set(n.x * side, n.y * side);
+      view.label = n.id;
+      const old = this.nodes.children[k];
+      if (old) {
+        this.nodes.addChildAt(view, k);
+        old.destroy({ children: true });
+      } else this.nodes.addChild(view);
+    });
+  }
+
+  /** The natural node under the pointer, if any (for the map tooltip). */
+  nodeAt(wx: number, wy: number): string | null {
+    const g = useGame.getState().game;
+    const side = parcelSideFt(g.settings);
+    let best: { id: string; d: number } | null = null;
+    for (const n of g.site.nodes) {
+      const d = Math.hypot(n.x * side - wx, n.y * side - wy);
+      if (d <= NODE_HOVER_FT && (!best || d < best.d)) best = { id: n.id, d };
+    }
+    return best?.id ?? null;
   }
 
   /** Planned systems as translucent ghosts with a dashed outline. */
@@ -828,7 +870,13 @@ export class MapScene {
         .fill({ color: 0xfff4d6, alpha: 0.12 })
         .stroke({ width: 1, color: 0xfff4d6 });
     } else {
-      this.setHover(this.hit(e));
+      const id = this.hit(e);
+      if (id) this.setHover(id);
+      else {
+        const w = this.toWorld(this.pointer.sx, this.pointer.sy);
+        const node = this.nodeAt(w.x, w.y);
+        this.setHover(node ? `node:${node}` : null);
+      }
     }
     this.updateGhost();
   }
