@@ -660,3 +660,40 @@ The unlimited-supply agreement now compares time-mode **potential** with `balanc
 - The suburban design's groceries and job get no transport. People (tier 0) use the two cars' 500 miles a week first, which is a real shortfall in that design, not a bug; the G15 adapt start sizes for it.
 
 **Known gaps:** feasible balance doesn't model market purchases (they are player actions, not steady state).
+
+## G13 — Where does this come from? (2026-10-01)
+
+**Shipped**
+- **Resource pages:** a side sheet with an address, `#/resource/<name>`.
+  - What the resource is, stock, storage room, spoilage, and a 12-week made / bought / used chart.
+  - **Where it comes from:** in your design (actual and potential output, and what holds each producer back); on your land (G14 nodes); you could build (cheapest per unit first, conventional last, each input marked ✓ have / ✗ missing and linking to its own page); buy (market price and a buy box, or "the market doesn't sell Electricity: it comes only through a grid connection").
+  - **Where it goes:** consumers in the design (gets N of M a week), catalog systems that use it, and what happens to the unused rest.
+- **Click-through everywhere:**
+  - Every System Card input and output, every checklist row name (heat and cooling rows open Heat and Cooling), and every drawer Inputs/Outputs entry open the resource page.
+  - So does every shortage toast ("Where from?") and the held-back list's "Find a source of X".
+  - Every system named on a page opens its card.
+  - A **back stack**: the ← on pages and cards, or Backspace when one is open with history. Backspace deletes the selection otherwise, and Delete always does.
+- **Status line** on the System Card: "Blocked: no Electricity · Electricity", linking to the missing input.
+- **Supply-chain tree** (Show supply chain): inputs → producers → their inputs, three levels; covered branches are green and collapsed, short ones amber and open.
+- **Build plans:**
+  - "Plan this branch" adds the cheapest producers of every unmet input as ghosts on the map: translucent, with a dashed outline, laid out near the system without overlapping each other.
+  - A Build plan card shows the total cost and setup labor; build one at a time or Build all, remove items, or Clear.
+- **Search by resource:** the drawer's Anything / Makes it / Uses it toggle. "wood pellets" + Uses lists the Pellet Stove; + Makes lists the Farm & Feed Store. The pellet mill arrives in G15.
+- Toasts moved to the bottom-left so they don't cover cards and pages.
+
+**Tests:** 185 unit.
+- `resource.test.ts` (3): an electricity page with producers, users, and build options; wood pellets with the market and an input you lack; a well's chain with electricity unmet and sunlight covered.
+- `search.test.ts`: makes / uses separates sellers from burners.
+
+e2e `sources.spec.ts` (4):
+- **The handoff:** from five blocked systems (well, wood stove, pellet stove, chicken coop, composting outhouse), the card (click 1), the missing input in its status line (click 2), and a source's card ready to Add (click 3), with something to build or buy on every page.
+- Card → resource → card and back with Backspace, with the URL hash.
+- The well's chain → Plan this branch → ghosts → Build all.
+- A deep link to `#/resource/Wood%20pellets` and the makes / uses search.
+
+Screenshots are in `docs/screenshots/g13/`.
+
+**Decisions not in the roadmap**
+- The page's "spare capacity" is shown as headroom: what a producer could add if its own inputs were met. A resource's surplus already shows as spilled, under Outputs.
+- "Sell" isn't modeled (there is no buyer in the engine), so "Where it goes" ends with what happens to the unused rest: spills, spoils, or piles up.
+- The pellet-stove walk the roadmap describes (pellet stove → Wood pellets → pellet mill → its wood-chip input → plan) needs the G15 pellet mill. It is in G15's e2e.

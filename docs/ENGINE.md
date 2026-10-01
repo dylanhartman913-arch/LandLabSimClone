@@ -378,3 +378,18 @@ Validation mode (`unlimitedSupply`) keeps backstops as fixed producers, so time-
 - `market.test.ts`: purchases stop at zero cash.
 - `market.test.ts`: fees, trips and delivery, standing orders, replay.
 - `sources.audit.test.ts`: every Flow input has a producer, a node, or a market listing. Inputs with a single source are printed as warnings.
+
+
+## Where things come from (G13)
+
+- `resourcePage(state, catalog, resource, nodes)` describes one resource:
+  - what it is, its unit and class, stock on hand, room in its storage pool, and spoilage;
+  - the last 12 weeks made / bought / used;
+  - **In your design:** producers with actual and potential output a week (yesterday × 7, or the average year before the clock runs) and the input holding them back;
+  - **On your land:** natural nodes (G14);
+  - **You could build:** catalog producers, non-conventional first, cheapest per unit of weekly output first, each with its inputs marked "you have this" (something in the design makes it, there is stock, or the site supplies it);
+  - **Buy:** the market price;
+  - **Where it goes:** consumers in the design with requested and received, catalog systems that use it, and what happens to the unused rest.
+- `supplyChain(state, catalog, systemId, depth = 3)` covers required, capacity, and ambient inputs (not labor or money). For each one it gives whether the average year already covers it, the market price, and the three cheapest non-conventional producers, each expanded to its own inputs.
+- "Plan this branch" (UI) takes, for every unmet input, the producer already in the design or else the cheapest, recursively.
+- `planTotals(catalog, items)` gives the cost and setup hours of a build plan, with terms.
