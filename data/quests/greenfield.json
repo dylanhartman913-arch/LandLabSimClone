@@ -10,102 +10,278 @@
       "goal": {
         "kind": "all",
         "of": [
-          { "kind": "stock", "resource": "Water", "atLeast": 20 },
-          { "kind": "made", "system": "Drinking Water Filter", "resource": "Drinking water", "atLeast": 1.4 }
+          {
+            "kind": "stock",
+            "resource": "Water",
+            "atLeast": 20
+          },
+          {
+            "kind": "made",
+            "system": "Drinking Water Filter",
+            "resource": "Drinking water",
+            "atLeast": 1.4
+          }
         ]
       },
       "steps": [],
-      "show": { "kind": "system", "name": "Rain Barrel (55 gal)" },
-      "reward": { "line": "Ruth drops off two jugs of her well water to tide you over.", "stock": { "Drinking water": 10 } }
+      "show": {
+        "kind": "system",
+        "name": "Rain Barrel (55 gal)"
+      },
+      "reward": {
+        "line": "Ruth drops off two jugs of her well water and pays you to fill her stock tank from your spring.",
+        "cash": 200,
+        "stock": {
+          "Drinking water": 10
+        }
+      }
     },
     {
       "id": "gf-firewood",
       "title": "Gather a week of firewood from the deadfall",
       "reason": "The stove and the firepit burn about 90 lbs a week. The deadfall is free, but someone has to walk out and haul it.",
       "row": "Heated shelter",
-      "goal": { "kind": "gathered", "resource": "Woody biomass", "atLeast": 90 },
-      "steps": [{ "do": "workCap", "job": "gather-wood", "hours": 6 }],
-      "show": { "kind": "node", "type": "deadfall" },
-      "reward": { "line": "Ruth pays you for a few armloads of split kindling.", "cash": 150 }
+      "goal": {
+        "kind": "gathered",
+        "resource": "Woody biomass",
+        "atLeast": 90
+      },
+      "steps": [
+        {
+          "do": "workCap",
+          "job": "gather-wood",
+          "hours": 6
+        }
+      ],
+      "show": {
+        "kind": "node",
+        "type": "deadfall"
+      },
+      "reward": {
+        "line": "Ruth pays you for a few armloads of kindling and splits her seed potatoes with you.",
+        "cash": 300,
+        "stock": {
+          "Root crops": 25
+        }
+      }
     },
     {
       "id": "gf-bed",
       "title": "Build a raised bed and plant it",
-      "reason": "A bed needs soil once, then seed and compost each season. Dig clay from the bank or buy a few bags.",
+      "reason": "A bed needs soil once, then seed and compost each season. Dig clay from the bank or buy a few bags, and put the seed potatoes in the ground next to it.",
       "row": "Food",
-      "goal": { "kind": "have", "system": "Raised Beds (24 sq ft)", "count": 1 },
+      "goal": {
+        "kind": "have",
+        "system": "Raised Beds (24 sq ft)",
+        "count": 1
+      },
       "steps": [
-        { "do": "buy", "resource": "Soil", "amount": 24 },
-        { "do": "buy", "resource": "Compost", "amount": 50 },
-        { "do": "place", "system": "Raised Beds (24 sq ft)", "mode": "diy" }
+        {
+          "do": "buy",
+          "resource": "Soil",
+          "amount": 24
+        },
+        {
+          "do": "buy",
+          "resource": "Compost",
+          "amount": 250
+        },
+        {
+          "do": "place",
+          "system": "Raised Beds (24 sq ft)",
+          "mode": "diy"
+        },
+        {
+          "do": "place",
+          "system": "Potato Patch (400 sq ft)",
+          "mode": "diy"
+        }
       ],
-      "show": { "kind": "system", "name": "Raised Beds (24 sq ft)" },
-      "reward": { "line": "Ruth splits her seed potatoes with you and shows you where to plant them.", "cash": 100, "stock": { "Compost": 200 } }
+      "show": {
+        "kind": "system",
+        "name": "Raised Beds (24 sq ft)"
+      },
+      "reward": {
+        "line": "Ruth sends over a wheelbarrow of finished compost for next season.",
+        "cash": 300,
+        "stock": {
+          "Compost": 200
+        }
+      }
     },
     {
       "id": "gf-compost",
       "title": "Start a compost pile with leaf litter and kitchen scraps",
-      "reason": "Greens from the meadow, browns from the litter or a bale of straw, and some water: your first closed loop.",
+      "reason": "Kitchen scraps under a cover of leaf litter or sawdust ferment into compost in a bucket: your first closed loop, and it leaves the meadow greens for the hens.",
       "row": "Food",
-      "goal": { "kind": "made", "system": "Compost Piles", "resource": "Compost", "atLeast": 0.5 },
+      "goal": {
+        "kind": "made",
+        "system": "Bokashi Bucket",
+        "resource": "Compost",
+        "atLeast": 0.2
+      },
       "steps": [
-        { "do": "place", "system": "Compost Piles", "mode": "diy" },
-        { "do": "standing", "resource": "Carbon", "keepAbove": 40, "orderUpTo": 120 }
+        {
+          "do": "place",
+          "system": "Bokashi Bucket",
+          "mode": "diy"
+        },
+        {
+          "do": "standing",
+          "resource": "Carbon",
+          "keepAbove": 40,
+          "orderUpTo": 120
+        }
       ],
-      "show": { "kind": "system", "name": "Compost Piles" },
-      "reward": { "line": "Ruth trades a sack of her chicken feed for a look at your pile.", "stock": { "Chicken feed": 50 } }
+      "show": {
+        "kind": "system",
+        "name": "Bokashi Bucket"
+      },
+      "reward": {
+        "line": "Ruth trades a sack of her chicken feed and some cash for a share of your first compost.",
+        "cash": 200,
+        "stock": {
+          "Chicken feed": 50
+        }
+      }
     },
     {
       "id": "gf-autowater",
       "title": "Set an auto-gather rule so you never run out of water",
       "reason": "Keep a week of water on hand without thinking about it. While you're at it, a standing grocery order keeps the pantry from running dry.",
       "row": "Drinking water",
-      "goal": { "kind": "setting", "rule": "waterDays", "atLeast": 7 },
+      "goal": {
+        "kind": "setting",
+        "rule": "waterDays",
+        "atLeast": 7
+      },
       "steps": [
-        { "do": "autoGather", "waterDays": 7 },
-        { "do": "standing", "resource": "Food", "keepAbove": 28000, "orderUpTo": 56000 }
+        {
+          "do": "autoGather",
+          "waterDays": 7
+        },
+        {
+          "do": "standing",
+          "resource": "Food",
+          "keepAbove": 14000,
+          "orderUpTo": 42000
+        }
       ],
-      "show": { "kind": "panel", "panel": "work" },
-      "reward": { "line": "Ruth brings a box of her canned beans and tomatoes.", "stock": { "Food": 40000 } }
+      "show": {
+        "kind": "panel",
+        "panel": "work"
+      },
+      "reward": {
+        "line": "Ruth brings two boxes of her canned beans and tomatoes.",
+        "cash": 0,
+        "stock": {
+          "Food": 80000
+        }
+      }
     },
     {
       "id": "gf-hens",
       "title": "Add a chicken coop and keep the hens fed",
-      "reason": "Twelve hens lay about 55 eggs a week. They need feed: find it on the Chicken feed page.",
+      "reason": "Twelve hens lay about 55 eggs a week, more with greens and scraps. They need feed: find it on the Chicken feed page. Spend spare hours foraging greens and berries for the hens and the table.",
       "row": "Food",
-      "goal": { "kind": "made", "system": "Chicken Coop (12 hens)", "resource": "Eggs", "atLeast": 5 },
+      "goal": {
+        "kind": "made",
+        "system": "Chicken Coop (12 hens)",
+        "resource": "Eggs",
+        "atLeast": 5
+      },
       "steps": [
-        { "do": "place", "system": "Chicken Coop (12 hens)", "mode": "diy" },
-        { "do": "standing", "resource": "Chicken feed", "keepAbove": 20, "orderUpTo": 60 }
+        {
+          "do": "place",
+          "system": "Chicken Coop (12 hens)",
+          "mode": "diy"
+        },
+        {
+          "do": "standing",
+          "resource": "Chicken feed",
+          "keepAbove": 20,
+          "orderUpTo": 60
+        },
+        {
+          "do": "workCap",
+          "job": "gather-food",
+          "hours": 20
+        }
       ],
-      "show": { "kind": "resource", "name": "Chicken feed" },
-      "reward": { "line": "Ruth's grandson helps you finish the run and won't take money for it.", "cash": 250 }
+      "show": {
+        "kind": "resource",
+        "name": "Chicken feed"
+      },
+      "reward": {
+        "line": "Ruth's grandson helps finish the run, and Ruth buys your extra eggs for the church sale.",
+        "cash": 500
+      }
     },
     {
       "id": "gf-cold",
       "title": "Get through the first cold snap warm",
-      "reason": "A tiny stove can't keep a canvas tent warm on a hard night. A mass heater stores the fire's heat; the cheapest heat of all is heat you don't lose.",
+      "reason": "A tiny stove can't keep a canvas tent warm on a hard night. A mass heater stores the fire's heat; the cheapest heat of all is heat you don't lose. The deadfall won't carry a winter of three fires: keep a cord coming from the market as a backstop.",
       "row": "Heated shelter",
-      "goal": { "kind": "warm", "hddAbove": 30, "atLeast": 0.8, "days": 3 },
+      "goal": {
+        "kind": "warm",
+        "hddAbove": 22,
+        "atLeast": 0.8,
+        "days": 3
+      },
       "steps": [
-        { "do": "place", "system": "Rocket Mass Heater", "mode": "diy" },
-        { "do": "autoGather", "woodWeeks": 4 }
+        {
+          "do": "place",
+          "system": "Rocket Mass Heater",
+          "mode": "diy"
+        },
+        {
+          "do": "autoGather",
+          "woodWeeks": 4
+        },
+        {
+          "do": "standing",
+          "resource": "Woody biomass",
+          "keepAbove": 150,
+          "orderUpTo": 600
+        }
       ],
-      "show": { "kind": "resource", "name": "Heat" },
-      "reward": { "line": "Ruth's family brings a truckload of split oak.", "stock": { "Woody biomass": 600 } }
+      "show": {
+        "kind": "resource",
+        "name": "Heat"
+      },
+      "reward": {
+        "line": "Ruth's family brings a truckload of split oak and pays you to watch their place over the holidays.",
+        "cash": 600,
+        "stock": {
+          "Woody biomass": 600
+        }
+      }
     },
     {
       "id": "gf-food",
       "title": "Cover 25% of your food from the land for a month",
       "reason": "This is what the stockpile was buying time for: food you grew, laid, or foraged, a quarter of what you eat.",
       "row": "Food",
-      "goal": { "kind": "homegrown", "share": 0.25, "days": 30 },
+      "goal": {
+        "kind": "homegrown",
+        "share": 0.25,
+        "days": 30
+      },
       "steps": [
-        { "do": "place", "system": "Potato Patch (400 sq ft)", "mode": "diy" },
-        { "do": "buy", "resource": "Root crops", "amount": 25 }
+        {
+          "do": "place",
+          "system": "Quail Hutch (10 quail)",
+          "mode": "diy"
+        }
       ],
-      "show": { "kind": "resource", "name": "Food" },
-      "reward": { "line": "Ruth throws you a harvest supper and sends the leftovers home.", "cash": 500 }
+      "show": {
+        "kind": "resource",
+        "name": "Food"
+      },
+      "reward": {
+        "line": "Ruth throws you a harvest supper and sends the leftovers home.",
+        "cash": 500
+      }
     }
   ]
 }

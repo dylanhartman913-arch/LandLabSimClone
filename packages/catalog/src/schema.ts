@@ -615,7 +615,10 @@ export const QuestStepSchema = z.union([
       on: z.boolean().default(false),
     })
     .strict(),
-  z.object({ do: z.literal('remove'), system: z.string() }).strict(),
+  /** Remove `count` of a system (all of them when omitted). */
+  z.object({ do: z.literal('remove'), system: z.string(), count: z.number().int().min(1).optional() }).strict(),
+  /** Serve a system first (priority tier 0), e.g. the commute before leisure miles. */
+  z.object({ do: z.literal('priority'), system: z.string(), tier: z.number().int().min(0).max(2) }).strict(),
   z.object({ do: z.literal('buy'), resource: z.string(), amount: z.number().positive() }).strict(),
   z.object({ do: z.literal('standing'), resource: z.string(), keepAbove: z.number().nonnegative(), orderUpTo: z.number().positive() }).strict(),
   z

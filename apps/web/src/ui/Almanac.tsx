@@ -34,6 +34,8 @@ function filterOf(e: GameEvent): Filter {
     case 'purchases-stopped':
     case 'market':
       return 'money';
+    case 'quest':
+      return 'people';
   }
 }
 
@@ -77,6 +79,8 @@ export function describeEvent(
       return `${instSys(e.instanceId) ?? 'Someone'} went to stay in town. They can come back once home has food, water, and shelter.`;
     case 'came-home':
       return `${instSys(e.instanceId) ?? 'Someone'} came home from town.`;
+    case 'quest':
+      return `Quest done: ${e.title}. ${e.reward}`;
     case 'purchases-stopped':
       return `Out of money: purchases stopped (cash ${fmtMoney(e.cash)}). Groceries, power, and market orders wait until there is cash again.`;
     case 'market':

@@ -90,11 +90,20 @@ describe('backstops fill what the homestead does not', () => {
     expect(total(ledgers, (l) => l.spend.backstop['Water'] ?? 0)).toBe(0);
   });
 
-  it('the bills view adds up the week and its trend', () => {
+  it('the bills view adds up the week, running costs included (house, cars), and its trend', () => {
     const r = run(adaptHome(), 30);
-    const b = weeklyBills(r.state);
+    const b = weeklyBills(r.state, catalog);
     const week = r.ledgers.slice(-7);
-    const expected = total(week, (l) => Object.values(l.spend.backstop).reduce((x, y) => x + y, 0) + l.spend.fees + l.spend.delivery);
+    const expected = total(
+      week,
+      (l) =>
+        Object.values(l.spend.backstop).reduce((x, y) => x + y, 0) +
+        l.spend.fees +
+        l.spend.delivery +
+        Object.values(l.spend.running ?? {}).reduce((x, y) => x + y, 0),
+    );
+    expect(b.thisWeek.value).toBeCloseTo(expected, 9);
+    expect(b.lines.some((l) => l.kind === 'running' && l.item === 'Average Suburban Home')).toBe(true);
     expect(b.thisWeek.value).toBeCloseTo(expected, 9);
     expect(b.lines.find((l) => l.item === 'Food')!.weeks.length).toBe(b.weeks.length);
   });

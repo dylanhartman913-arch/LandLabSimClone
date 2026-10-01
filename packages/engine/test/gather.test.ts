@@ -66,10 +66,10 @@ describe('the land provides', () => {
 
   it('gathering competes with construction through work priorities', () => {
     const base = (priorities: Record<string, number>) => {
-      let g = camp({ work: { priorities }, startDay: 90 });
+      let g = camp({ work: { priorities }, startDay: 90, constructionShare: 1 });
       const yurt = catalog.systems.find((s) => s.name === 'Yurt')!.id;
       g = placeSystem(catalog, g, yurt, 150, 150, 'diy').state;
-      const { ledgers } = run(g, 5);
+      const { ledgers } = run(g, 2);
       return {
         build: ledgers.reduce((a, l) => a + l.labor.construction, 0),
         gather: ledgers.reduce((a, l) => a + (l.labor.byJob?.['gather-wood'] ?? 0) + (l.labor.byJob?.['gather-water'] ?? 0), 0),

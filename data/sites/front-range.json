@@ -174,7 +174,7 @@
       "x": 0.86,
       "y": 0.82,
       "resource": "Water",
-      "yieldPerHour": 15,
+      "yieldPerHour": 25,
       "stock": null,
       "maxStock": null,
       "regrowPerDay": 0,
@@ -205,12 +205,12 @@
       "extra": [
         {
           "resource": "Vegetables fruit fiber herbs",
-          "perHour": 0.5
+          "perHour": 1.0
         }
       ],
       "stock": 200,
       "maxStock": 200,
-      "regrowPerDay": 3,
+      "regrowPerDay": 5,
       "months": [
         4,
         5,
@@ -229,12 +229,12 @@
       "extra": [
         {
           "resource": "Vegetables fruit fiber herbs",
-          "perHour": 0.5
+          "perHour": 1.0
         }
       ],
       "stock": 200,
       "maxStock": 200,
-      "regrowPerDay": 3,
+      "regrowPerDay": 5,
       "months": [
         4,
         5,

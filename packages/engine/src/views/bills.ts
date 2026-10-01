@@ -3,9 +3,9 @@ import { explained, type Explained } from '../provenance.ts';
 import type { DayLedger, GameState } from '../time/types.ts';
 
 export interface BillLine {
-  /** A resource name, "Connection fees", or "Market delivery". */
+  /** A resource name, a system (running costs), "Connection fees", or "Market delivery". */
   item: string;
-  kind: 'backstop' | 'market' | 'fees' | 'delivery';
+  kind: 'backstop' | 'market' | 'fees' | 'delivery' | 'running';
   /** Dollars over the last 7 days. */
   thisWeek: Explained;
   /** Dollars per week for up to the last 12 weeks, oldest first. */
@@ -29,7 +29,8 @@ function weekBlocks(ledgers: readonly DayLedger[], n = 12): DayLedger[][] {
 }
 
 /** What the household paid for backstops and market goods, this week and over the last 12 weeks (G12). */
-export function weeklyBills(state: GameState): WeeklyBills {
+export function weeklyBills(state: GameState, catalog?: Catalog): WeeklyBills {
+  const sysName = (id: string) => catalog?.systems.find((x) => x.id === id)?.name ?? id;
   const blocks = weekBlocks(state.ledgers);
   const lines = new Map<string, BillLine & { _w: number[] }>();
   const line = (item: string, kind: BillLine['kind']) => {
@@ -49,6 +50,7 @@ export function weeklyBills(state: GameState): WeeklyBills {
       for (const [r, v] of Object.entries(s.market)) line(r, 'market')._w[w]! += v;
       if (s.fees) line('Connection fees', 'fees')._w[w]! += s.fees;
       if (s.delivery) line('Market delivery', 'delivery')._w[w]! += s.delivery;
+      for (const [id, v] of Object.entries(s.running ?? {})) line(sysName(id), 'running')._w[w]! += v;
     }
   });
   const weeks = blocks.map((_, w) => [...lines.values()].reduce((a, l) => a + l._w[w]!, 0));
@@ -69,7 +71,7 @@ export function weeklyBills(state: GameState): WeeklyBills {
       ? (weeks[last]! - weeks[first]!) / weeks[first]!
       : null;
   return {
-    thisWeek: explained(weeks.at(-1) ?? 0, 'Σ backstop deliveries × price + market purchases + connection fees + delivery, last 7 days', {
+    thisWeek: explained(weeks.at(-1) ?? 0, 'Σ backstop deliveries × price + market purchases + connection fees + delivery + running costs (house, cars), last 7 days', {
       refs: Object.fromEntries(out.map((l) => [l.item, l.thisWeek.value])),
     }),
     weeks,

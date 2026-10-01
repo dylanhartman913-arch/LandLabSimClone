@@ -43,6 +43,8 @@ export type Action = { at: number } & (
   | { kind: 'settings'; settings: Partial<GameSettings> }
   | { kind: 'buy'; resource: string; amount: number }
   | { kind: 'standing'; resource: string; keepAbove: number; orderUpTo?: number }
+  | { kind: 'ui'; panel: string }
+  | { kind: 'tutorial'; skip: boolean }
 );
 
 /** An action without its day stamp (the store adds `at` when it applies one). */
@@ -83,6 +85,10 @@ export function applyAction(catalog: Catalog, s: GameState, a: Action): GameStat
       return buyAtMarket(catalog, s, a.resource, a.amount);
     case 'standing':
       return setStandingOrder(catalog, s, a.resource, a.keepAbove, a.orderUpTo);
+    case 'ui':
+      return s.tutorial && !s.tutorial.ui.includes(a.panel) ? { ...s, tutorial: { ...s.tutorial, ui: [...s.tutorial.ui, a.panel] } } : s;
+    case 'tutorial':
+      return s.tutorial ? { ...s, tutorial: { ...s.tutorial, skipped: a.skip } } : s;
   }
 }
 
@@ -127,6 +133,7 @@ export function gameDigest(s: GameState): string {
     instances: s.instances,
     settings: s.settings,
     ...(s.market ? { market: s.market } : {}),
+    ...(s.tutorial ? { tutorial: s.tutorial } : {}),
     // Real weather: the year draws are part of the game's substance (average-mode digests are unchanged).
     ...(s.weatherLog ? { weatherLog: s.weatherLog } : {}),
   });

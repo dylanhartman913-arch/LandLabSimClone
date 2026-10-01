@@ -21,8 +21,10 @@ export const JOBS: { id: JobId; label: string; defaultPriority: number }[] = [
   { id: 'gather-water', label: 'Fetch water', defaultPriority: 1 },
   { id: 'gather-wood', label: 'Gather firewood', defaultPriority: 1 },
   { id: 'gather-food', label: 'Forage greens and berries', defaultPriority: 1 },
+  // Look after what you have before building more: a filter or a toilet must not stop for
+  // ten days because a coop is going up (G16 tuning; was 3, after construction).
+  { id: 'upkeep', label: 'Look after systems', defaultPriority: 1 },
   { id: 'construction', label: 'Build', defaultPriority: 2 },
-  { id: 'upkeep', label: 'Look after systems', defaultPriority: 3 },
   { id: 'gather-soil', label: 'Dig clay and soil', defaultPriority: 4 },
   { id: 'gather-carbon', label: 'Rake leaf litter', defaultPriority: 4 },
 ];

@@ -6,6 +6,21 @@ on:
   pull_request:
 
 jobs:
+  pacing:
+    # CLAUDE.md rule 9: the playtest bots must pass their pacing gates (3 seeds × 3 sites).
+    name: Pacing gates (playtest bots)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Pacing gates
+        run: npm run test:pacing
+
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 30

@@ -3,6 +3,7 @@ import type { SurvivalNeed, WellbeingTerm } from './wellbeing.ts';
 import type { DayWeather } from './climate.ts';
 import type { YearWeather } from './weather.ts';
 import type { JobId } from './gather.ts';
+import type { TutorialState } from '../tutorial.ts';
 
 export type BuildMode = 'buy' | 'diy' | 'prebuilt';
 export type WeatherMode = 'average' | 'real';
@@ -187,6 +188,11 @@ export interface DaySpend {
   fees: number;
   /** Market delivery charges (when no transport was available for the trip). */
   delivery: number;
+  /**
+   * Running costs by system (G16): the Capital each system draws (a house payment, a car).
+   * Already part of cash out, so not in `spendTotal`; shown as bills.
+   */
+  running?: Record<string, number>;
 }
 
 /** One node's haul today (G14). */
@@ -244,6 +250,8 @@ export interface GameState {
   nodeStock?: Record<string, number>;
   /** The market (G12): one-off orders for the next trip, and standing orders. Absent until used. */
   market?: { orders: MarketOrder[]; standing: StandingOrder[] };
+  /** The tutorial quest line and where it stands (G16). */
+  tutorial?: TutorialState;
   /** The start this game began from (G15), if any. */
   start?: { id: string; difficulty: string; household: number; headline: 'self-reliance' | 'off-grid'; tutorial: string | null };
   /** Real weather only: this year's draws, and every year's draws so far (kept in saves). */
@@ -270,5 +278,6 @@ export type GameEvent =
   | { kind: 'health'; absDay: number; instanceId: string; health: number; wellbeing: number }
   | { kind: 'went-to-town'; absDay: number; instanceId: string }
   | { kind: 'came-home'; absDay: number; instanceId: string }
+  | { kind: 'quest'; absDay: number; questId: string; title: string; reward: string }
   | { kind: 'purchases-stopped'; absDay: number; cash: number }
   | { kind: 'market'; absDay: number; bought: Record<string, number>; cost: number; trip: 'own transport' | 'delivery' };

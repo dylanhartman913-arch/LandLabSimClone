@@ -1,6 +1,7 @@
 import type { Catalog, Difficulty, Site, Start } from '@homestead/catalog';
 import { initGame, parcelSideFt, placeSystem } from './game.ts';
 import { stepDay } from './step.ts';
+import { newTutorial } from '../tutorial.ts';
 import type { GameState } from './types.ts';
 
 /** Days before the last spring frost that a `spring` start begins. */
@@ -62,5 +63,9 @@ export function gameFromStart(catalog: Catalog, site: Site, start: Start, opts: 
   const carried: Record<string, number> = { ...s.stocks };
   for (const r of catalog.resources) if (r.class === 'Flow' && !r.storable && eve.stocks[r.name] !== undefined) carried[r.name] = eve.stocks[r.name]!;
   s = { ...s, stocks: carried, direct: eve.direct, services: eve.services, lastDay: eve.lastDay };
-  return { ...s, start: { id: start.id, difficulty, household: people, headline: start.headline, tutorial: start.tutorial } };
+  return {
+    ...s,
+    start: { id: start.id, difficulty, household: people, headline: start.headline, tutorial: start.tutorial },
+    ...(start.tutorial ? { tutorial: newTutorial(start.tutorial, s.calendar.absDay) } : {}),
+  };
 }

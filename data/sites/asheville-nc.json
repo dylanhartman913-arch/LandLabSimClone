@@ -255,12 +255,38 @@
       "extra": [
         {
           "resource": "Vegetables fruit fiber herbs",
-          "perHour": 0.5
+          "perHour": 1.0
         }
       ],
       "stock": 200,
       "maxStock": 200,
-      "regrowPerDay": 3,
+      "regrowPerDay": 5,
+      "months": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "greens-2",
+      "type": "wild-greens",
+      "x": 0.7,
+      "y": 0.9,
+      "resource": "Green biomass",
+      "yieldPerHour": 6,
+      "extra": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "perHour": 1.0
+        }
+      ],
+      "stock": 200,
+      "maxStock": 200,
+      "regrowPerDay": 5,
       "months": [
         3,
         4,

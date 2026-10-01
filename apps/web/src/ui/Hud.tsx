@@ -30,7 +30,7 @@ export function Hud() {
   const zoomToFit = useGame((s) => s.zoomToFit);
   const bal = useMemo(() => designBalance(game, catalog), [game.instances, game.site, catalog]); // eslint-disable-line react-hooks/exhaustive-deps
   const m = hudMetrics(game, catalog, bal);
-  const bills = useMemo(() => (m.headline === 'self-reliance' ? weeklyBills(game) : null), [game.ledgers, m.headline]); // eslint-disable-line react-hooks/exhaustive-deps
+  const bills = useMemo(() => (m.headline === 'self-reliance' ? weeklyBills(game, catalog) : null), [game.ledgers, m.headline]); // eslint-disable-line react-hooks/exhaustive-deps
   const wk = weatherKind(m.weather, m.season);
   return (
     <header className="hud" data-testid="hud">

@@ -10,7 +10,7 @@ export function Market() {
   const game = useGame((s) => s.game);
   const catalog = useGame((s) => s.catalog);
   const st = useGame.getState();
-  const bills = useMemo(() => weeklyBills(game), [game]);
+  const bills = useMemo(() => weeklyBills(game, catalog), [game, catalog]);
   const rows = useMemo(() => marketView(game, catalog), [game, catalog]);
   const scale = Math.max(1, ...bills.weeks);
   return (

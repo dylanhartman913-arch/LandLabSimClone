@@ -26,6 +26,7 @@ import {
   type JobId,
 } from './gather.ts';
 import { computeSpatial, groupKeyOf, type InstanceSpatial } from './spatial.ts';
+import { advanceTutorial } from '../tutorial.ts';
 import {
   COOL_CDD_MIN,
   HEAT_BEDDING_HDD,
@@ -147,6 +148,8 @@ interface Day {
   nodeStock: Record<string, number> | undefined;
   /** Systems that provide Shelter (where the household lives). */
   shelterIds: ReadonlySet<string>;
+  /** Seed held back from meals today (G16). */
+  seed: Record<string, number>;
 }
 
 const newResourceDay = (start: number): ResourceDay => ({
@@ -555,6 +558,7 @@ function buildRequests(d: Day): void {
 function allocate(d: Day): void {
   const { meta, stocks, direct } = d;
   const reserved: Record<string, number> = {};
+  d.seed = seedReserve(d);
   d.ordered = [...d.byResource.entries()].sort(
     ([a], [b]) => Number(meta.get(a)!.satisfiedBy.length > 0) - Number(meta.get(b)!.satisfiedBy.length > 0),
   );
@@ -569,7 +573,7 @@ function allocate(d: Day): void {
       const f = m.factorToNeed ?? 1;
       available = 0;
       for (const sub of m.satisfiedBy) {
-        const free = Math.max(0, (stocks[sub] ?? 0) - (reserved[sub] ?? 0));
+        const free = Math.max(0, (stocks[sub] ?? 0) - (reserved[sub] ?? 0) - (d.seed[sub] ?? 0));
         available += (free * (meta.get(sub)!.factorToNeed ?? 1)) / f;
       }
     } else {
@@ -587,8 +591,31 @@ function allocate(d: Day): void {
     d.capSat.set(r, d.unlimited || req <= 0 ? 1 : Math.min(1, (d.capAvail.get(r) ?? 0) / req));
   }
   for (const [r, req] of d.boostReq) {
-    d.boostSat.set(r, d.unlimited || req <= 0 ? 1 : Math.min(1, (d.prev.services[r] ?? 0) / req));
+    // Service boosts (pollination) use yesterday's service output; Flow boosts (scraps, greens
+    // for hens) draw on what is left in stock after direct requests (G16 fix: they read 0 before).
+    const flow = meta.get(r)!.class === 'Flow';
+    const avail = flow ? Math.max(0, (stocks[r] ?? 0) - (reserved[r] ?? 0) - (d.seed[r] ?? 0)) : (d.prev.services[r] ?? 0);
+    d.boostSat.set(r, d.unlimited || req <= 0 ? 1 : Math.min(1, avail / req));
   }
+}
+
+/**
+ * Seed kept for planting (G16): a season's worth of every food a planted system needs as seed
+ * (a potato patch's 25 lbs of seed potatoes) is held back from the household's meals.
+ */
+function seedReserve(d: Day): Record<string, number> {
+  const out: Record<string, number> = {};
+  const food = new Set(d.plans.foodFamily);
+  // Planted and still-being-planted systems both keep their seed.
+  for (const inst of d.instances) {
+    const plan = d.plans.bySystem.get(inst.systemId)!;
+    if (plan.isHuman) continue;
+    for (const f of plan.inputs) {
+      if (f.period !== 'Per season' || f.role !== 'required' || !food.has(f.resource) || f.resource === 'Food') continue;
+      out[f.resource] = (out[f.resource] ?? 0) + f.qty * (inst.scale ?? 1);
+    }
+  }
+  return out;
 }
 
 /** Market trips cost 10 miles of Transportation, or a $25 delivery charge without it (G12). */
@@ -803,6 +830,15 @@ function satisfy(d: Day): void {
 /** Step 6b: required inputs use satisfaction × request (the rest stays in stock); needs use their grant. */
 function consume(d: Day): void {
   const { meta, stocks, direct, res } = d;
+  // Flow boosts use what they were given.
+  for (const b of d.boostInputs) {
+    if (meta.get(b.plan.resource)!.class !== 'Flow' || d.unlimited) continue;
+    const gate = b.g.spatial.gated[b.plan.resource];
+    const use = gate === false ? 0 : b.amount * (d.boostSat.get(b.plan.resource) ?? 0);
+    if (use <= EPS) continue;
+    stocks[b.plan.resource] = Math.max(0, (stocks[b.plan.resource] ?? 0) - use);
+    res[b.plan.resource]!.consumed += use;
+  }
   for (const [resource, reqs] of d.ordered) {
     let totalUse = 0;
     let requested = 0;
@@ -813,6 +849,10 @@ function consume(d: Day): void {
       requested += q.amount;
       granted += q.grant;
       record(q.group, resource, q.amount, use, q.grant);
+      if (resource === 'Capital' && use > 0) {
+        const sid = q.group.plan.system.id;
+        (d.spend.running ??= {})[sid] = (d.spend.running[sid] ?? 0) + use;
+      }
       if (resource === 'Labor') {
         const sid = q.group.plan.system.id;
         d.laborBySystem[sid] = (d.laborBySystem[sid] ?? 0) + use;
@@ -848,7 +888,7 @@ function consume(d: Day): void {
         if (left <= EPS) break;
         const sf = meta.get(sub)!.factorToNeed ?? 1;
         const have = stocks[sub] ?? 0;
-        const take = Math.min(have, left / sf);
+        const take = Math.min(Math.max(0, have - (d.seed[sub] ?? 0)), left / sf);
         if (take <= 0) continue;
         stocks[sub] = have - take;
         res[sub]!.consumed += take;
@@ -1283,9 +1323,10 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     cashIn: 0,
     healthSum: 0,
     wellbeingSum: 0,
+    seed: {},
     people: 0,
     spoiledToday: {},
-    spend: { backstop: {}, market: {}, fees: 0, delivery: 0 },
+    spend: { backstop: {}, market: {}, fees: 0, delivery: 0, running: {} },
     market: prev.market,
     broke: false,
     byJob: {},
@@ -1339,6 +1380,14 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     pendingCash: { purchases: 0, refunds: 0 },
     flags,
   };
+  // The tutorial (G16): a finished quest's reward lands between days.
+  if (state.tutorial && !state.tutorial.skipped) {
+    const t = advanceTutorial(state, catalog);
+    if (t.completed) {
+      d.events.push({ kind: 'quest', absDay, questId: t.completed.id, title: t.completed.title, reward: t.completed.reward.line });
+      return { state: t.state, events: d.events, ledger };
+    }
+  }
   return { state, events: d.events, ledger };
 }
 
