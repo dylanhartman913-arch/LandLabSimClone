@@ -259,6 +259,8 @@ The diff summary proves the patch added rows only:
 
 A patch is idempotent: systems already present by name are skipped. Review the diff summary, and open the workbook in Excel, before merging.
 
+**Run by hand only.** `catalog_patch.py` is an authoring tool, and no CI job or npm script calls it. CI never needs Python, openpyxl, or LibreOffice. `npm run catalog:check` reads the workbook with SheetJS (`xlsx` from npm), and uses only the formula text and the cached values saved in the file; it never recalculates. That is why the patch script recalculates in LibreOffice before saving. The G11–G16 audit (`docs/AUDIT_G11_G16.md`) ran the check in a fresh clone after only `npm ci`, with no `soffice` or `python3` on PATH, and it passed.
+
 **G15 additions (S169–S176)**
 
 | System | Key flows | Notes |

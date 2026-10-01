@@ -36,6 +36,8 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Catalog in sync with xlsx
+        # Reads formula text and cached values only (SheetJS); no LibreOffice or Python needed.
+        # scripts/catalog_patch.py is run by hand, never in CI (docs/CATALOG.md).
         run: npm run catalog:check
       - name: Unit, parity, conservation, determinism
         run: npx vitest run
