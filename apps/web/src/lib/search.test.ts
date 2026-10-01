@@ -29,4 +29,13 @@ describe('drawer quick search', () => {
   it('returns everything for an empty query', () => {
     expect(names('')).toHaveLength(catalog.systems.length);
   });
+
+  it('makes / uses: "wood pellets" separates the stores that sell them from the stoves that burn them', () => {
+    const makes = searchSystems(index, 'wood pellets', 'makes').map((s) => s.name);
+    const uses = searchSystems(index, 'wood pellets', 'uses').map((s) => s.name);
+    expect(makes).toContain('Farm & Feed Store');
+    expect(makes).not.toContain('Pellet Stove');
+    expect(uses).toContain('Pellet Stove');
+    expect(uses).not.toContain('Farm & Feed Store');
+  });
 });

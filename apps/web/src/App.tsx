@@ -2,6 +2,7 @@ import { useAutosave } from './hooks/useAutosave.ts';
 import { useGameLoop } from './hooks/useGameLoop.ts';
 import { useStartup } from './hooks/useStartup.ts';
 import { useKeyboard } from './hooks/useKeyboard.ts';
+import { useResourceRoute } from './hooks/useResourceRoute.ts';
 import { Minimap } from './map/Minimap.tsx';
 import { MapView } from './map/MapView.tsx';
 import { screenToWorld, useGame } from './store/game.ts';
@@ -10,8 +11,11 @@ import { Checklist } from './ui/Checklist.tsx';
 import { Drawer } from './ui/Drawer.tsx';
 import { ErrorBoundary as EB } from './ui/ErrorBoundary.tsx';
 import { FlowLegend } from './ui/FlowLegend.tsx';
+import { Market } from './ui/Market.tsx';
 import { NewGame } from './ui/NewGame.tsx';
 import { Plan } from './ui/Plan.tsx';
+import { BuildPlanCard } from './ui/BuildPlan.tsx';
+import { ResourcePage } from './ui/ResourcePage.tsx';
 import { usePlan } from './store/plan.ts';
 import { SaveProblem } from './ui/SaveProblem.tsx';
 import { HintCard, QuestCard } from './ui/Quests.tsx';
@@ -30,6 +34,7 @@ const PANEL_NAMES: Record<string, string> = {
   report: 'The report',
   saves: 'Saves',
   settings: 'Settings',
+  market: 'The market',
 };
 
 const st = () => useGame.getState();
@@ -39,6 +44,7 @@ export function App() {
   useGameLoop();
   useAutosave();
   useStartup();
+  useResourceRoute();
   const prefs = useGame((s) => s.prefs);
   const panel = useGame((s) => s.panel);
   const onDrop = (e: React.DragEvent) => {
@@ -86,12 +92,18 @@ export function App() {
               <QuestCard />
               <HintCard />
             </EB>
+            <EB name="The build plan" inline>
+              <BuildPlanCard />
+            </EB>
           </div>
           <EB name="The flow legend" inline>
             <FlowLegend />
           </EB>
           <EB name="The system card" onClose={() => st().openCard(null)}>
             <SystemCard />
+          </EB>
+          <EB name="The resource page" onClose={() => st().closeResource()}>
+            <ResourcePage />
           </EB>
           <EB name="The checklist" onClose={() => st().setChecklist(false)}>
             <Checklist />
@@ -101,6 +113,7 @@ export function App() {
             {panel === 'report' && <Reports />}
             {panel === 'saves' && <Saves />}
             {panel === 'settings' && <Settings />}
+            {panel === 'market' && <Market />}
           </EB>
           <EB name="The plan" onClose={() => usePlan.getState().setOpen(false)}>
             <Plan />

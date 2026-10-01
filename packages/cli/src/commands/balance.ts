@@ -1,5 +1,5 @@
 import { catalog, type Assumptions } from '@homestead/catalog';
-import { balance, type Design } from '@homestead/engine';
+import { balanceFeasible, type Design } from '@homestead/engine';
 import { fmt, pct, table } from '../table.ts';
 
 export function runBalance(
@@ -7,17 +7,25 @@ export function runBalance(
   name: string,
   assumptions: Assumptions = catalog.assumptions,
 ): string {
-  const r = balance(catalog, assumptions, design);
+  const r = balanceFeasible(catalog, assumptions, design);
   const humans = r.humans.value;
   const lines: string[] = [];
   lines.push(
-    `${name}: overall off-grid score ${pct(r.overallScore.value)} (${humans} human${humans === 1 ? '' : 's'})`,
+    `${name}: overall off-grid score ${pct(r.overallScore.value)} actual, ${pct(r.potential.overallScore.value)} if every input were met (${humans} human${humans === 1 ? '' : 's'})`,
     '',
   );
   lines.push(
     table(
-      ['Need', 'Unit', 'Provided / wk', 'Needed / wk', '% covered', ''],
-      r.checklist.map((c) => [c.need, c.unit, c.provided.value, c.needed.value, pct(c.pct.value), c.covered]),
+      ['Need', 'Unit', 'Actual / wk', 'Potential / wk', 'Needed / wk', '% covered', ''],
+      r.checklist.map((c) => [
+        c.need,
+        c.unit,
+        c.provided.value,
+        c.potential?.value ?? c.provided.value,
+        c.needed.value,
+        pct(c.pct.value),
+        c.covered,
+      ]),
     ),
   );
   const s = r.summary;
@@ -29,5 +37,12 @@ export function runBalance(
     `Cash: +$${fmt(s.capitalIn.value)} −$${fmt(s.capitalOut.value)} = $${fmt(s.capitalNet.value)}/week; wellbeing ${fmt(s.wellbeing.value)}`,
     `Deficits (${s.deficitCount.value}): ${(s.deficitCount.explain.notes ?? []).join(', ') || 'none'}`,
   );
+  const blocked = Object.values(r.systems)
+    .filter((x) => x.satisfaction < 1 - 1e-9)
+    .sort((a, b) => (a.curtailedAt ?? 0) - (b.curtailedAt ?? 0) || a.name.localeCompare(b.name));
+  if (blocked.length) {
+    lines.push('', 'Held back by missing inputs:');
+    for (const b of blocked) lines.push(`  ${b.name}: ${b.status}`);
+  }
   return lines.join('\n');
 }

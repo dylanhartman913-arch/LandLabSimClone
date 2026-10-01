@@ -131,6 +131,8 @@ Defaults live in `packages/catalog/src/exporter/defaults.ts`. Anything in `data/
 | `resource.spoilPerWeek` | Vegetables 0.10, Eggs 0.03, Milk 0.30, Meat 0.20, Fish 0.30, Mushrooms 0.25, Root crops 0.02, Grain / Nuts / Honey 0.002; others 0 |
 | `resource.storedIn` | Water, Drinking water → Water storage, 50 gal buffer. Electricity → Battery storage, no buffer (unstored surplus spills). Food family → Food storage, 10 cu ft pantry buffer, with packing densities (units per cu ft): Food 48,000 kcal, vegetables 20 lb, root crops 35 lb, grain 45 lb, eggs 120, honey 80 lb, meat 40 lb, milk 7.5 gal, fish 40 lb, nuts 35 lb, mushrooms 10 lb. The buffer belongs to the storage pool; when several resources share a pool the engine uses the largest buffer. |
 | `system.spriteKey` | `system:<id>`; the web app generates a placeholder until art exists |
+| `resource.deliversTo`, `resource.deliveryRadiusFt` | Heat → `shelter`, 10 ft; Cooling → `shelter`, 30 ft; everything else `any`, 0 (G11: heat and cooling only count when the producer reaches a shelter) |
+| `system.outdoor` | false. Overrides set true for Firepit, Biochar Kiln Firepit, and Biochar Double Barrel Retort: their heat stays outdoors and never counts toward a shelter |
 | `adjacencyRules` (catalog top level) | none by default; G7 adds rules through overrides |
 
 ### Overrides file
@@ -174,3 +176,41 @@ All spatial behavior is data in `data/catalog_overrides.json`, exported to the c
 **`assignedCapacities`**: `{ resource, maxDistanceFt | null, note }`. Instead of pooling, each consumer is linked to one provider: the player's link if valid, otherwise the nearest provider with room. Shipped: Roofing area (rain catchment within 50 ft of a shelter's roof) and Fenced paddock (no distance limit).
 
 **`terrainRules`**: `{ to, resource, direction, perSlopePct, min, max, note }`; multiplier = clamp(1 + perSlopePct × site slope %, min, max). Shipped: swales +4% water per percent of slope (to 1.5×); ponds −3% water and storage per percent (to 0.5×).
+
+
+## Market prices and backstops (G12)
+
+**Market prices are low confidence.** They are rough 2020s US retail figures, chosen so that growing your own is visibly cheaper than buying but buying is always possible. They live in `data/catalog_overrides.json` (`resources.<name>.marketPrice`, `marketUnit`). The exporter rejects a `marketUnit` that isn't `$/<the resource's unit>`.
+
+| Resource | Price | Note |
+|---|---|---|
+| Food | $0.0065 / kcal | ~$90 per 14,000 kcal week |
+| Drinking water | $1.00 / gal | bottled |
+| Water | $0.10 / gal | hauled delivery |
+| Woody biomass | $0.10 / lb | ~$350 per cord |
+| Wood pellets | $0.30 / lb | bagged |
+| Propane | $3.00 / gal | |
+| Gasoline | $3.50 / gal | |
+| Chicken feed | $0.35 / lb | |
+| Hay | $0.15 / lb | |
+| Carbon (straw) | $0.10 / lb | |
+| Compost | $0.20 / lb | bagged |
+| Soil | $1.50 / cu ft | bulk |
+| Seeds | $3.00 / oz | |
+| Seedlings | $4.00 / plant | |
+| Waste lumber | $0.25 / lb | salvage yard |
+
+**Proposal:** add `Market price` and `Market unit` columns to the Resources sheet of the xlsx, so prices live with the catalog and parity applies to them. Until then, they stay overrides.
+
+**Backstops** (`systems.<id>.backstop`, `backstopFee`, `backstopPrices`):
+
+| System | Fee / week | Prices |
+|---|---|---|
+| Big Box Grocery Store | 0 | Food at the market price |
+| Factory Farmed Food (Family of Four) | 0 | Food at the market price |
+| Central Power Plant | $3 | electricity $0.15/kWh, heat $0.000025/BTU ($2.50/therm), cooking $0.30/hour, cooling $0.000012/BTU |
+| Municipal Water Hookup | $5 | water and drinking water $0.02/gal |
+| Gas Station | 0 | gasoline at the market price |
+| Farm & Feed Store | 0 | feed, hay, pellets, seeds, seedlings at market prices |
+
+The default price rule is: an override, else the resource's market price, else the system's weekly Capital (less its fee) ÷ its first output. The exporter rejects a backstop that sells nothing, prices on outputs it doesn't have, and prices or a fee on a system that isn't a backstop. The grid and city-water prices reproduce roughly the catalog's own weekly bills at the catalog's output.

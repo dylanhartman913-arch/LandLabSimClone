@@ -136,8 +136,12 @@ describe('scenarios that read like the game', () => {
       { settings: { startingCash: 0, startingStocks: { Food: 50000, 'Drinking water': 50 } } },
     );
     const { ledgers, events } = run(g, 5);
-    expect(ledgers.slice(1).every((l) => l.resources['Food']!.produced === 0)).toBe(true);
-    expect(eventsOf(events, 'shortage').some((e) => e.resource === 'Capital')).toBe(true);
+    // The grocery is a backstop (G12): it sells on demand, but not to an empty wallet.
+    expect(ledgers.every((l) => l.resources['Food']!.purchased === 0)).toBe(true);
+    expect(eventsOf(events, 'purchases-stopped')).toHaveLength(0); // the pantry still has food
+    const hungry = run(newGame({ 'Human Being': 1, 'Big Box Grocery Store': 1, 'Cargo Bike': 1 }, { settings: { startingCash: 0, startingStocks: {} } }), 3);
+    expect(hungry.ledgers.every((l) => l.resources['Food']!.purchased === 0)).toBe(true);
+    expect(eventsOf(hungry.events, 'purchases-stopped')).toHaveLength(1);
   });
 });
 

@@ -3,7 +3,9 @@ import {
   applyAction,
   buildReport,
   canPlace,
+  findSpot,
   MILESTONES,
+  placeSystem,
   QUESTS,
   displayDate,
   parcelSideFt,
@@ -26,11 +28,24 @@ import { create } from 'zustand';
 import { describeCommand, redoActions, undoActions, type Command } from './commands.ts';
 import { loadPref, savePref } from './persist.ts';
 import { DEFAULT_PREFS, type AutoPauseKey, type Prefs } from './prefs.ts';
+import { fmtNum as fmtNumber } from '../lib/format.ts';
+import type { SearchMode } from '../lib/search.ts';
 
 export type Tool = { kind: 'select' } | { kind: 'place'; systemId: string; mode: BuildMode };
 export type Speed = 0 | 1 | 3 | 10;
 export type DrawerTab = 'systems' | 'inputs' | 'outputs';
-export type Panel = null | 'almanac' | 'saves' | 'settings' | 'report';
+export type NavEntry = { kind: 'resource'; name: string } | { kind: 'card'; systemId: string; instanceId: string | null };
+
+/** A planned system: where its ghost sits and how it would be built. */
+export interface PlanItem {
+  key: string;
+  systemId: string;
+  mode: BuildMode;
+  x: number;
+  y: number;
+}
+
+export type Panel = null | 'almanac' | 'saves' | 'settings' | 'report' | 'market';
 
 export interface Camera {
   /** World point (ft) at the center of the view. */
@@ -64,6 +79,8 @@ export interface Toast {
   tone: 'info' | 'warn';
   /** Instance to show on the map, if the toast is about one. */
   instanceId?: string;
+  /** Resource whose page "Where from?" opens (G13). */
+  resource?: string;
 }
 
 export interface GameStore {
@@ -89,9 +106,34 @@ export interface GameStore {
   clipboard: { systemId: string; buildMode: BuildMode; dx: number; dy: number }[];
   drawerOpen: boolean;
   drawerTab: DrawerTab;
+  /** The resource page on screen (G13), or null. */
+  resourcePage: string | null;
+  /** Where Back returns to: resource pages and system cards visited before this one. */
+  navBack: NavEntry[];
+  openResource(name: string, opts?: { push?: boolean }): void;
+  closeResource(): void;
+  /** Back one step (Backspace or the back arrow on a page or card). */
+  navigateBack(): boolean;
+  /** Drawer search: any, or only what systems make / use (G13). */
+  drawerSearchMode: SearchMode;
+  setDrawerSearchMode(m: SearchMode): void;
+  /** Systems planned but not built: ghosts on the map with a cost and labor total (G13). */
+  buildPlan: PlanItem[];
+  planAdd(systemIds: string[], near?: { x: number; y: number }): number;
+  /** Center the map on a natural node (G14). */
+  focusNode(id: string): void;
+  planRemove(key: string): void;
+  planClear(): void;
+  /** Build one planned item, or all of them. Returns how many were placed. */
+  planBuild(key: string | 'all'): number;
   cardSystemId: string | null;
   cardInstanceId: string | null;
   highlightResource: string | null;
+  /** The drawer's search text (kept here so other panels can search for a resource). */
+  drawerQuery: string;
+  setDrawerQuery(q: string): void;
+  /** Show where a resource comes from: its resource page (G13). */
+  findSource(resource: string): void;
   toasts: Toast[];
   why: WhyTarget | null;
   checklistOpen: boolean;
@@ -146,17 +188,22 @@ export interface GameStore {
   setOverlay(o: Partial<GameStore['overlay']>): void;
   setInstancePriority(instanceId: string, priority: number): void;
   setInstanceLink(instanceId: string, resource: string, providerId: string | null): void;
+  /** Order from the market for the next trip (G12). Logged for replay; not undoable (it's a purchase). */
+  marketBuy(resource: string, amount: number): boolean;
+  /** Keep a stock above a level by standing order (keepAbove 0 removes it). */
+  marketStanding(resource: string, keepAbove: number, orderUpTo?: number): boolean;
   wizardOpen: boolean;
   setWizard(open: boolean): void;
   setHighlight(resource: string | null): void;
   setPrefs(p: Partial<Prefs>): void;
-  toast(text: string, tone?: Toast['tone'], instanceId?: string): void;
+  toast(text: string, tone?: Toast['tone'], instanceId?: string, resource?: string): void;
   dismissToast(id: number): void;
   setStorageWarning(w: string | null): void;
 }
 
 const MAX_EVENTS = 3000;
 let toastId = 1;
+let planKey = 1;
 
 /** The default start: two people and a bell tent on an acre of Front Range grass in early April. */
 export const DEFAULT_INIT: GameInit = {
@@ -262,6 +309,17 @@ export const useGame = create<GameStore>()((set, get) => {
     cardSystemId: null,
     cardInstanceId: null,
     highlightResource: null,
+    drawerQuery: '',
+    setDrawerQuery(q) {
+      set({ drawerQuery: q });
+    },
+    findSource(resource) {
+      get().openResource(resource);
+    },
+    resourcePage: null,
+    navBack: [],
+    drawerSearchMode: 'any',
+    buildPlan: [],
     toasts: [],
     why: null,
     checklistOpen: false,
@@ -608,7 +666,108 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     openCard(systemId, instanceId = null) {
-      set({ cardSystemId: systemId, cardInstanceId: systemId ? instanceId : null, why: null });
+      const st = get();
+      const push: NavEntry[] = systemId && st.resourcePage ? [{ kind: 'resource', name: st.resourcePage }] : [];
+      set({
+        cardSystemId: systemId,
+        cardInstanceId: systemId ? instanceId : null,
+        why: null,
+        ...(systemId ? { resourcePage: null } : {}),
+        ...(push.length ? { navBack: [...st.navBack.slice(-29), ...push] } : {}),
+        ...(!systemId && !st.resourcePage ? { navBack: [] } : {}),
+      });
+    },
+
+    openResource(name, opts = {}) {
+      const st = get();
+      if (!st.catalog.resources.some((r) => r.name === name)) return;
+      const cur: NavEntry | null = st.resourcePage
+        ? { kind: 'resource', name: st.resourcePage }
+        : st.cardSystemId
+          ? { kind: 'card', systemId: st.cardSystemId, instanceId: st.cardInstanceId }
+          : null;
+      const push = opts.push !== false && cur && !(cur.kind === 'resource' && cur.name === name);
+      set({
+        resourcePage: name,
+        cardSystemId: null,
+        cardInstanceId: null,
+        checklistOpen: false,
+        why: null,
+        navBack: push ? [...st.navBack.slice(-29), cur!] : st.navBack,
+      });
+    },
+
+    closeResource() {
+      set({ resourcePage: null, navBack: [] });
+    },
+
+    navigateBack() {
+      const st = get();
+      const prev = st.navBack.at(-1);
+      if (!prev) return false;
+      const navBack = st.navBack.slice(0, -1);
+      if (prev.kind === 'resource') set({ resourcePage: prev.name, cardSystemId: null, cardInstanceId: null, navBack });
+      else set({ resourcePage: null, cardSystemId: prev.systemId, cardInstanceId: prev.instanceId, navBack });
+      return true;
+    },
+
+    setDrawerSearchMode(drawerSearchMode) {
+      set({ drawerSearchMode });
+    },
+
+    planAdd(systemIds, near) {
+      const st = get();
+      const side = Math.sqrt(st.game.settings.parcelAcres * 43_560);
+      const at = near ?? { x: side / 2, y: side / 2 };
+      // Reserve each ghost's spot in a scratch copy so planned items don't overlap each other.
+      let scratch = st.game;
+      for (const p of st.buildPlan) {
+        try {
+          scratch = placeSystem(st.catalog, scratch, p.systemId, p.x, p.y, 'prebuilt').state;
+        } catch {
+          /* an old ghost that no longer fits; it is skipped */
+        }
+      }
+      const added: PlanItem[] = [];
+      for (const id of systemIds) {
+        const sys = st.catalog.systems.find((x) => x.id === id);
+        if (!sys) continue;
+        const spot = findSpot(st.catalog, scratch, id, at.x, at.y);
+        if (!spot) continue;
+        scratch = placeSystem(st.catalog, scratch, id, spot.x, spot.y, 'prebuilt').state;
+        const mode: BuildMode = sys.costDiy !== undefined && sys.costDiy < sys.costBuy ? 'diy' : 'buy';
+        added.push({ key: `plan${planKey++}`, systemId: id, mode, x: spot.x, y: spot.y });
+      }
+      set({ buildPlan: [...st.buildPlan, ...added] });
+      if (added.length) st.toast(`Added ${added.length} system${added.length === 1 ? '' : 's'} to your build plan.`);
+      return added.length;
+    },
+
+    focusNode(_id) {
+      // G14: natural nodes.
+    },
+
+    planRemove(key) {
+      set((s) => ({ buildPlan: s.buildPlan.filter((p) => p.key !== key) }));
+    },
+
+    planClear() {
+      set({ buildPlan: [] });
+    },
+
+    planBuild(key) {
+      const items = get().buildPlan.filter((p) => key === 'all' || p.key === key);
+      let built = 0;
+      for (const p of items) {
+        get().startPlacing(p.systemId, p.mode);
+        const r = get().placeAt(p.x, p.y);
+        get().cancelTool();
+        if (r.ok) {
+          built++;
+          set((s) => ({ buildPlan: s.buildPlan.filter((x) => x.key !== p.key) }));
+        } else get().toast(`Couldn't build ${p.systemId}: ${r.reason ?? 'no room'}`, 'warn');
+      }
+      return built;
     },
 
     showWhy(why) {
@@ -633,6 +792,35 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!inst || inst.priority === priority || !guard()) return;
       const r = apply(game, { kind: 'priority', id: instanceId, priority });
       commit(r.game, [r.action], { kind: 'priority', id: instanceId, from: inst.priority, to: priority });
+    },
+
+    marketBuy(resource, amount) {
+      if (!guard()) return false;
+      try {
+        const r = apply(get().game, { kind: 'buy', resource, amount });
+        set((s) => ({ game: r.game, actions: [...s.actions, r.action] }));
+        get().toast(`Ordered ${fmtNumber(amount)} ${resource}: it arrives on the next market run.`);
+        return true;
+      } catch (e) {
+        get().toast(e instanceof Error ? e.message : String(e), 'warn');
+        return false;
+      }
+    },
+
+    marketStanding(resource, keepAbove, orderUpTo) {
+      if (!guard()) return false;
+      try {
+        const body = orderUpTo === undefined
+          ? { kind: 'standing' as const, resource, keepAbove }
+          : { kind: 'standing' as const, resource, keepAbove, orderUpTo };
+        const r = apply(get().game, body);
+        set((s) => ({ game: r.game, actions: [...s.actions, r.action] }));
+        get().toast(keepAbove > 0 ? `Standing order: keep ${resource} above ${fmtNumber(keepAbove)}.` : `Standing order for ${resource} removed.`);
+        return true;
+      } catch (e) {
+        get().toast(e instanceof Error ? e.message : String(e), 'warn');
+        return false;
+      }
     },
 
     setInstanceLink(instanceId, resource, providerId) {
@@ -661,10 +849,14 @@ export const useGame = create<GameStore>()((set, get) => {
       set({ prefs });
     },
 
-    toast(text, tone = 'info', instanceId) {
+    toast(text, tone = 'info', instanceId, resource) {
       const id = toastId++;
+      // At most three, and a repeat replaces its earlier copy instead of stacking.
       set((s) => ({
-        toasts: [...s.toasts.slice(-4), { id, text, tone, ...(instanceId ? { instanceId } : {}) }],
+        toasts: [
+          ...s.toasts.filter((t) => t.text !== text).slice(-2),
+          { id, text, tone, ...(instanceId ? { instanceId } : {}), ...(resource ? { resource } : {}) },
+        ],
       }));
       setTimeout(() => get().dismissToast(id), 6000);
     },
@@ -746,8 +938,12 @@ function toastForEvent(e: GameEvent): void {
           `Short on ${e.resource}${e.curtailed.length ? `: ${e.curtailed.length} system${e.curtailed.length === 1 ? '' : 's'} slowed` : ''}.`,
           'warn',
           e.curtailed[0],
+          e.resource,
         );
       }
+      break;
+    case 'purchases-stopped':
+      s.toast('Out of money: purchases stopped until there is cash again.', 'warn');
       break;
     default:
       break;

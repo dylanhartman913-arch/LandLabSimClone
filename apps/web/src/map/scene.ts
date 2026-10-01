@@ -8,6 +8,7 @@ import {
   flowLinks,
   footprintSideFt,
   getSystem,
+  instanceStatuses,
   nextRandom,
   parcelSideFt,
   seasonOf,
@@ -17,6 +18,7 @@ import {
 } from '@homestead/engine';
 import { personTexture, systemTexture } from '../sprites/placeholder.ts';
 import { screenToWorld, snapTo, useGame, type GameStore } from '../store/game.ts';
+import { makeBadge } from './badges.ts';
 import { bakeTiled, grassTexture, SEASON_TINT, snowTexture } from './grass.ts';
 
 export const FLOW_COLORS: Record<FlowGroup, number> = {
@@ -92,6 +94,12 @@ export class MapScene {
   private spatialGfx = new Graphics();
   private flowLines = new Graphics();
   private flowDots = new Graphics();
+  /** Build-plan ghosts (G13): planned systems, not yet built. */
+  private planGhosts = new Container();
+  /** Status bubbles (G11), drawn at a constant screen size. */
+  private badges = new Container();
+  /** What the badges show, for tests and tooltips: instance id → status. */
+  badgeInfo = new Map<string, { level: 'partial' | 'blocked'; limitedBy: string | null; text: string }>();
   private links: { link: FlowLink; color: number; width: number; len: number }[] = [];
   private views = new Map<string, InstanceView>();
   private walkers = new Map<string, Walker>();
@@ -121,7 +129,9 @@ export class MapScene {
     this.snow.visible = false;
     this.world.addChild(this.grass, this.snow, this.parcel, this.terrain, this.ground, this.objects);
     this.world.addChild(
+      this.planGhosts,
       this.peopleLayer,
+      this.badges,
       this.highlight,
       this.flowLines,
       this.flowDots,
@@ -148,6 +158,9 @@ export class MapScene {
 
   private onStore(s: GameStore, prev: GameStore | null): void {
     if (!prev || s.game !== prev.game) this.syncGame(s.game);
+    if (!prev || s.game !== prev.game || s.prefs.badges !== prev.prefs.badges || s.prefs.colorblind !== prev.prefs.colorblind)
+      this.syncBadges(s);
+    if (!prev || s.buildPlan !== prev.buildPlan) this.syncPlan(s);
     if (!prev || s.selection !== prev.selection || s.game !== prev.game) {
       this.syncSelection(s.selection);
       this.syncSpatial(s);
@@ -354,6 +367,55 @@ export class MapScene {
       }
     }
     this.lastGame = g;
+  }
+
+  /** Planned systems as translucent ghosts with a dashed outline. */
+  private syncPlan(s: GameStore): void {
+    this.planGhosts.removeChildren().forEach((c) => c.destroy({ children: true }));
+    for (const p of s.buildPlan) {
+      const sys = getSystem(this.catalog, p.systemId);
+      const side = this.visualSide(sys);
+      const root = new Container();
+      const sprite = new Sprite(systemTexture(this.app.renderer, sys));
+      sprite.anchor.set(0.5);
+      sprite.width = side;
+      sprite.height = side;
+      sprite.alpha = 0.35;
+      const outline = new Graphics();
+      const h = side / 2;
+      const dash = Math.max(1, side / 8);
+      for (let x = -h; x < h; x += dash * 2) {
+        outline.moveTo(x, -h).lineTo(Math.min(h, x + dash), -h);
+        outline.moveTo(x, h).lineTo(Math.min(h, x + dash), h);
+      }
+      for (let y = -h; y < h; y += dash * 2) {
+        outline.moveTo(-h, y).lineTo(-h, Math.min(h, y + dash));
+        outline.moveTo(h, y).lineTo(h, Math.min(h, y + dash));
+      }
+      outline.stroke({ width: Math.max(0.3, side / 30), color: 0x8fd3ff, alpha: 0.9 });
+      root.addChild(sprite, outline);
+      root.position.set(p.x, p.y);
+      this.planGhosts.addChild(root);
+    }
+  }
+
+  /** Partial (yellow) and blocked (red) systems get a bubble with the missing input's glyph; running ones get nothing. */
+  private syncBadges(s: GameStore): void {
+    this.badges.removeChildren().forEach((c) => c.destroy({ children: true }));
+    this.badgeInfo = new Map();
+    for (const [id, st] of instanceStatuses(s.game, this.catalog)) this.badgeInfo.set(id, st);
+    this.badges.visible = s.prefs.badges;
+    if (!s.prefs.badges) return;
+    for (const [id, st] of this.badgeInfo) {
+      const inst = s.game.instances.find((i) => i.id === id);
+      if (!inst) continue;
+      const sys = getSystem(this.catalog, inst.systemId);
+      if (sys.layer === 'none') continue;
+      const h = this.visualSide(sys) / 2;
+      const b = makeBadge(st.level, st.limitedBy, s.prefs.colorblind);
+      b.position.set(inst.x + h * 0.7, inst.y - h * 0.7);
+      this.badges.addChild(b);
+    }
   }
 
   private drawParcel(side: number, g: GameState): void {
@@ -584,6 +646,7 @@ export class MapScene {
     const { camera: c, viewport: v } = s;
     this.world.scale.set(c.zoom);
     this.world.position.set(v.width / 2 - c.cx * c.zoom, v.height / 2 - c.cy * c.zoom);
+    for (const b of this.badges.children) b.scale.set(1 / c.zoom);
     if (!s.prefs.reducedMotion) this.animatePeople(s, this.app.ticker.deltaMS / 1000);
     this.animateFeel(now);
     if (s.overlay.on) this.animateFlows(s.prefs.reducedMotion);

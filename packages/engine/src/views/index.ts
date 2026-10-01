@@ -9,3 +9,7 @@ export * from './calendar.ts';
 export * from './report.ts';
 export * from './quests.ts';
 export * from './scenario.ts';
+export * from './status.ts';
+export * from './bills.ts';
+export * from './sources.ts';
+export * from './resource.ts';

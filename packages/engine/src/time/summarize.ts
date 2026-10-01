@@ -6,8 +6,14 @@ export interface RowSummary {
   need: NeedKey;
   /** Weekly averages (capacity rows such as Shelter are average levels). */
   provided: number;
+  /** What feeding systems would provide with every input met (G11). */
+  potential: number;
   needed: number;
   delivered: number;
+  /** Of `provided`, what came from outside (backstops, the market, conventional services). */
+  bought: number;
+  /** Share of this row's coverage that the homestead made itself: (1 − bought ÷ provided). 0 when nothing is provided. */
+  selfReliance: number;
   /** delivered ÷ needed, capped at 1 (0 when nothing is needed). */
   pct: number;
   /** Lowest 7-day coverage in the range (1 if the range is shorter than a week). */
@@ -30,6 +36,11 @@ export interface Summary {
   toAbsDay: number;
   checklist: RowSummary[];
   overallScore: number;
+  /**
+   * Self-reliance (G12): average over rows with any need of coverage × the share of it the
+   * homestead made itself. 1 = everything covered from your own land; 0 = all bought or uncovered.
+   */
+  selfReliance: number;
   resources: Record<string, ResourceSummary>;
   cash: { in: number; out: number; purchases: number; refunds: number };
   labor: { pool: number; construction: number; upkeepRequested: number; upkeepDelivered: number };
@@ -52,17 +63,30 @@ function capacityRowSet(catalog: Catalog): Set<NeedKey> {
   return set;
 }
 
+/**
+ * Self-reliance over rows with any need, leaving out the household's own labor (it measures
+ * where supply comes from, not effort): average of coverage × share made at home.
+ */
+export function selfRelianceOf(rows: readonly { need: NeedKey; pct: number; selfReliance: number }[]): number {
+  const supply = rows.filter((r) => r.need !== 'Est. Required Labor');
+  return supply.length ? supply.reduce((a, r) => a + r.pct * r.selfReliance, 0) / supply.length : 0;
+}
+
 /** Summarize a run of daily ledgers (e.g. one year) into weekly averages and totals. */
 export function summarizeLedgers(ledgers: readonly DayLedger[], catalog: Catalog): Summary {
   const n = ledgers.length;
   const cap = capacityRowSet(catalog);
   const checklist: RowSummary[] = NEED_KEYS.map((need) => {
     let p = 0;
+    let pot = 0;
     let nd = 0;
     let dl = 0;
+    let bt = 0;
     for (const l of ledgers) {
       const x = l.needs[need];
+      bt += x.bought ?? 0;
       p += x.provided;
+      pot += x.potential ?? x.provided;
       nd += x.needed;
       dl += x.delivered;
     }
@@ -83,8 +107,11 @@ export function summarizeLedgers(ledgers: readonly DayLedger[], catalog: Catalog
     return {
       need,
       provided: p * scale,
+      potential: pot * scale,
       needed: nd * scale,
       delivered: dl * scale,
+      bought: bt * scale,
+      selfReliance: p > EPS ? Math.max(0, 1 - bt / p) : 0,
       pct: nd > EPS ? Math.min(1, dl / nd) : 0,
       worstWeekPct: worst,
     };
@@ -133,6 +160,7 @@ export function summarizeLedgers(ledgers: readonly DayLedger[], catalog: Catalog
     toAbsDay: ledgers[n - 1]?.absDay ?? 0,
     checklist,
     overallScore: scored.length ? scored.reduce((a, r) => a + r.pct, 0) / scored.length : 0,
+    selfReliance: selfRelianceOf(scored),
     resources,
     cash,
     labor,

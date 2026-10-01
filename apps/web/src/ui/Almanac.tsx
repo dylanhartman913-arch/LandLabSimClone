@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { dateLabel, getSystem, type GameEvent } from '@homestead/engine';
-import { fmtNum } from '../lib/format.ts';
+import { fmtMoney, fmtNum } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
 
 type Filter = 'shortages' | 'harvests' | 'builds' | 'weather' | 'money' | 'people';
@@ -29,6 +29,9 @@ function filterOf(e: GameEvent): Filter {
     case 'hardship':
     case 'health':
       return 'people';
+    case 'purchases-stopped':
+    case 'market':
+      return 'money';
   }
 }
 
@@ -60,6 +63,12 @@ export function describeEvent(
       return `Hardship: only ${Math.round(e.level * 100)}% of ${e.need === 'drinkingWater' ? 'drinking water' : e.need} needs met for 3+ days.`;
     case 'health':
       return `Health fell to ${Math.round(e.health * 100)}%.`;
+    case 'purchases-stopped':
+      return `Out of money: purchases stopped (cash ${fmtMoney(e.cash)}). Groceries, power, and market orders wait until there is cash again.`;
+    case 'market':
+      return `Market run (${e.trip === 'delivery' ? 'delivered, $25' : 'own transport'}): ${Object.entries(e.bought)
+        .map(([r, v]) => `${fmtNum(v)} ${r}`)
+        .join(', ')} for ${fmtMoney(e.cost)}.`;
   }
 }
 

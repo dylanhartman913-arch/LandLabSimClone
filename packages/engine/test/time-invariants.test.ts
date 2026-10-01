@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { catalog, getSite, type NeedKey } from '@homestead/catalog';
 import {
-  balance,
+  balancePotential,
   designAdjust,
   digest,
   initGame,
@@ -40,7 +40,7 @@ function expectConservation(ledgers: DayLedger[], final: GameState) {
         d + 1 < ledgers.length
           ? ledgers[d + 1]!.resources[r]!.start
           : (final.stocks[r] ?? 0) + (final.direct[r] ?? 0);
-      const lhs = x.start + x.produced + x.supplied - x.consumed - x.spilled - x.spoiled;
+      const lhs = x.start + x.produced + x.purchased + x.supplied - x.consumed - x.spilled - x.spoiled;
       const scale = Math.max(1, x.start, x.produced, x.consumed, x.spilled);
       if (Math.abs(lhs - end) > 1e-9 * scale) {
         throw new Error(
@@ -51,7 +51,7 @@ function expectConservation(ledgers: DayLedger[], final: GameState) {
   }
 }
 
-describe('conservation: start + produced − consumed − spilled − spoiled = end, every resource, every day', () => {
+describe('conservation: start + produced + purchased − consumed − spilled − spoiled = end, every resource, every day', () => {
   for (const file of ['starter.json', 'offgrid-cabin-family.json', 'suburban-baseline.json']) {
     it(`holds for ${file} over a year`, () => {
       const { state, ledgers } = stepDays(gameFor(file), catalog, 365);
@@ -86,7 +86,7 @@ describe('conservation: start + produced − consumed − spilled − spoiled = 
   });
 });
 
-describe('time mode agrees with balance mode', () => {
+describe('time mode agrees with balance mode (potential)', () => {
   const ROWS_WITHIN = 0.05;
   const compare = (file: string, unlimited: boolean) => {
     const { design } = loadDesign(file);
@@ -94,19 +94,24 @@ describe('time mode agrees with balance mode', () => {
     const y2 = stepDays(y1.state, catalog, 365);
     const t = summarizeLedgers(y2.ledgers, catalog);
     // Balance mode with the same spatial adjustments (shade, slope…) as the laid-out design.
-    const b = balance(catalog, catalog.assumptions, { ...design, adjust: designAdjust(y2.state, catalog) });
+    const b = balancePotential(catalog, catalog.assumptions, { ...design, adjust: designAdjust(y2.state, catalog) });
     return { t, b, ledgers: y2.ledgers };
   };
   const rel = (a: number, e: number) => Math.abs(a - e) / Math.max(1e-9, Math.abs(e));
 
   for (const file of ['starter.json', 'offgrid-cabin-family.json', 'suburban-baseline.json']) {
-    it(`${file}: with every input supplied, year-2 weekly averages match balance within 5% on every row`, () => {
+    it(`${file}: with every input supplied, year-2 weekly averages match potential balance within 5% on every row`, () => {
       const { t, b } = compare(file, true);
       for (const row of t.checklist) {
         const br = b.checklist.find((x) => x.need === row.need)!;
-        for (const k of ['provided', 'needed'] as const) {
-          if (br[k].value === 0) expect(row[k], `${row.need} ${k}`).toBeCloseTo(0, 6);
-          else expect(rel(row[k], br[k].value), `${row.need} ${k}`).toBeLessThan(ROWS_WITHIN);
+        // Potential (every input met) is what the spreadsheet computes; parity applies to it.
+        const pairs = [
+          ['potential', row.potential, br.provided.value],
+          ['needed', row.needed, br.needed.value],
+        ] as const;
+        for (const [k, tv, bv] of pairs) {
+          if (bv === 0) expect(tv, `${row.need} ${k}`).toBeCloseTo(0, 6);
+          else expect(rel(tv, bv), `${row.need} ${k}`).toBeLessThan(ROWS_WITHIN);
         }
       }
     });

@@ -169,3 +169,12 @@ export function defaultStorage(resource: string, needsRow: string | undefined): 
   }
   return null;
 }
+
+/**
+ * Heat and cooling only count when they reach a shelter (G11): a stove within 10 ft of
+ * one (or inside it), shade or a fan within 30 ft. Everything else reaches anywhere.
+ */
+export const DEFAULT_DELIVERY: Record<string, { deliversTo: 'shelter' | 'any'; radiusFt: number }> = {
+  Heat: { deliversTo: 'shelter', radiusFt: 10 },
+  Cooling: { deliversTo: 'shelter', radiusFt: 30 },
+};

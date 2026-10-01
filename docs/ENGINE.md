@@ -25,9 +25,14 @@ Provenance is built while computing, never reconstructed afterwards. For any che
 
 ## Balance mode
 
+Two functions, one shape (`BalanceResult`):
+
 ```ts
-balance(catalog, assumptions, design: { counts: Record<SystemId, number> }): BalanceResult
+balancePotential(catalog, assumptions, design): BalanceResult   // the spreadsheet: parity applies here
+balanceFeasible(catalog, assumptions, design): FeasibleResult   // what players see (G11; see "Actual and potential")
 ```
+
+`balancePotential` is the spreadsheet's math: every system makes its nominal output, with no input check. The sections below describe it. `balanceFeasible` starts from the same terms and curtails them.
 
 ### Quantities and periods
 
@@ -280,3 +285,96 @@ Each year always consumes exactly 12 RNG values, whatever happens, so one outcom
 - **Flow record** (`homestead.flow_record.v1`, `flowRecord` / `flowRecords`): per game year, land by use (footprint by first category), monthly electricity bought / made on site / spilled (no net metering is modeled, so "export" is surplus with nowhere to go) / peak single-day demand / unmet, water drawn (all Water produced) vs used up (Water consumed − Greywater produced), food grown vs bought vs eaten (kcal), fuel used by type (Propane, Gasoline, Woody biomass, Wood pellets, Wood chips), spending, cash, labor, and the months anyone entered hardship. CLI: `run … --flow-record records.json`.
 - **Daily CSV** (`ledgersCsv`): one row per day with health, cash, labor, weather, each checklist row's needed and delivered, and stock / produced / consumed / unmet for every flow resource that moved. CLI: `run … --csv ledgers.csv`.
 - **Map PNG** is the app's (`MapScene.snapshotPng`).
+
+
+## Actual and potential (G11)
+
+Every output has two numbers. **Potential** is what a system makes if every input is met: the spreadsheet's number, where parity applies (`balancePotential`, and `NeedDay.potential` / `ResourceDay.potential` in time mode). **Actual** is what it made after missing inputs curtailed it. The checklist, the HUD score, scenarios, sensitivity, and reports use actual. Potential appears beside it as a labeled ceiling ("if every input were met").
+
+**Feasible balance** (`balanceFeasible`). The steady state with curtailment, as weekly averages:
+
+1. Every system in the design starts at satisfaction 1.
+2. Each pass:
+   - Compute each resource's supply from current satisfactions × boosts. Capacity outputs don't scale.
+   - Ration each Flow resource by priority tier, proportionally within a tier. Direct requests go first; substitutes (Food ← eggs, vegetables…) draw on what is left.
+   - Set each system's satisfaction to the minimum over its required inputs (grant ÷ request), capacity inputs (supply ÷ requests), and ambient inputs (met if the site supplies it, `design.ambient`, or a system in the design outputs it).
+   - `need` inputs (people, shelters' heat) are rationed but never switch anything off. Money is not rationed.
+   - Boost inputs scale output by 1 − weight × (1 − share met).
+3. Stop when nothing changes by more than 1e-9, or after 200 passes. Satisfactions only decrease, so this converges to the largest feasible state; real designs take 2–10 passes.
+4. The pass in which each system first fell below 1 is recorded (`curtailedAt`), so chains read in order: "the well, then the beds".
+
+**Storage in balance mode.** Time mode's storage rules apply as weekly averages:
+- **Electricity:** half of demand can run straight off production; the other half must pass through batteries, one charge a day. Available = min(½P, ½D) + min(½P, 7 × battery kWh).
+- **Other stored resources:** a day's production must fit in its storage pool (capacity plus the pool's small buffer), shared across the pool's members. City water with no tank is limited by the 50-gal buffer, as in time mode.
+
+**Coverage** is what consumers actually received ÷ needed, as in time mode. Actual provided (what was made) and potential are shown beside it. **Overall score** = the average actual coverage over rows with any need; the potential score is shown smaller beside it.
+
+**Delivery.** Heat and Cooling (`Resource.deliversTo: 'shelter'`) only count when the producer reaches a shelter. That means one of:
+- it is a shelter;
+- it has no footprint, so it is carried inside one (a fan) or is a utility hookup;
+- its footprint is within `deliveryRadiusFt` of a shelter's, edge to edge: 10 ft for heat, 30 ft for cooling.
+
+Otherwise the output is made but potential only: in time mode it's recorded as `ResourceDay.undelivered` and nothing can use it.
+
+Systems marked `outdoor` (Firepit, Biochar Kiln Firepit, Biochar Double Barrel Retort) never deliver. For balance mode, `designForGame` passes each system's delivered share from its placed instances. A count-only design assumes delivery, unless it has no shelter at all or the system is outdoor. `placeDesign` now puts stoves, fans, and shade trees beside the first shelter with room, so auto-laid-out designs deliver.
+
+**Statuses.**
+- `FeasibleResult.systems[id]` gives `satisfaction`, `limitedBy`, `curtailedAt`, and a status: "running", "partial: 40% of Water", or "blocked: no Electricity".
+- Each checklist row lists the systems holding it back (`blocked`), and so does the time-mode checklist view (from the ledgers' curtailed lists and the current layout's delivery).
+- `instanceStatuses(state, catalog)` gives each placed system's status for the map badges. It uses yesterday's group result, or the feasible balance before the clock has run.
+
+**Agreement.** With every input supplied, time-mode potential matches `balancePotential` within 5% on every row. With real supply, feasible balance matches time mode's year-2 overall coverage within 5 points for the starter, off-grid cabin, and suburban designs (`truthful.test.ts`).
+
+The one known gap is seasonal: in time mode, trees whose water need falls in summer still drop autumn leaves after it ends; a weekly steady state keeps them curtailed all year.
+
+**Fixed in G11:** spatial output multipliers (chickens by the compost, trees near a turbine, swales on a slope) were applied to capacity outputs only in time mode. They now multiply flow outputs too.
+
+
+## Market, backstops, and self-reliance (G12)
+
+**Backstops.** Conventional services marked `backstop` in the overrides stop producing fixed weekly amounts:
+- Big Box Grocery Store
+- Factory Farmed Food
+- Central Power Plant
+- Municipal Water Hookup
+- Gas Station
+- Farm & Feed Store
+
+"Propane Tank & Delivery" is not in the catalog; propane comes from the market.
+
+Each day, after on-site supply is allocated (step 5b, `dispatchBackstops`), they fill the unmet requests for what they sell:
+- **Order:** cheapest seller first, then by tier and proportionally within a tier.
+- **Cap:** up to 3 × their catalog weekly output (`BACKSTOP_CAP_MULT`), scaled by their own satisfaction (a grocery run needs its 10 miles of transport).
+- **Price:** each unit is paid from cash at `backstopPrices`. The default is the resource's market price; failing that, the system's weekly bill ÷ its first output.
+- **Connection fee:** charged every day whether used or not (grid $3/week, city water $5/week).
+
+Their Capital input is replaced by those charges. Unpriced outputs (a grocery's food waste) are by-products of what was delivered. Deliveries go into stock as `ResourceDay.purchased` and count toward the checklist row; nothing is curtailed. The conservation identity is now start + produced + purchased − consumed − spilled − spoiled = end.
+
+Validation mode (`unlimitedSupply`) keeps backstops as fixed producers, so time-mode potential still matches the spreadsheet.
+
+**Market.**
+- **Priced resources:** `Resource.marketPrice` / `marketUnit` / `marketAvailable`, set in the overrides; see CATALOG.md for the table and its low confidence. Electricity is not sold; it comes through a grid connection.
+- **Orders:** `buyAtMarket(catalog, state, resource, amount)` (action `buy`) queues an order for the next trip. `setStandingOrder(…, keepAbove, orderUpTo = 1.5 × keepAbove)` (action `standing`) buys up to `orderUpTo` whenever the stock is below `keepAbove`.
+- **Trips:** step 2b (`marketTrip`) makes one trip a day for all orders. It uses 10 miles of Transportation from stock, or costs $25 for delivery without it. Goods arrive in stock the same morning, as `purchased`. Partial orders are filled when cash runs short.
+- **Out of money:** while cash is at or below zero, nothing is bought (backstops or market). The first such day logs a `purchases-stopped` event and a toast.
+
+**Ledger.** `DayLedger.spend` holds dollars per resource for backstops and market, connection fees, and delivery; all of it is included in `cash.out`. `bought` (G9) now holds backstop and market deliveries plus conventional services' output. `NeedDay.bought` is the same in each row's units.
+
+**Self-reliance.**
+- **Per row:** 1 − bought ÷ provided over a period (time mode), or 1 − supply from backstops and Capital-paid conventional systems ÷ all supply (feasible balance).
+- **Headline:** the average over rows with any need of coverage × self-reliance. The household's own labor is left out, because it measures where supply comes from, not effort.
+- **Use:** the checklist shows it per row ("Made at home") and overall. G15's adapt start makes it the headline.
+
+**Feasible balance with backstops.** Backstop supply is left out of the first rationing. Then each sold resource's unmet requests are topped up to the cap (no cash limit in a steady state). Backstop terms scale to what was delivered, and their Capital terms become the bill. `FeasibleResult.backstops` gives units delivered, `bills` by resource, `fees`, and the weekly total.
+
+**Views.**
+- `weeklyBills(state)`: this week's total, the last 12 weeks, the trend, and lines by item.
+- `marketView(state, catalog)`: price, stock, days left at last week's use, pending orders, and standing orders.
+- `resourceSources(catalog, resource, nodes)`: producers, conventional sources, nodes, and market price.
+
+**Tests.**
+- `market.test.ts`: full coverage at full price.
+- `market.test.ts`: four raised beds and a 6 kW array cut the grocery and grid bills by exactly the vegetables eaten × price and the solar used × price, to the cent.
+- `market.test.ts`: purchases stop at zero cash.
+- `market.test.ts`: fees, trips and delivery, standing orders, replay.
+- `sources.audit.test.ts`: every Flow input has a producer, a node, or a market listing. Inputs with a single source are printed as warnings.

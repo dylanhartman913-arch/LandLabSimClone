@@ -23,6 +23,7 @@ import type {
   GameState,
   Instance,
   InstanceInputRecord,
+  DaySpend,
   NeedDay,
   ResourceDay,
 } from './types.ts';
@@ -51,6 +52,8 @@ interface Group {
   limitedBy: string | null;
   boostMult: number;
   inputs: Record<string, InstanceInputRecord>; // per instance
+  /** Backstops only: what it delivered today, by resource (group total). */
+  dispatched?: Record<string, number>;
 }
 
 interface Request {
@@ -112,6 +115,9 @@ interface Day {
   healthSum: number;
   people: number;
   spoiledToday: Record<string, number>;
+  spend: DaySpend;
+  market: GameState['market'];
+  broke: boolean;
 }
 
 const newResourceDay = (start: number): ResourceDay => ({
@@ -124,6 +130,9 @@ const newResourceDay = (start: number): ResourceDay => ({
   unmet: 0,
   imported: 0,
   supplied: 0,
+  potential: 0,
+  undelivered: 0,
+  purchased: 0,
 });
 
 /** Output share for a maturing plant: linear from planting to `yearsToFullOutput`. */
@@ -261,6 +270,8 @@ function laborPool(d: Day): void {
 function buildRequests(d: Day): void {
   for (const g of d.groups) {
     for (const plan of g.plan.inputs) {
+      // A backstop's bill is charged per unit delivered (G12), not as a fixed Capital request.
+      if (g.plan.backstop && !d.unlimited && plan.resource === 'Capital') continue;
       const amount =
         dailyAmount(plan, d.day, d.weather, d.table) * g.w * (g.spatial.inMult[plan.resource] ?? 1);
       const assigned = plan.role === 'capacity' ? g.spatial.assigned[plan.resource] : undefined;
@@ -345,6 +356,160 @@ function allocate(d: Day): void {
   }
   for (const [r, req] of d.boostReq) {
     d.boostSat.set(r, d.unlimited || req <= 0 ? 1 : Math.min(1, (d.prev.services[r] ?? 0) / req));
+  }
+}
+
+/** Market trips cost 10 miles of Transportation, or a $25 delivery charge without it (G12). */
+export const MARKET_TRIP_MILES = 10;
+export const MARKET_DELIVERY_FEE = 25;
+
+/**
+ * Step 2b (G12): the market. One trip a day covers every order: one-off orders placed since
+ * yesterday, and standing orders whose stock fell below their threshold. Nothing is bought
+ * while cash is at or below zero.
+ */
+function marketTrip(d: Day): void {
+  const m = d.market;
+  if (!m) return;
+  const orders = m.orders.map((o) => ({ ...o }));
+  for (const so of m.standing) {
+    const stock = d.stocks[so.resource] ?? 0;
+    if (stock < so.keepAbove) orders.push({ resource: so.resource, amount: so.orderUpTo - stock });
+  }
+  d.market = { orders: [], standing: m.standing };
+  const wanted = orders.filter((o) => o.amount > EPS && (d.meta.get(o.resource)?.marketPrice ?? null) !== null);
+  if (!wanted.length) return;
+  if (d.cash <= 0) {
+    d.broke = true;
+    return;
+  }
+  let trip: 'own transport' | 'delivery' = 'delivery';
+  const miles = d.stocks['Transportation'] ?? 0;
+  if (miles >= MARKET_TRIP_MILES) {
+    d.stocks['Transportation'] = miles - MARKET_TRIP_MILES;
+    d.res['Transportation']!.consumed += MARKET_TRIP_MILES;
+    trip = 'own transport';
+  } else {
+    d.cash -= MARKET_DELIVERY_FEE;
+    d.spend.delivery += MARKET_DELIVERY_FEE;
+  }
+  const bought: Record<string, number> = {};
+  let cost = 0;
+  for (const o of wanted) {
+    const r = d.meta.get(o.resource)!;
+    const price = r.marketPrice!;
+    const affordable = price > 0 ? Math.max(0, d.cash) / price : o.amount;
+    const amount = Math.min(o.amount, affordable);
+    if (amount <= EPS) {
+      d.broke = true;
+      continue;
+    }
+    d.stocks[o.resource] = (d.stocks[o.resource] ?? 0) + amount;
+    const led = d.res[o.resource];
+    if (led) led.purchased += amount;
+    d.bought[o.resource] = (d.bought[o.resource] ?? 0) + amount;
+    if (r.needsRow) {
+      const f = r.factorToNeed ?? 1;
+      d.needs[r.needsRow].provided += amount * f;
+      d.needs[r.needsRow].potential += amount * f;
+      d.needs[r.needsRow].bought += amount * f;
+    }
+    d.cash -= amount * price;
+    cost += amount * price;
+    d.spend.market[o.resource] = (d.spend.market[o.resource] ?? 0) + amount * price;
+    bought[o.resource] = (bought[o.resource] ?? 0) + amount;
+  }
+  if (cost > 0) d.events.push({ kind: 'market', absDay: d.absDay, bought, cost, trip });
+}
+
+/**
+ * Step 5b (G12): backstops fill what on-site supply didn't. After allocation, each backstop
+ * (grocery, grid, city water…) tops up the unmet requests for what it sells, by tier, up to
+ * 3 × its catalog output a week, at its price per unit, while cash lasts. Connection fees are
+ * charged every day whether used or not. A backstop that is short of its own inputs (a grocery
+ * run with no transport) delivers that much less.
+ */
+function dispatchBackstops(d: Day): void {
+  // Validation mode keeps the spreadsheet's fixed outputs, so potential parity still holds.
+  if (d.unlimited) return;
+  const groups = d.groups.filter((g) => g.plan.backstop);
+  if (!groups.length) return;
+  for (const g of groups) {
+    const fee = (g.plan.backstop!.fee / 7) * g.w;
+    if (fee > 0) {
+      d.cash -= fee;
+      d.spend.fees += fee;
+    }
+    g.dispatched = {};
+  }
+  // Each backstop's own satisfaction (transport for the grocery run) from what it was granted.
+  const own = new Map<Group, number>();
+  for (const reqs of d.byResource.values()) {
+    for (const q of reqs) {
+      if (!q.group.plan.backstop || q.plan.role !== 'required') continue;
+      own.set(q.group, Math.min(own.get(q.group) ?? 1, q.amount > 0 ? q.grant / q.amount : 1));
+    }
+  }
+  const sold = new Set<string>();
+  for (const g of groups) for (const r of Object.keys(g.plan.backstop!.prices)) sold.add(r);
+  for (const resource of sold) {
+    const reqs = (d.byResource.get(resource) ?? []).filter(
+      (q) => !q.group.plan.backstop && (q.plan.role === 'required' || q.plan.role === 'need'),
+    );
+    let unmet = 0;
+    for (const q of reqs) unmet += Math.max(0, q.amount - q.grant);
+    if (unmet <= EPS) continue;
+    // Cheapest backstop first.
+    const sellers = groups
+      .filter((g) => g.plan.backstop!.prices[resource] !== undefined)
+      .sort((a, b) => a.plan.backstop!.prices[resource]! - b.plan.backstop!.prices[resource]!);
+    let delivered = 0;
+    for (const g of sellers) {
+      if (unmet - delivered <= EPS) break;
+      if (d.cash <= 0) {
+        d.broke = true;
+        break;
+      }
+      const price = g.plan.backstop!.prices[resource]!;
+      const cap = ((g.plan.backstop!.capWeekly[resource] ?? 0) / 7) * g.w * (own.get(g) ?? 1);
+      const affordable = price > 0 ? d.cash / price : Infinity;
+      const amount = Math.min(unmet - delivered, cap, affordable);
+      if (amount <= EPS) continue;
+      if (amount < Math.min(unmet - delivered, cap) - EPS) d.broke = true;
+      delivered += amount;
+      g.dispatched![resource] = (g.dispatched![resource] ?? 0) + amount;
+      d.cash -= amount * price;
+      d.spend.backstop[resource] = (d.spend.backstop[resource] ?? 0) + amount * price;
+    }
+    if (delivered <= EPS) continue;
+    // Top up the unmet requests by tier, proportionally within a tier.
+    const tops: Request[] = reqs.map((q) => ({ ...q, amount: Math.max(0, q.amount - q.grant), grant: 0 }));
+    allocateByTier(tops, delivered);
+    tops.forEach((t, k) => (reqs[k]!.grant += t.grant));
+    d.stocks[resource] = (d.stocks[resource] ?? 0) + delivered;
+    const led = d.res[resource];
+    if (led) led.purchased += delivered;
+    d.bought[resource] = (d.bought[resource] ?? 0) + delivered;
+    const m = d.meta.get(resource)!;
+    if (m.needsRow) {
+      const f = m.factorToNeed ?? 1;
+      d.needs[m.needsRow].provided += delivered * f;
+      d.needs[m.needsRow].potential += delivered * f;
+      d.needs[m.needsRow].bought += delivered * f;
+    }
+  }
+  // By-products (food waste from groceries) follow what each backstop delivered of its first priced output.
+  for (const g of groups) {
+    const b = g.plan.backstop!;
+    const nominal = ((b.capWeekly[b.primary] ?? 0) / 3 / 7) * g.w;
+    const share = nominal > 0 ? (g.dispatched![b.primary] ?? 0) / nominal : 0;
+    if (share <= 0) continue;
+    for (const o of g.plan.outputs) {
+      if (b.prices[o.resource] !== undefined || o.cls !== 'Flow') continue;
+      const amount = (o.weekly / 7) * g.w * share;
+      d.produced[o.resource] = (d.produced[o.resource] ?? 0) + amount;
+      g.dispatched![o.resource] = (g.dispatched![o.resource] ?? 0) + amount;
+    }
   }
 }
 
@@ -475,31 +640,61 @@ function produce(d: Day): void {
   const harvest = new Map<string, { systemId: string; resource: string; ids: string[] }>();
   for (const g of d.groups) {
     const p = g.plan;
+    if (p.backstop && !d.unlimited) {
+      // Backstops delivered on demand (dispatchBackstops); report it per instance.
+      const per: Record<string, number> = {};
+      for (const [r, v] of Object.entries(g.dispatched ?? {})) per[r] = v / Math.max(1e-12, g.w);
+      d.lastDay[g.key] = { sat: g.sat, limitedBy: g.limitedBy, boostMult: 1, inputs: g.inputs, outputs: per, potential: per };
+      continue;
+    }
     const base: number[] = [];
     for (const o of p.outputs) {
       base.push(
-        p.isHuman && o.resource === 'Labor' ? p.laborWeekly / 7 : dailyAmount(o, d.day, d.weather, d.table),
+        p.isHuman && o.resource === 'Labor'
+          ? p.laborWeekly / 7
+          : dailyAmount(o, d.day, d.weather, d.table) * (g.spatial.outMult[o.resource] ?? 1),
       );
     }
     let multSum = 0;
+    let matSum = 0; // Σ maturity × scale: the potential multiplier
     for (const i of g.members) {
       const inst = d.instances[i]!;
-      multSum += p.isHuman ? (inst.person?.health ?? 1) : g.sat * g.boostMult * maturity(inst, p, d.absDay);
+      const m = p.isHuman ? (inst.scale ?? 1) : maturity(inst, p, d.absDay);
+      matSum += m;
+      multSum += p.isHuman ? (inst.person?.health ?? 1) : g.sat * g.boostMult * m;
     }
     const perUnit: Record<string, number> = {};
+    const potUnit: Record<string, number> = {};
+    const undelivered: string[] = [];
     const unitMult = p.isHuman ? 1 : g.sat * g.boostMult;
     for (let k = 0; k < p.outputs.length; k++) {
       const o = p.outputs[k]!;
       perUnit[o.resource] = (perUnit[o.resource] ?? 0) + base[k]! * unitMult;
-      if (p.isHuman && o.resource === 'Labor') continue; // counted in the pool
+      potUnit[o.resource] = (potUnit[o.resource] ?? 0) + base[k]!;
+      if (p.isHuman && o.resource === 'Labor') {
+        d.needs['Est. Required Labor'].potential += base[k]! * matSum;
+        continue; // actual is counted in the pool
+      }
       const amount = base[k]! * multSum;
-      if (o.needsRow) d.needs[o.needsRow].provided += amount * o.needFactor;
+      const pot = base[k]! * matSum;
+      if (o.needsRow) d.needs[o.needsRow].potential += pot * o.needFactor;
+      const led = o.cls === 'Flow' ? d.res[o.resource] : undefined;
+      if (led) led.potential += pot;
+      if (g.spatial.undelivered[o.resource]) {
+        // Made, but it never reaches a shelter: potential only (G11).
+        if (led) led.undelivered += amount;
+        if (!undelivered.includes(o.resource)) undelivered.push(o.resource);
+        continue;
+      }
+      if (o.needsRow) {
+        d.needs[o.needsRow].provided += amount * o.needFactor;
+        if (p.bought) d.needs[o.needsRow].bought += amount * o.needFactor;
+      }
       if (o.cls === 'Money') d.cashIn += amount;
       else if (o.cls === 'Flow') {
         d.produced[o.resource] = (d.produced[o.resource] ?? 0) + amount;
         if (p.bought && amount > 0) d.bought[o.resource] = (d.bought[o.resource] ?? 0) + amount;
-      }
-      else if (o.cls === 'Service') d.services[o.resource] = (d.services[o.resource] ?? 0) + amount;
+      } else if (o.cls === 'Service') d.services[o.resource] = (d.services[o.resource] ?? 0) + amount;
       if (o.shape === 'window' && d.day === o.window!.first && amount > 0) {
         const key = `${p.system.id}|${o.resource}`;
         const h = harvest.get(key) ?? { systemId: p.system.id, resource: o.resource, ids: [] };
@@ -513,6 +708,8 @@ function produce(d: Day): void {
       boostMult: g.boostMult,
       inputs: g.inputs,
       outputs: perUnit,
+      potential: potUnit,
+      ...(undelivered.length ? { undelivered } : {}),
     };
   }
   d.needs['Est. Required Labor'].provided = d.pool;
@@ -703,6 +900,13 @@ function emitEvents(d: Day): GameState['flags'] {
   return { short, spilling };
 }
 
+export function spendTotal(s: DaySpend): number {
+  let t = s.fees + s.delivery;
+  for (const v of Object.values(s.backstop)) t += v;
+  for (const v of Object.values(s.market)) t += v;
+  return t;
+}
+
 function buildLedger(d: Day): DayLedger {
   // Only groups running below full satisfaction are listed (keeps ledgers small).
   const curtailed: DayLedger['curtailed'] = [];
@@ -720,7 +924,7 @@ function buildLedger(d: Day): DayLedger {
     cash: {
       start: prev.cash + prev.pendingCash.purchases - prev.pendingCash.refunds,
       in: d.cashIn,
-      out: d.capitalUsed,
+      out: d.capitalUsed + spendTotal(d.spend),
       purchases: prev.pendingCash.purchases,
       refunds: prev.pendingCash.refunds,
       end: d.cash,
@@ -737,6 +941,7 @@ function buildLedger(d: Day): DayLedger {
     weather: d.weather,
     bought: d.bought,
     hardships: d.events.filter((e) => e.kind === 'hardship').length,
+    spend: d.spend,
     health: d.people ? d.healthSum / d.people : 1,
   };
 }
@@ -763,7 +968,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   const res: Record<string, ResourceDay> = {};
   for (const r of plans.flowResources) res[r] = newResourceDay((prev.stocks[r] ?? 0) + (prev.direct[r] ?? 0));
   const needs = {} as Record<NeedKey, NeedDay>;
-  for (const k of NEED_KEYS) needs[k] = { provided: 0, needed: 0, delivered: 0 };
+  for (const k of NEED_KEYS) needs[k] = { provided: 0, potential: 0, needed: 0, delivered: 0, bought: 0 };
 
   const d: Day = {
     prev,
@@ -809,13 +1014,18 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     healthSum: 0,
     people: 0,
     spoiledToday: {},
+    spend: { backstop: {}, market: {}, fees: 0, delivery: 0 },
+    market: prev.market,
+    broke: false,
   };
 
   groupInstances(d, computeSpatial(catalog, prev));
   startConstruction(d); // 2
+  marketTrip(d); // 2b
   laborPool(d); // 4 (people work before anything else runs)
   buildRequests(d); // 3
   allocate(d); // 5
+  dispatchBackstops(d); // 5b
   satisfy(d); // 6
   consume(d);
   produce(d);
@@ -824,6 +1034,8 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   d.cash += d.cashIn; // 9
   finishConstruction(d);
   const flags = emitEvents(d); // 10
+  if (d.broke && !prev.flags.broke) d.events.push({ kind: 'purchases-stopped', absDay, cash: d.cash });
+  if (d.broke) flags.broke = true;
   const ledger = buildLedger(d);
 
   const ledgers = prev.ledgers.length >= LEDGER_DAYS_KEPT ? prev.ledgers.slice(1) : prev.ledgers.slice();
@@ -845,6 +1057,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     weather,
     ledgers,
     ...(yearWeather ? { yearWeather, weatherLog } : {}),
+    ...(d.market ? { market: d.market } : {}),
     pendingCash: { purchases: 0, refunds: 0 },
     flags,
   };

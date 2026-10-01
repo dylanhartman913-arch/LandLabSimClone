@@ -104,6 +104,9 @@ export function MapView() {
         <div className="map-tip" style={{ left: hover.x + 14, top: hover.y + 10 }} role="tooltip">
           <strong>{sys.name}</strong>
           {inst.status === 'building' && <span className="tip-sub">Under construction</span>}
+          {sceneRef.current?.badgeInfo.get(inst.id) && (
+            <span className="tip-sub">{sceneRef.current.badgeInfo.get(inst.id)!.text}</span>
+          )}
         </div>
       )}
     </div>

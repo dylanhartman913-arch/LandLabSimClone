@@ -1,6 +1,7 @@
 import { getSite, type Catalog } from '@homestead/catalog';
 import { digest } from './digest.ts';
 import {
+  buyAtMarket,
   deleteInstance,
   initGame,
   insertInstance,
@@ -10,6 +11,7 @@ import {
   removeSystem,
   setLink,
   setPriority,
+  setStandingOrder,
 } from './time/game.ts';
 import { stepDays } from './time/step.ts';
 import type { BuildMode, GameSettings, GameState, Instance } from './time/types.ts';
@@ -36,6 +38,8 @@ export type Action = { at: number } & (
   | { kind: 'insert'; instance: Instance; cashDelta: number; index?: number }
   | { kind: 'delete'; id: string; cashDelta: number }
   | { kind: 'settings'; settings: Partial<GameSettings> }
+  | { kind: 'buy'; resource: string; amount: number }
+  | { kind: 'standing'; resource: string; keepAbove: number; orderUpTo?: number }
 );
 
 /** An action without its day stamp (the store adds `at` when it applies one). */
@@ -72,6 +76,10 @@ export function applyAction(catalog: Catalog, s: GameState, a: Action): GameStat
       return deleteInstance(s, a.id, a.cashDelta);
     case 'settings':
       return { ...s, settings: { ...s.settings, ...a.settings } };
+    case 'buy':
+      return buyAtMarket(catalog, s, a.resource, a.amount);
+    case 'standing':
+      return setStandingOrder(catalog, s, a.resource, a.keepAbove, a.orderUpTo);
   }
 }
 
@@ -107,6 +115,7 @@ export function gameDigest(s: GameState): string {
     direct: s.direct,
     instances: s.instances,
     settings: s.settings,
+    ...(s.market ? { market: s.market } : {}),
     // Real weather: the year draws are part of the game's substance (average-mode digests are unchanged).
     ...(s.weatherLog ? { weatherLog: s.weatherLog } : {}),
   });

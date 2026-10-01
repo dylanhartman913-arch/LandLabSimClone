@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  balance,
+  balanceFeasible,
   checklistView,
-  designAdjust,
+  designForGame,
   designBalance,
   flowLinks,
   hudMetrics,
@@ -13,18 +13,10 @@ import {
 import { advanceTo, catalog, newGame, run, sysId } from './time-helpers.ts';
 
 describe('the Needs Checklist view', () => {
-  it('Average year is balance mode, number for number, with provenance', () => {
+  it('Average year is feasible balance mode, number for number, with provenance', () => {
     const g = newGame({ 'Human Being': 2, 'Bell Tent': 1, Well: 1, '500W Photovoltaic Panels': 2 });
     const v = checklistView(g, catalog, 'average');
-    const b = balance(catalog, g.site.assumptions, {
-      counts: {
-        [sysId('Human Being')]: 2,
-        [sysId('Bell Tent')]: 1,
-        [sysId('Well')]: 1,
-        [sysId('500W Photovoltaic Panels')]: 2,
-      },
-      adjust: designAdjust(g, catalog),
-    });
+    const b = balanceFeasible(catalog, g.site.assumptions, designForGame(g, catalog));
     expect(v.rows.map((r) => [r.provided.value, r.needed.value, r.pct.value, r.covered])).toEqual(
       b.checklist.map((r) => [r.provided.value, r.needed.value, r.pct.value, r.covered]),
     );

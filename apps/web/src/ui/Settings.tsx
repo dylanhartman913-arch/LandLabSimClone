@@ -78,6 +78,15 @@ export function Settings() {
           />
           Reduce motion
         </label>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={prefs.badges}
+            onChange={(e) => st.setPrefs({ badges: e.target.checked })}
+            data-testid="badges-pref"
+          />
+          Status bubbles on systems that are short of an input (B)
+        </label>
       </div>
       <h3>Pause automatically when…</h3>
       <div className="form">

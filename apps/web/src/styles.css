@@ -524,7 +524,7 @@ select {
 
 .toasts {
   position: absolute;
-  top: 10px;
+  bottom: 64px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1730,4 +1730,190 @@ pre.cli {
   .drawer {
     transition: none;
   }
+}
+
+/* Actual vs potential (G11) ---------------------------------------------------- */
+.potential-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.85em;
+  min-width: 90px;
+}
+.checklist td.potential {
+  color: var(--ink-2);
+}
+.blocked-row td {
+  padding-top: 0;
+  border-top: none;
+}
+.blocked .link {
+  color: var(--warn);
+}
+.blocked-list {
+  list-style: none;
+  padding: 2px 0 6px 14px;
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+.blocked-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.badge-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1px solid #1b1f16;
+}
+.badge-dot.blocked {
+  background: var(--bad);
+}
+.badge-dot.partial {
+  background: var(--accent);
+}
+.cb .badge-dot.blocked {
+  background: #ff9f40;
+}
+.cb .badge-dot.partial {
+  background: #8fd3ff;
+}
+.hud-potential {
+  font-size: 0.75em;
+  color: var(--muted);
+}
+
+/* Market and bills (G12) -------------------------------------------------------- */
+.bills-head {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.big-num {
+  font-size: 1.6em;
+  font-weight: 700;
+}
+.good-text {
+  color: var(--good);
+}
+.inline-form {
+  display: flex;
+  gap: 4px;
+}
+.inline-form input {
+  width: 80px;
+}
+.market-table th[scope='row'] {
+  font-weight: normal;
+}
+
+/* Resource pages, supply chains, build plans (G13) ------------------------------- */
+.resource-sheet h4 {
+  margin: 10px 0 4px;
+  font-size: 0.9em;
+  color: var(--ink-2);
+}
+.res-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 6px 0;
+}
+.res-chart {
+  margin: 6px 0;
+}
+.bar-made {
+  fill: var(--good);
+}
+.bar-bought {
+  fill: #6aa0d8;
+}
+.key::before {
+  content: '';
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 3px;
+  border-radius: 2px;
+}
+.key.made::before {
+  background: var(--good);
+}
+.key.bought::before {
+  background: #6aa0d8;
+}
+.key.used::before {
+  background: var(--accent);
+  height: 2px;
+  vertical-align: middle;
+}
+.res-link {
+  text-align: left;
+}
+.needs-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.85em;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.chip {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 6px;
+}
+.chip.have {
+  border-color: var(--good);
+}
+.chip.missing {
+  border-color: var(--bad);
+}
+.status-line {
+  margin: 6px 0;
+  font-size: 0.92em;
+}
+.status-line.blocked {
+  color: var(--bad);
+}
+.status-line.partial {
+  color: var(--warn);
+}
+.chain-toggle {
+  margin: 6px 0;
+}
+.chain ul {
+  list-style: none;
+  padding-left: 14px;
+  margin: 2px 0;
+}
+.chain li.ok > details > summary {
+  color: var(--good);
+}
+.chain li.short > details > summary {
+  color: var(--warn);
+}
+.chain summary {
+  cursor: pointer;
+}
+.build-plan .plan-items {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0;
+  display: grid;
+  gap: 4px;
+}
+.build-plan .plan-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  align-items: center;
+}
+.seg.small .seg-btn {
+  padding: 3px;
+  font-size: 0.85em;
 }

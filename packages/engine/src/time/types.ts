@@ -74,8 +74,12 @@ export interface GroupDay {
   boostMult: number;
   /** Per instance: requested and received for each input. */
   inputs: Record<string, InstanceInputRecord>;
-  /** Per instance at full maturity and health: output of each resource. */
+  /** Per instance at full maturity and health: output of each resource (actual: × satisfaction × boosts). */
   outputs: Record<string, number>;
+  /** Per instance at full maturity: output with every input met (potential, G11). */
+  potential: Record<string, number>;
+  /** Outputs that didn't reach a shelter (G11), so they count as potential only. */
+  undelivered?: string[];
 }
 
 export interface ResourceDay {
@@ -90,15 +94,25 @@ export interface ResourceDay {
   imported: number;
   /** Validation mode only: amount added to the stock so every request could be met. */
   supplied: number;
+  /** What producers would have made with every input met (G11). */
+  potential: number;
+  /** Made but unusable: heat or cooling that doesn't reach a shelter (G11). */
+  undelivered: number;
+  /** Brought in from outside today: backstop deliveries and market purchases (G12). */
+  purchased: number;
 }
 
 export interface NeedDay {
-  /** Output of feeding resources, in the row's unit. */
+  /** Actual output of feeding resources that reached their users, in the row's unit. */
   provided: number;
+  /** The same with every input met and every output delivered (G11 potential). */
+  potential: number;
   /** Requests from every consumer of feeding resources, in the row's unit. */
   needed: number;
   /** What those consumers actually received, in the row's unit. */
   delivered: number;
+  /** Of `provided`, what came from outside: backstops, the market, and conventional services (G12). */
+  bought: number;
 }
 
 export interface DayLedger {
@@ -124,8 +138,34 @@ export interface DayLedger {
   bought: Record<string, number>;
   /** Household members who entered hardship today. */
   hardships: number;
+  /** Money spent today on backstops, the market, connection fees, and delivery (G12). Included in cash.out. */
+  spend: DaySpend;
   /** Average household health today. */
   health: number;
+}
+
+export interface DaySpend {
+  /** Dollars per resource delivered by backstops (grocery, grid, city water…). */
+  backstop: Record<string, number>;
+  /** Dollars per resource bought at the market. */
+  market: Record<string, number>;
+  /** Backstop connection fees (charged whether used or not). */
+  fees: number;
+  /** Market delivery charges (when no transport was available for the trip). */
+  delivery: number;
+}
+
+/** A market purchase waiting for the next trip (G12). */
+export interface MarketOrder {
+  resource: string;
+  amount: number;
+}
+
+/** "Keep firewood above 500 lbs": buy up to `orderUpTo` whenever the stock drops below `keepAbove`. */
+export interface StandingOrder {
+  resource: string;
+  keepAbove: number;
+  orderUpTo: number;
 }
 
 export interface GameState {
@@ -153,7 +193,9 @@ export interface GameState {
    * Rolling flags used to emit "first day of" events: for each resource that is short,
    * the systems it curtails; whether electricity is spilling.
    */
-  flags: { short: Record<string, string[]>; spilling: boolean };
+  flags: { short: Record<string, string[]>; spilling: boolean; broke?: boolean };
+  /** The market (G12): one-off orders for the next trip, and standing orders. Absent until used. */
+  market?: { orders: MarketOrder[]; standing: StandingOrder[] };
   /** Real weather only: this year's draws, and every year's draws so far (kept in saves). */
   yearWeather?: YearWeather;
   weatherLog?: YearWeather[];
@@ -175,4 +217,6 @@ export type GameEvent =
   | { kind: 'built'; absDay: number; instanceId: string; systemId: string }
   | { kind: 'imported'; absDay: number; instanceId: string; resource: string; amount: number }
   | { kind: 'hardship'; absDay: number; instanceId: string; need: PersonNeed; level: number }
-  | { kind: 'health'; absDay: number; instanceId: string; health: number };
+  | { kind: 'health'; absDay: number; instanceId: string; health: number }
+  | { kind: 'purchases-stopped'; absDay: number; cash: number }
+  | { kind: 'market'; absDay: number; bought: Record<string, number>; cost: number; trip: 'own transport' | 'delivery' };

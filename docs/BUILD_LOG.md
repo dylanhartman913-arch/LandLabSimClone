@@ -571,3 +571,92 @@ The cloud sandbox has no GPU, no screen, no spreadsheet program, and can't chang
 8. **Art and audio** need original assets. Wiring `manifestEntry` into `MapScene` sprite creation is a small code task once images exist.
 
 A new cloud session can do the code-only follow-ups: splitting the bundle, drawing art from the manifest, putting pinned scenarios into saves, varying sun and wind in real weather, and a second allocation pass.
+
+---
+
+# Playability roadmap (G11–G16)
+
+`docs/HOMESTEAD_SIM_PLAYABILITY_ROADMAP.md`, written after the first playtest. `CLAUDE.md` gains hard rules 7–9 (actual flows score; new systems via `scripts/catalog_patch.py`; pacing gates in CI) and points at the new roadmap.
+
+## G11 — Truthful accounting: actual vs potential (2026-10-01)
+
+**Shipped**
+- **Feasible balance** (`balanceFeasible`). The weekly steady state with curtailment:
+  - Satisfactions start at 1 and only decrease.
+  - Each pass rations every Flow resource by tier (proportional within a tier, substitutes last) and sets satisfaction to the minimum over required, capacity, and ambient inputs.
+  - It converges in 2–10 passes, with a cap of 200.
+  - Storage follows time mode as weekly averages: half of electricity demand runs straight off production and the rest must fit through batteries; other stored resources are limited by their pool.
+  - Coverage = what consumers received ÷ needed.
+  - It returns per-system statuses ("blocked: no Electricity", "partial: 40% of Water"), the pass each one first fell (so chains read in order), and per-row `potential` and `blocked` lists.
+- **Potential.** The old function is now `balancePotential` (the spreadsheet; the parity tests and balance digests target it, unchanged). Both functions share `collectTerms`/`assembleBalance`.
+- **Delivery.** Heat and Cooling count only when they reach a shelter:
+  - The producer is a shelter itself, carried inside one (no footprint), or within 10 ft (heat) or 30 ft (cooling) of one.
+  - New engine fields `Resource.deliversTo` / `deliveryRadiusFt` and `System.outdoor` (Firepit, Biochar Kiln Firepit, and Biochar Retort are outdoor).
+  - In time mode, undelivered output is recorded as `ResourceDay.undelivered` and nothing can use it.
+  - `placeDesign` now puts stoves, fans, and shade trees beside a shelter.
+- **Time mode.** Each output's potential is recorded beside its actual (`NeedDay.potential`, `ResourceDay.potential`, `GroupDay.potential`).
+- **Views.** The checklist has Actual, Potential, Needed, % covered, and Covered columns in all three modes. A row held back shows "N systems are held back", which expands to each system, its status, and **Find a source of X** (it opens the drawer search for X; G13 replaces this with resource pages). The overall score is actual, with "If every input were met: N%" beside it, in the checklist and as "N% if supplied" in the HUD.
+- **Map status bubbles** (Timberborn-style; `instanceStatuses`):
+  - A partial system gets a yellow bubble; a blocked one gets a red bubble with a slash.
+  - Each bubble carries an original vector glyph for the missing input (bolt, drop, log, flame, leaf, clock…), drawn at a constant screen size.
+  - The map tooltip says why. `B` and Settings toggle the bubbles; running systems show nothing.
+- **Bug fixed:** spatial output multipliers from G7 (chickens by the compost, trees near a turbine, swales on a slope) applied only to capacity outputs in time mode. They now multiply flows.
+
+**Tests:** `truthful.test.ts` (10):
+- **GoSun Fan + Bell Tent + Human, no power:** cooling actual 0, potential above 0, "blocked: no Electricity". Time mode agrees in July.
+- **Removing the panels:** the well stops in pass 1 and the beds in pass 2; water and food drop while potential stays.
+- **Convergence:** the solver settles and satisfactions never rise.
+- **Delivery:** a firepit's heat is potential only; a stove beside the tent counts and the same stove 120 ft away doesn't, in both modes.
+- **HUD score:** equals the feasible score, with potential ≥ actual.
+- **Agreement:** feasible matches time-mode year-2 overall coverage within 5 points for the starter, off-grid cabin, and suburban designs. Starter rows match within 5 points, except one documented seasonal effect: trees drop autumn leaves after their summer water need ends.
+
+The unlimited-supply agreement now compares time-mode **potential** with `balancePotential`. e2e `truthful.spec.ts` (3): the fan drill-down and Find a source, map bubbles and `B`, and the HUD potential. Screenshots are in `docs/screenshots/g11/`.
+
+**Digests:** balance (potential) and spreadsheet goldens are unchanged. Time digests were re-recorded (delivery, the output-multiplier fix, auto-layout, and new ledger fields), and again in G12.
+
+**Decisions not in the roadmap**
+- Coverage % is what consumers received ÷ needed, not actual made ÷ needed, so a panel whose power spills for lack of a battery doesn't count twice. Actual (made) is still the column beside it.
+- A count-only design (no layout) assumes heat and cooling are delivered, unless it has no shelter or the producer is outdoor.
+- Ambient inputs in balance mode are met by the site (`design.ambient`, from the game) or by a system in the design that outputs them (the spreadsheet's Sunlight and Rainfall systems).
+- Bubbles appear only on systems with a footprint (a fan or a utility hookup has none to put one on); the checklist drill-down lists them all.
+
+## G12 — Market, backstops, self-reliance, weekly bills (2026-10-01)
+
+**Shipped**
+- **Market:**
+  - 15 priced resources (roadmap table; low confidence, flagged in CATALOG.md with the proposal to move them into the xlsx). Electricity is not sold.
+  - **Buy now** orders for the next trip, and **standing orders** ("keep firewood above 150 lbs", buying up to 1.5×). Both are actions (`buy`, `standing`) that replay.
+  - One trip a day covers all orders, using 10 miles of transport or a $25 delivery charge.
+  - Partial fills when cash runs short; nothing is bought at or below zero cash, with a `purchases-stopped` event and toast.
+- **Backstops:**
+  - The grocery store, factory-farmed food, the power plant, city water, the gas station, and the feed store fill whatever on-site supply didn't. Each one serves up to 3× its catalog output, at a per-unit price, plus a connection fee whether used or not (grid $3/week, city water $5/week).
+  - Their Capital input becomes those charges; by-products follow what was delivered.
+  - Deliveries are `purchased`, recorded separately from on-site `produced`.
+  - Feasible balance tops up unmet demand the same way and reports bills.
+- **Self-reliance:** per row and overall (coverage × share made at home, labor left out), in time mode and feasible balance. The checklist shows a "Made at home" column and the overall figure.
+- **Market and bills panel** (`M`, HUD "Market"): this week's bills with the 12-week trend and a line per item (sparklines); a buy table with price, stock, days it lasts, buy-now, and keep-above.
+- **Exports** stay correct: the flow record's bought vs made-on-site now accounts for `purchased`.
+- **Toasts:** at most three, with repeats replacing their earlier copy, shown at the bottom so they never cover a panel. My earlier notes said this was already done; it wasn't.
+
+**Tests:** 181 unit across 23 files (+11).
+- `market.test.ts` (10): full coverage at full price.
+- **Roadmap check:** four raised beds and a 6 kW array cut the grocery and grid bills by exactly vegetables eaten × price and solar used × price, within half a cent.
+- `market.test.ts`, more checks:
+  - Zero cash stops every purchase and logs it.
+  - Connection fees, the bills view, buy-now with trip or delivery, and standing orders.
+  - Electricity can't be bought, and market actions replay.
+  - Feasible balance fills food from the grocery and prices it.
+- `sources.audit.test.ts` (1, the **handoff**): every Flow input can be made, gathered, or bought. The warnings for inputs with a single source are printed: chicken feed, gasoline, propane, waste lumber, and wood pellets are market-only; coffee grounds, grain, root crops, and wood chips have one producer.
+- The no-cash scenario was rewritten for backstops.
+- e2e `market.spec.ts` (2): buy, standing order, bills lines, and the action log; the self-reliance column. Screenshots are in `docs/screenshots/g12/`.
+
+**Digests:** time digests re-recorded (backstop dispatch and summary self-reliance fields). Potential balance and goldens are unchanged.
+
+**Decisions not in the roadmap**
+- Backstop price = market price where one exists. The grid and city water get explicit prices tuned to roughly their catalog weekly bills.
+- When several backstops sell the same thing, the cheapest is served first.
+- Market orders arrive the morning of the trip, and a standing order buys up to 1.5 × its threshold by default.
+- Market purchases count as "bought" for self-reliance even after they sit in stock.
+- The suburban design's groceries and job get no transport. People (tier 0) use the two cars' 500 miles a week first, which is a real shortfall in that design, not a bug; the G15 adapt start sizes for it.
+
+**Known gaps:** feasible balance doesn't model market purchases (they are player actions, not steady state).

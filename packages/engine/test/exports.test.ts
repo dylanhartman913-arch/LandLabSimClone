@@ -3,7 +3,7 @@ import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { getSite } from '@homestead/catalog';
 import {
-  balance,
+  balanceFeasible,
   designForBalance,
   designFromGame,
   flowRecord,
@@ -91,7 +91,7 @@ describe('scenario compare', () => {
   it('shows the average-year checklist, cost, labor, land, autonomy, and yearly cash, each explained', () => {
     const s = scenarioSummary(catalog, load('offgrid-cabin-family.json'), 'laramie-wy');
     const { design } = designForBalance(catalog, load('offgrid-cabin-family.json'), 'laramie-wy');
-    const b = balance(catalog, getSite('laramie-wy').assumptions, design);
+    const b = balanceFeasible(catalog, getSite('laramie-wy').assumptions, design);
     expect(s.overall.value).toBe(b.overallScore.value);
     expect(s.checklist).toHaveLength(11);
     expect(s.cashPerYear.value).toBeCloseTo(b.summary.capitalNet.value * 52, 9);
@@ -110,12 +110,16 @@ describe('scenario compare', () => {
 
 describe('sensitivity', () => {
   const site = getSite('front-range');
-  const solar = resolveDesign(catalog, {
+  const solar = {
+    ambient: site.ambient,
+    ...resolveDesign(catalog, {
     'Human Being': 1,
     Yurt: 1,
     '500W Photovoltaic Panels': 2,
-    Well: 1,
-  });
+      'LiFePO4 Battery Bank (10 kWh)': 1,
+      Well: 1,
+    }),
+  };
 
   it('a solar-powered design is most sensitive to sun hours and PV derate', () => {
     const t = sensitivity(catalog, site.assumptions, solar);

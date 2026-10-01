@@ -63,12 +63,15 @@ function SystemsTab() {
   const openCard = useGame((s) => s.openCard);
   const [mode, setMode] = useState<'all' | 'my'>('all');
   const [category, setCategory] = useState('');
-  const [query, setQuery] = useState('');
+  const query = useGame((s) => s.drawerQuery);
+  const setQuery = useGame((s) => s.setDrawerQuery);
   const [tip, setTip] = useState<{ id: string; x: number; y: number } | null>(null);
   const index = useMemo(() => buildSearchIndex(catalog), [catalog]);
   const cats = useMemo(() => categoryOptions(catalog), [catalog]);
   const mine = designCounts(game);
-  let list = searchSystems(index, query);
+  const searchMode = useGame((s) => s.drawerSearchMode);
+  const setSearchMode = useGame((s) => s.setDrawerSearchMode);
+  let list = searchSystems(index, query, searchMode);
   if (category) list = list.filter((s) => s.categories.includes(category));
   if (mode === 'my') list = list.filter((s) => mine[s.id]);
   const tipView = tip ? systemFlows(catalog, tip.id, game.site.assumptions) : null;
@@ -112,6 +115,20 @@ function SystemsTab() {
         aria-label="Search systems"
         data-testid="system-search"
       />
+      <div className="seg small" role="radiogroup" aria-label="Search in">
+        {(['any', 'makes', 'uses'] as const).map((m) => (
+          <button
+            key={m}
+            role="radio"
+            aria-checked={searchMode === m}
+            className={`seg-btn ${searchMode === m ? 'on' : ''}`}
+            onClick={() => setSearchMode(m)}
+            data-testid={`search-${m}`}
+          >
+            {m === 'any' ? 'Anything' : m === 'makes' ? 'Makes it' : 'Uses it'}
+          </button>
+        ))}
+      </div>
       <div className="tile-grid" data-testid="tile-grid">
         {list.map((s) => (
           <button
@@ -184,7 +201,8 @@ function FlowsTab({ kind }: { kind: 'inputs' | 'outputs' }) {
         </label>
       )}
       <p className="hint">
-        Last 7 days. Click a resource to highlight who makes (green) and uses (amber) it.
+        Last 7 days. Click a row to highlight who makes (green) and uses (amber) it on the map, or its name for
+        where it comes from.
       </p>
       <ul className="res-list">
         {rows.map((r) => (
@@ -202,7 +220,24 @@ function FlowsTab({ kind }: { kind: 'inputs' | 'outputs' }) {
                       ! Short
                     </span>
                   ) : null}{' '}
-                  {r.resource}
+                  <span
+                    role="link"
+                    tabIndex={0}
+                    className="link"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      useGame.getState().openResource(r.resource);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.stopPropagation();
+                        useGame.getState().openResource(r.resource);
+                      }
+                    }}
+                    data-testid={`res-page-${r.resource}`}
+                  >
+                    {r.resource}
+                  </span>
                 </span>
                 {kind === 'inputs' ? (
                   <span className="res-num" title={r.share.explain.formula}>

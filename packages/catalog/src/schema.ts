@@ -170,6 +170,18 @@ export const ResourceSchema = z.object({
   directUseShare: z.number().min(0).max(1),
   /** Other resources that can meet a request for this one, in draw order, converted through `factorToNeed`. */
   satisfiedBy: z.array(z.string()),
+  /**
+   * Who an output of this resource reaches (G11). `shelter`: it only counts when the producer
+   * serves a shelter (is one, sits inside one with no footprint, or is within `deliveryRadiusFt`
+   * of one); otherwise it is potential only. `any`: everywhere.
+   */
+  deliversTo: z.enum(['shelter', 'any']),
+  deliveryRadiusFt: z.number().nonnegative(),
+  /** Market (G12): dollars per canonical unit when the market sells it (null: not sold). */
+  marketPrice: z.number().nonnegative().nullable(),
+  /** "$/<unit>", which must match the resource's own unit. */
+  marketUnit: z.string().nullable(),
+  marketAvailable: z.boolean(),
   provenance: z.record(z.string(), ProvenanceSourceSchema),
 });
 export type Resource = z.infer<typeof ResourceSchema>;
@@ -202,6 +214,16 @@ export const SystemSchema = z.object({
   spriteKey: z.string(),
   /** Map layer: `none` (no footprint), `ground` (large plantings others may sit on), `object`. */
   layer: z.enum(['none', 'ground', 'object']),
+  /** Its heat and cooling stay outdoors (a firepit): they never reach a shelter (G11). */
+  outdoor: z.boolean(),
+  /**
+   * Backstop (G12): instead of a fixed weekly output, it fills whatever the homestead doesn't,
+   * up to 3× its catalog output, at `backstopPrices` per unit, plus `backstopFee` a week whether used or not.
+   */
+  backstop: z.boolean(),
+  backstopFee: z.number().nonnegative(),
+  /** Dollars per unit for each output it sells. Outputs without a price are by-products. */
+  backstopPrices: z.record(z.string(), z.number().nonnegative()),
   provenance: z.record(z.string(), ProvenanceSourceSchema),
 });
 export type System = z.infer<typeof SystemSchema>;
@@ -283,6 +305,11 @@ export const OverridesSchema = z
           yearsToFullOutput: z.number().nonnegative().optional(),
           spriteKey: z.string().optional(),
           layer: z.enum(['none', 'ground', 'object']).optional(),
+          outdoor: z.boolean().optional(),
+          backstop: z.boolean().optional(),
+          backstopFee: z.number().nonnegative().optional(),
+          backstopPrices: z.record(z.string(), z.number().nonnegative()).optional(),
+          note: z.string().optional(),
         })
         .strict(),
     ),
@@ -295,6 +322,12 @@ export const OverridesSchema = z
           storable: z.boolean().optional(),
           directUseShare: z.number().min(0).max(1).optional(),
           satisfiedBy: z.array(z.string()).optional(),
+          deliversTo: z.enum(['shelter', 'any']).optional(),
+          deliveryRadiusFt: z.number().nonnegative().optional(),
+          marketPrice: z.number().nonnegative().optional(),
+          marketUnit: z.string().optional(),
+          marketAvailable: z.boolean().optional(),
+          note: z.string().optional(),
         })
         .strict(),
     ),

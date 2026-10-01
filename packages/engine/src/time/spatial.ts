@@ -14,6 +14,11 @@ export interface InstanceSpatial {
   gated: Record<string, boolean>;
   /** Assigned capacities: which provider serves this consumer, and what share of its need fits. */
   assigned: Record<string, { providerId: string | null; share: number; distanceFt: number | null }>;
+  /**
+   * Outputs that don't reach a shelter (G11: a stove far from any tent, a firepit): they are
+   * made but count as potential only, and nothing can use them.
+   */
+  undelivered: Record<string, true>;
   /** Plain language for "why" popovers. */
   notes: string[];
   /** Instances with the same signature behave identically (the engine groups them). */
@@ -25,6 +30,7 @@ const NONE: InstanceSpatial = Object.freeze({
   outMult: {},
   gated: {},
   assigned: {},
+  undelivered: {},
   notes: [],
   sig: '',
 }) as InstanceSpatial;
@@ -82,7 +88,8 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
   const work = new Map<string, InstanceSpatial>();
   const get = (id: string): InstanceSpatial => {
     let s = work.get(id);
-    if (!s) work.set(id, (s = { inMult: {}, outMult: {}, gated: {}, assigned: {}, notes: [], sig: '' }));
+    if (!s)
+      work.set(id, (s = { inMult: {}, outMult: {}, gated: {}, assigned: {}, undelivered: {}, notes: [], sig: '' }));
     return s;
   };
 
@@ -231,6 +238,39 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     }
   }
 
+  // Delivery (G11): heat and cooling only count when they reach a shelter.
+  const resByName = new Map(catalog.resources.map((r) => [r.name, r]));
+  const shelters = active.filter((i) =>
+    plans.bySystem.get(i.systemId)!.outputs.some((o) => o.resource === 'Shelter' && o.isCapacity),
+  );
+  for (const inst of state.instances) {
+    const sys = sysOf(inst);
+    const plan = plans.bySystem.get(sys.id)!;
+    const isShelter = plan.outputs.some((o) => o.resource === 'Shelter' && o.isCapacity);
+    for (const o of plan.outputs) {
+      const r = resByName.get(o.resource);
+      if (!r || r.deliversTo !== 'shelter') continue;
+      if (sys.outdoor) {
+        const s = get(inst.id);
+        s.undelivered[o.resource] = true;
+        s.notes.push(`Its ${o.resource.toLowerCase()} stays outdoors, so it doesn't warm or cool a shelter.`);
+        continue;
+      }
+      if (isShelter || sys.layer === 'none') continue; // part of a shelter, or carried inside one
+      const ih = halfOf(sys);
+      let best = Infinity;
+      for (const sh of shelters) best = Math.min(best, gapFt(sh.x, sh.y, halfOf(sysOf(sh)), inst.x, inst.y, ih));
+      if (best <= r.deliveryRadiusFt) continue;
+      const s = get(inst.id);
+      s.undelivered[o.resource] = true;
+      s.notes.push(
+        shelters.length
+          ? `Its ${o.resource.toLowerCase()} doesn't reach a shelter: the nearest is ${Math.round(best)} ft away (it must be within ${r.deliveryRadiusFt} ft).`
+          : `Its ${o.resource.toLowerCase()} has no shelter to reach.`,
+      );
+    }
+  }
+
   const map = new Map<string, InstanceSpatial>();
   for (const inst of state.instances) {
     const s = work.get(inst.id);
@@ -244,6 +284,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
       Object.entries(s.outMult).map(([k, v]) => [k, r(v)]),
       Object.entries(s.gated),
       Object.entries(s.assigned).map(([k, v]) => [k, r(v.share)]),
+      Object.keys(s.undelivered),
     ]);
     map.set(inst.id, s);
   }

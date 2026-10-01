@@ -1,6 +1,6 @@
 import { catalog, goldens, NEED_KEYS } from '@homestead/catalog';
 import { describe, expect, it } from 'vitest';
-import { balance, evalQty, getSystem, weeklyFactor } from '../src/index.ts';
+import { balancePotential, evalQty, getSystem, weeklyFactor } from '../src/index.ts';
 
 /** Relative tolerance with an absolute floor of 1e-9 near zero. */
 function expectClose(actual: number, expected: number, label: string) {
@@ -10,9 +10,9 @@ function expectClose(actual: number, expected: number, label: string) {
   );
 }
 
-const result = balance(catalog, catalog.assumptions, { counts: goldens.counts });
+const result = balancePotential(catalog, catalog.assumptions, { counts: goldens.counts });
 
-describe('balance mode reproduces the spreadsheet for the saved starter design', () => {
+describe('balancePotential mode reproduces the spreadsheet for the saved starter design', () => {
   it('evaluates every flow quantity and weekly equivalent like the sheet', () => {
     for (const flow of catalog.flows) {
       const g = goldens.flows[flow.id]!;
@@ -51,7 +51,7 @@ describe('balance mode reproduces the spreadsheet for the saved starter design',
     }
   });
 
-  it('matches every Resources balance row', () => {
+  it('matches every Resources balancePotential row', () => {
     for (const [name, g] of Object.entries(goldens.resources)) {
       const r = result.resources[name]!;
       expectClose(r.produced.value, g.produced, `${name} produced`);

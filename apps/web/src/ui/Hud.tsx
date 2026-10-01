@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { designBalance, displayDate, ENGINE_VERSION, hudMetrics } from '@homestead/engine';
-import { fmtMoney, fmtNum } from '../lib/format.ts';
+import { fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { useGame, type Speed } from '../store/game.ts';
 import { usePlan } from '../store/plan.ts';
 import { ScoreRing } from './ScoreRing.tsx';
@@ -86,9 +86,11 @@ export function Hud() {
       >
         <ScoreRing score={m.score} label="Off-grid score (average year)" />
         <span className="hud-sub">
-          Off-grid
+          Off-grid score
           <br />
-          score
+          <span className="hud-potential" data-testid="hud-potential">
+            {fmtPct(m.potentialScore.value)} if supplied
+          </span>
         </span>
       </button>
       <button
@@ -110,6 +112,14 @@ export function Hud() {
           data-testid="open-plan"
         >
           Plan
+        </button>
+        <button
+          className="btn ghost"
+          onClick={() => st.setPanel(panel === 'market' ? null : 'market')}
+          title="Market and weekly bills (M)"
+          data-testid="open-market"
+        >
+          Market
         </button>
         <button
           className="btn ghost"

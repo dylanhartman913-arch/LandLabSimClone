@@ -275,6 +275,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 0.1,
+      "marketUnit": "$/gal",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -286,7 +291,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -305,6 +315,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 1,
+      "marketUnit": "$/gal",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -316,7 +331,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -329,6 +349,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -338,7 +363,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -351,6 +381,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -360,7 +395,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -391,6 +431,11 @@
         "Nuts",
         "Food"
       ],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 0.0065,
+      "marketUnit": "$/kcal",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -402,7 +447,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -421,6 +471,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -432,7 +487,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -451,6 +511,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -462,7 +527,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -481,6 +551,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -492,7 +567,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -511,6 +591,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -522,7 +607,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -541,6 +631,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -552,7 +647,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -571,6 +671,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -582,7 +687,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -601,6 +711,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -612,7 +727,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -631,6 +751,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -642,7 +767,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -661,6 +791,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -672,7 +807,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -691,6 +831,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -702,7 +847,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -717,6 +867,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -728,7 +883,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -743,6 +903,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -754,7 +919,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -773,6 +943,11 @@
       "storable": true,
       "directUseShare": 0.5,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -784,7 +959,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -799,6 +979,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -810,7 +995,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -825,6 +1015,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -836,7 +1031,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -851,6 +1051,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "shelter",
+      "deliveryRadiusFt": 10,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -862,7 +1067,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -877,6 +1087,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "shelter",
+      "deliveryRadiusFt": 30,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -888,7 +1103,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -903,6 +1123,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -914,7 +1139,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -927,6 +1157,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -936,7 +1171,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -949,6 +1189,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -958,7 +1203,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -971,6 +1221,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -980,7 +1235,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -993,6 +1253,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1002,7 +1267,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1015,6 +1285,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1024,7 +1299,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1037,6 +1317,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1046,7 +1331,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1059,6 +1349,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1068,7 +1363,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1081,6 +1381,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1090,7 +1395,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1103,6 +1413,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1112,7 +1427,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1125,6 +1445,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1134,7 +1459,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1147,6 +1477,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1156,7 +1491,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1169,6 +1509,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1178,7 +1523,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1191,6 +1541,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1200,7 +1555,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1213,6 +1573,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 0.1,
+      "marketUnit": "$/lbs",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1222,7 +1587,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1235,6 +1605,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1244,7 +1619,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1257,6 +1637,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 0.3,
+      "marketUnit": "$/lbs",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1266,7 +1651,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1279,6 +1669,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 0.25,
+      "marketUnit": "$/lbs",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1288,7 +1683,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1301,6 +1701,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1310,7 +1715,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1323,6 +1733,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 0.15,
+      "marketUnit": "$/lbs",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1332,7 +1747,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1345,6 +1765,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 0.1,
+      "marketUnit": "$/lbs",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1354,7 +1779,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1367,6 +1797,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 0.2,
+      "marketUnit": "$/lbs",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1376,7 +1811,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1389,6 +1829,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1398,7 +1843,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1411,6 +1861,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1420,7 +1875,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1433,6 +1893,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1442,7 +1907,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1455,6 +1925,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1464,7 +1939,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1477,6 +1957,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1486,7 +1971,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1499,6 +1989,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1508,7 +2003,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1521,6 +2021,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 0.35,
+      "marketUnit": "$/lbs",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1530,7 +2035,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1543,6 +2053,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1552,7 +2067,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1565,6 +2085,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 3,
+      "marketUnit": "$/oz",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1574,7 +2099,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1587,6 +2117,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 4,
+      "marketUnit": "$/plants",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1596,7 +2131,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1609,6 +2149,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 1.5,
+      "marketUnit": "$/cu ft",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1618,7 +2163,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1631,6 +2181,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 3.5,
+      "marketUnit": "$/gal",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1640,7 +2195,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1653,6 +2213,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 3,
+      "marketUnit": "$/gal",
+      "marketAvailable": true,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1662,7 +2227,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1675,6 +2245,11 @@
       "storable": true,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1684,7 +2259,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1697,6 +2277,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1706,7 +2291,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1719,6 +2309,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1728,7 +2323,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1741,6 +2341,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1750,7 +2355,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     },
     {
@@ -1763,6 +2373,11 @@
       "storable": false,
       "directUseShare": 0,
       "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
         "unit": "xlsx",
@@ -1772,7 +2387,12 @@
         "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
-        "directUseShare": "default-rule"
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
       }
     }
   ],
@@ -1806,6 +2426,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S001",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -1827,7 +2451,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -1858,6 +2486,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S002",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -1879,7 +2511,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -1909,6 +2545,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S003",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -1929,7 +2569,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -1960,6 +2604,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S004",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -1981,7 +2629,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2012,6 +2664,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S005",
       "layer": "object",
+      "outdoor": true,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2033,7 +2689,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "override",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2064,6 +2724,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S006",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2087,7 +2751,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2119,6 +2787,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S007",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2141,7 +2813,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2174,6 +2850,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S008",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2197,7 +2877,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2229,6 +2913,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S009",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2251,7 +2939,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2284,6 +2976,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S010",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2307,7 +3003,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2337,6 +3037,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S011",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2358,7 +3062,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2387,6 +3095,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S012",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2408,7 +3120,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2439,6 +3155,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S013",
       "layer": "object",
+      "outdoor": true,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2460,7 +3180,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "override",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2488,6 +3212,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S014",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2508,7 +3236,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2538,6 +3270,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S015",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2558,7 +3294,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2589,6 +3329,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S016",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2610,7 +3354,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2641,6 +3389,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S017",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2662,7 +3414,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2692,6 +3448,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S018",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2712,7 +3472,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2742,6 +3506,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S019",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2762,7 +3530,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2792,6 +3564,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S020",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2812,7 +3588,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2841,6 +3621,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S021",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2862,7 +3646,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2892,6 +3680,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S022",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2912,7 +3704,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2942,6 +3738,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S023",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -2962,7 +3762,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -2995,6 +3799,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S024",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3018,7 +3826,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3051,6 +3863,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S025",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3072,7 +3888,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3102,6 +3922,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S026",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3122,7 +3946,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3150,6 +3978,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S027",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3170,7 +4002,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3200,6 +4036,12 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S028",
       "layer": "none",
+      "outdoor": false,
+      "backstop": true,
+      "backstopFee": 0,
+      "backstopPrices": {
+        "Food": 0.0065
+      },
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3220,7 +4062,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "override",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3250,6 +4096,15 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S029",
       "layer": "none",
+      "outdoor": false,
+      "backstop": true,
+      "backstopFee": 3,
+      "backstopPrices": {
+        "Electricity": 0.15,
+        "Heat": 0.000025,
+        "Cooking fuel": 0.3,
+        "Cooling": 0.000012
+      },
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3270,7 +4125,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "override",
+        "backstopFee": "override",
+        "backstopPrices": "override"
       }
     },
     {
@@ -3300,6 +4159,12 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S030",
       "layer": "none",
+      "outdoor": false,
+      "backstop": true,
+      "backstopFee": 0,
+      "backstopPrices": {
+        "Food": 0.0065
+      },
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3320,7 +4185,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "override",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3348,6 +4217,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S031",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3368,7 +4241,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3398,6 +4275,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S032",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3418,7 +4299,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3449,6 +4334,10 @@
       "yearsToFullOutput": 7,
       "spriteKey": "system:S033",
       "layer": "ground",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3470,7 +4359,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3499,6 +4392,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S034",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3520,7 +4417,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3553,6 +4454,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S035",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3574,7 +4479,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3605,6 +4514,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S036",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3626,7 +4539,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3658,6 +4575,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S037",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3679,7 +4600,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3708,6 +4633,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S038",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3728,7 +4657,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3759,6 +4692,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S039",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3780,7 +4717,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3812,6 +4753,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S040",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3835,7 +4780,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3866,6 +4815,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S041",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3887,7 +4840,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3917,6 +4874,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S042",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3937,7 +4898,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -3966,6 +4931,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S043",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -3987,7 +4956,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4018,6 +4991,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S044",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4039,7 +5016,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4069,6 +5050,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S045",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4090,7 +5075,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4119,6 +5108,10 @@
       "yearsToFullOutput": 5,
       "spriteKey": "system:S046",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4140,7 +5133,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4171,6 +5168,10 @@
       "yearsToFullOutput": 5,
       "spriteKey": "system:S047",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4192,7 +5193,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4222,6 +5227,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S048",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4243,7 +5252,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4274,6 +5287,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S049",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4295,7 +5312,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4325,6 +5346,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S050",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4345,7 +5370,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4375,6 +5404,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S051",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4395,7 +5428,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4424,6 +5461,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S052",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4444,7 +5485,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4475,6 +5520,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S053",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4496,7 +5545,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4527,6 +5580,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S054",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4548,7 +5605,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4581,6 +5642,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S055",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4604,7 +5669,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4637,6 +5706,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S056",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4660,7 +5733,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4689,6 +5766,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S057",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4710,7 +5791,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4739,6 +5824,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S058",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4760,7 +5849,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4792,6 +5885,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S059",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4813,7 +5910,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4848,6 +5949,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S060",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4869,7 +5974,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4900,6 +6009,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S061",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4920,7 +6033,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4949,6 +6066,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S062",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -4969,7 +6090,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -4998,6 +6123,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S063",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5018,7 +6147,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5048,6 +6181,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S064",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5068,7 +6205,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5099,6 +6240,10 @@
       "yearsToFullOutput": 5,
       "spriteKey": "system:S065",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5120,7 +6265,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5150,6 +6299,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S066",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5171,7 +6324,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5202,6 +6359,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S067",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5222,7 +6383,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5254,6 +6419,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S068",
       "layer": "object",
+      "outdoor": true,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5275,7 +6444,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "override",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5303,6 +6476,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S069",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5323,7 +6500,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5351,6 +6532,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S070",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5371,7 +6556,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5399,6 +6588,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S071",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5419,7 +6612,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5448,6 +6645,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S072",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5469,7 +6670,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5497,6 +6702,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S073",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5517,7 +6726,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5542,6 +6755,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S074",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5561,7 +6778,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5588,6 +6809,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S075",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5608,7 +6833,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5634,6 +6863,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S076",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5654,7 +6887,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5681,6 +6918,10 @@
       "yearsToFullOutput": 5,
       "spriteKey": "system:S077",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5701,7 +6942,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5728,6 +6973,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S078",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5748,7 +6997,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5773,6 +7026,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S079",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5792,7 +7049,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5820,6 +7081,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S080",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5842,7 +7107,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5870,6 +7139,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S081",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5892,7 +7165,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5920,6 +7197,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S082",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5942,7 +7223,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -5970,6 +7255,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S083",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -5992,7 +7281,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6020,6 +7313,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S084",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6042,7 +7339,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6070,6 +7371,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S085",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6092,7 +7397,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6120,6 +7429,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S086",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6142,7 +7455,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6171,6 +7488,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S087",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6193,7 +7514,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6221,6 +7546,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S088",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6243,7 +7572,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6272,6 +7605,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S089",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6294,7 +7631,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6321,6 +7662,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S090",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6342,7 +7687,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6370,6 +7719,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S091",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6392,7 +7745,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6419,6 +7776,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S092",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6439,7 +7800,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6465,6 +7830,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S093",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6485,7 +7854,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6512,6 +7885,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S094",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6532,7 +7909,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6558,6 +7939,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S095",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6577,7 +7962,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6602,6 +7991,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S096",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6621,7 +8014,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6647,6 +8044,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S097",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6667,7 +8068,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6692,6 +8097,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S098",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6711,7 +8120,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6738,6 +8151,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S099",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6758,7 +8175,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6785,6 +8206,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S100",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6805,7 +8230,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6833,6 +8262,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S101",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6853,7 +8286,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6880,6 +8317,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S102",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6899,7 +8340,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6925,6 +8370,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S103",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6945,7 +8394,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -6972,6 +8425,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S104",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -6992,7 +8449,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7021,6 +8482,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S105",
       "layer": "ground",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7043,7 +8508,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7070,6 +8539,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S106",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7090,7 +8563,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7119,6 +8596,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S107",
       "layer": "ground",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7141,7 +8622,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7167,6 +8652,13 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S108",
       "layer": "object",
+      "outdoor": false,
+      "backstop": true,
+      "backstopFee": 5,
+      "backstopPrices": {
+        "Water": 0.02,
+        "Drinking water": 0.02
+      },
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7186,7 +8678,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "override",
+        "backstopFee": "override",
+        "backstopPrices": "override"
       }
     },
     {
@@ -7211,6 +8707,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S109",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7230,7 +8730,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7256,6 +8760,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S110",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7276,7 +8784,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7303,6 +8815,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S111",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7323,7 +8839,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7351,6 +8871,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S112",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7371,7 +8895,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7397,6 +8925,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S113",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7416,7 +8948,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7441,6 +8977,16 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S114",
       "layer": "none",
+      "outdoor": false,
+      "backstop": true,
+      "backstopFee": 0,
+      "backstopPrices": {
+        "Chicken feed": 0.35,
+        "Hay": 0.15,
+        "Wood pellets": 0.3,
+        "Seeds": 3,
+        "Seedlings": 4
+      },
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7460,7 +9006,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "override",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7485,6 +9035,12 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S115",
       "layer": "none",
+      "outdoor": false,
+      "backstop": true,
+      "backstopFee": 0,
+      "backstopPrices": {
+        "Gasoline": 3.5
+      },
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7504,7 +9060,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "override",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7531,6 +9091,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S116",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7551,7 +9115,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7578,6 +9146,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S117",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7598,7 +9170,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7625,6 +9201,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S118",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7644,7 +9224,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7670,6 +9254,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S119",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7690,7 +9278,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7716,6 +9308,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S120",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7736,7 +9332,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7762,6 +9362,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S121",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7781,7 +9385,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7808,6 +9416,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S122",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7828,7 +9440,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7855,6 +9471,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S123",
       "layer": "ground",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7875,7 +9495,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7901,6 +9525,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S124",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7921,7 +9549,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7947,6 +9579,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S125",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -7967,7 +9603,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -7993,6 +9633,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S126",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8013,7 +9657,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8039,6 +9687,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S127",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8059,7 +9711,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8085,6 +9741,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S128",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8105,7 +9765,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8131,6 +9795,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S129",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8151,7 +9819,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8177,6 +9849,10 @@
       "yearsToFullOutput": 5,
       "spriteKey": "system:S130",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8197,7 +9873,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8223,6 +9903,10 @@
       "yearsToFullOutput": 5,
       "spriteKey": "system:S131",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8243,7 +9927,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8269,6 +9957,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S132",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8289,7 +9981,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8315,6 +10011,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S133",
       "layer": "ground",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8335,7 +10035,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8361,6 +10065,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S134",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8381,7 +10089,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8407,6 +10119,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S135",
       "layer": "ground",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8427,7 +10143,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8453,6 +10173,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S136",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8473,7 +10197,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8500,6 +10228,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S137",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8520,7 +10252,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8546,6 +10282,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S138",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8566,7 +10306,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8591,6 +10335,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S139",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8610,7 +10358,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8636,6 +10388,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S140",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8656,7 +10412,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8681,6 +10441,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S141",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8700,7 +10464,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8727,6 +10495,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S142",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8747,7 +10519,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8773,6 +10549,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S143",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8792,7 +10572,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8817,6 +10601,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S144",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8836,7 +10624,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8861,6 +10653,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S145",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8880,7 +10676,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8906,6 +10706,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S146",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8926,7 +10730,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8952,6 +10760,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S147",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -8972,7 +10784,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -8998,6 +10814,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S148",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9018,7 +10838,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9045,6 +10869,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S149",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9065,7 +10893,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9090,6 +10922,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S150",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9109,7 +10945,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9135,6 +10975,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S151",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9154,7 +10998,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9180,6 +11028,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S152",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9199,7 +11051,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9224,6 +11080,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S153",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9243,7 +11103,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9269,6 +11133,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S154",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9289,7 +11157,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9314,6 +11186,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S155",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9333,7 +11209,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9358,6 +11238,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S156",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9377,7 +11261,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9403,6 +11291,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S157",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9423,7 +11315,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9448,6 +11344,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S158",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9467,7 +11367,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9494,6 +11398,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S159",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9514,7 +11422,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9540,6 +11452,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S160",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9560,7 +11476,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9585,6 +11505,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S161",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9604,7 +11528,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9631,6 +11559,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S162",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9651,7 +11583,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9676,6 +11612,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S163",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9695,7 +11635,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9721,6 +11665,10 @@
       "yearsToFullOutput": 3,
       "spriteKey": "system:S164",
       "layer": "ground",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9741,7 +11689,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9766,6 +11718,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S165",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9785,7 +11741,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9810,6 +11770,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S166",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9829,7 +11793,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9854,6 +11822,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S167",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9873,7 +11845,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     },
     {
@@ -9899,6 +11875,10 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S168",
       "layer": "ground",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
       "provenance": {
         "id": "xlsx",
         "name": "xlsx",
@@ -9919,7 +11899,11 @@
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
-        "layer": "default-rule"
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
       }
     }
   ],

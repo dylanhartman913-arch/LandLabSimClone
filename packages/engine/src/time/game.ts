@@ -1,4 +1,4 @@
-import type { Catalog, Site } from '@homestead/catalog';
+import type { Catalog, Site, System } from '@homestead/catalog';
 import { getSystem } from '../catalog-index.ts';
 import { climateTable } from './climate.ts';
 import {
@@ -236,9 +236,10 @@ export function setPriority(state: GameState, instanceId: string, priority: numb
 }
 
 /**
- * Lay out a balance-mode design on the parcel (prebuilt), for tests, the CLI,
- * and starter kits. Places systems left-to-right, top-to-bottom in rows;
- * ground-layer systems are laid from the opposite corner.
+ * Lay a design out automatically (prebuilt by default): objects in rows from the north-west
+ * corner, ground plantings from the south-east, systems with no footprint at the centre. Heat
+ * and cooling producers that must reach a shelter (stoves, fans, shade trees) are placed beside
+ * the first shelter with room, so a count-only design is laid out sensibly (G11).
  */
 export function placeDesign(
   catalog: Catalog,
@@ -255,8 +256,32 @@ export function placeDesign(
   let gy = side;
   let gRowH = 0;
   const gap = 2;
+  const res = new Map(catalog.resources.map((r) => [r.name, r]));
+  const outputs = new Map<string, Set<string>>();
+  for (const f of catalog.flows) {
+    if (f.direction !== 'out') continue;
+    const set = outputs.get(f.systemId) ?? new Set<string>();
+    set.add(f.resource);
+    outputs.set(f.systemId, set);
+  }
+  const isShelter = (id: string) => outputs.get(id)?.has('Shelter') ?? false;
+  const attachRadius = (sys: System): number | null => {
+    if (sys.layer !== 'object' || sys.outdoor || isShelter(sys.id)) return null;
+    let r: number | null = null;
+    for (const o of outputs.get(sys.id) ?? []) {
+      const m = res.get(o);
+      if (m?.deliversTo === 'shelter') r = r === null ? m.deliveryRadiusFt : Math.min(r, m.deliveryRadiusFt);
+    }
+    return r;
+  };
+  const attach: System[] = [];
+  const shelters: { x: number; y: number; half: number }[] = [];
   for (const sys of catalog.systems) {
     const n = counts[sys.id] ?? 0;
+    if (n > 0 && attachRadius(sys) !== null) {
+      for (let k = 0; k < n; k++) attach.push(sys);
+      continue;
+    }
     for (let k = 0; k < n; k++) {
       const w = footprintSideFt(sys.footprintSqft);
       let x: number;
@@ -286,7 +311,48 @@ export function placeDesign(
         rowH = Math.max(rowH, w);
       }
       s = placeSystem(catalog, s, sys.id, x, y, buildMode).state;
+      if (isShelter(sys.id)) shelters.push({ x, y, half: w / 2 });
     }
+  }
+  // Stoves, fans, and shade go beside a shelter, ring by ring outward.
+  for (const sys of attach) {
+    const w = footprintSideFt(sys.footprintSqft);
+    const radius = attachRadius(sys)!;
+    let spot: { x: number; y: number } | null = null;
+    for (const sh of shelters) {
+      for (let ring = 1; ring <= radius + w && !spot; ring += 2) {
+        const d = sh.half + w / 2 + ring;
+        const steps = Math.max(8, Math.ceil((8 * d) / Math.max(1, w)));
+        for (let k = 0; k < steps && !spot; k++) {
+          // Walk the square ring around the shelter.
+          const t = (k / steps) * 8;
+          const seg = Math.floor(t);
+          const f = t - seg;
+          const pts: [number, number][] = [
+            [-d + 2 * d * f, -d],
+            [d, -d + 2 * d * f],
+            [d - 2 * d * f, d],
+            [-d, d - 2 * d * f],
+          ];
+          const [ox, oy] = pts[Math.floor(seg / 2)]!;
+          const x = sh.x + ox;
+          const y = sh.y + oy;
+          if (canPlace(catalog, s, sys.id, x, y).ok) spot = { x, y };
+        }
+      }
+      if (spot) break;
+    }
+    if (!spot) {
+      if (cx + w > side) {
+        cx = 0;
+        cy += rowH + gap;
+        rowH = 0;
+      }
+      spot = { x: cx + w / 2, y: cy + w / 2 };
+      cx += w + gap;
+      rowH = Math.max(rowH, w);
+    }
+    s = placeSystem(catalog, s, sys.id, spot.x, spot.y, buildMode).state;
   }
   return s;
 }
@@ -362,4 +428,42 @@ export function setLink(
       return { ...i, links };
     }),
   };
+}
+
+// --- Market (G12) -------------------------------------------------------------
+
+function marketOf(state: GameState): NonNullable<GameState['market']> {
+  return state.market ?? { orders: [], standing: [] };
+}
+
+function assertSold(catalog: Catalog, resource: string): void {
+  const r = catalog.resources.find((x) => x.name === resource);
+  if (!r) throw new Error(`Unknown resource ${resource}`);
+  if (r.marketPrice === null || !r.marketAvailable) throw new Error(`The market doesn't sell ${resource}`);
+}
+
+/** Order something for the next market trip (tomorrow morning). */
+export function buyAtMarket(catalog: Catalog, state: GameState, resource: string, amount: number): GameState {
+  assertSold(catalog, resource);
+  if (!(amount > 0)) throw new Error('Buy a positive amount');
+  const m = marketOf(state);
+  return { ...state, market: { ...m, orders: [...m.orders, { resource, amount }] } };
+}
+
+/**
+ * Keep a stock topped up: whenever it falls below `keepAbove`, the next trip buys up to
+ * `orderUpTo` (default 1.5 × keepAbove). `keepAbove` 0 removes the standing order.
+ */
+export function setStandingOrder(
+  catalog: Catalog,
+  state: GameState,
+  resource: string,
+  keepAbove: number,
+  orderUpTo = keepAbove * 1.5,
+): GameState {
+  assertSold(catalog, resource);
+  const m = marketOf(state);
+  const standing = m.standing.filter((s) => s.resource !== resource);
+  if (keepAbove > 0) standing.push({ resource, keepAbove, orderUpTo: Math.max(orderUpTo, keepAbove) });
+  return { ...state, market: { ...m, standing } };
 }
