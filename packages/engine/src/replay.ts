@@ -1,4 +1,5 @@
-import { getSite, type Catalog } from '@homestead/catalog';
+import { getSite, getStart, type Catalog, type Difficulty } from '@homestead/catalog';
+import { gameFromStart } from './time/start.ts';
 import { digest } from './digest.ts';
 import {
   buyAtMarket,
@@ -21,6 +22,8 @@ export interface GameInit {
   siteId: string;
   seed: number;
   settings: Partial<GameSettings>;
+  /** Began from a start config (G15): its id, difficulty, and household. `settings` are applied on top. */
+  start?: { id: string; difficulty: Difficulty; household: number };
 }
 
 /**
@@ -84,6 +87,14 @@ export function applyAction(catalog: Catalog, s: GameState, a: Action): GameStat
 }
 
 export function startGame(catalog: Catalog, init: GameInit): GameState {
+  if (init.start) {
+    const g = gameFromStart(catalog, getSite(init.siteId), getStart(init.start.id), {
+      difficulty: init.start.difficulty,
+      household: init.start.household,
+      seed: init.seed,
+    });
+    return Object.keys(init.settings).length ? { ...g, settings: { ...g.settings, ...init.settings } } : g;
+  }
   return initGame(catalog, getSite(init.siteId), init.settings, init.seed);
 }
 

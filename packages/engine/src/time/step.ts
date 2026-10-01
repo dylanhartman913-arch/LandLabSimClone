@@ -4,17 +4,9 @@ import { climateTable, type ClimateTable, type DayWeather } from './climate.ts';
 import {
   COLD_STORAGE_SPOIL_CUT,
   EPS,
-  HARDSHIP_DAYS,
-  HARDSHIP_REPEAT_DAYS,
-  HARDSHIP_THRESHOLD,
-  HEALTH_FLOOR,
-  HEALTH_WEIGHTS,
   LEDGER_DAYS_KEPT,
-  PERSON_NEEDS,
-  ROLLING_DAYS,
-  type PersonNeed,
 } from './constants.ts';
-import { dailyAmount, getPlans, type FlowPlan, type Plans, type SystemPlan } from './plans.ts';
+import { BACKSTOP_CAP_MULT, dailyAmount, getPlans, type FlowPlan, type Plans, type SystemPlan } from './plans.ts';
 import { drawYearWeather, weatherFor, type YearWeather } from './weather.ts';
 import {
   BOIL_GAL_PER_FUEL_HOUR,
@@ -34,6 +26,16 @@ import {
   type JobId,
 } from './gather.ts';
 import { computeSpatial, groupKeyOf, type InstanceSpatial } from './spatial.ts';
+import {
+  COOL_CDD_MIN,
+  HEAT_BEDDING_HDD,
+  HEAT_HDD_MIN,
+  WB_AWAY_MIN_DAYS,
+  WB_RETURN_AT,
+  laborShare,
+  updateWellbeing,
+  type PersonDay,
+} from './wellbeing.ts';
 import type {
   DayLedger,
   GameEvent,
@@ -131,6 +133,7 @@ interface Day {
   lastDay: GameState['lastDay'];
   cashIn: number;
   healthSum: number;
+  wellbeingSum: number;
   people: number;
   spoiledToday: Record<string, number>;
   spend: DaySpend;
@@ -205,7 +208,7 @@ function groupInstances(d: Day, spatial: Map<string, InstanceSpatial>): void {
   const byKey = new Map<string, Group>();
   for (let i = 0; i < d.instances.length; i++) {
     const inst = d.instances[i]!;
-    if (inst.status !== 'active') continue;
+    if (inst.status !== 'active' || inst.person?.away) continue;
     const sp = spatial.get(inst.id)!;
     const key = groupKeyOf(inst, sp);
     let g = byKey.get(key);
@@ -700,7 +703,8 @@ function dispatchBackstops(d: Day): void {
         break;
       }
       const price = g.plan.backstop!.prices[resource]!;
-      const cap = ((g.plan.backstop!.capWeekly[resource] ?? 0) / 7) * g.w * (own.get(g) ?? 1);
+      const capMult = (d.prev.settings.backstopCapMult ?? BACKSTOP_CAP_MULT) / BACKSTOP_CAP_MULT;
+      const cap = ((g.plan.backstop!.capWeekly[resource] ?? 0) / 7) * g.w * (own.get(g) ?? 1) * capMult;
       const affordable = price > 0 ? d.cash / price : Infinity;
       const amount = Math.min(unmet - delivered, cap, affordable);
       if (amount <= EPS) continue;
@@ -953,57 +957,86 @@ function produce(d: Day): void {
   }
 }
 
-/** Step 7: people's 7-day needs, health, and hardship. */
+/** Step 7: people's wellbeing (G15 wellbeing v2), hardship, and going to town and back. */
 function updatePeople(d: Day): void {
+  const share = (n: NeedDay) => (n.needed > EPS ? Math.min(1, n.delivered / n.needed) : 1);
+  const hdd = d.weather.hdd;
   const heatNeed = d.needs['Heated shelter'];
-  const heatFrac = heatNeed.needed > EPS ? Math.min(1, heatNeed.delivered / heatNeed.needed) : 1;
+  const beyondBedding = hdd > EPS ? Math.max(0, hdd - HEAT_BEDDING_HDD) / hdd : 0;
+  const heatFrac =
+    hdd > HEAT_HDD_MIN
+      ? heatNeed.needed * beyondBedding > EPS
+        ? Math.min(1, heatNeed.delivered / (heatNeed.needed * beyondBedding))
+        : 1
+      : null;
+  const coolFrac = d.weather.cdd > COOL_CDD_MIN ? share(d.needs['Cooled shelter']) : null;
+  const mult = d.prev.settings.wellbeingMult ?? 1;
+  let present = 0;
+  for (const g of d.groups) if (g.plan.isHuman) present += g.w;
+  const servicePoints = present > EPS ? ((d.services['Wellbeing'] ?? 0) * 7) / present : 0;
+  let anyShort = false;
   for (const g of d.groups) {
     if (!g.plan.isHuman) continue;
-    const frac = (r: string) => {
+    const frac = (r: string): number | null => {
       const x = g.inputs[r];
-      return x && x.requested > EPS ? Math.min(1, x.received / x.requested) : 1;
+      return x && x.requested > EPS ? Math.min(1, x.received / x.requested) : x ? 1 : null;
     };
-    const today: Record<PersonNeed, number> = {
-      food: frac('Food'),
-      drinkingWater: frac('Drinking water'),
-      heat: heatFrac,
-      shelter: frac('Shelter'),
+    const today: PersonDay = {
+      survival: {
+        drinkingWater: frac('Drinking water'),
+        food: frac('Food'),
+        shelter: frac('Shelter'),
+        heat: heatFrac,
+        sanitation: frac('Sanitation'),
+      },
+      comfort: {
+        electricity: frac('Electricity'),
+        cooling: coolFrac,
+        transportation: frac('Transportation'),
+        hotWater: frac('Hot water'),
+        cookingFuel: frac('Cooking fuel'),
+      },
+      servicePoints,
+      mult,
     };
     for (const i of g.members) {
       const old = d.instances[i]!.person;
       if (!old) continue;
       const inst = touch(d, i);
-      const person = { ...old, recent: { ...old.recent }, lowStreak: { ...old.lowStreak } };
-      let penalty = 0;
-      for (const k of PERSON_NEEDS) {
-        const list =
-          person.recent[k].length >= ROLLING_DAYS ? person.recent[k].slice(1) : person.recent[k].slice();
-        list.push(today[k]);
-        person.recent[k] = list;
-        let sum = 0;
-        for (let j = 0; j < list.length; j++) sum += list[j]!;
-        penalty += HEALTH_WEIGHTS[k] * (1 - sum / list.length);
-        const streak = today[k] < HARDSHIP_THRESHOLD ? person.lowStreak[k] + 1 : 0;
-        person.lowStreak[k] = streak;
-        if (streak >= HARDSHIP_DAYS && (streak - HARDSHIP_DAYS) % HARDSHIP_REPEAT_DAYS === 0) {
-          d.events.push({
-            kind: 'hardship',
-            absDay: d.absDay,
-            instanceId: inst.id,
-            need: k,
-            level: today[k],
-          });
-        }
+      const u = updateWellbeing(old, today);
+      for (const h of u.hardships) {
+        d.events.push({ kind: 'hardship', absDay: d.absDay, instanceId: inst.id, need: h.need, level: h.level });
       }
-      const before = person.health;
-      person.health = Math.max(HEALTH_FLOOR, 1 - penalty);
-      if (person.health < before && Math.floor(before * 10) !== Math.floor(person.health * 10)) {
-        d.events.push({ kind: 'health', absDay: d.absDay, instanceId: inst.id, health: person.health });
+      if (u.person.wellbeing < old.wellbeing && Math.floor(old.wellbeing / 10) !== Math.floor(u.person.wellbeing / 10)) {
+        d.events.push({ kind: 'health', absDay: d.absDay, instanceId: inst.id, health: u.person.health, wellbeing: u.person.wellbeing });
       }
-      inst.person = person;
-      d.healthSum += person.health;
+      if (u.wentToTown && d.prev.settings.peopleLeave) {
+        u.person.away = { since: d.absDay };
+        d.events.push({ kind: 'went-to-town', absDay: d.absDay, instanceId: inst.id });
+      }
+      if (u.hardships.length || Object.values(u.person.short).some((v) => v > 0)) anyShort = true;
+      inst.person = u.person;
+      d.healthSum += u.person.health;
+      d.wellbeingSum += u.person.wellbeing;
       d.people++;
     }
+  }
+  // Someone in town comes home once home could keep them: a shelter, a week of food, and
+  // three days of drinking water on hand, and nobody at home going short today.
+  for (let i = 0; i < d.instances.length; i++) {
+    const p = d.instances[i]!.person;
+    if (!p?.away || d.absDay - p.away.since < WB_AWAY_MIN_DAYS || anyShort) continue;
+    const plan = d.plans.bySystem.get(d.instances[i]!.systemId)!;
+    const need = (r: string) =>
+      plan.inputs.filter((f) => f.resource === r).reduce((a, f) => a + dailyAmount(f, d.day, d.weather, d.table), 0);
+    const shelter = d.instances.some((x) => x.status === 'active' && d.shelterIds.has(x.systemId));
+    const food = (d.stocks['Food'] ?? 0) >= 7 * need('Food');
+    const water = (d.stocks['Drinking water'] ?? 0) >= 3 * need('Drinking water');
+    if (!shelter || !food || !water) continue;
+    const inst = touch(d, i);
+    const { away: _gone, ...rest } = p;
+    inst.person = { ...rest, wellbeing: WB_RETURN_AT, health: laborShare(WB_RETURN_AT), why: [] };
+    d.events.push({ kind: 'came-home', absDay: d.absDay, instanceId: inst.id });
   }
 }
 
@@ -1177,6 +1210,8 @@ function buildLedger(d: Day): DayLedger {
     hardships: d.events.filter((e) => e.kind === 'hardship').length,
     spend: d.spend,
     health: d.people ? d.healthSum / d.people : 1,
+    wellbeing: d.people ? d.wellbeingSum / d.people : null,
+    away: d.instances.filter((i) => i.person?.away).length,
   };
 }
 
@@ -1247,6 +1282,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     lastDay: {},
     cashIn: 0,
     healthSum: 0,
+    wellbeingSum: 0,
     people: 0,
     spoiledToday: {},
     spend: { backstop: {}, market: {}, fees: 0, delivery: 0 },

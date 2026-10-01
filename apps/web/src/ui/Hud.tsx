@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { designBalance, displayDate, ENGINE_VERSION, hudMetrics } from '@homestead/engine';
+import { designBalance, displayDate, ENGINE_VERSION, hudMetrics, weeklyBills } from '@homestead/engine';
 import { fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { useGame, type Speed } from '../store/game.ts';
 import { usePlan } from '../store/plan.ts';
@@ -30,6 +30,7 @@ export function Hud() {
   const zoomToFit = useGame((s) => s.zoomToFit);
   const bal = useMemo(() => designBalance(game, catalog), [game.instances, game.site, catalog]); // eslint-disable-line react-hooks/exhaustive-deps
   const m = hudMetrics(game, catalog, bal);
+  const bills = useMemo(() => (m.headline === 'self-reliance' ? weeklyBills(game) : null), [game.ledgers, m.headline]); // eslint-disable-line react-hooks/exhaustive-deps
   const wk = weatherKind(m.weather, m.season);
   return (
     <header className="hud" data-testid="hud">
@@ -78,8 +79,31 @@ export function Hud() {
           </div>
         </div>
       </div>
+      {bills && (
+        <>
+          <div className="hud-group hud-headline" data-testid="hud-self-reliance">
+            <div>
+              <div className="hud-sub">Self-reliance</div>
+              <div className="hud-strong big">
+                <WhyNum value={m.selfReliance} title="Self-reliance" format={fmtPct} />
+              </div>
+            </div>
+          </div>
+          <button
+            className="hud-group hud-headline"
+            onClick={() => st.setPanel(panel === 'market' ? null : 'market')}
+            title="Weekly bills (M)"
+            data-testid="hud-bills"
+          >
+            <div>
+              <div className="hud-sub">Weekly bills</div>
+              <div className="hud-strong big">{fmtMoney(bills.thisWeek.value)}</div>
+            </div>
+          </button>
+        </>
+      )}
       <button
-        className="hud-group hud-score"
+        className={`hud-group hud-score ${bills ? 'secondary' : ''}`}
         onClick={() => useGame.getState().setChecklist(true)}
         title="Open the needs checklist (N)"
         data-testid="open-checklist"

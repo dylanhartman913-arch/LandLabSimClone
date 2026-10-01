@@ -152,7 +152,7 @@ describe('time mode agrees with balance mode (potential)', () => {
     expect(limited('Composting Outhouse')).toBe('Carbon'); // Sanitation: no cover material
     expect(limited('Cargo Bike')).toBe('Food'); // Transportation: the rider’s calories go to the household first
     expect(limited('Poplar Tree')).toBe('Water'); // Cooled shelter: shade trees need summer water
-    expect(t.averageHealth).toBeLessThan(0.5); // Labor provided falls with health
+    expect(t.averageHealth).toBeLessThan(0.6); // Labor provided falls with wellbeing (0.5 at wellbeing 0)
     // Electricity production matches; only delivery is storage-limited.
     const e = t.checklist.find((r) => r.need === 'Electricity')!;
     expect(rel(e.provided, 14)).toBeLessThan(ROWS_WITHIN);

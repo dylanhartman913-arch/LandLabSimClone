@@ -235,3 +235,41 @@ Each site has its own mix:
 - Laramie: one small deadfall, a weak spring, and rain pools.
 
 Node yields are **tunable data** (G16's tuning loop may change them; record each change in `docs/BALANCE_LOG.md`).
+
+## Adding systems with `scripts/catalog_patch.py` (G15)
+
+New systems are added as **rows in the workbook** (CLAUDE.md rule 8), never only in JSON:
+
+```
+pip install openpyxl            # and LibreOffice Calc (`soffice`) on PATH
+python3 scripts/catalog_patch.py data/catalog_patches/g15.json
+npm run catalog:export
+```
+
+The patch file lists systems with their sheet columns and flows. Quantities are numbers, or `{"formula": "rain" | "rainCapture" | "catchArea" | "sun"}` for the sheet's own climate formulas. The script:
+1. appends Systems, Flows, and Matrix rows, copying the sheet's formulas into the computed columns;
+2. extends every `Systems!$X$2:$X$<last>` range so totals include the new rows;
+3. recalculates in headless LibreOffice, because the exporter reads cached values;
+4. writes `docs/catalog_patches/<patch>-diff.md`.
+
+The diff summary proves the patch added rows only:
+- **typed values changed: 0**;
+- formula text changed only by range extension;
+- computed values changed only in catalog-wide counts (systems per category, producers per resource).
+
+A patch is idempotent: systems already present by name are skipped. Review the diff summary, and open the workbook in Excel, before merging.
+
+**G15 additions (S169–S176)**
+
+| System | Key flows | Notes |
+|---|---|---|
+| Rain Barrel (55 gal) | rainfall on its own 100 sq ft catchment → Water; Water storage 55 | needs no Roofing area, so a tent camp can use it |
+| Pellet Mill (small) | Wood chips 120 + Electricity 15 → Wood pellets 100 / week | |
+| Part-Time Job (20 hrs) | Labor 20 + Transportation 75 → Capital 575 / week | |
+| Remote Job (40 hrs) | Labor 40 → Capital 1,000 / week | |
+| Sheet-Mulch Lawn Conversion (500 sq ft) | Carbon 100 + Compost 200 (one-time) → Soil 40 per season | |
+| Home Weatherization Retrofit | Labor 0.05 / week; modifier: host shelter Heat × 0.7 | place it on the house |
+| Suburban Lot (1/4 acre) | Land area 10,890 | |
+| Clothesline | Labor 0.5 → Wellbeing 2 / week; modifier: people's Electricity × 20/21 | |
+
+**Modifiers** (`systems.<id>.modifies` in `data/catalog_overrides.json`): `{ to, resource, direction, multiplier, scope: "host" | "parcel", note }`. They are exported as adjacency rules; see ENGINE.md, "Modifiers".

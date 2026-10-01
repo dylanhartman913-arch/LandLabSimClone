@@ -8,12 +8,12 @@ import {
   DEFAULT_PARCEL_ACRES,
   DEFAULT_STARTING_CASH,
   DIY_SETUP_FRACTION,
-  PERSON_NEEDS,
   REFUND_BUILDING,
   REFUND_BUILT,
   SQFT_PER_ACRE,
 } from './constants.ts';
 import { seedState } from './rng.ts';
+import { newWellbeing } from './wellbeing.ts';
 import type { BuildMode, GameSettings, GameState, Instance, PersonState } from './types.ts';
 
 export function defaultSettings(overrides: Partial<GameSettings> = {}): GameSettings {
@@ -126,13 +126,7 @@ export function canPlace(
 }
 
 function newPerson(): PersonState {
-  const recent = {} as PersonState['recent'];
-  const lowStreak = {} as PersonState['lowStreak'];
-  for (const k of PERSON_NEEDS) {
-    recent[k] = [];
-    lowStreak[k] = 0;
-  }
-  return { recent, health: 1, lowStreak };
+  return newWellbeing();
 }
 
 export function costFor(catalog: Catalog, systemId: string, mode: BuildMode): number {

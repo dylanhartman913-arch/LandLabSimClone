@@ -23,6 +23,7 @@ import { HintCard, QuestCard } from './ui/Quests.tsx';
 import { Reports } from './ui/Reports.tsx';
 import { Saves } from './ui/Saves.tsx';
 import { Settings } from './ui/Settings.tsx';
+import { PeopleBar, StockpileBar } from './ui/PeopleBar.tsx';
 import { Hud } from './ui/Hud.tsx';
 import { StatusBar } from './ui/StatusBar.tsx';
 import { SystemCard } from './ui/SystemCard.tsx';
@@ -70,6 +71,12 @@ export function App() {
     >
       <EB name="The top bar" inline>
         <Hud />
+      </EB>
+      <EB name="People and stockpile" inline>
+        <div className="subbar" data-testid="subbar">
+          <PeopleBar />
+          <StockpileBar />
+        </div>
       </EB>
       <div className="main">
         <EB name="The drawer" inline>

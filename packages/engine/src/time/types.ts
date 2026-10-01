@@ -1,5 +1,5 @@
 import type { NeedKey, Site } from '@homestead/catalog';
-import type { PersonNeed } from './constants.ts';
+import type { SurvivalNeed, WellbeingTerm } from './wellbeing.ts';
 import type { DayWeather } from './climate.ts';
 import type { YearWeather } from './weather.ts';
 import type { JobId } from './gather.ts';
@@ -29,14 +29,30 @@ export interface GameSettings {
    * N weeks, by gathering from the land's natural nodes. Absent or 0: off.
    */
   autoGather?: { waterDays?: number; woodWeeks?: number; foodWeeks?: number };
+  /** Difficulty (G15): multiplier on wellbeing penalties (Gentle 0.5, Standard 1). Default 1. */
+  wellbeingMult?: number;
+  /**
+   * People at 0 wellbeing go to stay in town (G15). On in the two game starts; off by default so
+   * design analysis (validation, Monte Carlo, scenarios) keeps a fixed household at 0 wellbeing.
+   */
+  peopleLeave?: boolean;
+  /** Backstops fill unmet needs up to this × their catalog output a week (default 3, G12). */
+  backstopCapMult?: number;
 }
 
 export interface PersonState {
-  /** Last ROLLING_DAYS fractions met per need, oldest first. */
-  recent: Record<PersonNeed, number[]>;
+  /** Wellbeing 0–100 (G15). */
+  wellbeing: number;
+  /** Labor share: 0.5 + 0.5 × wellbeing / 100. */
   health: number;
-  /** Consecutive days below the hardship threshold, per need. */
-  lowStreak: Record<PersonNeed, number>;
+  /** Consecutive days each survival need has been short (the grace counter). */
+  short: Record<SurvivalNeed, number>;
+  /** Consecutive days food has been severely short (under 20%). */
+  severeFood: number;
+  /** Today's change in wellbeing, term by term, biggest first. */
+  why: WellbeingTerm[];
+  /** Gone to stay in town (wellbeing hit 0): consumes and makes nothing until they come back. */
+  away?: { since: number };
 }
 
 export interface InstanceInputRecord {
@@ -154,8 +170,12 @@ export interface DayLedger {
   hardships: number;
   /** Money spent today on backstops, the market, connection fees, and delivery (G12). Included in cash.out. */
   spend: DaySpend;
-  /** Average household health today. */
+  /** Average labor share of the people at home today (0.5 + 0.5 × wellbeing / 100). */
   health: number;
+  /** Average wellbeing (0–100) of the people at home today; null when nobody is home (G15). */
+  wellbeing: number | null;
+  /** People staying in town today (G15). */
+  away: number;
 }
 
 export interface DaySpend {
@@ -224,6 +244,8 @@ export interface GameState {
   nodeStock?: Record<string, number>;
   /** The market (G12): one-off orders for the next trip, and standing orders. Absent until used. */
   market?: { orders: MarketOrder[]; standing: StandingOrder[] };
+  /** The start this game began from (G15), if any. */
+  start?: { id: string; difficulty: string; household: number; headline: 'self-reliance' | 'off-grid'; tutorial: string | null };
   /** Real weather only: this year's draws, and every year's draws so far (kept in saves). */
   yearWeather?: YearWeather;
   weatherLog?: YearWeather[];
@@ -244,7 +266,9 @@ export type GameEvent =
   | { kind: 'harvest'; absDay: number; systemId: string; resource: string; instanceIds: string[] }
   | { kind: 'built'; absDay: number; instanceId: string; systemId: string }
   | { kind: 'imported'; absDay: number; instanceId: string; resource: string; amount: number }
-  | { kind: 'hardship'; absDay: number; instanceId: string; need: PersonNeed; level: number }
-  | { kind: 'health'; absDay: number; instanceId: string; health: number }
+  | { kind: 'hardship'; absDay: number; instanceId: string; need: SurvivalNeed; level: number }
+  | { kind: 'health'; absDay: number; instanceId: string; health: number; wellbeing: number }
+  | { kind: 'went-to-town'; absDay: number; instanceId: string }
+  | { kind: 'came-home'; absDay: number; instanceId: string }
   | { kind: 'purchases-stopped'; absDay: number; cash: number }
   | { kind: 'market'; absDay: number; bought: Record<string, number>; cost: number; trip: 'own transport' | 'delivery' };

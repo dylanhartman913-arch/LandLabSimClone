@@ -33,12 +33,13 @@ test('a fan with no power cools nobody: actual 0, potential shown, and the check
   await expect(page.getByTestId('blocked-Cooled shelter')).toContainText('blocked: no Electricity');
   await expect(page.getByTestId('potential-score')).toBeVisible();
   await shot(page, 'g11', '01-blocked-drilldown');
-  // "Find a source" takes you to systems that make the missing input.
+  // "Find a source" opens the missing input's page (G13): systems that make it, and where to buy it.
   await page.getByTestId('blocked-Cooled shelter').getByTestId('find-Electricity').click();
   await expect(page.getByTestId('checklist')).toHaveCount(0);
-  await expect(page.getByTestId('system-search')).toHaveValue('Electricity');
+  const res = page.getByTestId('resource-page');
+  await expect(res).toContainText('Electricity');
   const panel = await idOf(page, '500W Photovoltaic Panels');
-  await expect(page.getByTestId(`tile-${panel}`)).toBeVisible();
+  await expect(res.getByTestId(`build-option-${panel}`)).toBeVisible();
 });
 
 test('blocked and partial systems wear a status bubble on the map; B hides them', async ({ page }) => {

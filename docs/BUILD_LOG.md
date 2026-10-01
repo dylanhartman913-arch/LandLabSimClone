@@ -732,3 +732,58 @@ e2e `gather.spec.ts` (1): work priorities, auto-gather on, a season passes, depl
 - There is no "market trip" job: G12's daily trip costs transport, not labor. Each system's upkeep is one "Look after systems" job rather than one job per system, to keep the panel short.
 - Gathered food is Vegetables fruit fiber herbs, which counts toward Food through the existing factor.
 - Rain pools fill at 150 gal per inch of rain on a 200 gal cap and evaporate 25% a day.
+
+## G15 — Two ways to start (2026-10-01)
+
+**Shipped**
+- **Start screen.** Two cards, "Adapt your home" and "Start from the ground up". Each previews its kit, stockpile, cash, and land. Below them: site, household (adults), and difficulty (Gentle, Standard, Real weather). The old form is still there as "Custom game…".
+- **Start configs as data:** `data/starts/adapt.json` and `greenfield.json`, validated by `StartSchema`, built by `gameFromStart`, and replayable (`init.start`).
+  - Adapt: every row is 100% on day 1, and self-reliance and weekly bills lead the HUD.
+  - Greenfield: the full starter kit, with auto-gather on.
+- **Wellbeing v2** (`time/wellbeing.ts`, ENGINE.md "Wellbeing v2"):
+  - grace periods and drift;
+  - recovery, with no day costing more than 8 points;
+  - labor = 0.5 + 0.5 × wellbeing;
+  - going to town and coming back;
+  - each person's terms kept as `why`.
+- **People bar and stockpile bar** under the HUD.
+  - Each person has a wellbeing bar, the top reason it is moving, and a "why" that lists every term.
+  - Days of food, drinking water, firewood, and battery, each with a trend arrow and red under 3 days. Every number has a "why".
+- **Catalog additions as xlsx rows**, via the new `scripts/catalog_patch.py` (8 systems, 21 flows).
+  - The diff summary is `docs/catalog_patches/g15-diff.md`: 0 existing typed values changed.
+  - The exported catalog and goldens are purely additive: all 168 old systems and 797 old flows are identical, and only the source hash changed.
+- **`modifies` overrides** (host and parcel scope) for the weatherization retrofit (house heat × 0.7) and the clothesline (people's electricity × 20/21).
+- The G13 pellet walk now works end to end: pellet stove → Wood pellets → the market and the Pellet Mill → its Wood chips → a planned branch.
+
+**Tests:** 211 unit, of which 21 are new in `starts.test.ts`:
+- the adapt and greenfield pacing gates on 3 sites;
+- Gentle;
+- spring start days and household scaling;
+- going to town and coming home;
+- grace, drift, and recovery;
+- the retrofit, the clothesline, and the rain barrel.
+
+e2e `starts.spec.ts` (3): the greenfield start with the stockpile and wellbeing "why"; adapt with the HUD headline and every row covered after two weeks; the pellet walk. Four older specs were updated:
+- the wizard tests go through "Custom game…";
+- the truthful "find a source" test now expects the resource page (G13);
+- the drawer's makes/uses toggle moved above the search box, with a roving tabindex, so Tab from search reaches the first tile again (keyboard spec).
+
+Screenshots are in `docs/screenshots/g15/`.
+
+**Digests:** the time digests were re-recorded, because wellbeing replaced health and labor now follows it (0.5–1 instead of 0.3–1). Balance digests and goldens are unchanged.
+
+**Decisions not in the roadmap** (see `docs/BALANCE_LOG.md` for the numbers)
+- **Going to town is a setting** (`peopleLeave`). It is on in both starts. Design analysis keeps a fixed household, because a household that empties would make validation and Monte Carlo meaningless.
+- **Heat and bedding:** clothes and bedding cover the first 20 °F-days of cold a day. Without this, the catalog's tiny stove (about 25% of a wall tent's heat loss) would make every spring start a hardship.
+- **Greenfield food is 200,000 kcal**, because the roadmap's "600,000 kcal" and "3 weeks" disagree. Seed potatoes are omitted (no catalog resource).
+- **"Spring, day 1"** is 30 days before each site's last frost.
+- **Adapt has two cars and the gas station**, and its backstops may fill 8× their catalog output, so January heat comes from the grid.
+- **The start "eve":** one silent day before day 1, so the house's sanitation and the cars' miles count on day 1. Only flows carry over: no cash, no stock draw.
+- **The Rain Barrel has its own 100 sq ft catchment** (no Roofing area input), so a tent camp can fill it.
+- **Sheet-mulch Soil is per season.** A one-time output would count as nothing in the weekly model.
+- **The retrofit carries a token Labor 0.05/week.** A system with no flows isn't valid in the sheet.
+- **The clothesline's "home electricity −2 kWh/week"** is 1 kWh per person, because the catalog's home has no electricity input; people do.
+- The old tutorial quests still show in both starts. G16 replaces them with the greenfield and adapt tutorials.
+
+**For the user to check**
+- Open `data/source/LandLab_Sim_Systems_v2.xlsx` in Excel. The 8 new rows are at Systems 170–177, Flows 799–819, and Matrix 170–177. The summary is in `docs/catalog_patches/g15-diff.md`. The Shelter category now counts 21 systems, so its "Within target?" cell reads No (the retrofit carries the Shelter tag).

@@ -1,0 +1,38 @@
+{
+  "id": "adapt",
+  "title": "Adapt your home",
+  "pitch": "You live in a house, work a job and shop at the store. Turn your yard and roof into a homestead, one project at a time.",
+  "parcelAcres": 0.25,
+  "startDay": "spring",
+  "household": { "default": 2, "min": 1, "max": 4 },
+  "instances": [
+    { "system": "Suburban Lot (1/4 acre)", "x": 0.5, "y": 0.5 },
+    { "system": "Average Suburban Home", "x": 0.5, "y": 0.36 },
+    { "system": "Human Being", "x": 0.5, "y": 0.36, "perPerson": true },
+    { "system": "Average Job", "x": 0.5, "y": 0.5 },
+    { "system": "Average American Vehicle", "x": 0.2, "y": 0.86 },
+    { "system": "Average American Vehicle", "x": 0.36, "y": 0.86 },
+    { "system": "Big Box Grocery Store", "x": 0.5, "y": 0.5 },
+    { "system": "Central Power Plant (Coal / NatGas / Nuclear)", "x": 0.5, "y": 0.5 },
+    { "system": "Municipal Water Hookup", "x": 0.86, "y": 0.86 },
+    { "system": "Gas Station", "x": 0.5, "y": 0.5 }
+  ],
+  "stockpile": { "Food": 28000 },
+  "cash": 15000,
+  "backstopCapMult": 8,
+  "tutorial": "adapt",
+  "headline": "self-reliance",
+  "difficulty": {
+    "gentle": { "label": "Gentle", "blurb": "Slow wellbeing loss, a fuller pantry.", "wellbeingMult": 0.5, "stockMult": 1.5, "weatherMode": "average" },
+    "standard": { "label": "Standard", "blurb": "An average year, every year.", "wellbeingMult": 1, "stockMult": 1, "weatherMode": "average" },
+    "real": { "label": "Real weather", "blurb": "Droughts, cold snaps, and good years, drawn from the site's history.", "wellbeingMult": 1, "stockMult": 1, "weatherMode": "real" }
+  },
+  "preview": {
+    "kit": [
+      "A 2,000 sq ft house on a quarter-acre lot",
+      "A full-time job and two cars",
+      "Groceries, the power grid, and city water"
+    ],
+    "stockpile": ["A week of pantry food", "$15,000 in savings"]
+  }
+}

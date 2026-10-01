@@ -10,7 +10,7 @@ describe('scenarios that read like the game', () => {
     expect(need(ledgers, 'Heated shelter').delivered).toBe(0);
     const hardship = eventsOf(events, 'hardship').filter((e) => e.need === 'heat');
     expect(hardship.length).toBeGreaterThan(0);
-    expect(hardship[0]!.absDay).toBe(2); // third cold day in a row
+    expect(hardship[0]!.absDay).toBe(1); // the second cold night in a row: heat has one night's grace (wellbeing v2)
   });
 
   it('wood stoves with a woodpile keep the tent warm in January', () => {

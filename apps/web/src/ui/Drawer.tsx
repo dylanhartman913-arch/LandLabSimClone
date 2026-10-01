@@ -106,6 +106,32 @@ function SystemsTab() {
           </option>
         ))}
       </select>
+      <div className="seg small" role="radiogroup" aria-label="Search in">
+        {(['any', 'makes', 'uses'] as const).map((m) => (
+          <button
+            key={m}
+            role="radio"
+            aria-checked={searchMode === m}
+            className={`seg-btn ${searchMode === m ? 'on' : ''}`}
+            tabIndex={searchMode === m ? 0 : -1}
+            onClick={() => setSearchMode(m)}
+            onKeyDown={(e) => {
+              // A radio group: arrows move the choice; Tab leaves the group (one stop).
+              const order = ['any', 'makes', 'uses'] as const;
+              const k = order.indexOf(m);
+              const next = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+              if (!next) return;
+              e.preventDefault();
+              const to = order[(k + next + order.length) % order.length]!;
+              setSearchMode(to);
+              (e.currentTarget.parentElement?.querySelector(`[data-testid="search-${to}"]`) as HTMLElement | null)?.focus();
+            }}
+            data-testid={`search-${m}`}
+          >
+            {m === 'any' ? 'Anything' : m === 'makes' ? 'Makes it' : 'Uses it'}
+          </button>
+        ))}
+      </div>
       <input
         className="field"
         type="search"
@@ -115,20 +141,6 @@ function SystemsTab() {
         aria-label="Search systems"
         data-testid="system-search"
       />
-      <div className="seg small" role="radiogroup" aria-label="Search in">
-        {(['any', 'makes', 'uses'] as const).map((m) => (
-          <button
-            key={m}
-            role="radio"
-            aria-checked={searchMode === m}
-            className={`seg-btn ${searchMode === m ? 'on' : ''}`}
-            onClick={() => setSearchMode(m)}
-            data-testid={`search-${m}`}
-          >
-            {m === 'any' ? 'Anything' : m === 'makes' ? 'Makes it' : 'Uses it'}
-          </button>
-        ))}
-      </div>
       <div className="tile-grid" data-testid="tile-grid">
         {list.map((s) => (
           <button

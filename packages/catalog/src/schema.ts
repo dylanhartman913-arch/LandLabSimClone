@@ -486,3 +486,187 @@ export const SiteSchema = z.object({
   notes: z.string(),
 });
 export type Site = z.infer<typeof SiteSchema>;
+
+/** Difficulty presets for a start (G15). */
+export const DifficultySchema = z.enum(['gentle', 'standard', 'real']);
+export type Difficulty = z.infer<typeof DifficultySchema>;
+
+/**
+ * A way to start a game (G15), as data in `data/starts/<id>.json`: land, systems already
+ * running, a stockpile, cash, rules, and per-difficulty multipliers. Names are catalog names,
+ * so a start never hard-codes system IDs.
+ */
+export const StartSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    pitch: z.string(),
+    parcelAcres: z.number().positive(),
+    /**
+     * Day of year the game starts on (0 = Jan 1), or `spring`: 30 days before the site's last
+     * spring frost, so every site starts with a month to prepare beds and the winter far off.
+     */
+    startDay: z.union([z.number().int().min(0).max(364), z.literal('spring')]),
+    /** Default household (adults), and the range the start screen offers. */
+    household: z.object({ default: z.number().int().min(1), min: z.number().int().min(1), max: z.number().int().min(1) }),
+    /** Systems already built and running; x, y as fractions of the parcel side. `perPerson` scales with the household. */
+    instances: z.array(
+      z
+        .object({
+          system: z.string(),
+          x: z.number().min(0).max(1),
+          y: z.number().min(0).max(1),
+          count: z.number().int().min(1).default(1),
+          perPerson: z.boolean().default(false),
+        })
+        .strict(),
+    ),
+    /** Starting stocks for the default household; scaled by household ÷ default. */
+    stockpile: z.record(z.string(), z.number().nonnegative()),
+    cash: z.number(),
+    autoGather: z.object({ waterDays: z.number(), woodWeeks: z.number(), foodWeeks: z.number() }).partial().optional(),
+    /** Share of an unmet need a backstop may fill in a week, as a multiple of its catalog output (default 3). */
+    backstopCapMult: z.number().positive().optional(),
+    tutorial: z.string().nullable(),
+    /** What the HUD leads with. */
+    headline: z.enum(['self-reliance', 'off-grid']),
+    difficulty: z.record(
+      DifficultySchema,
+      z
+        .object({
+          label: z.string(),
+          blurb: z.string(),
+          /** Wellbeing penalties × this. */
+          wellbeingMult: z.number().positive(),
+          /** Stockpile × this. */
+          stockMult: z.number().positive(),
+          weatherMode: z.enum(['average', 'real']),
+        })
+        .strict(),
+    ),
+    /** Plain-language lines for the start card ("A canvas wall tent with a stove jack"). */
+    preview: z.object({ kit: z.array(z.string()), stockpile: z.array(z.string()) }),
+  })
+  .strict();
+export type Start = z.infer<typeof StartSchema>;
+
+/**
+ * A tutorial quest goal (G16), evaluated by the engine. Goals compose with `all`.
+ * - have: N active instances of a system (by catalog name).
+ * - made: yesterday a system made at least this much of a resource.
+ * - gathered: gathered at least this much of a resource since the quest began.
+ * - stock: a stock is at least this much.
+ * - setting: an auto-gather rule is at least this.
+ * - warm: this many days since the quest began with HDD above `hddAbove` and the household's
+ *   heat (after bedding) at least `atLeast` met.
+ * - homegrown: home-grown food eaten is at least `share` of the household's need over `days`.
+ * - modified: a system modifies some shelter's `resource` (a retrofit on the house).
+ * - lacks: no active instance of a system.
+ * - days: this many days since the quest began.
+ * - ui: the player did something in the interface (opened a panel); bots count it as done.
+ */
+export const QuestGoalSchema: z.ZodType<QuestGoal, z.ZodTypeDef, unknown> = z.lazy(() =>
+  z.union([
+    z.object({ kind: z.literal('all'), of: z.array(QuestGoalSchema) }).strict(),
+    z.object({ kind: z.literal('have'), system: z.string(), count: z.number().int().min(1).default(1) }).strict(),
+    z.object({ kind: z.literal('made'), system: z.string(), resource: z.string(), atLeast: z.number().positive() }).strict(),
+    z.object({ kind: z.literal('gathered'), resource: z.string(), atLeast: z.number().positive() }).strict(),
+    z.object({ kind: z.literal('stock'), resource: z.string(), atLeast: z.number().positive() }).strict(),
+    z
+      .object({ kind: z.literal('setting'), rule: z.enum(['waterDays', 'woodWeeks', 'foodWeeks']), atLeast: z.number().positive() })
+      .strict(),
+    z
+      .object({ kind: z.literal('warm'), hddAbove: z.number(), atLeast: z.number().min(0).max(1), days: z.number().int().min(1) })
+      .strict(),
+    z.object({ kind: z.literal('homegrown'), share: z.number().min(0).max(1), days: z.number().int().min(1) }).strict(),
+    z.object({ kind: z.literal('modified'), system: z.string(), resource: z.string() }).strict(),
+    z.object({ kind: z.literal('lacks'), system: z.string() }).strict(),
+    z.object({ kind: z.literal('days'), atLeast: z.number().int().min(1) }).strict(),
+    z.object({ kind: z.literal('ui'), panel: z.string(), label: z.string() }).strict(),
+  ]),
+);
+export type QuestGoal =
+  | { kind: 'all'; of: QuestGoal[] }
+  | { kind: 'have'; system: string; count: number }
+  | { kind: 'made'; system: string; resource: string; atLeast: number }
+  | { kind: 'gathered'; resource: string; atLeast: number }
+  | { kind: 'stock'; resource: string; atLeast: number }
+  | { kind: 'setting'; rule: 'waterDays' | 'woodWeeks' | 'foodWeeks'; atLeast: number }
+  | { kind: 'warm'; hddAbove: number; atLeast: number; days: number }
+  | { kind: 'homegrown'; share: number; days: number }
+  | { kind: 'modified'; system: string; resource: string }
+  | { kind: 'lacks'; system: string }
+  | { kind: 'days'; atLeast: number }
+  | { kind: 'ui'; panel: string; label: string };
+
+/**
+ * The cheapest way a quest suggests to do it (G16): what the tutorial-following bot does,
+ * and what "show me" points at. `near` is the home, a node type, or a system already placed.
+ */
+export const QuestStepSchema = z.union([
+  z
+    .object({
+      do: z.literal('place'),
+      system: z.string(),
+      mode: z.enum(['buy', 'diy']).default('diy'),
+      count: z.number().int().min(1).default(1),
+      near: z.string().default('home'),
+      /** Put it on top of `near` (a retrofit on the house). */
+      on: z.boolean().default(false),
+    })
+    .strict(),
+  z.object({ do: z.literal('remove'), system: z.string() }).strict(),
+  z.object({ do: z.literal('buy'), resource: z.string(), amount: z.number().positive() }).strict(),
+  z.object({ do: z.literal('standing'), resource: z.string(), keepAbove: z.number().nonnegative(), orderUpTo: z.number().positive() }).strict(),
+  z
+    .object({ do: z.literal('autoGather'), waterDays: z.number().optional(), woodWeeks: z.number().optional(), foodWeeks: z.number().optional() })
+    .strict(),
+  z.object({ do: z.literal('workCap'), job: z.string(), hours: z.number().nonnegative().nullable() }).strict(),
+  z.object({ do: z.literal('open'), panel: z.string() }).strict(),
+]);
+export type QuestStep = z.infer<typeof QuestStepSchema>;
+
+/** What "show me" highlights: a drawer item, a node on the map, a resource page, or a panel. */
+export const QuestShowSchema = z.union([
+  z.object({ kind: z.literal('system'), name: z.string() }).strict(),
+  z.object({ kind: z.literal('node'), type: z.string() }).strict(),
+  z.object({ kind: z.literal('resource'), name: z.string() }).strict(),
+  z.object({ kind: z.literal('panel'), panel: z.string() }).strict(),
+]);
+export type QuestShow = z.infer<typeof QuestShowSchema>;
+
+/** A neighbor's thanks when a quest is done: cash or a stockpile top-up, and why. */
+export const QuestRewardSchema = z
+  .object({
+    line: z.string(),
+    cash: z.number().nonnegative().default(0),
+    stock: z.record(z.string(), z.number().positive()).default({}),
+  })
+  .strict();
+export type QuestReward = z.infer<typeof QuestRewardSchema>;
+
+export const QuestSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    /** One line: what this teaches and why it matters now. */
+    reason: z.string(),
+    /** The checklist row the quest moves. */
+    row: NeedKeySchema,
+    goal: QuestGoalSchema,
+    steps: z.array(QuestStepSchema),
+    show: QuestShowSchema,
+    reward: QuestRewardSchema,
+  })
+  .strict();
+export type QuestDef = z.infer<typeof QuestSchema>;
+
+export const QuestLineSchema = z
+  .object({
+    id: z.string(),
+    /** Who sends the rewards ("Ruth, on the next ridge"). */
+    neighbor: z.string(),
+    quests: z.array(QuestSchema).min(1),
+  })
+  .strict();
+export type QuestLine = z.infer<typeof QuestLineSchema>;

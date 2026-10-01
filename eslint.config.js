@@ -11,6 +11,7 @@ export default tseslint.config(
       'test-results/**',
       'playwright-report/**',
       'packages/catalog/generated/**',
+      '**/scratch/**',
     ],
   },
   js.configs.recommended,

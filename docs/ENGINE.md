@@ -428,3 +428,62 @@ The ledger records `boiled`, and the checklist's "why" says, for example, "Drink
 **Views:**
 - `nodeOptions(state, resource)` lists the nodes for a resource page (distance, yield, stock).
 - `workView(state)` lists jobs, priorities, caps, and last week's hours.
+
+## Wellbeing v2 (G15)
+
+Each person has **wellbeing** from 0 to 100, starting at 75 (`time/wellbeing.ts`). It replaces the old 7-day health average. Every constant below is tunable data: change it only through the G16 tuning loop and record the change in `docs/BALANCE_LOG.md`.
+
+**Survival needs** have a grace period before they cost anything:
+
+| Need | Short when share met is under | Grace | Penalty a day past grace | Drift when partly met |
+|---|---|---|---|---|
+| Drinking water | 80% | 1 day | 10 × (1 − met) | 0.5 × (1 − met) |
+| Food | 50% (or 20%) | 4 days (1 day) | 4 × (1 − met) | 0.4 × (1 − met) |
+| Shelter | 50% | 2 days | 5 × (1 − met) | 0.2 × (1 − met) |
+| Heat (only days with HDD > 10) | 50% | 1 night | 5 × (1 − met) | 0.3 × (1 − met) |
+| Sanitation | 50% | 7 days | 2 × (1 − met) | 0.1 × (1 − met) |
+
+- **Heat and bedding.** Warm clothes and bedding carry a person through the first 20 °F-days of a day (`HEAT_BEDDING_HDD`). Heat is measured against the rest: delivered ÷ (needed × (HDD − 20) ÷ HDD). The catalog's Tiny Wood Stove covers about a quarter of a canvas wall tent's heat loss. With bedding, that is enough in spring and not in January.
+- **Comfort needs** only drift: points a day × (1 − met):
+  - electricity 0.25;
+  - cooling 0.25 (only days with CDD > 5);
+  - transportation 0.15;
+  - hot water 0.15;
+  - cooked meals 0.2.
+- **Recovery** applies when every survival need is met: +0.6, plus up to +0.4 more in proportion to comfort coverage. Wellbeing points (a Service: the firepit, the clothesline) add 0.05 per point per person per week, up to +0.5.
+- **The day's change** is recovery − penalties − drift, with survival penalties and drift × the difficulty multiplier (`settings.wellbeingMult`: Gentle 0.5). No day costs more than 8 points.
+- **Labor:** a person's labor = nominal × (0.5 + 0.5 × wellbeing ÷ 100).
+- **Hardship events** fire the first day a survival need passes its grace, then weekly while it lasts.
+- **Going to town.** At 0, a person goes to stay in town (`person.away`): they leave every group, consume nothing, and make nothing. They come home, at wellbeing 50, after 14 days or more, once nobody at home is going short, a shelter stands, and there is a week of their food and 3 days of their drinking water on hand. Nobody dies.
+  - This happens only when `settings.peopleLeave` is on. The two game starts turn it on. Design analysis (validation, Monte Carlo, scenarios, the old tests) leaves it off, so a household stays fixed at wellbeing 0 and its demand never disappears.
+- Each person keeps today's terms in `person.why`. `peopleView` turns them into the HUD bar and its "why". The day ledger carries the average `wellbeing` of the people at home and the number `away`.
+
+## Two ways to start (G15)
+
+Start configs are data in `data/starts/<id>.json`, validated by `StartSchema` (`@homestead/catalog`). `gameFromStart(catalog, site, start, { difficulty, household, seed })` builds the game:
+- the land;
+- the systems already running (prebuilt, no construction; `perPerson` entries scale with the household);
+- the stockpile × (household ÷ default) × the difficulty's `stockMult`;
+- cash, auto-gather rules, and `backstopCapMult`;
+- the difficulty's `wellbeingMult` and `weatherMode`;
+- `peopleLeave: true`.
+
+`startDay: "spring"` is 30 days before the site's last spring frost: March 21 in Asheville, April 5 on the Front Range, May 6 in Laramie. Each site gets a month to prepare beds, and the winter is about 9 months away.
+
+The kit was already running "yesterday". The start steps one silent day and keeps only its direct-use output, non-storable flows (the house's sanitation, the cars' miles), services, and group results, so every row is covered on day 1. Saves record `init.start = { id, difficulty, household }`, and replay rebuilds the game from it.
+
+| | Adapt your home | Start from the ground up |
+|---|---|---|
+| Land | ¼ acre (Suburban Lot) | 1 acre |
+| Running | house, job, two cars, grocery, grid, city water, gas station | wall tent, tiny stove, firepit, 500 W panel, power station, fan, filter, rain barrel, humanure bucket |
+| Stockpile (household of 2) | 28,000 kcal | 200,000 kcal, 40 gal drinking water, 800 lbs firewood, 8 oz seed, 100 lbs sawdust |
+| Cash | $15,000 | $8,000 |
+| HUD leads with | Self-reliance and weekly bills | Off-grid score |
+
+The stockpile view (`stockpileView`) shows days of food (every food in kcal), drinking water, firewood, and battery at today's use, each with a 7-day trend. It turns red under 3 days.
+
+## Modifiers (G15)
+
+A system can change another system's flow (`systems.<id>.modifies` in the overrides). The exporter turns each modifier into an adjacency rule with `scope`:
+- `host`: the modifier sits on the receiver, with its centre inside the footprint. Example: the Home Weatherization Retrofit placed on a house scales the house's Heat request by 0.7.
+- `parcel`: anywhere on the parcel. Example: a Clothesline scales each person's Electricity request by 20/21, about 1 kWh a week less each.

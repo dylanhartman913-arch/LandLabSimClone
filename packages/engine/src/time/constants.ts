@@ -5,14 +5,7 @@ export const DEFAULT_CONSTRUCTION_SHARE = 0.6;
 export const REFUND_BUILT = 0.25;
 export const REFUND_BUILDING = 1;
 
-export const HEALTH_WEIGHTS = { food: 0.35, drinkingWater: 0.45, heat: 0.25, shelter: 0.2 } as const;
-export type PersonNeed = keyof typeof HEALTH_WEIGHTS;
-export const PERSON_NEEDS: PersonNeed[] = ['food', 'drinkingWater', 'heat', 'shelter'];
-export const HEALTH_FLOOR = 0.3;
-export const HARDSHIP_THRESHOLD = 0.8;
-export const HARDSHIP_DAYS = 3;
-export const HARDSHIP_REPEAT_DAYS = 7;
-export const ROLLING_DAYS = 7;
+// People's wellbeing (G15, wellbeing v2) lives in wellbeing.ts.
 
 export const COLD_STORAGE_SPOIL_CUT = 0.8;
 export const LEDGER_DAYS_KEPT = 730;

@@ -112,6 +112,10 @@ export interface HudMetrics {
   score: Explained;
   /** The same score if every input were met (the ceiling). */
   potentialScore: Explained;
+  /** Share of supply made at home, not bought (G12). */
+  selfReliance: Explained;
+  /** What the HUD leads with: self-reliance and weekly bills (adapt start) or the off-grid score. */
+  headline: 'self-reliance' | 'off-grid';
   weather: { hdd: number; psh: number; precipIn: number; growing: boolean; tags: string[] };
 }
 
@@ -142,6 +146,8 @@ export function hudMetrics(state: GameState, catalog: Catalog, bal?: FeasibleRes
     }),
     score: b.overallScore,
     potentialScore: b.potential.overallScore,
+    selfReliance: b.selfReliance,
+    headline: state.start?.headline ?? 'off-grid',
     weather: { hdd: w.hdd, psh: w.psh, precipIn: w.precipIn, growing: w.growing, tags: w.tags },
   };
 }

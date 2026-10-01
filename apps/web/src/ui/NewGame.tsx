@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { SITES } from '@homestead/catalog';
-import { KIT_LABELS, newGameFromOptions, type StartingKit } from '@homestead/engine';
+import { SITES, STARTS, type Difficulty } from '@homestead/catalog';
+import { KIT_LABELS, newGameFromOptions, startGame, type GameInit, type StartingKit } from '@homestead/engine';
 import { fmtMoney } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
 import { savePref } from '../store/persist.ts';
@@ -12,9 +12,144 @@ const ACRES = [
 ];
 const CASH = [25_000, 50_000, 100_000, 250_000];
 
-/** New game: site, parcel, money, household, weather, and a starting kit. */
+const ACRE_LABEL = (a: number) => (a === 0.25 ? '¼ acre' : a === 1 ? '1 acre' : `${a} acres`);
+const DIFFICULTIES: Difficulty[] = ['gentle', 'standard', 'real'];
+
+/** The start screen (G15): two ways to start, then site, household, and difficulty. */
 export function NewGame() {
   const open = useGame((s) => s.wizardOpen);
+  const [custom, setCustom] = useState(false);
+  const [startId, setStartId] = useState('greenfield');
+  const [siteId, setSite] = useState('front-range');
+  const [household, setHousehold] = useState(2);
+  const [difficulty, setDifficulty] = useState<Difficulty>('standard');
+  if (!open) return null;
+  if (custom) return <CustomGame onBack={() => setCustom(false)} />;
+  const st = useGame.getState();
+  const begin = () => {
+    const init: GameInit = {
+      siteId,
+      seed: Math.floor(Math.random() * 2 ** 31), // UI-side: the seed is then saved with the game
+      settings: {},
+      start: { id: startId, difficulty, household },
+    };
+    try {
+      st.loadGame(init, [], startGame(st.catalog, init));
+      st.setWizard(false);
+      savePref('seenWizard', true);
+      st.toast(`${STARTS[startId]!.title} on ${SITES[siteId]!.name}.`);
+    } catch (e) {
+      st.toast(e instanceof Error ? e.message : String(e), 'warn');
+    }
+  };
+  const chosen = STARTS[startId]!;
+  return (
+    <div className="modal-back">
+      <section className="modal" role="dialog" aria-label="New game" data-testid="new-game">
+        <header className="panel-head">
+          <h2>Start a homestead</h2>
+          <button className="btn ghost" onClick={() => st.setWizard(false)} aria-label="Close">
+            ✕
+          </button>
+        </header>
+        <div className="start-cards" role="radiogroup" aria-label="How to start">
+          {Object.values(STARTS)
+            .sort((a, b) => (a.id === 'adapt' ? -1 : b.id === 'adapt' ? 1 : 0))
+            .map((x) => (
+              <button
+                key={x.id}
+                role="radio"
+                aria-checked={startId === x.id}
+                className={`choice start-card ${startId === x.id ? 'on' : ''}`}
+                onClick={() => {
+                  setStartId(x.id);
+                  setHousehold(x.household.default);
+                }}
+                data-testid={`start-${x.id}`}
+              >
+                <h3>{x.title}</h3>
+                <span className="muted">{x.pitch}</span>
+                <span className="facts small">
+                  <span>{ACRE_LABEL(x.parcelAcres)}</span>
+                  <span>{fmtMoney(x.cash)}</span>
+                </span>
+                <strong className="small">Starting kit</strong>
+                <ul className="small">
+                  {x.preview.kit.map((k) => (
+                    <li key={k}>{k}</li>
+                  ))}
+                </ul>
+                <strong className="small">Stockpile</strong>
+                <ul className="small">
+                  {x.preview.stockpile.map((k) => (
+                    <li key={k}>{k}</li>
+                  ))}
+                </ul>
+              </button>
+            ))}
+        </div>
+        <h3>Land</h3>
+        <div className="choice-grid" role="radiogroup" aria-label="Site">
+          {Object.values(SITES).map((x) => (
+            <button
+              key={x.id}
+              role="radio"
+              aria-checked={siteId === x.id}
+              className={`choice ${siteId === x.id ? 'on' : ''}`}
+              onClick={() => setSite(x.id)}
+              data-testid={`site-${x.id}`}
+            >
+              <strong>{x.name}</strong>
+              <span className="muted small">{x.description}</span>
+            </button>
+          ))}
+        </div>
+        <div className="wizard-row">
+          <label>
+            Household (adults)
+            <input
+              type="number"
+              min={chosen.household.min}
+              max={chosen.household.max}
+              value={household}
+              onChange={(e) =>
+                setHousehold(Math.max(chosen.household.min, Math.min(chosen.household.max, Number(e.target.value))))
+              }
+              data-testid="start-household"
+            />
+          </label>
+        </div>
+        <h3>Difficulty</h3>
+        <div className="choice-grid three" role="radiogroup" aria-label="Difficulty">
+          {DIFFICULTIES.map((d) => (
+            <button
+              key={d}
+              role="radio"
+              aria-checked={difficulty === d}
+              className={`choice ${difficulty === d ? 'on' : ''}`}
+              onClick={() => setDifficulty(d)}
+              data-testid={`difficulty-${d}`}
+            >
+              <strong>{chosen.difficulty[d]?.label}</strong>
+              <span className="muted small">{chosen.difficulty[d]?.blurb}</span>
+            </button>
+          ))}
+        </div>
+        <div className="row end">
+          <button className="btn ghost" onClick={() => setCustom(true)} data-testid="custom-game">
+            Custom game…
+          </button>
+          <button className="btn primary" onClick={begin} data-testid="start-begin">
+            Start
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/** A custom game: site, parcel, money, household, weather, and a starting kit. */
+function CustomGame({ onBack }: { onBack: () => void }) {
   const [siteId, setSite] = useState('front-range');
   const [acres, setAcres] = useState(1);
   const [cash, setCash] = useState(100_000);
@@ -22,7 +157,6 @@ export function NewGame() {
   const [children, setChildren] = useState(0);
   const [weather, setWeather] = useState<'average' | 'real'>('average');
   const [kit, setKit] = useState<StartingKit>('tent');
-  if (!open) return null;
   const st = useGame.getState();
   const site = SITES[siteId]!;
   const start = () => {
@@ -50,7 +184,10 @@ export function NewGame() {
     <div className="modal-back">
       <section className="modal" role="dialog" aria-label="New game" data-testid="new-game">
         <header className="panel-head">
-          <h2>Start a homestead</h2>
+          <button className="btn ghost" onClick={onBack} aria-label="Back" data-testid="custom-back">
+            ←
+          </button>
+          <h2>Custom game</h2>
           <button className="btn ghost" onClick={() => st.setWizard(false)} aria-label="Close">
             ✕
           </button>
