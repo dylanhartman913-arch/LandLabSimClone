@@ -836,3 +836,22 @@ All six sessions are done and pushed to `claude/gifted-hypatia-x158zw`, with no 
    - camps settle around wellbeing 80.
 3. **Run the full suites on your machine:** `npm test`, `npm run test:pacing`, and `npm run test:e2e`. CI runs them all; the pacing job is separate and fast.
 4. Open the PR when you're happy. This branch carries G11–G16. Per CLAUDE.md's "one session = one branch", you may prefer to split it.
+
+## Audit — G11–G16 verification (2026-10-01)
+
+**Shipped:** no features, no tuning. Full report: `docs/AUDIT_G11_G16.md`.
+- `catalog:check` needs no LibreOffice or Python: it passes in a fresh clone after only `npm ci`, with neither on PATH. `docs/CATALOG.md` now says the patch script is run by hand only.
+- Digest history and per-fix attribution are in `packages/engine/test/DIGESTS.md`. History was not rewritten (the branch is pushed).
+  - Upkeep priority moved `time:suburban-baseline`.
+  - Flow boosts moved `time:starter` and `time:offgrid-cabin-family`.
+  - The seed reserve and running-costs fixes moved none.
+- Goldens: existing entries are identical to before G11. The file changed only by the xlsx hash and 21 added flows.
+- Workbook:
+  - A LibreOffice recalculation reproduces every cached formula value (7,094 cells), the 48.5% overall score, and the checklist goldens.
+  - The G15 patch changed 0 typed values. 872 formulas were changed only by extending range ends from row 169 to 177.
+
+**Tests (fresh clone):** 218/218 unit, all pacing gates, typecheck and lint clean. e2e was not rerun.
+
+**Digests:** unchanged.
+
+**Known gaps:** see the report's "Found, not fixed" section and its open bedding question.
