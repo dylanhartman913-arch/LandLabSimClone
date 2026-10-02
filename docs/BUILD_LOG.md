@@ -872,3 +872,18 @@ Four changes, each in its own commit.
    - Wellbeing's threshold test gained a 1e-9 tolerance. It was a latent float bug that this change exposed.
    - Pacing is identical to "baseline plus the tolerance fix" on every measure. The full before/after table and the multiplier scan are in `BALANCE_LOG.md`, along with a caveat: under a constant multiplier, winter in a tent is easier than under the old offset.
    - Time digests were re-recorded (`DIGESTS.md`).
+
+**Also: CI was red on the PR.** The `check` job's one-year performance budget (200 instances, under 150 ms) read 161 ms on the runner.
+- On an idle CPU here, the bench grew from about 65 ms at the end of G10 to about 92 ms by G16; the runner is about 1.8× slower. A profile diff put the growth in two places:
+  - the spatial cache check rebuilt a string of every instance each day;
+  - wellbeing ran once per person.
+- Both are fixed without changing any result: the layout fields are compared in place, and an update is reused for the next person in an identical state. The bench is now about 60 ms. Digests and pacing are unchanged.
+
+**Tests:**
+- 222 unit tests, including 4 new blanket tests: the need cut, one heat need for the checklist and the people bar, blankets stacking with a retrofit, and blankets in the kit.
+- Pacing: 15 of 15 gate groups pass.
+- e2e: 44 of 44 pass. `starts.spec` now checks that the wellbeing "why" names the blankets.
+
+**Digests:** time digests were re-recorded once, for the removal of the bedding constant (`DIGESTS.md`). The performance commit changed none.
+
+**Known gaps:** winter in a tent with blankets is easier than under the old offset. See `BALANCE_LOG.md`, "What the gates don't show".
