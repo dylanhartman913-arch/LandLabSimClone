@@ -810,7 +810,8 @@ Screenshots are in `docs/screenshots/g15/`.
 
 e2e `tutorial.spec.ts` (1): the first five greenfield quests through the UI, with Show me, the Work panel, the market, and placing. Screenshots are in `docs/screenshots/g16/`. Two G14/G12 unit tests were updated for the new upkeep priority and running costs.
 
-**Digests:** the time digests were re-recorded, for upkeep priority 1, Flow boosts, and the seed reserve. Balance digests and goldens are unchanged.
+**Digests:** the time digests were re-recorded, for upkeep priority 1 (`time:suburban-baseline`) and Flow boosts (`time:starter`, `time:offgrid-cabin-family`). The seed reserve and the running-costs bills changed no digest. Balance digests and goldens are unchanged.
+*(Corrected 2026-10-02: this line first said the seed reserve also changed digests. Reverting each fix alone shows it didn't; see `packages/engine/test/DIGESTS.md`.)*
 
 **Decisions not in the roadmap**
 - **"Survives year 1"** = nobody goes to town during the year.
