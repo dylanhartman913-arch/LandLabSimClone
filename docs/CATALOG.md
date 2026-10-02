@@ -248,7 +248,7 @@ npm run catalog:export
 
 The patch file lists systems with their sheet columns and flows. Quantities are numbers, or `{"formula": "rain" | "rainCapture" | "catchArea" | "sun"}` for the sheet's own climate formulas. The script:
 1. appends Systems, Flows, and Matrix rows, copying the sheet's formulas into the computed columns;
-2. extends every `Systems!$X$2:$X$<last>` range so totals include the new rows;
+2. extends every `Systems!$X$2:$X$<last>` range so totals include the new rows, and stretches the Systems and Matrix data validation and conditional formatting that start at row 2 down to the last row;
 3. recalculates in headless LibreOffice, because the exporter reads cached values;
 4. writes `docs/catalog_patches/<patch>-diff.md`.
 

@@ -12,6 +12,8 @@ What it does, and nothing else:
   * applies `edits`: text-only changes to a system's row (its categories, tags, description,
     or notes), for fixing a row a patch added. Number columns can't be edited this way;
   * extends every `Systems!$X$2:$X$<last>` range in every sheet to cover the new rows;
+  * extends the Systems and Matrix data validation and conditional formatting that start at
+    row 2 down to the last row (so added rows get the same checks and highlighting);
   * recalculates the workbook in headless LibreOffice so cached values are current
     (the exporter reads cached values);
   * writes an xlsx diff summary (docs/catalog_patches/<patch>-diff.md) proving existing
@@ -32,7 +34,9 @@ import tempfile
 from pathlib import Path
 
 import openpyxl
+from openpyxl.formatting.formatting import ConditionalFormattingList
 from openpyxl.formula.translate import Translator
+from openpyxl.worksheet.cell_range import CellRange, MultiCellRange
 
 ROOT = Path(__file__).resolve().parent.parent
 XLSX = ROOT / "data" / "source" / "LandLab_Sim_Systems_v2.xlsx"
@@ -83,6 +87,48 @@ def extend_ranges(wb, old_last: int, new_last: int) -> int:
                     cell.value = pat.sub(lambda m: m.group(1) + str(new_last), v)
                     n += 1
     return n
+
+
+# Sheets whose data validation and conditional formatting cover the whole table, row 2 to the end.
+TABLE_SHEETS = ("Systems", "Matrix")
+
+
+def _extend(sqref, last: int) -> tuple[str, bool]:
+    """Stretch every range that starts at row 2 and stops short of `last` down to `last`."""
+    out, changed = [], False
+    for rng in MultiCellRange(str(sqref)).ranges:
+        r = CellRange(rng.coord)
+        if r.min_row == 2 and r.max_row < last:
+            r.expand(down=last - r.max_row)
+            changed = True
+        out.append(r.coord)
+    return " ".join(out), changed
+
+
+def extend_table_formats(wb) -> list[str]:
+    """Extend table-wide data validation and conditional formatting to the last row; list what moved."""
+    moved: list[str] = []
+    for name in TABLE_SHEETS:
+        ws = wb[name]
+        last = last_row(ws)
+        for dv in ws.data_validations.dataValidation:
+            new, changed = _extend(dv.sqref, last)
+            if changed:
+                moved.append(f"{name} data validation ({dv.type}) {dv.sqref} -> {new}")
+                dv.sqref = MultiCellRange(new)
+        old = ws.conditional_formatting
+        rebuilt = ConditionalFormattingList()
+        any_cf = False
+        for cf in old:
+            new, changed = _extend(cf.sqref, last)
+            if changed:
+                any_cf = True
+                moved.append(f"{name} conditional formatting ({len(cf.rules)} rules) {cf.sqref} -> {new}")
+            for rule in cf.rules:
+                rebuilt.add(new, rule)
+        if any_cf:
+            ws.conditional_formatting = rebuilt
+    return moved
 
 
 # Systems columns an edit may change: text only, never a catalog number.
@@ -158,7 +204,7 @@ def norm(v):
     return v
 
 
-def diff_summary(old: Path, new: Path, patch: dict, added: dict, edits: list | None = None) -> str:
+def diff_summary(old: Path, new: Path, patch: dict, added: dict, edits: list | None = None, formats: list | None = None) -> str:
     ov, nv = cell_map(old, True), cell_map(new, True)
     of, nf = cell_map(old, False), cell_map(new, False)
     lines = [f"# Catalog patch `{patch['patch']}`: xlsx diff summary", "", patch.get("note", ""), ""]
@@ -169,6 +215,12 @@ def diff_summary(old: Path, new: Path, patch: dict, added: dict, edits: list | N
     for sheet, rows in added.items():
         lines.append(f"| {sheet} | {', '.join(rows) if rows else '(none)'} |")
     lines.append("")
+    if formats:
+        lines.append("## Validation and highlighting extended")
+        lines.append("")
+        for f in formats:
+            lines.append(f"- {f}")
+        lines.append("")
     if edits:
         lines.append("## Text edits")
         lines.append("")
@@ -238,7 +290,8 @@ def main() -> int:
     existing = {sysws.cell(r, 2).value for r in range(2, last_row(sysws) + 1)}
     todo = [s for s in patch.get("systems", []) if s["name"] not in existing]
     edits = pending_edits(sysws, patch)
-    if not todo and not edits:
+    formats_due = extend_table_formats(openpyxl.load_workbook(XLSX))  # a dry look: anything stopping short?
+    if not todo and not edits and not formats_due:
         print("catalog_patch: the workbook already has everything in this patch; nothing to do.")
         return 0
     for r, c, name, old, new, _e in edits:
@@ -300,8 +353,10 @@ def main() -> int:
             next_fid += 1
             added["Flows"].append(str(fl_last))
 
+    formats = extend_table_formats(wb)
+
     if dry:
-        print(f"catalog_patch (dry run): would add {len(todo)} systems, {len(added['Flows'])} flows; extend {n_ext} ranges; {len(edits)} edit(s).")
+        print(f"catalog_patch (dry run): would add {len(todo)} systems, {len(added['Flows'])} flows; extend {n_ext} ranges; {len(edits)} edit(s); {len(formats)} format range(s).")
         return 0
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -310,12 +365,12 @@ def main() -> int:
         staged = Path(tmp) / XLSX.name
         wb.save(staged)
         recalc(staged)
-        summary = diff_summary(before, staged, {**patch, "systems": todo}, added, edits)
+        summary = diff_summary(before, staged, {**patch, "systems": todo}, added, edits, formats)
         shutil.copy(staged, XLSX)
     out = ROOT / "docs" / "catalog_patches" / f"{patch['patch']}-diff.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(summary)
-    print(f"catalog_patch: added {len(todo)} systems and {len(added['Flows'])} flows; extended {n_ext} ranges; {len(edits)} edit(s).")
+    print(f"catalog_patch: added {len(todo)} systems and {len(added['Flows'])} flows; extended {n_ext} ranges; {len(edits)} edit(s); {len(formats)} format range(s).")
     print(f"catalog_patch: diff summary in {out.relative_to(ROOT)}. Now run `npm run catalog:export`.")
     return 0
 
