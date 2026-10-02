@@ -61,16 +61,65 @@ function gapFt(ax: number, ay: number, ah: number, bx: number, by: number, bh: n
   return Math.hypot(dx, dy);
 }
 
-/** One-entry cache per catalog, keyed by what spatial effects depend on (not array identity). */
-const cache = new WeakMap<Catalog, { key: string; site: unknown; map: Map<string, InstanceSpatial> }>();
+/**
+ * One-entry cache per catalog, keyed by what spatial effects depend on (not array identity):
+ * the parcel and, per instance, id, system, position, active or not, scale, and links. The
+ * check compares those fields in place, with no per-day string building (it runs every day).
+ */
+interface LayoutSig {
+  acres: number;
+  site: unknown;
+  ids: string[];
+  sys: string[];
+  xs: number[];
+  ys: number[];
+  active: boolean[];
+  scale: number[];
+  links: (Instance['links'] | undefined)[];
+}
+const cache = new WeakMap<Catalog, { sig: LayoutSig; map: Map<string, InstanceSpatial> }>();
 
-function spatialKey(state: GameState): string {
-  let k = `${state.settings.parcelAcres}`;
-  for (const i of state.instances) {
-    k += `;${i.id},${i.systemId},${i.x},${i.y},${i.status === 'active' ? 1 : 0},${i.scale ?? 1}`;
-    if (i.links) k += `,${JSON.stringify(i.links)}`;
+function sameLinks(a: Instance['links'] | undefined, b: Instance['links'] | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const ka = Object.keys(a);
+  if (ka.length !== Object.keys(b).length) return false;
+  for (const k of ka) if (a[k] !== b[k]) return false;
+  return true;
+}
+
+function sameLayout(sig: LayoutSig, state: GameState): boolean {
+  const xs = state.instances;
+  if (sig.site !== state.site || sig.acres !== state.settings.parcelAcres || sig.ids.length !== xs.length) return false;
+  for (let k = 0; k < xs.length; k++) {
+    const i = xs[k]!;
+    if (
+      sig.ids[k] !== i.id ||
+      sig.sys[k] !== i.systemId ||
+      sig.xs[k] !== i.x ||
+      sig.ys[k] !== i.y ||
+      sig.active[k] !== (i.status === 'active') ||
+      sig.scale[k] !== (i.scale ?? 1) ||
+      !sameLinks(sig.links[k], i.links)
+    )
+      return false;
   }
-  return k;
+  return true;
+}
+
+function layoutOf(state: GameState): LayoutSig {
+  const xs = state.instances;
+  return {
+    acres: state.settings.parcelAcres,
+    site: state.site,
+    ids: xs.map((i) => i.id),
+    sys: xs.map((i) => i.systemId),
+    xs: xs.map((i) => i.x),
+    ys: xs.map((i) => i.y),
+    active: xs.map((i) => i.status === 'active'),
+    scale: xs.map((i) => i.scale ?? 1),
+    links: xs.map((i) => (i.links ? { ...i.links } : undefined)),
+  };
 }
 
 /**
@@ -78,9 +127,8 @@ function spatialKey(state: GameState): string {
  * assigned-capacity rules (all from catalog_overrides.json). Cached per instance list.
  */
 export function computeSpatial(catalog: Catalog, state: GameState): Map<string, InstanceSpatial> {
-  const key = spatialKey(state);
   const hit = cache.get(catalog);
-  if (hit && hit.site === state.site && hit.key === key) return hit.map;
+  if (hit && sameLayout(hit.sig, state)) return hit.map;
   const plans = getPlans(catalog, state.site);
   const side = parcelSideFt(state.settings);
   const active = state.instances.filter((i) => i.status === 'active');
@@ -294,7 +342,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     ]);
     map.set(inst.id, s);
   }
-  cache.set(catalog, { key, site: state.site, map });
+  cache.set(catalog, { sig: layoutOf(state), map });
   return map;
 }
 

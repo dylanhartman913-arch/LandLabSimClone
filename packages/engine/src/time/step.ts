@@ -35,6 +35,7 @@ import {
   laborShare,
   updateWellbeing,
   type PersonDay,
+  type PersonUpdate,
 } from './wellbeing.ts';
 import type {
   DayLedger,
@@ -45,6 +46,7 @@ import type {
   DaySpend,
   GatherRecord,
   NeedDay,
+  PersonState,
   ResourceDay,
 } from './types.ts';
 
@@ -1032,11 +1034,15 @@ function updatePeople(d: Day): void {
       servicePoints,
       mult,
     };
+    // Members of a group see the same day; two people in the same state get the same update
+    // (person states are immutable, so sharing the result is safe and saves the allocations).
+    let memo: { old: PersonState; u: PersonUpdate } | null = null;
     for (const i of g.members) {
       const old = d.instances[i]!.person;
       if (!old) continue;
       const inst = touch(d, i);
-      const u = updateWellbeing(old, today);
+      const u: PersonUpdate = memo && samePersonState(memo.old, old) ? memo.u : updateWellbeing(old, today);
+      memo = { old, u };
       for (const h of u.hardships) {
         d.events.push({ kind: 'hardship', absDay: d.absDay, instanceId: inst.id, need: h.need, level: h.level });
       }
@@ -1071,6 +1077,13 @@ function updatePeople(d: Day): void {
     inst.person = { ...rest, wellbeing: WB_RETURN_AT, health: laborShare(WB_RETURN_AT), why: [] };
     d.events.push({ kind: 'came-home', absDay: d.absDay, instanceId: inst.id });
   }
+}
+
+function samePersonState(a: PersonState, b: PersonState): boolean {
+  if (a === b) return true;
+  if (a.wellbeing !== b.wellbeing || a.severeFood !== b.severeFood || !!a.away !== !!b.away) return false;
+  for (const k in a.short) if (a.short[k as keyof PersonState['short']] !== b.short[k as keyof PersonState['short']]) return false;
+  return true;
 }
 
 /** Step 8: unstorable leftovers are lost, production lands, pools overflow, food spoils. */
