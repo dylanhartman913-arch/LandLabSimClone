@@ -3,6 +3,7 @@ import type { BlockedSystem } from '../balance/balance.ts';
 import { statusText, type FeasibleResult } from '../balance/feasible.ts';
 import { getSystem } from '../catalog-index.ts';
 import { computeSpatial } from '../time/spatial.ts';
+import { shelterHeatNeedNotes } from './people.ts';
 import { NODE_LABEL } from '../time/gather.ts';
 import { explained, type Explained } from '../provenance.ts';
 import { summarizeLedgers } from '../time/summarize.ts';
@@ -116,13 +117,17 @@ export function checklistView(
 ): ChecklistView {
   const spark = sparklines(state.ledgers);
   if (mode === 'average' || state.ledgers.length === 0) {
+    // What lowers a shelter's heat need (blankets, a retrofit) is named on the heat row's why (G16).
+    const heatNotes = shelterHeatNeedNotes(state, catalog).map((n) => `Heat needed: ${n}`);
+    const withHeat = (e: Explained, need: string): Explained =>
+      need === 'Heated shelter' && heatNotes.length ? { ...e, explain: { ...e.explain, notes: [...(e.explain.notes ?? []), ...heatNotes] } } : e;
     const rows: ChecklistRowView[] = bal.checklist.map((r) => ({
       need: r.need,
       unit: r.unit,
       provided: r.provided,
       potential: r.potential!,
-      needed: r.needed,
-      pct: r.pct,
+      needed: withHeat(r.needed, r.need),
+      pct: withHeat(r.pct, r.need),
       covered: r.covered,
       blocked: r.blocked ?? [],
       selfReliance: r.selfReliance ?? explained(0, 'not computed'),
@@ -283,8 +288,10 @@ export function checklistView(
     return out;
   };
 
+  const heatNeed = shelterHeatNeedNotes(state, catalog);
   const rows: ChecklistRowView[] = sum.checklist.map((r) => {
     const notes: string[] = [];
+    if (r.need === 'Heated shelter') notes.push(...heatNeed.map((n) => `Heat needed: ${n}`));
     for (const res of feeding(r.need)) {
       const sys = curtailed.get(res);
       if (sys?.size) {
@@ -323,6 +330,7 @@ export function checklistView(
       ),
       needed: explained(r.needed, `average weekly requests for resources feeding ${r.need} over ${label}`, {
         refs,
+        ...(r.need === 'Heated shelter' && heatNeed.length ? { notes: heatNeed.map((n) => `Heat needed: ${n}`) } : {}),
       }),
       pct: explained(r.needed > 0 ? r.pct : 0, 'delivered ÷ needed (what consumers actually received)', {
         refs: {

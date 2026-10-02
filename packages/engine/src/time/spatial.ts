@@ -119,7 +119,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
         mode: 'scale' | 'require';
         any: boolean;
         notes: string[];
-        once: Set<number>;
+        once: Set<string>;
       }
     >();
     for (const rule of catalog.adjacencyRules) {
@@ -137,7 +137,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
         mode: e.mode,
         any: false,
         notes: [],
-        once: new Set<number>(),
+        once: new Set<string>(),
       };
       const inRange = sourcesFor(rule).filter((src) => {
         if (src === undefined) return false;
@@ -149,9 +149,11 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
       if (inRange.length) {
         c.any = true;
         if (e.stack === 'once') {
-          // Applies once however many rules and sources reach it.
-          if (!c.once.has(e.multiplier)) c.mult *= e.multiplier;
-          c.once.add(e.multiplier);
+          // Applies once however many rules and sources reach it. Host and parcel modifiers are
+          // keyed by their source system too, so blankets and a retrofit with equal multipliers both count.
+          const key = rule.scope === 'host' || rule.scope === 'parcel' ? `${rule.from}|${e.multiplier}` : `${e.multiplier}`;
+          if (!c.once.has(key)) c.mult *= e.multiplier;
+          c.once.add(key);
         } else c.mult *= e.multiplier ** inRange.length;
         if (e.floor !== undefined) c.floor = Math.max(c.floor, e.floor);
         c.notes.push(

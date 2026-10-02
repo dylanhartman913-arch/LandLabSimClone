@@ -14,6 +14,7 @@
 | `4e06287` (G14) | labor refactor: floating-point reordering (3.7e-14 gal) | `8453ea4c12fb8415` | `d40f3374eaa0a7b6` | unchanged |
 | `ac41a6e` (G15) | wellbeing v2 replaces health; labor follows it (0.5–1) | `b68f73296d744388` | `bb1a900eb08f3884` | `06a4d2d355f6ba34` |
 | `55622ac` (G16) | the engine fixes below | `597405555e09f6e0` | `8e5b69da0f8d529c` | `4d8464032212228c` |
+| blankets commit (2026-10-02) | `HEAT_BEDDING_HDD` removed: households without blankets judge heat against the full need. The 1e-9 threshold tolerance, measured alone, changed no digest. | `312fd10045969f43` | `56fbee659cf664de` | `db5e8240c2ff852c` |
 
 ## G16 engine fixes, one at a time
 

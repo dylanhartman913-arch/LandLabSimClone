@@ -2,6 +2,9 @@ import { catalog, getSite, getStart, type Difficulty } from '@homestead/catalog'
 import { describe, expect, it } from 'vitest';
 import {
   buyAtMarket,
+  checklistView,
+  initGame,
+  peopleView,
   computeSpatial,
   gameFromStart,
   newWellbeing,
@@ -153,5 +156,66 @@ describe('the G15 catalog additions', () => {
     const water = r.ledgers.reduce((a, l) => a + l.resources['Water']!.produced, 0);
     const gathered = r.ledgers.reduce((a, l) => a + (l.gathered ?? []).filter((x) => x.resource === 'Water').reduce((b, x) => b + x.amount, 0), 0);
     expect(water - gathered).toBeGreaterThan(20);
+  });
+});
+
+describe('wool blankets replace the hidden bedding constant (G16)', () => {
+  const blankets = () => sysId('Wool Blankets & Sleeping Bags');
+  /** Two people in a canvas tent with the kit stove and firewood, early January in Laramie. */
+  const tent = (withBlankets: boolean) => {
+    let g = initGame(catalog, getSite('laramie-wy'), {
+      startDay: 5,
+      peopleLeave: false,
+      startingStocks: { Food: 200000, 'Drinking water': 40, 'Woody biomass': 2000, Carbon: 100 },
+    });
+    const at = (name: string, x: number, y: number) => (g = placeSystem(catalog, g, sysId(name), x, y, 'prebuilt').state);
+    at('Canvas Wall Tent + Stove Jack', 100, 100);
+    at('Human Being', 100, 100);
+    at('Human Being', 100, 100);
+    at('Tiny Wood Stove', 110, 100);
+    if (withBlankets) at('Wool Blankets & Sleeping Bags', 100, 100);
+    return g;
+  };
+
+  it('blankets on the tent cut its heat need to a fifth, in the engine and on the checklist alike', () => {
+    const off = stepDays(tent(false), catalog, 3);
+    const on = stepDays(tent(true), catalog, 3);
+    const need = (r: typeof on) => r.ledgers.reduce((a, l) => a + l.needs['Heated shelter'].needed, 0);
+    expect(need(on) / need(off)).toBeCloseTo(0.2, 9);
+    const sp = computeSpatial(catalog, on.state);
+    const shelter = on.state.instances.find((i) => i.systemId === sysId('Canvas Wall Tent + Stove Jack'))!;
+    expect(sp.get(shelter.id)!.inMult['Heat']).toBeCloseTo(0.2, 9);
+    // Off the tent (on open ground), they warm nobody.
+    const away = placeSystem(catalog, tent(false), blankets(), 20, 20, 'prebuilt').state;
+    expect(computeSpatial(catalog, away).get(shelter.id)?.inMult['Heat']).toBeUndefined();
+  });
+
+  it('the people bar judges heat against the same need the checklist shows, and the why names the blankets', () => {
+    const r = stepDays(tent(true), catalog, 1);
+    const l = r.ledgers[0]!;
+    const share = l.needs['Heated shelter'].delivered / l.needs['Heated shelter'].needed;
+    expect(share).toBeLessThan(1); // a Laramie January in a tent: still short with the kit stove
+    const person = peopleView(r.state, catalog)[0]!;
+    expect(person.why.some((t) => t.label.startsWith(`Heat: ${Math.round(share * 100)}% met`))).toBe(true);
+    expect(person.wellbeing.explain.notes!.join(' ')).toContain('Wool Blankets & Sleeping Bags × 0.20');
+    const row = checklistView(r.state, catalog, 'worst').rows.find((x) => x.need === 'Heated shelter')!;
+    expect(row.pct.value).toBeCloseTo(share, 9);
+    expect(row.pct.explain.notes!.join(' ')).toContain('Wool Blankets & Sleeping Bags × 0.20');
+    expect(checklistView(r.state, catalog, 'average').rows.find((x) => x.need === 'Heated shelter')!.pct.explain.notes!.join(' ')).toContain('Wool Blankets');
+  });
+
+  it('blankets and a weatherization retrofit on the same house both count', () => {
+    const g = start('adapt', 'front-range');
+    const home = g.instances.find((i) => i.systemId === sysId('Average Suburban Home'))!;
+    let s = placeSystem(catalog, g, sysId('Home Weatherization Retrofit'), home.x, home.y, 'prebuilt').state;
+    s = placeSystem(catalog, s, blankets(), home.x, home.y, 'prebuilt').state;
+    expect(computeSpatial(catalog, s).get(home.id)!.inMult['Heat']).toBeCloseTo(0.7 * 0.2, 9);
+  });
+
+  it('the greenfield kit includes them, on the tent', () => {
+    const g = start('greenfield', 'front-range');
+    const b = g.instances.find((i) => i.systemId === blankets())!;
+    const t = g.instances.find((i) => i.systemId === sysId('Canvas Wall Tent + Stove Jack'))!;
+    expect([b.x, b.y]).toEqual([t.x, t.y]);
   });
 });

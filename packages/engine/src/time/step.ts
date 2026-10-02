@@ -29,7 +29,6 @@ import { computeSpatial, groupKeyOf, type InstanceSpatial } from './spatial.ts';
 import { advanceTutorial } from '../tutorial.ts';
 import {
   COOL_CDD_MIN,
-  HEAT_BEDDING_HDD,
   HEAT_HDD_MIN,
   WB_AWAY_MIN_DAYS,
   WB_RETURN_AT,
@@ -1000,15 +999,9 @@ function produce(d: Day): void {
 /** Step 7: people's wellbeing (G15 wellbeing v2), hardship, and going to town and back. */
 function updatePeople(d: Day): void {
   const share = (n: NeedDay) => (n.needed > EPS ? Math.min(1, n.delivered / n.needed) : 1);
-  const hdd = d.weather.hdd;
-  const heatNeed = d.needs['Heated shelter'];
-  const beyondBedding = hdd > EPS ? Math.max(0, hdd - HEAT_BEDDING_HDD) / hdd : 0;
-  const heatFrac =
-    hdd > HEAT_HDD_MIN
-      ? heatNeed.needed * beyondBedding > EPS
-        ? Math.min(1, heatNeed.delivered / (heatNeed.needed * beyondBedding))
-        : 1
-      : null;
+  // Heat is measured against the shelter's own heat need, the same need the checklist shows.
+  // Bedding (blankets, sleeping bags) lowers that need as a catalog modifier on the shelter (G16).
+  const heatFrac = d.weather.hdd > HEAT_HDD_MIN ? share(d.needs['Heated shelter']) : null;
   const coolFrac = d.weather.cdd > COOL_CDD_MIN ? share(d.needs['Cooled shelter']) : null;
   const mult = d.prev.settings.wellbeingMult ?? 1;
   let present = 0;

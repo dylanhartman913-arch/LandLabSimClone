@@ -277,3 +277,11 @@ A patch is idempotent: systems already present by name are skipped, and edits al
 | Clothesline | Labor 0.5 → Wellbeing 2 / week; modifier: people's Electricity × 20/21 | |
 
 **Modifiers** (`systems.<id>.modifies` in `data/catalog_overrides.json`): `{ to, resource, direction, multiplier, scope: "host" | "parcel", note }`. They are exported as adjacency rules; see ENGINE.md, "Modifiers".
+
+**G16 addition (S177, patch `g16c-wool-blankets`)**
+
+| System | Key flows | Notes |
+|---|---|---|
+| Wool Blankets & Sleeping Bags | Labor 0.1 / week; modifier: host shelter Heat × 0.2 | place it on the shelter; in the greenfield kit; replaces the `HEAT_BEDDING_HDD` constant |
+
+The patch script also stretched the Systems R validation and the Matrix highlighting to row 178.

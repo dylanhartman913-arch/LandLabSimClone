@@ -40,6 +40,8 @@ test('start from the ground up: the camp, the stockpile bar, and wellbeing with 
   await person.locator('button.why').click();
   const why = page.getByTestId('why-popover');
   await expect(why).toContainText('wellbeing');
+  // Heat is judged against the tent's heat need, which the kit's blankets lower (G16).
+  await expect(why).toContainText('Wool Blankets & Sleeping Bags × 0.20');
   await shot(page, 'g15', '03-wellbeing-why');
   await page.keyboard.press('Escape');
   await page.getByTestId('stock-days-food').click();

@@ -37,7 +37,8 @@ export function StockpileBar() {
 /** Each person's wellbeing bar and the top reason it is moving today (G15). */
 export function PeopleBar() {
   const game = useGame((s) => s.game);
-  const people = useMemo(() => peopleView(game), [game]);
+  const catalog = useGame((s) => s.catalog);
+  const people = useMemo(() => peopleView(game, catalog), [game, catalog]);
   if (!people.length) return null;
   return (
     <div className="people" role="group" aria-label="People" data-testid="people">

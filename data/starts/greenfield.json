@@ -16,6 +16,11 @@
       "y": 0.5
     },
     {
+      "system": "Wool Blankets & Sleeping Bags",
+      "x": 0.5,
+      "y": 0.5
+    },
+    {
       "system": "Human Being",
       "x": 0.5,
       "y": 0.5,
@@ -102,7 +107,7 @@
   },
   "preview": {
     "kit": [
-      "A canvas wall tent with a tiny wood stove",
+      "A canvas wall tent with a tiny wood stove, wool blankets, and sleeping bags",
       "A firepit for cooking and evenings",
       "A 500 W panel, a power station, and a fan",
       "A water filter and a rain barrel",

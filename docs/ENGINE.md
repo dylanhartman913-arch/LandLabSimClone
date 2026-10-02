@@ -443,7 +443,8 @@ Each person has **wellbeing** from 0 to 100, starting at 75 (`time/wellbeing.ts`
 | Heat (only days with HDD > 10) | 50% | 1 night | 5 × (1 − met) | 0.3 × (1 − met) |
 | Sanitation | 50% | 7 days | 2 × (1 − met) | 0.1 × (1 − met) |
 
-- **Heat and bedding.** Warm clothes and bedding carry a person through the first 20 °F-days of a day (`HEAT_BEDDING_HDD`). Heat is measured against the rest: delivered ÷ (needed × (HDD − 20) ÷ HDD). The catalog's Tiny Wood Stove covers about a quarter of a canvas wall tent's heat loss. With bedding, that is enough in spring and not in January.
+- **Heat** is measured against the shelter's own heat need: delivered ÷ needed on the checklist's Heated shelter row. Bedding is an item, not a rule: Wool Blankets & Sleeping Bags placed on a shelter multiply its heat need by 0.2 (a host modifier, see "Modifiers"). The greenfield tent has them. The old `HEAT_BEDDING_HDD` constant is gone (G16; see `docs/BALANCE_LOG.md`).
+- **Thresholds have a tolerance:** a share within 1e-9 of a "short" threshold is not short, so 17.5 ÷ 35 is exactly half.
 - **Comfort needs** only drift: points a day × (1 − met):
   - electricity 0.25;
   - cooling 0.25 (only days with CDD > 5);
@@ -487,6 +488,9 @@ The stockpile view (`stockpileView`) shows days of food (every food in kcal), dr
 A system can change another system's flow (`systems.<id>.modifies` in the overrides). The exporter turns each modifier into an adjacency rule with `scope`:
 - `host`: the modifier sits on the receiver, with its centre inside the footprint. Example: the Home Weatherization Retrofit placed on a house scales the house's Heat request by 0.7.
 - `parcel`: anywhere on the parcel. Example: a Clothesline scales each person's Electricity request by 20/21, about 1 kWh a week less each.
+- Wool Blankets & Sleeping Bags (host): the shelter's Heat request × 0.2.
+- Host and parcel modifiers that stack `once` are keyed by their source system, so blankets and a retrofit on one house both apply (0.7 × 0.2). Other `once` rules, such as trees near a turbine, still apply once per multiplier however many sources reach them.
+- `shelterHeatNeedNotes` lists what lowers each shelter's heat need. The checklist's Heated shelter row and the people bar's "why" both show it.
 
 ## Tutorials, bots, and pacing gates (G16)
 

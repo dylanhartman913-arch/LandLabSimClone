@@ -1,7 +1,6 @@
 import { getQuestLine, type Catalog, type QuestDef, type QuestGoal, type QuestLine } from '@homestead/catalog';
 import { computeSpatial } from './time/spatial.ts';
 import type { DayLedger, GameState } from './time/types.ts';
-import { HEAT_BEDDING_HDD } from './time/wellbeing.ts';
 
 /** Where a game's tutorial stands (G16). Lives in the game state, so rewards replay exactly. */
 export interface TutorialState {
@@ -36,11 +35,10 @@ const byName = (catalog: Catalog, name: string) => {
 
 const active = (state: GameState, id: string) => state.instances.filter((i) => i.systemId === id && i.status === 'active');
 
-/** Share of the heat a household needs beyond what bedding covers (as in wellbeing v2). */
-export function heatShareAfterBedding(l: DayLedger): number {
-  const hdd = l.weather.hdd;
-  const need = l.needs['Heated shelter'].needed * (hdd > 0 ? Math.max(0, hdd - HEAT_BEDDING_HDD) / hdd : 0);
-  return need > 1e-9 ? Math.min(1, l.needs['Heated shelter'].delivered / need) : 1;
+/** Share of the shelter's heat need met that day: the checklist's Heated shelter row (bedding included as a modifier). */
+export function heatShare(l: DayLedger): number {
+  const n = l.needs['Heated shelter'];
+  return n.needed > 1e-9 ? Math.min(1, n.delivered / n.needed) : 1;
 }
 
 /** Home-grown food eaten over the last `days` days, as a share of the household's need. */
@@ -104,7 +102,7 @@ export function goalStatus(state: GameState, catalog: Catalog, goal: QuestGoal, 
     }
     case 'warm': {
       let n = 0;
-      for (const l of state.ledgers) if (l.absDay >= since && l.weather.hdd > goal.hddAbove && heatShareAfterBedding(l) >= goal.atLeast) n++;
+      for (const l of state.ledgers) if (l.absDay >= since && l.weather.hdd > goal.hddAbove && heatShare(l) >= goal.atLeast) n++;
       return {
         done: n >= goal.days,
         progress: Math.min(1, n / goal.days),

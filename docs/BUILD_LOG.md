@@ -856,3 +856,19 @@ All six sessions are done and pushed to `claude/gifted-hypatia-x158zw`, with no 
 **Digests:** unchanged.
 
 **Known gaps:** see the report's "Found, not fixed" section and its open bedding question.
+
+## Review follow-ups on PR 1 (2026-10-02)
+
+Four changes, each in its own commit.
+
+1. **The retrofit is tagged Heating only** (`g16a-retrofit-heating`). Shelter is back to 20 systems and "Within target?" reads Yes. `catalog_patch.py` gained text-only `edits` (never a number column). Goldens: only the source hash changed.
+2. **The Systems R validation and the Matrix highlighting cover every row** (`g16b-table-formats`). They now reach R2:R177 and B2:BK177, and the patch script stretches them on every future patch (the blankets patch took them to 178).
+   - Styling, checked cell by cell against the file before: only those two ranges changed.
+   - Against the pre-G15 original, the G15 save left 61 custom row heights rounded to LibreOffice's 0.75 pt grid, and one extra cell format (5 added Flows notes cells say "wrap off" explicitly). Nothing else differs.
+3. **Corrected the G16 entry's digest line.** The seed reserve changed no digest.
+4. **Wool Blankets & Sleeping Bags replace `HEAT_BEDDING_HDD`** (S177, `g16c-wool-blankets`).
+   - It is a host modifier on the shelter's Heat request, × 0.2, and is in the greenfield kit.
+   - The checklist, the people bar, and the "warm" quest goal all use the shelter's own heat need. Both "why" popovers name the blankets.
+   - Wellbeing's threshold test gained a 1e-9 tolerance. It was a latent float bug that this change exposed.
+   - Pacing is identical to "baseline plus the tolerance fix" on every measure. The full before/after table and the multiplier scan are in `BALANCE_LOG.md`, along with a caveat: under a constant multiplier, winter in a tent is easier than under the old offset.
+   - Time digests were re-recorded (`DIGESTS.md`).

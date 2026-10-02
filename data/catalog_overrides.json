@@ -74,6 +74,19 @@
         }
       ],
       "note": "G15: household electricity -2 kWh/week for two people."
+    },
+    "S177": {
+      "modifies": [
+        {
+          "to": "category:Shelter",
+          "resource": "Heat",
+          "direction": "in",
+          "multiplier": 0.2,
+          "scope": "host",
+          "note": "Wool blankets and sleeping bags let the household stay warm at a much lower indoor temperature, so the shelter needs a fifth of the heat (fitted to the bedding rule it replaces; see docs/BALANCE_LOG.md)."
+        }
+      ],
+      "note": "Place it on the shelter it serves (G16, replaces the HEAT_BEDDING_HDD constant)."
     }
   },
   "resources": {

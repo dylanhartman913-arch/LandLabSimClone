@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "source": {
     "file": "LandLab_Sim_Systems_v2.xlsx",
-    "sha256": "2414deeca3b60b45df6f316188259087e5744de9c828c2c292aadbe41ecc3a9c"
+    "sha256": "b92b6bf36fe07032605c186d367e182cf4331a4df3e137d7286a19e82c609895"
   },
   "assumptions": {
     "hdd": 6000,
@@ -12326,6 +12326,58 @@
         "gameListedInputs": "xlsx",
         "gameListedOutputs": "xlsx",
         "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S177",
+      "name": "Wool Blankets & Sleeping Bags",
+      "categories": [
+        "Heating"
+      ],
+      "source": "New (G16 patch)",
+      "description": "Wool blankets and cold-rated sleeping bags for everyone who sleeps in the shelter.",
+      "costBuy": 300,
+      "setupLaborHrs": 0,
+      "weeklyUpkeepHrs": 0.1,
+      "footprintSqft": 0,
+      "lifespanYrs": 10,
+      "confidence": "low",
+      "notes": "Lowers the host shelter's heat need: people stay warm at a lower indoor temperature (engine modifier, catalog_overrides.json).",
+      "starterCount": 0,
+      "gameListedInputs": "Labor",
+      "gameListedOutputs": "(modifies its host shelter)",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S177",
+      "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
@@ -34154,6 +34206,33 @@
         "note": "xlsx",
         "timing": "default-rule"
       }
+    },
+    {
+      "id": "F0819",
+      "systemId": "S177",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.1
+      },
+      "period": "Weekly",
+      "note": "Weekly upkeep hours (Systems column K): airing and washing.",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
     }
   ],
   "adjacencyRules": [
@@ -34423,6 +34502,20 @@
         "stack": "once"
       },
       "note": "A clothesline replaces the dryer: about 1 kWh less per person a week (21 to 20)."
+    },
+    {
+      "from": "S177",
+      "to": "category:Shelter",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Heat",
+        "multiplier": 0.2,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Wool blankets and sleeping bags let the household stay warm at a much lower indoor temperature, so the shelter needs a fifth of the heat (fitted to the bedding rule it replaces; see docs/BALANCE_LOG.md)."
     }
   ],
   "assignedCapacities": [

@@ -48,12 +48,6 @@ export const FOOD_SEVERE = 0.2;
 export const FOOD_SEVERE_GRACE = 1;
 /** Heat counts only on days colder than this (HDD); cooling only on days hotter than this (CDD). */
 export const HEAT_HDD_MIN = 10;
-/**
- * Warm clothes and bedding carry a person through the first this-many heating degree-days of
- * a day (a night in the mid-40s °F indoors). Heat is measured against the rest: delivered ÷
- * (needed × (HDD − this) ÷ HDD). So a tiny stove in a canvas tent is enough in spring, not in January.
- */
-export const HEAT_BEDDING_HDD = 20;
 export const COOL_CDD_MIN = 5;
 
 /** Comfort needs drift only: points a day × (1 − share met). Their weights sum to 1. */
@@ -117,7 +111,8 @@ export function updateWellbeing(old: PersonState, today: PersonDay): PersonUpdat
       short[k] = 0;
       continue;
     }
-    if (f < rule.short) {
+    // A share exactly at the threshold is not short (1e-9 absorbs floating-point noise: 17.5 ÷ 35).
+    if (f < rule.short - 1e-9) {
       allMet = false;
       short[k]++;
       let past = short[k] > rule.graceDays;

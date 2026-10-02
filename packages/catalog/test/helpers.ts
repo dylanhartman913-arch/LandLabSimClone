@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs';
 import * as XLSX from 'xlsx';
 import { DEFAULT_OVERRIDES, DEFAULT_XLSX, exportCatalog } from '../src/exporter/index.ts';
 
-/** The next free system ID after the shipped catalog (S176 after the G15 patch). */
-export const NEW_SYSTEM_ID = 'S177';
+/** The next free system ID after the shipped catalog (S177 after the G16 blankets patch). */
+export const NEW_SYSTEM_ID = 'S178';
 
 export const realXlsx = new Uint8Array(readFileSync(DEFAULT_XLSX));
 export const realOverrides: unknown = JSON.parse(readFileSync(DEFAULT_OVERRIDES, 'utf8'));
@@ -84,8 +84,8 @@ export function withNewSystem(wb: XLSX.WorkBook): void {
     at('N', { t: 's', v: '' });
     fr++;
   };
-  addFlow('F0819', 'Input', 'Labor', 0.5, 'hours');
-  addFlow('F0820', 'Input', 'Vegetables fruit fiber herbs', 3, 'lbs');
-  addFlow('F0821', 'Output', 'Vegetables fruit fiber herbs', 2.4, 'lbs');
+  addFlow('F0820', 'Input', 'Labor', 0.5, 'hours');
+  addFlow('F0821', 'Input', 'Vegetables fruit fiber herbs', 3, 'lbs');
+  addFlow('F0822', 'Output', 'Vegetables fruit fiber herbs', 2.4, 'lbs');
   flows['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: fr - 2, c: 13 } });
 }

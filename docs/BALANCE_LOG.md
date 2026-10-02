@@ -33,7 +33,7 @@ Catalog quantities are never tuned.
 | Food: short / grace / weight | 50% (20%) / 4 days (1) / 4 | Grace from the roadmap. A weight of 4 a day at zero food makes a person go to town about 18–20 days after the pantry runs out: "declines slowly rather than collapsing". |
 | Shelter: short / grace / weight | 50% / 2 days / 5 | A canvas wall tent gives two people 56% of the catalog's 200 sq ft each: crowded, not unsheltered (drift only). |
 | Heat: short / grace / weight | 50% / 1 night / 5 | Grace from the roadmap. |
-| `HEAT_BEDDING_HDD` | 20 | The catalog's Tiny Wood Stove makes 200,000 BTU a week. The Canvas Wall Tent loses about 806,000 BTU a week on average, so the kit stove covers about 25%. Without a bedding allowance, every greenfield start would be a heat hardship from night 2. With 20 °F-days of bedding, spring is fine on all three sites, and a Laramie January in a tent is a hardship, as it should be. |
+| `HEAT_BEDDING_HDD` *(removed 2026-10-02; replaced by the Wool Blankets & Sleeping Bags item, see below)* | 20 | The catalog's Tiny Wood Stove makes 200,000 BTU a week. The Canvas Wall Tent loses about 806,000 BTU a week on average, so the kit stove covers about 25%. Without a bedding allowance, every greenfield start would be a heat hardship from night 2. With 20 °F-days of bedding, spring is fine on all three sites, and a Laramie January in a tent is a hardship, as it should be. |
 | Sanitation: short / grace / weight | 50% / 7 days / 2 | The humanure bucket handles exactly half of two people's waste (17.5 of 35 lbs a week). It is not short, so it drifts. |
 | Comfort weights | electricity 0.25, cooling 0.25, transport 0.15, hot water 0.15, cooked meals 0.2 | They sum to 1, so a camp with no comfort at all still recovers (+0.6) when survival is met. |
 | Service bonus | 0.05 a point a person a week, at most 0.5 | The firepit's 5 points a week for two people is +0.125 a day. |
@@ -91,3 +91,93 @@ The bots (`packages/cli/bots/`) played every gate on 3 sites × 3 seeds (`npm ru
 **Open for the designer:**
 - Real weather doesn't bite: all 9 seeds survive year 1. The roadmap hoped it would ("difficulty should bite"), but the gate only asks for at least 2 of 3. Raising `wellbeingMult` for Real weather to 1.25, or making its stockpile smaller, would make it bite.
 - The tutorial follower lands on 77–78 for its lowest month. Comfort drift (no hot water, no car, a crowded tent) holds a camp at about 80, which is the intended "you can live like this, but you'd want more".
+
+## Bedding becomes a catalog item (2026-10-02)
+
+`HEAT_BEDDING_HDD` (clothes and bedding cover the first 20 °F-days of a day) is gone. It was an engine constant, it applied to every household, and the "why" never showed it. It also meant the checklist and the people bar judged heat against different needs.
+
+In its place is **Wool Blankets & Sleeping Bags** (S177, patch `g16c-wool-blankets`):
+- a Heating item with a host modifier, radius 0, reusing the retrofit's machinery;
+- placed on a shelter, it multiplies the shelter's Heat request by **0.2**;
+- it is in the greenfield kit, on the tent.
+
+The checklist's Heated shelter row, the people bar, and the "warm" quest goal now all use the shelter's own heat need. Both "why" popovers name the blankets.
+
+**One more change in the same commit:** wellbeing's "short" test now has a 1e-9 tolerance (`f < short − 1e-9`). The humanure bucket handles exactly half of two people's waste (17.5 of 35 lbs). Floating-point noise put that share a hair under 0.5, so the Front Range tutorial follower took a sanitation hardship from day 222 and went to town. The baseline passed only by luck of rounding. Measured alone, this fix changes Laramie's day-42 wellbeing (85.7 → 84.2) and lowest tutorial month (78 → 77), and nothing else.
+
+### Choosing the multiplier
+
+Tolerance, fixed before scanning:
+- every gate passes;
+- idle first hardship within ±2 days, wellbeing on day 42 within ±3, and every leave day within ±5;
+- lowest tutorial month within ±3 points, and home-grown food within ±2 points;
+- Real weather survivors unchanged.
+
+Scan (`packages/cli/scratch`, not committed), after the tolerance fix:
+
+| Multiplier | Front Range | Laramie | Asheville |
+|---|---|---|---|
+| 0.20 | identical to the tolerance-fix-only baseline | identical | identical |
+| 0.22 | identical | wellbeing on day 42 −0.5 | identical |
+| 0.25 | wellbeing on day 42 −0.1 | day 42 −1.2, leave day −1, lowest month −1 | identical |
+| 0.30 | day 42 −1.3 | day 42 −2.1 | identical |
+| 0.35 | day 42 −2.3 | heat hardship on day 1; to town by day 23; Real weather fails | identical |
+| 0.50 and up | heat hardship on day 1; to town by day 24 | heat hardship on day 1 | identical (heat drift only) |
+
+**0.2 is the closest fit:** every pacing metric equals the tolerance-fix-only baseline exactly.
+
+### Before and after, all gates (seeds 1–3; Standard and Gentle are seed-invariant)
+
+| Site | Measure | Before (bedding constant) | Tolerance fix only | After (blankets × 0.2) |
+|---|---|---|---|---|
+| Front Range | Idle: first hardship (day, need) | 53 (food) | 53 (food) | 53 (food) |
+| Front Range | Idle: wellbeing on day 42 | 85.2 | 85.2 | 85.2 |
+| Front Range | Idle: first to town (day) | 76 | 76 | 76 |
+| Front Range | Gentle idle: first to town (day) | 124 | 124 | 124 |
+| Front Range | Tutorial: lowest month | 78 | 78 | 78 |
+| Front Range | Tutorial: best home-grown month by frost | 31% | 31% | 31% |
+| Front Range | Tutorial: cold-snap quest done (day) | 212 | 212 | 212 |
+| Front Range | Tutorial: heat hardships in year 1 | 0 | 0 | 0 |
+| Front Range | Real weather: first to town, seeds 1/2/3 | never/never/never | never/never/never | never/never/never |
+| Front Range | Adapt upgrader | $807 → $627 (22% lower) lowest wb 76 | $807 → $627 (22% lower) lowest wb 76 | $807 → $627 (22% lower) lowest wb 76 |
+| Laramie | Idle: first hardship (day, need) | 52 (food) | 52 (food) | 52 (food) |
+| Laramie | Idle: wellbeing on day 42 | 85.7 | 84.2 | 84.2 |
+| Laramie | Idle: first to town (day) | 75 | 75 | 75 |
+| Laramie | Gentle idle: first to town (day) | 121 | 121 | 121 |
+| Laramie | Tutorial: lowest month | 78 | 77 | 77 |
+| Laramie | Tutorial: best home-grown month by frost | 32% | 32% | 32% |
+| Laramie | Tutorial: cold-snap quest done (day) | 150 | 150 | 150 |
+| Laramie | Tutorial: heat hardships in year 1 | 0 | 0 | 0 |
+| Laramie | Real weather: first to town, seeds 1/2/3 | never/never/never | never/never/never | never/never/never |
+| Laramie | Adapt upgrader | $810 → $631 (22% lower) lowest wb 76 | $810 → $631 (22% lower) lowest wb 76 | $810 → $631 (22% lower) lowest wb 76 |
+| Asheville | Idle: first hardship (day, need) | 53 (food) | 53 (food) | 53 (food) |
+| Asheville | Idle: wellbeing on day 42 | 84.7 | 84.7 | 84.7 |
+| Asheville | Idle: first to town (day) | 77 | 77 | 77 |
+| Asheville | Gentle idle: first to town (day) | 124 | 124 | 124 |
+| Asheville | Tutorial: lowest month | 77 | 77 | 77 |
+| Asheville | Tutorial: best home-grown month by frost | 29% | 29% | 29% |
+| Asheville | Tutorial: cold-snap quest done (day) | 257 | 257 | 257 |
+| Asheville | Tutorial: heat hardships in year 1 | 0 | 0 | 0 |
+| Asheville | Real weather: first to town, seeds 1/2/3 | never/never/never | never/never/never | never/never/never |
+| Asheville | Adapt upgrader | $797 → $619 (22% lower) lowest wb 76 | $797 → $619 (22% lower) lowest wb 76 | $797 → $619 (22% lower) lowest wb 76 |
+
+`npm run test:pacing`: 15 of 15 gate groups pass, before and after. The only verdict-line change is Laramie's tutorial lowest month, 78 → 77, from the tolerance fix.
+
+### What the gates don't show: winter in a tent got easier
+
+The kit stove's output and a shelter's heat loss both scale with heating degree-days. Under a constant multiplier, a tent's heat share is therefore the same every day of the year. The old offset made cold days harder. Canvas wall tent, kit stove, two people:
+
+| Day | Old bedding rule | Blankets × 0.2 |
+|---|---|---|
+| Front Range, January (HDD 34) | 60% | 100% |
+| Laramie, January (HDD 43.5) | 30%: short, a heat hardship | 81%: not short |
+| Laramie, late March (HDD 35.5) | 37% | 81% |
+| Asheville, any day | 100% | 100% |
+
+So "a Laramie January in a tent is a hardship, as it should be" (the G15 rationale) no longer holds with blankets. The gates can't see it: the idle runs end before winter, and the tutorial follower builds a mass heater before the first cold snap. Without blankets a tent is much colder than before (Laramie 16%, Front Range 25%, all year).
+
+If winter should bite again:
+- give the modifier an HDD-dependent form (an offset rather than a multiplier); or
+- lower the multiplier only for warm days.
+
+Either is an engine change and was not made here.

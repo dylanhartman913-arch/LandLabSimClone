@@ -1,6 +1,7 @@
 import type { Catalog } from '@homestead/catalog';
 import { explained, type Explained } from '../provenance.ts';
 import { getPlans } from '../time/plans.ts';
+import { computeSpatial } from '../time/spatial.ts';
 import type { GameState } from '../time/types.ts';
 import { laborShare, type WellbeingTerm } from '../time/wellbeing.ts';
 
@@ -99,7 +100,8 @@ export interface PersonView {
 }
 
 /** Each person's wellbeing bar and why it is moving (G15). */
-export function peopleView(state: GameState): PersonView[] {
+export function peopleView(state: GameState, catalog?: Catalog): PersonView[] {
+  const heatNotes = catalog ? shelterHeatNeedNotes(state, catalog).map((n) => `Heat is judged against the shelter's heat need: ${n}`) : [];
   return state.instances
     .filter((i) => i.person)
     .map((i, k) => {
@@ -110,7 +112,7 @@ export function peopleView(state: GameState): PersonView[] {
         label: `Person ${k + 1}`,
         wellbeing: explained(p.wellbeing, 'yesterday’s wellbeing + recovery − penalties (each day costs at most 8 points)', {
           refs: { changeToday: change, laborShare: laborShare(p.wellbeing) },
-          notes: p.why.map((t) => `${t.points >= 0 ? '+' : '−'}${Math.abs(t.points).toFixed(2)}  ${t.label}`),
+          notes: [...p.why.map((t) => `${t.points >= 0 ? '+' : '−'}${Math.abs(t.points).toFixed(2)}  ${t.label}`), ...heatNotes],
         }),
         labor: p.health,
         away: !!p.away,
@@ -118,4 +120,31 @@ export function peopleView(state: GameState): PersonView[] {
         why: p.why,
       };
     });
+}
+
+/**
+ * What lowers each shelter's heat need (G16): the host modifiers sitting on it (wool blankets,
+ * a weatherization retrofit), each with its multiplier, and the shelter's combined multiplier.
+ * The checklist's Heated shelter row and the people bar both judge heat against this need.
+ */
+export function shelterHeatNeedNotes(state: GameState, catalog: Catalog): string[] {
+  const spatial = computeSpatial(catalog, state);
+  const name = (id: string) => catalog.systems.find((x) => x.id === id)?.name ?? id;
+  const rules = catalog.adjacencyRules.filter((r) => r.scope === 'host' && r.effect.resource === 'Heat' && r.effect.direction === 'in');
+  const out: string[] = [];
+  for (const sh of state.instances) {
+    const total = spatial.get(sh.id)?.inMult['Heat'];
+    if (sh.status !== 'active' || total === undefined || Math.abs(total - 1) < 1e-9) continue;
+    const parts: string[] = [];
+    const half = Math.sqrt(catalog.systems.find((x) => x.id === sh.systemId)?.footprintSqft ?? 0) / 2;
+    for (const r of rules) {
+      // A host modifier counts when it sits on the shelter: its centre inside the footprint (as in spatial.ts).
+      const on = state.instances.some(
+        (src) => src.systemId === r.from && src.status === 'active' && Math.abs(src.x - sh.x) <= half + 1e-6 && Math.abs(src.y - sh.y) <= half + 1e-6,
+      );
+      if (on) parts.push(`${name(r.from)} × ${r.effect.multiplier.toFixed(2)}`);
+    }
+    out.push(`${name(sh.systemId)}: heat need × ${total.toFixed(2)}${parts.length ? ` (${[...new Set(parts)].join(', ')})` : ''}`);
+  }
+  return out;
 }

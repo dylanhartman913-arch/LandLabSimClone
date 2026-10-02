@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "source": {
     "file": "LandLab_Sim_Systems_v2.xlsx",
-    "sha256": "2414deeca3b60b45df6f316188259087e5744de9c828c2c292aadbe41ecc3a9c"
+    "sha256": "b92b6bf36fe07032605c186d367e182cf4331a4df3e137d7286a19e82c609895"
   },
   "counts": {
     "S002": 1,
@@ -6235,6 +6235,13 @@
       "count": 0,
       "weeklyTotal": 0,
       "contribution": null
+    },
+    "F0819": {
+      "qty": 0.1,
+      "weeklyPerUnit": 0.1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
     }
   }
 }

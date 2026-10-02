@@ -18,6 +18,6 @@ describe('adding a system in the spreadsheet', () => {
     ]);
     // Engine-only fields come from the default rules, as for every other system.
     expect(sys.provenance.layer).toBe('default-rule');
-    expect(result!.catalog.systems).toHaveLength(177);
+    expect(result!.catalog.systems).toHaveLength(178);
   });
 });

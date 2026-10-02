@@ -558,7 +558,7 @@ export type Start = z.infer<typeof StartSchema>;
  * - stock: a stock is at least this much.
  * - setting: an auto-gather rule is at least this.
  * - warm: this many days since the quest began with HDD above `hddAbove` and the household's
- *   heat (after bedding) at least `atLeast` met.
+ *   heat need (the checklist's Heated shelter row, blankets included) at least `atLeast` met.
  * - homegrown: home-grown food eaten is at least `share` of the household's need over `days`.
  * - modified: a system modifies some shelter's `resource` (a retrofit on the house).
  * - lacks: no active instance of a system.
