@@ -21,6 +21,8 @@ export interface Prefs {
   colorblind: boolean;
   reducedMotion: boolean;
   uiScale: number;
+  /** Status bubbles on systems that are partial or blocked (B). */
+  badges: boolean;
 }
 
 export const DEFAULT_PREFS: Prefs = {
@@ -41,4 +43,5 @@ export const DEFAULT_PREFS: Prefs = {
   reducedMotion:
     typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches,
   uiScale: 1,
+  badges: true,
 };

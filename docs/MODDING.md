@@ -9,7 +9,7 @@ Field-by-field reference: [`CATALOG.md`](CATALOG.md). Engine behavior: [`ENGINE.
 You need Node 22, `npm ci` once, and a spreadsheet program that recalculates formulas (Excel, LibreOffice, Numbers). SheetJS reads the values the program saved, so always save after recalculating.
 
 1. **Systems sheet: add a row.**
-   - `System ID`: the next free ID (the shipped catalog ends at `S168`, so `S169`).
+   - `System ID`: the next free ID (the shipped catalog ends at `S177`, so `S178`).
    - `System`: a unique name. This is what players see.
    - `Categories`: one or more names from the Categories sheet, separated by `; `. The first category sets the tile color and icon.
    - `Source`, `Description`, `Confidence` (`high`, `medium`, `low`), `Notes`: plain text.
@@ -46,7 +46,7 @@ The system gets sensible engine behavior from default rules: its allocation prio
 
 ```json
 {
-  "systems": { "S169": { "yearsToFullOutput": 0, "priorityTier": 2 } },
+  "systems": { "S178": { "yearsToFullOutput": 0, "priorityTier": 2 } },
   "flows": { "F0799": { "inputRole": "boost", "boostWeight": 0.3, "note": "Works without it, better with it." } }
 }
 ```

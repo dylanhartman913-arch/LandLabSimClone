@@ -10,7 +10,7 @@ describe('scenarios that read like the game', () => {
     expect(need(ledgers, 'Heated shelter').delivered).toBe(0);
     const hardship = eventsOf(events, 'hardship').filter((e) => e.need === 'heat');
     expect(hardship.length).toBeGreaterThan(0);
-    expect(hardship[0]!.absDay).toBe(2); // third cold day in a row
+    expect(hardship[0]!.absDay).toBe(1); // the second cold night in a row: heat has one night's grace (wellbeing v2)
   });
 
   it('wood stoves with a woodpile keep the tent warm in January', () => {
@@ -136,8 +136,12 @@ describe('scenarios that read like the game', () => {
       { settings: { startingCash: 0, startingStocks: { Food: 50000, 'Drinking water': 50 } } },
     );
     const { ledgers, events } = run(g, 5);
-    expect(ledgers.slice(1).every((l) => l.resources['Food']!.produced === 0)).toBe(true);
-    expect(eventsOf(events, 'shortage').some((e) => e.resource === 'Capital')).toBe(true);
+    // The grocery is a backstop (G12): it sells on demand, but not to an empty wallet.
+    expect(ledgers.every((l) => l.resources['Food']!.purchased === 0)).toBe(true);
+    expect(eventsOf(events, 'purchases-stopped')).toHaveLength(0); // the pantry still has food
+    const hungry = run(newGame({ 'Human Being': 1, 'Big Box Grocery Store': 1, 'Cargo Bike': 1 }, { settings: { startingCash: 0, startingStocks: {} } }), 3);
+    expect(hungry.ledgers.every((l) => l.resources['Food']!.purchased === 0)).toBe(true);
+    expect(eventsOf(hungry.events, 'purchases-stopped')).toHaveLength(1);
   });
 });
 

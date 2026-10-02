@@ -14,6 +14,11 @@ export interface InstanceSpatial {
   gated: Record<string, boolean>;
   /** Assigned capacities: which provider serves this consumer, and what share of its need fits. */
   assigned: Record<string, { providerId: string | null; share: number; distanceFt: number | null }>;
+  /**
+   * Outputs that don't reach a shelter (G11: a stove far from any tent, a firepit): they are
+   * made but count as potential only, and nothing can use them.
+   */
+  undelivered: Record<string, true>;
   /** Plain language for "why" popovers. */
   notes: string[];
   /** Instances with the same signature behave identically (the engine groups them). */
@@ -25,6 +30,7 @@ const NONE: InstanceSpatial = Object.freeze({
   outMult: {},
   gated: {},
   assigned: {},
+  undelivered: {},
   notes: [],
   sig: '',
 }) as InstanceSpatial;
@@ -55,16 +61,65 @@ function gapFt(ax: number, ay: number, ah: number, bx: number, by: number, bh: n
   return Math.hypot(dx, dy);
 }
 
-/** One-entry cache per catalog, keyed by what spatial effects depend on (not array identity). */
-const cache = new WeakMap<Catalog, { key: string; site: unknown; map: Map<string, InstanceSpatial> }>();
+/**
+ * One-entry cache per catalog, keyed by what spatial effects depend on (not array identity):
+ * the parcel and, per instance, id, system, position, active or not, scale, and links. The
+ * check compares those fields in place, with no per-day string building (it runs every day).
+ */
+interface LayoutSig {
+  acres: number;
+  site: unknown;
+  ids: string[];
+  sys: string[];
+  xs: number[];
+  ys: number[];
+  active: boolean[];
+  scale: number[];
+  links: (Instance['links'] | undefined)[];
+}
+const cache = new WeakMap<Catalog, { sig: LayoutSig; map: Map<string, InstanceSpatial> }>();
 
-function spatialKey(state: GameState): string {
-  let k = `${state.settings.parcelAcres}`;
-  for (const i of state.instances) {
-    k += `;${i.id},${i.systemId},${i.x},${i.y},${i.status === 'active' ? 1 : 0},${i.scale ?? 1}`;
-    if (i.links) k += `,${JSON.stringify(i.links)}`;
+function sameLinks(a: Instance['links'] | undefined, b: Instance['links'] | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const ka = Object.keys(a);
+  if (ka.length !== Object.keys(b).length) return false;
+  for (const k of ka) if (a[k] !== b[k]) return false;
+  return true;
+}
+
+function sameLayout(sig: LayoutSig, state: GameState): boolean {
+  const xs = state.instances;
+  if (sig.site !== state.site || sig.acres !== state.settings.parcelAcres || sig.ids.length !== xs.length) return false;
+  for (let k = 0; k < xs.length; k++) {
+    const i = xs[k]!;
+    if (
+      sig.ids[k] !== i.id ||
+      sig.sys[k] !== i.systemId ||
+      sig.xs[k] !== i.x ||
+      sig.ys[k] !== i.y ||
+      sig.active[k] !== (i.status === 'active') ||
+      sig.scale[k] !== (i.scale ?? 1) ||
+      !sameLinks(sig.links[k], i.links)
+    )
+      return false;
   }
-  return k;
+  return true;
+}
+
+function layoutOf(state: GameState): LayoutSig {
+  const xs = state.instances;
+  return {
+    acres: state.settings.parcelAcres,
+    site: state.site,
+    ids: xs.map((i) => i.id),
+    sys: xs.map((i) => i.systemId),
+    xs: xs.map((i) => i.x),
+    ys: xs.map((i) => i.y),
+    active: xs.map((i) => i.status === 'active'),
+    scale: xs.map((i) => i.scale ?? 1),
+    links: xs.map((i) => (i.links ? { ...i.links } : undefined)),
+  };
 }
 
 /**
@@ -72,9 +127,8 @@ function spatialKey(state: GameState): string {
  * assigned-capacity rules (all from catalog_overrides.json). Cached per instance list.
  */
 export function computeSpatial(catalog: Catalog, state: GameState): Map<string, InstanceSpatial> {
-  const key = spatialKey(state);
   const hit = cache.get(catalog);
-  if (hit && hit.site === state.site && hit.key === key) return hit.map;
+  if (hit && sameLayout(hit.sig, state)) return hit.map;
   const plans = getPlans(catalog, state.site);
   const side = parcelSideFt(state.settings);
   const active = state.instances.filter((i) => i.status === 'active');
@@ -82,7 +136,8 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
   const work = new Map<string, InstanceSpatial>();
   const get = (id: string): InstanceSpatial => {
     let s = work.get(id);
-    if (!s) work.set(id, (s = { inMult: {}, outMult: {}, gated: {}, assigned: {}, notes: [], sig: '' }));
+    if (!s)
+      work.set(id, (s = { inMult: {}, outMult: {}, gated: {}, assigned: {}, undelivered: {}, notes: [], sig: '' }));
     return s;
   };
 
@@ -112,7 +167,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
         mode: 'scale' | 'require';
         any: boolean;
         notes: string[];
-        once: Set<number>;
+        once: Set<string>;
       }
     >();
     for (const rule of catalog.adjacencyRules) {
@@ -130,17 +185,23 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
         mode: e.mode,
         any: false,
         notes: [],
-        once: new Set<number>(),
+        once: new Set<string>(),
       };
-      const inRange = sourcesFor(rule).filter(
-        (src) => src !== undefined && gapFt(src.x, src.y, src.half, recv.x, recv.y, rh) <= rule.radiusFt,
-      );
+      const inRange = sourcesFor(rule).filter((src) => {
+        if (src === undefined) return false;
+        if (rule.scope === 'parcel') return true;
+        // A host modifier (a retrofit) sits on its house: its centre is inside the footprint.
+        if (rule.scope === 'host') return Math.abs(src.x - recv.x) <= rh + 1e-6 && Math.abs(src.y - recv.y) <= rh + 1e-6;
+        return gapFt(src.x, src.y, src.half, recv.x, recv.y, rh) <= rule.radiusFt;
+      });
       if (inRange.length) {
         c.any = true;
         if (e.stack === 'once') {
-          // Applies once however many rules and sources reach it.
-          if (!c.once.has(e.multiplier)) c.mult *= e.multiplier;
-          c.once.add(e.multiplier);
+          // Applies once however many rules and sources reach it. Host and parcel modifiers are
+          // keyed by their source system too, so blankets and a retrofit with equal multipliers both count.
+          const key = rule.scope === 'host' || rule.scope === 'parcel' ? `${rule.from}|${e.multiplier}` : `${e.multiplier}`;
+          if (!c.once.has(key)) c.mult *= e.multiplier;
+          c.once.add(key);
         } else c.mult *= e.multiplier ** inRange.length;
         if (e.floor !== undefined) c.floor = Math.max(c.floor, e.floor);
         c.notes.push(
@@ -231,6 +292,39 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     }
   }
 
+  // Delivery (G11): heat and cooling only count when they reach a shelter.
+  const resByName = new Map(catalog.resources.map((r) => [r.name, r]));
+  const shelters = active.filter((i) =>
+    plans.bySystem.get(i.systemId)!.outputs.some((o) => o.resource === 'Shelter' && o.isCapacity),
+  );
+  for (const inst of state.instances) {
+    const sys = sysOf(inst);
+    const plan = plans.bySystem.get(sys.id)!;
+    const isShelter = plan.outputs.some((o) => o.resource === 'Shelter' && o.isCapacity);
+    for (const o of plan.outputs) {
+      const r = resByName.get(o.resource);
+      if (!r || r.deliversTo !== 'shelter') continue;
+      if (sys.outdoor) {
+        const s = get(inst.id);
+        s.undelivered[o.resource] = true;
+        s.notes.push(`Its ${o.resource.toLowerCase()} stays outdoors, so it doesn't warm or cool a shelter.`);
+        continue;
+      }
+      if (isShelter || sys.layer === 'none') continue; // part of a shelter, or carried inside one
+      const ih = halfOf(sys);
+      let best = Infinity;
+      for (const sh of shelters) best = Math.min(best, gapFt(sh.x, sh.y, halfOf(sysOf(sh)), inst.x, inst.y, ih));
+      if (best <= r.deliveryRadiusFt) continue;
+      const s = get(inst.id);
+      s.undelivered[o.resource] = true;
+      s.notes.push(
+        shelters.length
+          ? `Its ${o.resource.toLowerCase()} doesn't reach a shelter: the nearest is ${Math.round(best)} ft away (it must be within ${r.deliveryRadiusFt} ft).`
+          : `Its ${o.resource.toLowerCase()} has no shelter to reach.`,
+      );
+    }
+  }
+
   const map = new Map<string, InstanceSpatial>();
   for (const inst of state.instances) {
     const s = work.get(inst.id);
@@ -244,10 +338,11 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
       Object.entries(s.outMult).map(([k, v]) => [k, r(v)]),
       Object.entries(s.gated),
       Object.entries(s.assigned).map(([k, v]) => [k, r(v.share)]),
+      Object.keys(s.undelivered),
     ]);
     map.set(inst.id, s);
   }
-  cache.set(catalog, { key, site: state.site, map });
+  cache.set(catalog, { sig: layoutOf(state), map });
   return map;
 }
 

@@ -131,6 +131,8 @@ Defaults live in `packages/catalog/src/exporter/defaults.ts`. Anything in `data/
 | `resource.spoilPerWeek` | Vegetables 0.10, Eggs 0.03, Milk 0.30, Meat 0.20, Fish 0.30, Mushrooms 0.25, Root crops 0.02, Grain / Nuts / Honey 0.002; others 0 |
 | `resource.storedIn` | Water, Drinking water → Water storage, 50 gal buffer. Electricity → Battery storage, no buffer (unstored surplus spills). Food family → Food storage, 10 cu ft pantry buffer, with packing densities (units per cu ft): Food 48,000 kcal, vegetables 20 lb, root crops 35 lb, grain 45 lb, eggs 120, honey 80 lb, meat 40 lb, milk 7.5 gal, fish 40 lb, nuts 35 lb, mushrooms 10 lb. The buffer belongs to the storage pool; when several resources share a pool the engine uses the largest buffer. |
 | `system.spriteKey` | `system:<id>`; the web app generates a placeholder until art exists |
+| `resource.deliversTo`, `resource.deliveryRadiusFt` | Heat → `shelter`, 10 ft; Cooling → `shelter`, 30 ft; everything else `any`, 0 (G11: heat and cooling only count when the producer reaches a shelter) |
+| `system.outdoor` | false. Overrides set true for Firepit, Biochar Kiln Firepit, and Biochar Double Barrel Retort: their heat stays outdoors and never counts toward a shelter |
 | `adjacencyRules` (catalog top level) | none by default; G7 adds rules through overrides |
 
 ### Overrides file
@@ -174,3 +176,112 @@ All spatial behavior is data in `data/catalog_overrides.json`, exported to the c
 **`assignedCapacities`**: `{ resource, maxDistanceFt | null, note }`. Instead of pooling, each consumer is linked to one provider: the player's link if valid, otherwise the nearest provider with room. Shipped: Roofing area (rain catchment within 50 ft of a shelter's roof) and Fenced paddock (no distance limit).
 
 **`terrainRules`**: `{ to, resource, direction, perSlopePct, min, max, note }`; multiplier = clamp(1 + perSlopePct × site slope %, min, max). Shipped: swales +4% water per percent of slope (to 1.5×); ponds −3% water and storage per percent (to 0.5×).
+
+
+## Market prices and backstops (G12)
+
+**Market prices are low confidence.** They are rough 2020s US retail figures, chosen so that growing your own is visibly cheaper than buying but buying is always possible. They live in `data/catalog_overrides.json` (`resources.<name>.marketPrice`, `marketUnit`). The exporter rejects a `marketUnit` that isn't `$/<the resource's unit>`.
+
+| Resource | Price | Note |
+|---|---|---|
+| Food | $0.0065 / kcal | ~$90 per 14,000 kcal week |
+| Drinking water | $1.00 / gal | bottled |
+| Water | $0.10 / gal | hauled delivery |
+| Woody biomass | $0.10 / lb | ~$350 per cord |
+| Wood pellets | $0.30 / lb | bagged |
+| Propane | $3.00 / gal | |
+| Gasoline | $3.50 / gal | |
+| Chicken feed | $0.35 / lb | |
+| Hay | $0.15 / lb | |
+| Carbon (straw) | $0.10 / lb | |
+| Compost | $0.20 / lb | bagged |
+| Soil | $1.50 / cu ft | bulk |
+| Seeds | $3.00 / oz | |
+| Seedlings | $4.00 / plant | |
+| Waste lumber | $0.25 / lb | salvage yard |
+
+**Proposal:** add `Market price` and `Market unit` columns to the Resources sheet of the xlsx, so prices live with the catalog and parity applies to them. Until then, they stay overrides.
+
+**Backstops** (`systems.<id>.backstop`, `backstopFee`, `backstopPrices`):
+
+| System | Fee / week | Prices |
+|---|---|---|
+| Big Box Grocery Store | 0 | Food at the market price |
+| Factory Farmed Food (Family of Four) | 0 | Food at the market price |
+| Central Power Plant | $3 | electricity $0.15/kWh, heat $0.000025/BTU ($2.50/therm), cooking $0.30/hour, cooling $0.000012/BTU |
+| Municipal Water Hookup | $5 | water and drinking water $0.02/gal |
+| Gas Station | 0 | gasoline at the market price |
+| Farm & Feed Store | 0 | feed, hay, pellets, seeds, seedlings at market prices |
+
+The default price rule is: an override, else the resource's market price, else the system's weekly Capital (less its fee) ÷ its first output. The exporter rejects a backstop that sells nothing, prices on outputs it doesn't have, and prices or a fee on a system that isn't a backstop. The grid and city-water prices reproduce roughly the catalog's own weekly bills at the catalog's output.
+
+## Natural nodes (G14, site data)
+
+Nodes live in `data/sites/<id>.json` under `nodes` and are parsed by `SiteSchema` (`packages/catalog/src/schema.ts`). They are not catalog systems, so they never touch parity.
+
+| Type | Resource | Yield / labor hour | Stock | Regrowth | Notes |
+|---|---|---|---|---|---|
+| deadfall | Woody biomass | 40 lbs | 600–2,500 lbs | 1.6–7 lbs/day (refills in about a year) | finite early wood |
+| creek / spring | Water | 25 (creek) / 12–15 (spring) gal | unlimited | — | untreated; drought-sensitive |
+| wild-greens | Green biomass (+0.5 lb produce) | 6 lbs | 120–200 lbs | 3 lbs/day, in the growing months | |
+| berry-thicket | Vegetables fruit fiber herbs | 2 lbs | starts empty | 2.5 lbs/day, July–September | Asheville |
+| clay-bank | Soil | 3 cu ft | unlimited | — | |
+| leaf-litter | Carbon | 20 lbs | starts empty | 15–25 lbs/day, September–November | |
+| rain-pools | Water | 10 gal | fills with rain (150 gal per inch), 25%/day evaporation | — | untreated |
+
+Each site has its own mix:
+- Asheville: three deadfall nodes, a creek, and two berry thickets.
+- Front Range: two deadfall nodes and a spring.
+- Laramie: one small deadfall, a weak spring, and rain pools.
+
+Node yields are **tunable data** (G16's tuning loop may change them; record each change in `docs/BALANCE_LOG.md`).
+
+## Adding systems with `scripts/catalog_patch.py` (G15)
+
+New systems are added as **rows in the workbook** (CLAUDE.md rule 8), never only in JSON:
+
+```
+pip install openpyxl            # and LibreOffice Calc (`soffice`) on PATH
+python3 scripts/catalog_patch.py data/catalog_patches/g15.json
+npm run catalog:export
+```
+
+The patch file lists systems with their sheet columns and flows. Quantities are numbers, or `{"formula": "rain" | "rainCapture" | "catchArea" | "sun"}` for the sheet's own climate formulas. The script:
+1. appends Systems, Flows, and Matrix rows, copying the sheet's formulas into the computed columns;
+2. extends every `Systems!$X$2:$X$<last>` range so totals include the new rows, and stretches the Systems and Matrix data validation and conditional formatting that start at row 2 down to the last row;
+3. recalculates in headless LibreOffice, because the exporter reads cached values;
+4. writes `docs/catalog_patches/<patch>-diff.md`.
+
+The diff summary proves the patch added rows only:
+- **typed values changed: 0**;
+- formula text changed only by range extension;
+- computed values changed only in catalog-wide counts (systems per category, producers per resource).
+
+A patch can also carry `edits`: text-only changes to a row (Categories, Original game tags, Description, Notes), for fixing a row a patch added. Number columns can't be edited this way, so a patch never changes a catalog number.
+
+A patch is idempotent: systems already present by name are skipped, and edits already applied are skipped. Review the diff summary, and open the workbook in Excel, before merging.
+
+**Run by hand only.** `catalog_patch.py` is an authoring tool, and no CI job or npm script calls it. CI never needs Python, openpyxl, or LibreOffice. `npm run catalog:check` reads the workbook with SheetJS (`xlsx` from npm), and uses only the formula text and the cached values saved in the file; it never recalculates. That is why the patch script recalculates in LibreOffice before saving. The G11–G16 audit (`docs/AUDIT_G11_G16.md`) ran the check in a fresh clone after only `npm ci`, with no `soffice` or `python3` on PATH, and it passed.
+
+**G15 additions (S169–S176)**
+
+| System | Key flows | Notes |
+|---|---|---|
+| Rain Barrel (55 gal) | rainfall on its own 100 sq ft catchment → Water; Water storage 55 | needs no Roofing area, so a tent camp can use it |
+| Pellet Mill (small) | Wood chips 120 + Electricity 15 → Wood pellets 100 / week | |
+| Part-Time Job (20 hrs) | Labor 20 + Transportation 75 → Capital 575 / week | |
+| Remote Job (40 hrs) | Labor 40 → Capital 1,000 / week | |
+| Sheet-Mulch Lawn Conversion (500 sq ft) | Carbon 100 + Compost 200 (one-time) → Soil 40 per season | |
+| Home Weatherization Retrofit | Labor 0.05 / week; modifier: host shelter Heat × 0.7 | place it on the house; tagged Heating only (patch `g16a-retrofit-heating`) |
+| Suburban Lot (1/4 acre) | Land area 10,890 | |
+| Clothesline | Labor 0.5 → Wellbeing 2 / week; modifier: people's Electricity × 20/21 | |
+
+**Modifiers** (`systems.<id>.modifies` in `data/catalog_overrides.json`): `{ to, resource, direction, multiplier, scope: "host" | "parcel", note }`. They are exported as adjacency rules; see ENGINE.md, "Modifiers".
+
+**G16 addition (S177, patch `g16c-wool-blankets`)**
+
+| System | Key flows | Notes |
+|---|---|---|
+| Wool Blankets & Sleeping Bags | Labor 0.1 / week; modifier: host shelter Heat × 0.2 | place it on the shelter; in the greenfield kit; replaces the `HEAT_BEDDING_HDD` constant |
+
+The patch script also stretched the Systems R validation and the Matrix highlighting to row 178.

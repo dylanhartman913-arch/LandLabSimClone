@@ -15,7 +15,11 @@ export interface Term {
   needFactor?: number;
   /** Spatial adjustment (shade, slope, neighbors) applied to this flow, if any. */
   adjust?: number;
-  /** qty × factor × count (× adjust) (× needFactor). */
+  /** Feasible balance: the system's satisfaction × boosts (1 = running fully). */
+  satisfaction?: number;
+  /** Feasible balance: share of this heat or cooling that reaches a shelter. */
+  delivered?: number;
+  /** qty × factor × count (× adjust) (× needFactor) (× satisfaction × delivered). */
   value: number;
 }
 

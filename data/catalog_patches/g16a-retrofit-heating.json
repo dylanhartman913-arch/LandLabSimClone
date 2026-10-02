@@ -1,0 +1,14 @@
+{
+  "patch": "g16a-retrofit-heating",
+  "source": "New (G15 patch)",
+  "note": "Retag Home Weatherization Retrofit (S174) as Heating only. It modifies a shelter but isn't one, and the Shelter tag pushed the Shelter category to 21 systems (target 12-20). Text edit only; no number changes.",
+  "systems": [],
+  "edits": [
+    {
+      "system": "Home Weatherization Retrofit",
+      "column": "Categories",
+      "value": "Heating",
+      "why": "It cuts a shelter's heat loss but gives no shelter; Shelter returns to 20 systems (target 12-20)."
+    }
+  ]
+}

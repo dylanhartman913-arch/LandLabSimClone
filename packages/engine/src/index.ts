@@ -13,3 +13,4 @@ export * from './kits.ts';
 export * from './scenario.ts';
 export * from './montecarlo.ts';
 export * from './exports.ts';
+export * from './tutorial.ts';

@@ -179,6 +179,7 @@ test('a real-weather game shows the year’s weather and records the draws', asy
   await openApp(page);
   await page.getByTestId('open-saves').click();
   await page.getByTestId('open-wizard').click();
+  await page.getByTestId('custom-game').click();
   await page.getByTestId('site-laramie-wy').click();
   await page.getByTestId('wizard-weather').selectOption('real');
   await page.getByTestId('kit-tent').click();

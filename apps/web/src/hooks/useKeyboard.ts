@@ -60,6 +60,7 @@ export function useKeyboard() {
       switch (k) {
         case 'Escape':
           if (s.why) s.showWhy(null);
+          else if (s.resourcePage) s.closeResource();
           else if (s.tool.kind !== 'select') {
             s.cancelTool();
             s.setKbCursor(null);
@@ -86,6 +87,19 @@ export function useKeyboard() {
         case 'N':
           s.setChecklist(!s.checklistOpen);
           break;
+        case 'j':
+        case 'J':
+          s.setPanel(s.panel === 'work' ? null : 'work');
+          break;
+        case 'm':
+        case 'M':
+          s.setPanel(s.panel === 'market' ? null : 'market');
+          break;
+        case 'b':
+        case 'B':
+          s.setPrefs({ badges: !s.prefs.badges });
+          s.toast(s.prefs.badges ? 'Status bubbles hidden (B to show).' : 'Status bubbles on: yellow is partial, red is blocked.');
+          break;
         case 'p':
         case 'P':
           usePlan.getState().setOpen(!usePlan.getState().open);
@@ -98,8 +112,15 @@ export function useKeyboard() {
         case 'F':
           s.setOverlay({ on: !s.overlay.on });
           break;
-        case 'Delete':
         case 'Backspace':
+          // Back through resource pages and cards first (G13); otherwise delete like Delete.
+          if ((s.resourcePage || s.cardSystemId) && s.navigateBack()) {
+            e.preventDefault();
+            break;
+          }
+          s.deleteSelection();
+          break;
+        case 'Delete':
           s.deleteSelection();
           break;
         case ' ':

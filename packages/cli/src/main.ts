@@ -3,6 +3,7 @@ import { DEFAULT_SITE_ID, getSite } from '@homestead/catalog';
 import { numFlag, parseArgs } from './args.ts';
 import { runBalance } from './commands/balance.ts';
 import { runMonteCarlo } from './commands/montecarlo.ts';
+import { runPacing } from './commands/pacing.ts';
 import { runTime } from './commands/run.ts';
 import { loadDesignFile } from './design-file.ts';
 
@@ -14,6 +15,7 @@ Usage:
                  [--flow-record records.json] [--csv ledgers.csv]
   npm run sim -- montecarlo <design.json> [--site <id>] [--years N] [--seeds N] [--seed N]
                  [--weather real|average] [--json out.json]
+  npm run sim -- pacing      (the playtest bots' pacing gates; exits 1 if any misses)
 
 Monte Carlo runs seeds N, N+1, … (default 1) in real weather; the app's Monte Carlo
 panel shows the same numbers for the same design file, site, years, and seeds.
@@ -23,6 +25,11 @@ function main(argv: string[]): number {
   const args = parseArgs(argv);
   const designPath = args.positional[0];
   switch (args.command) {
+    case 'pacing': {
+      const r = runPacing();
+      console.log(r.text);
+      return r.pass ? 0 : 1;
+    }
     case 'balance': {
       if (!designPath) break;
       const { file, design } = loadDesignFile(designPath);

@@ -116,5 +116,201 @@
     ],
     "coordinates": "fractions of the parcel side (0-1), so terrain scales with parcel size"
   },
-  "notes": "Monthly shapes approximate NOAA 1991-2020 Denver-area normals; scalar values are the spreadsheet's. Monthly arrays are shapes: the engine rescales them so the annual totals equal the scalars."
+  "notes": "Monthly shapes approximate NOAA 1991-2020 Denver-area normals; scalar values are the spreadsheet's. Monthly arrays are shapes: the engine rescales them so the annual totals equal the scalars.",
+  "nodes": [
+    {
+      "id": "deadfall-1",
+      "type": "deadfall",
+      "x": 0.2,
+      "y": 0.26,
+      "resource": "Woody biomass",
+      "yieldPerHour": 40,
+      "stock": 1500,
+      "maxStock": 1500,
+      "regrowPerDay": 4,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "deadfall-2",
+      "type": "deadfall",
+      "x": 0.78,
+      "y": 0.2,
+      "resource": "Woody biomass",
+      "yieldPerHour": 40,
+      "stock": 900,
+      "maxStock": 900,
+      "regrowPerDay": 4,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "spring-1",
+      "type": "spring",
+      "x": 0.86,
+      "y": 0.82,
+      "resource": "Water",
+      "yieldPerHour": 25,
+      "stock": null,
+      "maxStock": null,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "untreated": true,
+      "droughtSensitive": true
+    },
+    {
+      "id": "greens-1",
+      "type": "wild-greens",
+      "x": 0.32,
+      "y": 0.82,
+      "resource": "Green biomass",
+      "yieldPerHour": 6,
+      "extra": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "perHour": 1.0
+        }
+      ],
+      "stock": 200,
+      "maxStock": 200,
+      "regrowPerDay": 5,
+      "months": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "id": "greens-2",
+      "type": "wild-greens",
+      "x": 0.6,
+      "y": 0.9,
+      "resource": "Green biomass",
+      "yieldPerHour": 6,
+      "extra": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "perHour": 1.0
+        }
+      ],
+      "stock": 200,
+      "maxStock": 200,
+      "regrowPerDay": 5,
+      "months": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "id": "clay-1",
+      "type": "clay-bank",
+      "x": 0.08,
+      "y": 0.6,
+      "resource": "Soil",
+      "yieldPerHour": 3,
+      "stock": null,
+      "maxStock": null,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "leaves-1",
+      "type": "leaf-litter",
+      "x": 0.16,
+      "y": 0.12,
+      "resource": "Carbon",
+      "yieldPerHour": 20,
+      "stock": 0,
+      "maxStock": 800,
+      "regrowPerDay": 15,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "id": "pools-1",
+      "type": "rain-pools",
+      "x": 0.5,
+      "y": 0.65,
+      "resource": "Water",
+      "yieldPerHour": 10,
+      "stock": 0,
+      "maxStock": 200,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "untreated": true,
+      "rainFill": 150,
+      "evaporatePerDay": 0.25
+    }
+  ]
 }

@@ -1,10 +1,11 @@
 import { getSite, type AssumptionKey, type Assumptions, type Catalog, type NeedKey } from '@homestead/catalog';
-import { balance, type BalanceResult, type ChecklistRow } from '../balance/balance.ts';
+import type { BalanceResult, ChecklistRow } from '../balance/balance.ts';
+import { balanceFeasible } from '../balance/feasible.ts';
 import { getSystem } from '../catalog-index.ts';
 import type { Design, DesignFile } from '../design.ts';
 import { explained, type Explained } from '../provenance.ts';
 import { gameFromDesign } from '../scenario.ts';
-import { designAdjust, designCounts } from './hud.ts';
+import { designForGame } from './hud.ts';
 import { siteAssumptions } from './site.ts';
 
 export const ASSUMPTION_LABELS: Record<AssumptionKey, string> = {
@@ -26,10 +27,7 @@ export function designForBalance(
   siteId?: string,
 ): { design: Design; assumptions: Assumptions } {
   const game = gameFromDesign(catalog, file, { siteId, seed: 1, weatherMode: 'average' });
-  return {
-    design: { counts: designCounts(game), adjust: designAdjust(game, catalog) },
-    assumptions: siteAssumptions(game.site),
-  };
+  return { design: designForGame(game, catalog), assumptions: siteAssumptions(game.site) };
 }
 
 export interface ScenarioSummary {
@@ -52,7 +50,7 @@ export interface ScenarioSummary {
 export function scenarioSummary(catalog: Catalog, file: DesignFile, siteId?: string): ScenarioSummary {
   const site = getSite(siteId ?? file.site ?? 'front-range');
   const { design, assumptions } = designForBalance(catalog, file, site.id);
-  const b = balance(catalog, assumptions, design);
+  const b = balanceFeasible(catalog, assumptions, design);
   const net = b.summary.capitalNet;
   return {
     name: file.name,
@@ -121,10 +119,10 @@ export function sensitivity(
   design: Design,
   delta = 0.2,
 ): Sensitivity {
-  const base: BalanceResult = balance(catalog, assumptions, design);
+  const base: BalanceResult = balanceFeasible(catalog, assumptions, design);
   const bars: TornadoBar[] = (Object.keys(ASSUMPTION_LABELS) as AssumptionKey[]).map((key) => {
     const at = (f: number) =>
-      balance(catalog, { ...assumptions, [key]: assumptions[key] * f }, design).overallScore.value;
+      balanceFeasible(catalog, { ...assumptions, [key]: assumptions[key] * f }, design).overallScore.value;
     const low = at(1 - delta);
     const high = at(1 + delta);
     return { key, label: ASSUMPTION_LABELS[key], base: base.overallScore.value, low, high, swing: Math.abs(high - low) };

@@ -1,5 +1,5 @@
 import type { Catalog } from '@homestead/catalog';
-import { balance, type BalanceResult } from '../balance/balance.ts';
+import { balanceFeasible, type FeasibleResult } from '../balance/feasible.ts';
 import { explained, type Explained } from '../provenance.ts';
 import { dateLabel, monthOfDay } from '../time/calendar.ts';
 import { siteAssumptions } from './site.ts';
@@ -45,12 +45,48 @@ export function designAdjust(state: GameState, catalog: Catalog): NonNullable<De
   return adjust;
 }
 
-/** Balance mode for the current layout on the game's site ("Average year"), with spatial effects. */
-export function designBalance(state: GameState, catalog: Catalog): BalanceResult {
-  return balance(catalog, siteAssumptions(state.site), {
+/** Per system, the share of its placed instances whose heat or cooling reaches a shelter (G11). */
+export function designDelivered(state: GameState, catalog: Catalog): NonNullable<Design['delivered']> {
+  const spatial = computeSpatial(catalog, state);
+  const resByName = new Map(catalog.resources.map((r) => [r.name, r]));
+  const sums: Record<string, { n: number; lost: Record<string, number>; resources: Set<string> }> = {};
+  for (const i of state.instances) {
+    const bag = (sums[i.systemId] ??= { n: 0, lost: {}, resources: new Set() });
+    bag.n += i.scale ?? 1;
+    for (const r of Object.keys(spatial.get(i.id)?.undelivered ?? {})) bag.lost[r] = (bag.lost[r] ?? 0) + (i.scale ?? 1);
+  }
+  const out: NonNullable<Design['delivered']> = {};
+  for (const [id, b] of Object.entries(sums)) {
+    for (const [r, lost] of Object.entries(b.lost)) {
+      if (resByName.get(r)?.deliversTo !== 'shelter') continue;
+      (out[id] ??= {})[r] = 1 - lost / b.n;
+    }
+  }
+  // Heat and cooling from systems that do reach a shelter count fully.
+  for (const id of Object.keys(sums)) out[id] ??= {};
+  for (const [id, m] of Object.entries(out)) {
+    for (const r of ['Heat', 'Cooling']) if (m[r] === undefined) m[r] = 1;
+    out[id] = m;
+  }
+  return out;
+}
+
+/** The balance-mode design for a game: counts, spatial effects, the site's ambient supply, delivery. */
+export function designForGame(state: GameState, catalog: Catalog): Design {
+  return {
     counts: designCounts(state),
     adjust: designAdjust(state, catalog),
-  });
+    ambient: state.site.ambient,
+    delivered: designDelivered(state, catalog),
+  };
+}
+
+/**
+ * The "Average year" for the current layout on the game's site: feasible balance (actual flows,
+ * with supply chains and placement), with the potential ceiling beside it (G11).
+ */
+export function designBalance(state: GameState, catalog: Catalog): FeasibleResult {
+  return balanceFeasible(catalog, siteAssumptions(state.site), designForGame(state, catalog));
 }
 
 export type Season = 'spring' | 'summer' | 'fall' | 'winter';
@@ -72,12 +108,19 @@ export interface HudMetrics {
   cash: Explained;
   laborUsedWeek: Explained;
   laborAvailableWeek: Explained;
+  /** Overall score from actual flows (G11). */
   score: Explained;
+  /** The same score if every input were met (the ceiling). */
+  potentialScore: Explained;
+  /** Share of supply made at home, not bought (G12). */
+  selfReliance: Explained;
+  /** What the HUD leads with: self-reliance and weekly bills (adapt start) or the off-grid score. */
+  headline: 'self-reliance' | 'off-grid';
   weather: { hdd: number; psh: number; precipIn: number; growing: boolean; tags: string[] };
 }
 
 /** Everything the top bar shows, each number with its provenance. */
-export function hudMetrics(state: GameState, catalog: Catalog, bal?: BalanceResult): HudMetrics {
+export function hudMetrics(state: GameState, catalog: Catalog, bal?: FeasibleResult): HudMetrics {
   const week = state.ledgers.slice(-7);
   let used = 0;
   let avail = 0;
@@ -102,6 +145,9 @@ export function hudMetrics(state: GameState, catalog: Catalog, bal?: BalanceResu
       refs: { days: week.length },
     }),
     score: b.overallScore,
+    potentialScore: b.potential.overallScore,
+    selfReliance: b.selfReliance,
+    headline: state.start?.headline ?? 'off-grid',
     weather: { hdd: w.hdd, psh: w.psh, precipIn: w.precipIn, growing: w.growing, tags: w.tags },
   };
 }

@@ -10,6 +10,8 @@
   --good: #7ed957;
   --warn: #f2a93b;
   --bad: #e0523d;
+  /* Red for text on panels: --bad is 3.8:1 there, this is 6.3:1 (WCAG AA). */
+  --bad-text: #ff8a75;
   --focus: #8fd3ff;
   --radius: 8px;
   --shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
@@ -168,7 +170,7 @@ select {
 }
 
 .hud-strong.neg {
-  color: var(--bad);
+  color: var(--bad-text);
 }
 
 .hud-spacer {
@@ -524,9 +526,9 @@ select {
 
 .toasts {
   position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 64px;
+  left: 12px;
+  max-width: min(420px, calc(100% - 24px));
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1265,6 +1267,7 @@ table.mini .bad {
 .app.cb {
   --good: #3aa0ff;
   --bad: #ff8c1a;
+  --bad-text: #ffb066;
   --warn: #ffc233;
 }
 
@@ -1729,5 +1732,335 @@ pre.cli {
 @media (prefers-reduced-motion: reduce) {
   .drawer {
     transition: none;
+  }
+}
+
+/* Actual vs potential (G11) ---------------------------------------------------- */
+.potential-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.85em;
+  min-width: 90px;
+}
+.checklist td.potential {
+  color: var(--ink-2);
+}
+.blocked-row td {
+  padding-top: 0;
+  border-top: none;
+}
+.blocked .link {
+  color: var(--warn);
+}
+.blocked-list {
+  list-style: none;
+  padding: 2px 0 6px 14px;
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+.blocked-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.badge-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1px solid #1b1f16;
+}
+.badge-dot.blocked {
+  background: var(--bad);
+}
+.badge-dot.partial {
+  background: var(--accent);
+}
+.cb .badge-dot.blocked {
+  background: #ff9f40;
+}
+.cb .badge-dot.partial {
+  background: #8fd3ff;
+}
+.hud-potential {
+  font-size: 0.75em;
+  color: var(--muted);
+}
+
+/* Market and bills (G12) -------------------------------------------------------- */
+.bills-head {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.big-num {
+  font-size: 1.6em;
+  font-weight: 700;
+}
+.good-text {
+  color: var(--good);
+}
+.inline-form {
+  display: flex;
+  gap: 4px;
+}
+.inline-form input {
+  width: 80px;
+}
+.market-table th[scope='row'] {
+  font-weight: normal;
+}
+
+/* Resource pages, supply chains, build plans (G13) ------------------------------- */
+.resource-sheet h4 {
+  margin: 10px 0 4px;
+  font-size: 0.9em;
+  color: var(--ink-2);
+}
+.res-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 6px 0;
+}
+.res-chart {
+  margin: 6px 0;
+}
+.bar-made {
+  fill: var(--good);
+}
+.bar-bought {
+  fill: #6aa0d8;
+}
+.key::before {
+  content: '';
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 3px;
+  border-radius: 2px;
+}
+.key.made::before {
+  background: var(--good);
+}
+.key.bought::before {
+  background: #6aa0d8;
+}
+.key.used::before {
+  background: var(--accent);
+  height: 2px;
+  vertical-align: middle;
+}
+.res-link {
+  text-align: left;
+}
+.needs-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.85em;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.chip {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 6px;
+}
+.chip.have {
+  border-color: var(--good);
+}
+.chip.missing {
+  border-color: var(--bad);
+}
+.status-line {
+  margin: 6px 0;
+  font-size: 0.92em;
+}
+.status-line.blocked {
+  color: var(--bad);
+}
+.status-line.partial {
+  color: var(--warn);
+}
+.chain-toggle {
+  margin: 6px 0;
+}
+.chain ul {
+  list-style: none;
+  padding-left: 14px;
+  margin: 2px 0;
+}
+.chain li.ok > details > summary {
+  color: var(--good);
+}
+.chain li.short > details > summary {
+  color: var(--warn);
+}
+.chain summary {
+  cursor: pointer;
+}
+.build-plan .plan-items {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0;
+  display: grid;
+  gap: 4px;
+}
+.build-plan .plan-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  align-items: center;
+}
+.seg.small .seg-btn {
+  padding: 3px;
+  font-size: 0.85em;
+}
+
+/* Work priorities (G14) ------------------------------------------------------------ */
+.prio {
+  display: flex;
+  gap: 2px;
+}
+.prio-btn {
+  width: 26px;
+  height: 24px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.prio-btn.on {
+  background: var(--accent);
+  color: #1b1f16;
+  font-weight: 700;
+  border-color: var(--accent);
+}
+.work-table input {
+  width: 80px;
+}
+.work-table th[scope='row'] {
+  font-weight: normal;
+}
+
+/* --- G15: people, stockpile, start screen ------------------------------------- */
+.subbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 12px;
+  padding: 4px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9em;
+}
+.people,
+.stockpile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.stockpile {
+  margin-left: auto;
+}
+.person {
+  min-width: 150px;
+  max-width: 230px;
+}
+.person-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+.wb-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+  margin: 2px 0;
+}
+.wb-bar span {
+  display: block;
+  height: 100%;
+  background: var(--good);
+}
+.person.warn .wb-bar span {
+  background: var(--warn);
+}
+.person.bad .wb-bar span {
+  background: var(--bad);
+}
+.person.away {
+  opacity: 0.6;
+}
+.person-why {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stock-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.stock-chip.red {
+  border-color: var(--bad);
+  color: var(--bad-text);
+}
+.stock-chip .trend.up {
+  color: var(--good);
+}
+.stock-chip .trend.down {
+  color: var(--warn);
+}
+.stock-chip .trend {
+  font-size: 0.75em;
+}
+.hud-strong.big {
+  font-size: 1.3em;
+}
+.hud-score.secondary {
+  opacity: 0.8;
+  transform: scale(0.85);
+}
+.start-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+.start-card {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  min-height: 220px;
+}
+.start-card h3 {
+  margin: 0;
+}
+.start-card ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.start-card .facts {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .stockpile {
+    margin-left: 0;
+  }
+  .person {
+    min-width: 120px;
   }
 }

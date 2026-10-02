@@ -7,9 +7,9 @@ import { GENERATED_DIR, exportFromFiles, renderGenerated } from '../src/exporter
 const { catalog, goldens } = exportFromFiles();
 
 describe('exporting the delivered spreadsheet', () => {
-  it('finds 168 systems, 797 flows, and 62 resources', () => {
-    expect(catalog.systems).toHaveLength(168);
-    expect(catalog.flows).toHaveLength(797);
+  it('finds 177 systems, 819 flows, and 62 resources (168 delivered + 8 from the G15 patch + 1 from G16)', () => {
+    expect(catalog.systems).toHaveLength(177);
+    expect(catalog.flows).toHaveLength(819);
     expect(catalog.resources).toHaveLength(62);
   });
 
@@ -21,16 +21,17 @@ describe('exporting the delivered spreadsheet', () => {
   it('maps every formula flow to a climate-linked QtyExpr', () => {
     const kinds = new Map<string, number>();
     for (const f of catalog.flows) kinds.set(f.qty.kind, (kinds.get(f.qty.kind) ?? 0) + 1);
-    // 70 formula cells in Flows!E: 16 sun, 3 pv, 20 heat, 20 cool, 1 catch area, 5 rain, 3 rain capture, 1 wind, 1 hydro
+    // 72 formula cells in Flows!E: 16 sun, 3 pv, 20 heat, 20 cool, 1 catch area, 6 rain, 4 rain capture, 1 wind, 1 hydro
+    // (the G15 rain barrel adds a rain and a rain-capture formula)
     expect(Object.fromEntries(kinds)).toEqual({
-      const: 727,
+      const: 747,
       sun: 16,
       pv: 3,
       heatLoad: 20,
       coolLoad: 20,
       catchArea: 1,
-      rain: 5,
-      rainCapture: 3,
+      rain: 6,
+      rainCapture: 4,
       wind: 1,
       hydro: 1,
     });

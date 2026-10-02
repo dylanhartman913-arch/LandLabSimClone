@@ -1,6 +1,8 @@
-import { getSite, type Catalog } from '@homestead/catalog';
+import { getSite, getStart, type Catalog, type Difficulty } from '@homestead/catalog';
+import { gameFromStart } from './time/start.ts';
 import { digest } from './digest.ts';
 import {
+  buyAtMarket,
   deleteInstance,
   initGame,
   insertInstance,
@@ -10,6 +12,7 @@ import {
   removeSystem,
   setLink,
   setPriority,
+  setStandingOrder,
 } from './time/game.ts';
 import { stepDays } from './time/step.ts';
 import type { BuildMode, GameSettings, GameState, Instance } from './time/types.ts';
@@ -19,6 +22,8 @@ export interface GameInit {
   siteId: string;
   seed: number;
   settings: Partial<GameSettings>;
+  /** Began from a start config (G15): its id, difficulty, and household. `settings` are applied on top. */
+  start?: { id: string; difficulty: Difficulty; household: number };
 }
 
 /**
@@ -36,6 +41,10 @@ export type Action = { at: number } & (
   | { kind: 'insert'; instance: Instance; cashDelta: number; index?: number }
   | { kind: 'delete'; id: string; cashDelta: number }
   | { kind: 'settings'; settings: Partial<GameSettings> }
+  | { kind: 'buy'; resource: string; amount: number }
+  | { kind: 'standing'; resource: string; keepAbove: number; orderUpTo?: number }
+  | { kind: 'ui'; panel: string }
+  | { kind: 'tutorial'; skip: boolean }
 );
 
 /** An action without its day stamp (the store adds `at` when it applies one). */
@@ -72,10 +81,26 @@ export function applyAction(catalog: Catalog, s: GameState, a: Action): GameStat
       return deleteInstance(s, a.id, a.cashDelta);
     case 'settings':
       return { ...s, settings: { ...s.settings, ...a.settings } };
+    case 'buy':
+      return buyAtMarket(catalog, s, a.resource, a.amount);
+    case 'standing':
+      return setStandingOrder(catalog, s, a.resource, a.keepAbove, a.orderUpTo);
+    case 'ui':
+      return s.tutorial && !s.tutorial.ui.includes(a.panel) ? { ...s, tutorial: { ...s.tutorial, ui: [...s.tutorial.ui, a.panel] } } : s;
+    case 'tutorial':
+      return s.tutorial ? { ...s, tutorial: { ...s.tutorial, skipped: a.skip } } : s;
   }
 }
 
 export function startGame(catalog: Catalog, init: GameInit): GameState {
+  if (init.start) {
+    const g = gameFromStart(catalog, getSite(init.siteId), getStart(init.start.id), {
+      difficulty: init.start.difficulty,
+      household: init.start.household,
+      seed: init.seed,
+    });
+    return Object.keys(init.settings).length ? { ...g, settings: { ...g.settings, ...init.settings } } : g;
+  }
   return initGame(catalog, getSite(init.siteId), init.settings, init.seed);
 }
 
@@ -107,6 +132,8 @@ export function gameDigest(s: GameState): string {
     direct: s.direct,
     instances: s.instances,
     settings: s.settings,
+    ...(s.market ? { market: s.market } : {}),
+    ...(s.tutorial ? { tutorial: s.tutorial } : {}),
     // Real weather: the year draws are part of the game's substance (average-mode digests are unchanged).
     ...(s.weatherLog ? { weatherLog: s.weatherLog } : {}),
   });

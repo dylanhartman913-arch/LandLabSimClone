@@ -571,3 +571,321 @@ The cloud sandbox has no GPU, no screen, no spreadsheet program, and can't chang
 8. **Art and audio** need original assets. Wiring `manifestEntry` into `MapScene` sprite creation is a small code task once images exist.
 
 A new cloud session can do the code-only follow-ups: splitting the bundle, drawing art from the manifest, putting pinned scenarios into saves, varying sun and wind in real weather, and a second allocation pass.
+
+---
+
+# Playability roadmap (G11–G16)
+
+`docs/HOMESTEAD_SIM_PLAYABILITY_ROADMAP.md`, written after the first playtest. `CLAUDE.md` gains hard rules 7–9 (actual flows score; new systems via `scripts/catalog_patch.py`; pacing gates in CI) and points at the new roadmap.
+
+## G11 — Truthful accounting: actual vs potential (2026-10-01)
+
+**Shipped**
+- **Feasible balance** (`balanceFeasible`). The weekly steady state with curtailment:
+  - Satisfactions start at 1 and only decrease.
+  - Each pass rations every Flow resource by tier (proportional within a tier, substitutes last) and sets satisfaction to the minimum over required, capacity, and ambient inputs.
+  - It converges in 2–10 passes, with a cap of 200.
+  - Storage follows time mode as weekly averages: half of electricity demand runs straight off production and the rest must fit through batteries; other stored resources are limited by their pool.
+  - Coverage = what consumers received ÷ needed.
+  - It returns per-system statuses ("blocked: no Electricity", "partial: 40% of Water"), the pass each one first fell (so chains read in order), and per-row `potential` and `blocked` lists.
+- **Potential.** The old function is now `balancePotential` (the spreadsheet; the parity tests and balance digests target it, unchanged). Both functions share `collectTerms`/`assembleBalance`.
+- **Delivery.** Heat and Cooling count only when they reach a shelter:
+  - The producer is a shelter itself, carried inside one (no footprint), or within 10 ft (heat) or 30 ft (cooling) of one.
+  - New engine fields `Resource.deliversTo` / `deliveryRadiusFt` and `System.outdoor` (Firepit, Biochar Kiln Firepit, and Biochar Retort are outdoor).
+  - In time mode, undelivered output is recorded as `ResourceDay.undelivered` and nothing can use it.
+  - `placeDesign` now puts stoves, fans, and shade trees beside a shelter.
+- **Time mode.** Each output's potential is recorded beside its actual (`NeedDay.potential`, `ResourceDay.potential`, `GroupDay.potential`).
+- **Views.** The checklist has Actual, Potential, Needed, % covered, and Covered columns in all three modes. A row held back shows "N systems are held back", which expands to each system, its status, and **Find a source of X** (it opens the drawer search for X; G13 replaces this with resource pages). The overall score is actual, with "If every input were met: N%" beside it, in the checklist and as "N% if supplied" in the HUD.
+- **Map status bubbles** (Timberborn-style; `instanceStatuses`):
+  - A partial system gets a yellow bubble; a blocked one gets a red bubble with a slash.
+  - Each bubble carries an original vector glyph for the missing input (bolt, drop, log, flame, leaf, clock…), drawn at a constant screen size.
+  - The map tooltip says why. `B` and Settings toggle the bubbles; running systems show nothing.
+- **Bug fixed:** spatial output multipliers from G7 (chickens by the compost, trees near a turbine, swales on a slope) applied only to capacity outputs in time mode. They now multiply flows.
+
+**Tests:** `truthful.test.ts` (10):
+- **GoSun Fan + Bell Tent + Human, no power:** cooling actual 0, potential above 0, "blocked: no Electricity". Time mode agrees in July.
+- **Removing the panels:** the well stops in pass 1 and the beds in pass 2; water and food drop while potential stays.
+- **Convergence:** the solver settles and satisfactions never rise.
+- **Delivery:** a firepit's heat is potential only; a stove beside the tent counts and the same stove 120 ft away doesn't, in both modes.
+- **HUD score:** equals the feasible score, with potential ≥ actual.
+- **Agreement:** feasible matches time-mode year-2 overall coverage within 5 points for the starter, off-grid cabin, and suburban designs. Starter rows match within 5 points, except one documented seasonal effect: trees drop autumn leaves after their summer water need ends.
+
+The unlimited-supply agreement now compares time-mode **potential** with `balancePotential`. e2e `truthful.spec.ts` (3): the fan drill-down and Find a source, map bubbles and `B`, and the HUD potential. Screenshots are in `docs/screenshots/g11/`.
+
+**Digests:** balance (potential) and spreadsheet goldens are unchanged. Time digests were re-recorded (delivery, the output-multiplier fix, auto-layout, and new ledger fields), and again in G12.
+
+**Decisions not in the roadmap**
+- Coverage % is what consumers received ÷ needed, not actual made ÷ needed, so a panel whose power spills for lack of a battery doesn't count twice. Actual (made) is still the column beside it.
+- A count-only design (no layout) assumes heat and cooling are delivered, unless it has no shelter or the producer is outdoor.
+- Ambient inputs in balance mode are met by the site (`design.ambient`, from the game) or by a system in the design that outputs them (the spreadsheet's Sunlight and Rainfall systems).
+- Bubbles appear only on systems with a footprint (a fan or a utility hookup has none to put one on); the checklist drill-down lists them all.
+
+## G12 — Market, backstops, self-reliance, weekly bills (2026-10-01)
+
+**Shipped**
+- **Market:**
+  - 15 priced resources (roadmap table; low confidence, flagged in CATALOG.md with the proposal to move them into the xlsx). Electricity is not sold.
+  - **Buy now** orders for the next trip, and **standing orders** ("keep firewood above 150 lbs", buying up to 1.5×). Both are actions (`buy`, `standing`) that replay.
+  - One trip a day covers all orders, using 10 miles of transport or a $25 delivery charge.
+  - Partial fills when cash runs short; nothing is bought at or below zero cash, with a `purchases-stopped` event and toast.
+- **Backstops:**
+  - The grocery store, factory-farmed food, the power plant, city water, the gas station, and the feed store fill whatever on-site supply didn't. Each one serves up to 3× its catalog output, at a per-unit price, plus a connection fee whether used or not (grid $3/week, city water $5/week).
+  - Their Capital input becomes those charges; by-products follow what was delivered.
+  - Deliveries are `purchased`, recorded separately from on-site `produced`.
+  - Feasible balance tops up unmet demand the same way and reports bills.
+- **Self-reliance:** per row and overall (coverage × share made at home, labor left out), in time mode and feasible balance. The checklist shows a "Made at home" column and the overall figure.
+- **Market and bills panel** (`M`, HUD "Market"): this week's bills with the 12-week trend and a line per item (sparklines); a buy table with price, stock, days it lasts, buy-now, and keep-above.
+- **Exports** stay correct: the flow record's bought vs made-on-site now accounts for `purchased`.
+- **Toasts:** at most three, with repeats replacing their earlier copy, shown at the bottom so they never cover a panel. My earlier notes said this was already done; it wasn't.
+
+**Tests:** 181 unit across 23 files (+11).
+- `market.test.ts` (10): full coverage at full price.
+- **Roadmap check:** four raised beds and a 6 kW array cut the grocery and grid bills by exactly vegetables eaten × price and solar used × price, within half a cent.
+- `market.test.ts`, more checks:
+  - Zero cash stops every purchase and logs it.
+  - Connection fees, the bills view, buy-now with trip or delivery, and standing orders.
+  - Electricity can't be bought, and market actions replay.
+  - Feasible balance fills food from the grocery and prices it.
+- `sources.audit.test.ts` (1, the **handoff**): every Flow input can be made, gathered, or bought. The warnings for inputs with a single source are printed: chicken feed, gasoline, propane, waste lumber, and wood pellets are market-only; coffee grounds, grain, root crops, and wood chips have one producer.
+- The no-cash scenario was rewritten for backstops.
+- e2e `market.spec.ts` (2): buy, standing order, bills lines, and the action log; the self-reliance column. Screenshots are in `docs/screenshots/g12/`.
+
+**Digests:** time digests re-recorded (backstop dispatch and summary self-reliance fields). Potential balance and goldens are unchanged.
+
+**Decisions not in the roadmap**
+- Backstop price = market price where one exists. The grid and city water get explicit prices tuned to roughly their catalog weekly bills.
+- When several backstops sell the same thing, the cheapest is served first.
+- Market orders arrive the morning of the trip, and a standing order buys up to 1.5 × its threshold by default.
+- Market purchases count as "bought" for self-reliance even after they sit in stock.
+- The suburban design's groceries and job get no transport. People (tier 0) use the two cars' 500 miles a week first, which is a real shortfall in that design, not a bug; the G15 adapt start sizes for it.
+
+**Known gaps:** feasible balance doesn't model market purchases (they are player actions, not steady state).
+
+## G13 — Where does this come from? (2026-10-01)
+
+**Shipped**
+- **Resource pages:** a side sheet with an address, `#/resource/<name>`.
+  - What the resource is, stock, storage room, spoilage, and a 12-week made / bought / used chart.
+  - **Where it comes from:** in your design (actual and potential output, and what holds each producer back); on your land (G14 nodes); you could build (cheapest per unit first, conventional last, each input marked ✓ have / ✗ missing and linking to its own page); buy (market price and a buy box, or "the market doesn't sell Electricity: it comes only through a grid connection").
+  - **Where it goes:** consumers in the design (gets N of M a week), catalog systems that use it, and what happens to the unused rest.
+- **Click-through everywhere:**
+  - Every System Card input and output, every checklist row name (heat and cooling rows open Heat and Cooling), and every drawer Inputs/Outputs entry open the resource page.
+  - So does every shortage toast ("Where from?") and the held-back list's "Find a source of X".
+  - Every system named on a page opens its card.
+  - A **back stack**: the ← on pages and cards, or Backspace when one is open with history. Backspace deletes the selection otherwise, and Delete always does.
+- **Status line** on the System Card: "Blocked: no Electricity · Electricity", linking to the missing input.
+- **Supply-chain tree** (Show supply chain): inputs → producers → their inputs, three levels; covered branches are green and collapsed, short ones amber and open.
+- **Build plans:**
+  - "Plan this branch" adds the cheapest producers of every unmet input as ghosts on the map: translucent, with a dashed outline, laid out near the system without overlapping each other.
+  - A Build plan card shows the total cost and setup labor; build one at a time or Build all, remove items, or Clear.
+- **Search by resource:** the drawer's Anything / Makes it / Uses it toggle. "wood pellets" + Uses lists the Pellet Stove; + Makes lists the Farm & Feed Store. The pellet mill arrives in G15.
+- Toasts moved to the bottom-left so they don't cover cards and pages.
+
+**Tests:** 185 unit.
+- `resource.test.ts` (3): an electricity page with producers, users, and build options; wood pellets with the market and an input you lack; a well's chain with electricity unmet and sunlight covered.
+- `search.test.ts`: makes / uses separates sellers from burners.
+
+e2e `sources.spec.ts` (4):
+- **The handoff:** from five blocked systems (well, wood stove, pellet stove, chicken coop, composting outhouse), the card (click 1), the missing input in its status line (click 2), and a source's card ready to Add (click 3), with something to build or buy on every page.
+- Card → resource → card and back with Backspace, with the URL hash.
+- The well's chain → Plan this branch → ghosts → Build all.
+- A deep link to `#/resource/Wood%20pellets` and the makes / uses search.
+
+Screenshots are in `docs/screenshots/g13/`.
+
+**Decisions not in the roadmap**
+- The page's "spare capacity" is shown as headroom: what a producer could add if its own inputs were met. A resource's surplus already shows as spilled, under Outputs.
+- "Sell" isn't modeled (there is no buyer in the engine), so "Where it goes" ends with what happens to the unused rest: spills, spoils, or piles up.
+- The pellet-stove walk the roadmap describes (pellet stove → Wood pellets → pellet mill → its wood-chip input → plan) needs the G15 pellet mill. It is in G15's e2e.
+
+## G14 — The land provides: gathering (2026-10-01)
+
+**Shipped**
+- **Natural nodes** as site data (`nodes` in `data/sites/*.json`, validated by `SiteSchema`): deadfall, creek, spring, wild greens, berry thicket, clay bank, leaf litter, and rain pools. Each node has a stock, regrowth, a season, by-products, an untreated-water flag, rain fill, and drought sensitivity. Asheville is wood- and creek-rich; Laramie has little wood and a weak spring.
+- **Jobs and the work panel** (J, or the HUD's Work button):
+  - seven jobs, each with a 1–5 priority and a weekly hour cap;
+  - labor goes by priority, then proportionally; "last week" hours per job;
+  - every job's hours land in `ledger.labor.byJob`.
+- **Auto-gather rules:** keep water above N days, firewood above N weeks, and food above N weeks. These are editable in the Work panel and off by default; G15's greenfield start turns them on. Each rule restocks at most 2 days of use per day and takes at most 40% of the day's labor.
+- **Gathering:** the nearest node is worked first; walking costs labor (1 min per 50 ft each way per trip). By-products come along, stocks deplete and regrow, and drought cuts creek and spring yields (floor 20%) in real-weather mode.
+- **Boiling:** with no filter, untreated water is boiled over the cooking fire (4 gal per fuel-hour, 0.05 h labor per gal).
+- **Map:** nodes draw as original sprites (log piles, a water line, bushes, a clay patch, leaves, puddles) that shrink as they deplete. Hovering shows the stock, yield, distance, and season. A resource page's "On your land" entries focus the node.
+- **Why:** the checklist notes gathering, for example "Drinking water: 6.2 gal from the spring via boiling, 0.3 h labor", and "Woody biomass: 40 lbs from deadfall, 1.2 h labor (0.2 walking)".
+
+**Tests:** 190 unit (`gather.test.ts`, 5).
+- A tent camp with a tiny stove lives off the spring and the deadfall for a spring month on the Front Range, by auto-gather alone: no hardship, drinking water and heat never short of wood.
+- A creek yields less in a drought year.
+- Gathering competes with construction through priorities.
+- A weekly cap holds a job to its hours, and a cap alone sets standing hours.
+- Deadfall regrows slowly; untouched nodes aren't tracked.
+
+e2e `gather.spec.ts` (1): work priorities, auto-gather on, a season passes, depleted nodes on the map, and the "why" mentions gathering. Screenshots are in `docs/screenshots/g14/`.
+
+**Digests:**
+- `time:starter` and `time:offgrid-cabin-family` re-recorded. The labor refactor moved a sum by 3.7e‑14 gal (floating-point reordering); no behavior changed, because those designs have no auto-gather.
+- Balance digests and goldens are unchanged.
+
+**Decisions not in the roadmap**
+- The Firepit is `outdoor` (G11), so it never heats a tent. The roadmap's "tent and firepit" test uses the catalog's Tiny Wood Stove for heat, and asserts the stove is never short of wood. The catalog's stove is too small to fully heat a canvas tent on April nights, and that is a catalog fact.
+- Both the 40% labor cap and the 2-day restock limit exist because, without them, food foraging at priority 1 starved upkeep and the camp's systems decayed.
+- The water rule counts both Water and Drinking water. Boiling only happens when no system in the design turns Water into Drinking water.
+- There is no "market trip" job: G12's daily trip costs transport, not labor. Each system's upkeep is one "Look after systems" job rather than one job per system, to keep the panel short.
+- Gathered food is Vegetables fruit fiber herbs, which counts toward Food through the existing factor.
+- Rain pools fill at 150 gal per inch of rain on a 200 gal cap and evaporate 25% a day.
+
+## G15 — Two ways to start (2026-10-01)
+
+**Shipped**
+- **Start screen.** Two cards, "Adapt your home" and "Start from the ground up". Each previews its kit, stockpile, cash, and land. Below them: site, household (adults), and difficulty (Gentle, Standard, Real weather). The old form is still there as "Custom game…".
+- **Start configs as data:** `data/starts/adapt.json` and `greenfield.json`, validated by `StartSchema`, built by `gameFromStart`, and replayable (`init.start`).
+  - Adapt: every row is 100% on day 1, and self-reliance and weekly bills lead the HUD.
+  - Greenfield: the full starter kit, with auto-gather on.
+- **Wellbeing v2** (`time/wellbeing.ts`, ENGINE.md "Wellbeing v2"):
+  - grace periods and drift;
+  - recovery, with no day costing more than 8 points;
+  - labor = 0.5 + 0.5 × wellbeing;
+  - going to town and coming back;
+  - each person's terms kept as `why`.
+- **People bar and stockpile bar** under the HUD.
+  - Each person has a wellbeing bar, the top reason it is moving, and a "why" that lists every term.
+  - Days of food, drinking water, firewood, and battery, each with a trend arrow and red under 3 days. Every number has a "why".
+- **Catalog additions as xlsx rows**, via the new `scripts/catalog_patch.py` (8 systems, 21 flows).
+  - The diff summary is `docs/catalog_patches/g15-diff.md`: 0 existing typed values changed.
+  - The exported catalog and goldens are purely additive: all 168 old systems and 797 old flows are identical, and only the source hash changed.
+- **`modifies` overrides** (host and parcel scope) for the weatherization retrofit (house heat × 0.7) and the clothesline (people's electricity × 20/21).
+- The G13 pellet walk now works end to end: pellet stove → Wood pellets → the market and the Pellet Mill → its Wood chips → a planned branch.
+
+**Tests:** 211 unit, of which 21 are new in `starts.test.ts`:
+- the adapt and greenfield pacing gates on 3 sites;
+- Gentle;
+- spring start days and household scaling;
+- going to town and coming home;
+- grace, drift, and recovery;
+- the retrofit, the clothesline, and the rain barrel.
+
+e2e `starts.spec.ts` (3): the greenfield start with the stockpile and wellbeing "why"; adapt with the HUD headline and every row covered after two weeks; the pellet walk. Four older specs were updated:
+- the wizard tests go through "Custom game…";
+- the truthful "find a source" test now expects the resource page (G13);
+- the drawer's makes/uses toggle moved above the search box, with a roving tabindex, so Tab from search reaches the first tile again (keyboard spec).
+
+Screenshots are in `docs/screenshots/g15/`.
+
+**Digests:** the time digests were re-recorded, because wellbeing replaced health and labor now follows it (0.5–1 instead of 0.3–1). Balance digests and goldens are unchanged.
+
+**Decisions not in the roadmap** (see `docs/BALANCE_LOG.md` for the numbers)
+- **Going to town is a setting** (`peopleLeave`). It is on in both starts. Design analysis keeps a fixed household, because a household that empties would make validation and Monte Carlo meaningless.
+- **Heat and bedding:** clothes and bedding cover the first 20 °F-days of cold a day. Without this, the catalog's tiny stove (about 25% of a wall tent's heat loss) would make every spring start a hardship.
+- **Greenfield food is 200,000 kcal**, because the roadmap's "600,000 kcal" and "3 weeks" disagree. Seed potatoes are omitted (no catalog resource).
+- **"Spring, day 1"** is 30 days before each site's last frost.
+- **Adapt has two cars and the gas station**, and its backstops may fill 8× their catalog output, so January heat comes from the grid.
+- **The start "eve":** one silent day before day 1, so the house's sanitation and the cars' miles count on day 1. Only flows carry over: no cash, no stock draw.
+- **The Rain Barrel has its own 100 sq ft catchment** (no Roofing area input), so a tent camp can fill it.
+- **Sheet-mulch Soil is per season.** A one-time output would count as nothing in the weekly model.
+- **The retrofit carries a token Labor 0.05/week.** A system with no flows isn't valid in the sheet.
+- **The clothesline's "home electricity −2 kWh/week"** is 1 kWh per person, because the catalog's home has no electricity input; people do.
+- The old tutorial quests still show in both starts. G16 replaces them with the greenfield and adapt tutorials.
+
+**For the user to check**
+- Open `data/source/LandLab_Sim_Systems_v2.xlsx` in Excel. The 8 new rows are at Systems 170–177, Flows 799–819, and Matrix 170–177. The summary is in `docs/catalog_patches/g15-diff.md`. The Shelter category now counts 21 systems, so its "Within target?" cell reads No (the retrofit carries the Shelter tag).
+
+## G16 — Tutorials and pacing gates (2026-10-01)
+
+**Shipped**
+- **Quest lines as data** (`data/quests/greenfield.json`, `adapt.json`): 8 quests each, in the roadmap's order and words. Each has a goal, the cheapest steps, a "show me" target, the checklist row it moves, and a neighbor's reward (Ruth on the next ridge; Dale across the street).
+  - The engine evaluates goals (`tutorial.ts`) and pays rewards at the end of the day, inside `stepDay`, so tutorials replay exactly.
+- **Quest card:** pinned, with progress, the goal's detail line, **Show me** (opens the drawer item and its card, focuses a node, opens a resource page, or opens a panel), the reward's sender, and Skip (a logged action). Opening the Market panel completes "Read your weekly bills". Quest-done toasts carry the neighbor's line.
+- **Bots** (`packages/cli/bots/`): idle, tutorialFollower, greedy, adaptUpgrader, plus `playBot`.
+- **Pacing gates:** all 5 of the roadmap's gates on 3 sites × 3 seeds, in three places:
+  - a Vitest suite;
+  - `npm run test:pacing` (a table, exit 1 on a miss);
+  - a **separate CI job**, "Pacing gates (playtest bots)".
+  - All 45 runs take about 3 seconds.
+- **The tuning loop**, recorded change by change with results in `docs/BALANCE_LOG.md`. It found four engine bugs, now fixed:
+  - upkeep starved by construction;
+  - Flow boosts always 0;
+  - seed potatoes eaten;
+  - running costs missing from the bills.
+
+**Tests:** 218 unit tests, including 7 pacing tests: the 5 gates, bot determinism, and the greedy bot. Full e2e suite: 44 of 44 pass.
+
+e2e `tutorial.spec.ts` (1): the first five greenfield quests through the UI, with Show me, the Work panel, the market, and placing. Screenshots are in `docs/screenshots/g16/`. Two G14/G12 unit tests were updated for the new upkeep priority and running costs.
+
+**Digests:** the time digests were re-recorded, for upkeep priority 1 (`time:suburban-baseline`) and Flow boosts (`time:starter`, `time:offgrid-cabin-family`). The seed reserve and the running-costs bills changed no digest. Balance digests and goldens are unchanged.
+*(Corrected 2026-10-02: this line first said the seed reserve also changed digests. Reverting each fix alone shows it didn't; see `packages/engine/test/DIGESTS.md`.)*
+
+**Decisions not in the roadmap**
+- **"Survives year 1"** = nobody goes to town during the year.
+- **"At least one food row ≥ 25% actual by autumn"** = home-grown food eaten (not bought) is at least 25% of the household's need over some 30-day window that ends by the site's first fall frost. Bought food would make "actual" trivially 100%.
+- **"Bills fall ≥ 20%"** compares the average week of weeks 2–5 with the last 4 weeks of the year.
+- **Rewards land at the end of a day**, as part of the engine state, not as UI actions. A bot and a player get identical rewards, and replays match.
+- **The greedy bot** ranks by cost per unit of the worst row's weekly output and skips anything costing more than half its cash. It has no gate; the roadmap gives it none.
+- **Old games keep the old quest line.** The G8 quests still run for custom games; only games from a start use the new lines.
+
+## Status at the end of the playability roadmap (G11–G16)
+
+All six sessions are done and pushed to `claude/gifted-hypatia-x158zw`, with no irreconcilable snags. The roadmap's "What to check when it comes back":
+- [x] The GoSun Fan test exists and passes (`truthful.test.ts`, `truthful.spec.ts`), and no checklist path calls `balancePotential` (only `balance/` and parity tests do).
+- [x] Spreadsheet goldens are untouched. Parity targets `balancePotential`. The G15 patch changed only the source hash and added 21 flow entries.
+- [x] The xlsx diff from `catalog_patch.py` adds rows only: `docs/catalog_patches/g15-diff.md`, 0 typed values changed.
+- [x] Pacing gates are real CI jobs, not skipped. `BALANCE_LOG.md` shows each tuned number and why.
+- [ ] **Greenfield idle at 1× in the browser:** count the days to the first hardship toast. The engine says day 53–54 on every site (the gate wants ≥ 28). Worth a look by eye.
+
+### Where to pick up locally
+1. **Review the workbook in Excel** (`data/source/LandLab_Sim_Systems_v2.xlsx`): Systems 170–177, Flows 799–819, Matrix 170–177. Re-running the patch script needs `pip install openpyxl` and LibreOffice Calc.
+2. **Play both starts for real.** The bots prove the gates, not the fun. The open questions are in `BALANCE_LOG.md`:
+   - Real weather currently survives 9 of 9 seeds;
+   - camps settle around wellbeing 80.
+3. **Run the full suites on your machine:** `npm test`, `npm run test:pacing`, and `npm run test:e2e`. CI runs them all; the pacing job is separate and fast.
+4. Open the PR when you're happy. This branch carries G11–G16. Per CLAUDE.md's "one session = one branch", you may prefer to split it.
+
+## Audit — G11–G16 verification (2026-10-01)
+
+**Shipped:** no features, no tuning. Full report: `docs/AUDIT_G11_G16.md`.
+- `catalog:check` needs no LibreOffice or Python: it passes in a fresh clone after only `npm ci`, with neither on PATH. `docs/CATALOG.md` now says the patch script is run by hand only.
+- Digest history and per-fix attribution are in `packages/engine/test/DIGESTS.md`. History was not rewritten (the branch is pushed).
+  - Upkeep priority moved `time:suburban-baseline`.
+  - Flow boosts moved `time:starter` and `time:offgrid-cabin-family`.
+  - The seed reserve and running-costs fixes moved none.
+- Goldens: existing entries are identical to before G11. The file changed only by the xlsx hash and 21 added flows.
+- Workbook:
+  - A LibreOffice recalculation reproduces every cached formula value (7,094 cells), the 48.5% overall score, and the checklist goldens.
+  - The G15 patch changed 0 typed values. 872 formulas were changed only by extending range ends from row 169 to 177.
+
+**Tests (fresh clone):** 218/218 unit, all pacing gates, typecheck and lint clean. e2e was not rerun.
+
+**Digests:** unchanged.
+
+**Known gaps:** see the report's "Found, not fixed" section and its open bedding question.
+
+## Review follow-ups on PR 1 (2026-10-02)
+
+Four changes, each in its own commit.
+
+1. **The retrofit is tagged Heating only** (`g16a-retrofit-heating`). Shelter is back to 20 systems and "Within target?" reads Yes. `catalog_patch.py` gained text-only `edits` (never a number column). Goldens: only the source hash changed.
+2. **The Systems R validation and the Matrix highlighting cover every row** (`g16b-table-formats`). They now reach R2:R177 and B2:BK177, and the patch script stretches them on every future patch (the blankets patch took them to 178).
+   - Styling, checked cell by cell against the file before: only those two ranges changed.
+   - Against the pre-G15 original, the G15 save left 61 custom row heights rounded to LibreOffice's 0.75 pt grid, and one extra cell format (5 added Flows notes cells say "wrap off" explicitly). Nothing else differs.
+3. **Corrected the G16 entry's digest line.** The seed reserve changed no digest.
+4. **Wool Blankets & Sleeping Bags replace `HEAT_BEDDING_HDD`** (S177, `g16c-wool-blankets`).
+   - It is a host modifier on the shelter's Heat request, × 0.2, and is in the greenfield kit.
+   - The checklist, the people bar, and the "warm" quest goal all use the shelter's own heat need. Both "why" popovers name the blankets.
+   - Wellbeing's threshold test gained a 1e-9 tolerance. It was a latent float bug that this change exposed.
+   - Pacing is identical to "baseline plus the tolerance fix" on every measure. The full before/after table and the multiplier scan are in `BALANCE_LOG.md`, along with a caveat: under a constant multiplier, winter in a tent is easier than under the old offset.
+   - Time digests were re-recorded (`DIGESTS.md`).
+
+**Also: CI was red on the PR.** The `check` job's one-year performance budget (200 instances, under 150 ms) read 161 ms on the runner.
+- On an idle CPU here, the bench grew from about 65 ms at the end of G10 to about 92 ms by G16; the runner is about 1.8× slower. A profile diff put the growth in two places:
+  - the spatial cache check rebuilt a string of every instance each day;
+  - wellbeing ran once per person.
+- Both are fixed without changing any result: the layout fields are compared in place, and an update is reused for the next person in an identical state. The bench is now about 60 ms. Digests and pacing are unchanged.
+
+**Tests:**
+- 222 unit tests, including 4 new blanket tests: the need cut, one heat need for the checklist and the people bar, blankets stacking with a retrofit, and blankets in the kit.
+- Pacing: 15 of 15 gate groups pass.
+- e2e: 44 of 44 pass. `starts.spec` now checks that the wellbeing "why" names the blankets.
+
+**Digests:** time digests were re-recorded once, for the removal of the bedding constant (`DIGESTS.md`). The performance commit changed none.
+
+**Known gaps:** winter in a tent with blankets is easier than under the old offset. See `BALANCE_LOG.md`, "What the gates don't show".
+
+**Then a second CI fix (`2a7c9e9`).** With the unit step passing, CI reached Lighthouse, which failed `color-contrast`: the red stockpile chip from G15 was #e0523d on the panel, 3.76:1. A `--bad-text` token (#ff8a75, 6.3:1; the colorblind palette gets #ffb066) is now used for red text. CI is green on `2a7c9e9`.

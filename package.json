@@ -22,7 +22,8 @@
     "format": "prettier --write .",
     "catalog:export": "tsx packages/catalog/src/cli/export.ts",
     "catalog:check": "tsx packages/catalog/src/cli/check.ts",
-    "sim": "tsx packages/cli/src/main.ts"
+    "sim": "tsx packages/cli/src/main.ts",
+    "test:pacing": "tsx packages/cli/src/main.ts pacing"
   },
   "engines": {
     "node": ">=20"

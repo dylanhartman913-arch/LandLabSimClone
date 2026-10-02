@@ -10,6 +10,17 @@ export interface Design {
    * multiplies matching flows by it and lists the reasons in provenance.
    */
   adjust?: Record<string, { in?: Record<string, FlowAdjust>; out?: Record<string, FlowAdjust> }>;
+  /**
+   * Feasible balance (G11): ambient resources the site supplies with no system (sun, rain…).
+   * Without it, an ambient input is met only by a system in the design that outputs it.
+   */
+  ambient?: Record<string, boolean>;
+  /**
+   * Feasible balance (G11): per system, the share of its instances whose heat or cooling reaches
+   * a shelter, by resource. Without it: none if the design has no shelter or the system is
+   * outdoor, otherwise all (a count-only design is assumed to be laid out sensibly).
+   */
+  delivered?: Record<string, Record<string, number>>;
 }
 
 export interface FlowAdjust {

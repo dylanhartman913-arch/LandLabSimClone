@@ -37,6 +37,25 @@ export interface ChecklistRow {
   covered: '✓' | '✗' | 'n/a';
   /** Resources that feed this row. */
   resources: string[];
+  /** Feasible balance only: what the row's systems would provide with every input met. */
+  potential?: Explained;
+  /** Feasible balance only: systems feeding this row that run below full (worst first). */
+  blocked?: BlockedSystem[];
+  /** Feasible balance only: share of the row's actual supply the homestead makes itself (G12). */
+  selfReliance?: Explained;
+}
+
+/** A system that can't run fully, and why (G11). */
+export interface BlockedSystem {
+  systemId: string;
+  name: string;
+  count: number;
+  /** 0 = blocked, between 0 and 1 = partial. */
+  satisfaction: number;
+  /** The input that limits it. */
+  limitedBy: string | null;
+  /** Plain words: "blocked: no Electricity", "partial: 40% of Water". */
+  status: string;
 }
 
 export const SUMMARY_KEYS = [
@@ -193,12 +212,18 @@ function getStatics(catalog: Catalog): BalanceStatics {
   return out;
 }
 
-/**
- * Balance mode: the spreadsheet's math. Weekly averages × counts, the Needs
- * Checklist, the overall score, and the Design Summary, each with provenance.
- */
-export function balance(catalog: Catalog, assumptions: Assumptions, design: Design): BalanceResult {
-  const idx = indexCatalog(catalog);
+/** Every flow's weekly term for a design, grouped by resource and by checklist row. */
+export interface CollectedTerms {
+  outTerms: Map<string, Term[]>;
+  inTerms: Map<string, Term[]>;
+  needOut: Map<NeedKey, Term[]>;
+  needIn: Map<NeedKey, Term[]>;
+  assumptionsByResource: Map<string, Set<AssumptionKey>>;
+  adjustNotes: Map<string, Set<string>>;
+}
+
+/** Walk the design's flows in spreadsheet row order and build their weekly terms (nominal). */
+export function collectTerms(catalog: Catalog, assumptions: Assumptions, design: Design): CollectedTerms {
   const st = getStatics(catalog);
   const factors = weeklyFactors(catalog, assumptions);
   const counts = design.counts;
@@ -262,6 +287,24 @@ export function balance(catalog: Catalog, assumptions: Assumptions, design: Desi
     for (const m of [outTerms, inTerms, needOut, needIn] as Map<string, Term[]>[])
       for (const t of m.values()) t.sort(byRow);
   }
+  return { outTerms, inTerms, needOut, needIn, assumptionsByResource, adjustNotes };
+}
+
+/**
+ * Balance mode, potential: the spreadsheet's math. Weekly averages × counts with no input
+ * check: what every system would make if all its inputs were met. Spreadsheet parity applies
+ * here. Players see `balanceFeasible` (actual); this is the "if you fix your supply chains" ceiling.
+ */
+export function balancePotential(catalog: Catalog, assumptions: Assumptions, design: Design): BalanceResult {
+  return assembleBalance(catalog, design, collectTerms(catalog, assumptions, design));
+}
+
+/** Resource balances, the Needs Checklist, the score, and the Design Summary from collected terms. */
+export function assembleBalance(catalog: Catalog, design: Design, c: CollectedTerms): BalanceResult {
+  const idx = indexCatalog(catalog);
+  const st = getStatics(catalog);
+  const counts = design.counts;
+  const { outTerms, inTerms, needOut, needIn, assumptionsByResource, adjustNotes } = c;
 
   // Resources balance (Resources!I:L)
   const resources: Record<string, ResourceBalance> = {};

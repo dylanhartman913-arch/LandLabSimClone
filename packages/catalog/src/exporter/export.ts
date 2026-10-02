@@ -27,6 +27,7 @@ import { evalQtyExpr } from '../qty.ts';
 import { CatalogExportError } from './errors.ts';
 import { recognizeFormula } from './formulas.ts';
 import {
+  DEFAULT_DELIVERY,
   DEFAULT_DIRECT_USE,
   DEFAULT_SPOIL_PER_WEEK,
   defaultInputRole,
@@ -198,7 +199,17 @@ function readResources(t: Table, problems: string[]) {
   ]);
   const out: Omit<
     Resource,
-    'spoilPerWeek' | 'storedIn' | 'storable' | 'directUseShare' | 'satisfiedBy' | 'provenance'
+    | 'spoilPerWeek'
+    | 'storedIn'
+    | 'storable'
+    | 'directUseShare'
+    | 'satisfiedBy'
+    | 'deliversTo'
+    | 'deliveryRadiusFt'
+    | 'marketPrice'
+    | 'marketUnit'
+    | 'marketAvailable'
+    | 'provenance'
   >[] = [];
   const seen = new Set<string>();
   for (const r of t.rows) {
@@ -257,7 +268,18 @@ const SYSTEM_HEADERS = [
   'Notes',
 ];
 
-type RawSystem = Omit<System, 'priorityTier' | 'yearsToFullOutput' | 'spriteKey' | 'layer' | 'provenance'>;
+type RawSystem = Omit<
+  System,
+  | 'priorityTier'
+  | 'yearsToFullOutput'
+  | 'spriteKey'
+  | 'layer'
+  | 'outdoor'
+  | 'backstop'
+  | 'backstopFee'
+  | 'backstopPrices'
+  | 'provenance'
+>;
 
 function readSystems(t: Table, categories: Category[], problems: string[]): RawSystem[] {
   requireHeaders(t, SYSTEM_HEADERS);
@@ -502,6 +524,10 @@ function applyEngineFields(
       ),
       spriteKey: pick('spriteKey', o.spriteKey, `system:${s.id}`),
       layer: pick('layer', o.layer, defaultLayer(s.footprintSqft, s.categories)),
+      outdoor: pick('outdoor', o.outdoor, false),
+      backstop: pick('backstop', o.backstop, false),
+      backstopFee: pick('backstopFee', o.backstopFee, 0),
+      backstopPrices: pick('backstopPrices', o.backstopPrices, {}),
       provenance,
     };
   });
@@ -515,6 +541,14 @@ function applyEngineFields(
     provenance.storable = o.storable !== undefined ? 'override' : 'default-rule';
     provenance.satisfiedBy = o.satisfiedBy !== undefined ? 'override' : 'default-rule';
     provenance.directUseShare = o.directUseShare !== undefined ? 'override' : 'default-rule';
+    provenance.deliversTo = o.deliversTo !== undefined ? 'override' : 'default-rule';
+    provenance.deliveryRadiusFt = o.deliveryRadiusFt !== undefined ? 'override' : 'default-rule';
+    provenance.marketPrice = o.marketPrice !== undefined ? 'override' : 'default-rule';
+    provenance.marketUnit = o.marketUnit !== undefined ? 'override' : 'default-rule';
+    provenance.marketAvailable = o.marketAvailable !== undefined ? 'override' : 'default-rule';
+    if (o.marketUnit !== undefined && o.marketUnit !== `$/${r.unit}`)
+      problems.push(`catalog_overrides.json: resources."${r.name}".marketUnit "${o.marketUnit}" must be "$/${r.unit}"`);
+    const delivery = DEFAULT_DELIVERY[r.name];
     return {
       ...r,
       spoilPerWeek: o.spoilPerWeek ?? DEFAULT_SPOIL_PER_WEEK[r.name] ?? 0,
@@ -522,6 +556,11 @@ function applyEngineFields(
       storable: o.storable ?? (r.class === 'Flow' || r.class === 'Money' ? !NON_STORABLE.has(r.name) : false),
       directUseShare: o.directUseShare ?? DEFAULT_DIRECT_USE[r.name] ?? 0,
       satisfiedBy: o.satisfiedBy ?? [],
+      deliversTo: o.deliversTo ?? delivery?.deliversTo ?? 'any',
+      deliveryRadiusFt: o.deliveryRadiusFt ?? delivery?.radiusFt ?? 0,
+      marketPrice: o.marketPrice ?? null,
+      marketUnit: o.marketUnit ?? null,
+      marketAvailable: o.marketAvailable ?? o.marketPrice !== undefined,
       provenance,
     };
   });
@@ -590,7 +629,21 @@ function applyEngineFields(
     return flow;
   });
 
-  const adjacencyRules: AdjacencyRule[] = overrides.adjacencyRules;
+  // G15 modifiers become adjacency rules (scope host: on the receiver; parcel: anywhere).
+  const modifierRules: AdjacencyRule[] = [];
+  for (const [id, o] of Object.entries(overrides.systems)) {
+    for (const m of o.modifies ?? []) {
+      modifierRules.push({
+        from: id,
+        to: m.to,
+        radiusFt: 0,
+        scope: m.scope,
+        effect: { resource: m.resource, multiplier: m.multiplier, mode: 'scale', direction: m.direction, stack: 'once' },
+        note: m.note,
+      });
+    }
+  }
+  const adjacencyRules: AdjacencyRule[] = [...overrides.adjacencyRules, ...modifierRules];
   const catNames = new Set(rawSystems.flatMap((s) => s.categories));
   for (const rule of adjacencyRules) {
     for (const end of [rule.from, rule.to]) {
@@ -617,6 +670,39 @@ function applyEngineFields(
     if (!resNames.has(t.resource))
       problems.push(`catalog_overrides.json: terrain rule resource "${t.resource}" is not a resource`);
   }
+  // Backstops (G12): every sold output needs a price. Default: the market price; failing that,
+  // for the system's first Flow output, its weekly bill (Capital in, less the fee) ÷ that output.
+  const resByName = new Map(resources.map((r) => [r.name, r]));
+  for (const sys of systems) {
+    if (!sys.backstop) {
+      if (Object.keys(sys.backstopPrices).length || sys.backstopFee)
+        problems.push(`catalog_overrides.json: systems.${sys.id} has backstop prices or a fee but is not a backstop`);
+      continue;
+    }
+    const own = flows.filter((f) => f.systemId === sys.id);
+    const outs = own.filter((f) => f.direction === 'out' && resByName.get(f.resource)?.class === 'Flow');
+    for (const r of Object.keys(sys.backstopPrices)) {
+      if (!outs.some((f) => f.resource === r))
+        problems.push(`catalog_overrides.json: systems.${sys.id}.backstopPrices."${r}" is not one of its outputs`);
+    }
+    const prices: Record<string, number> = { ...sys.backstopPrices };
+    for (const f of outs) {
+      if (prices[f.resource] !== undefined) continue;
+      const market = resByName.get(f.resource)?.marketPrice;
+      if (market !== null && market !== undefined) prices[f.resource] = market;
+    }
+    if (!Object.keys(prices).length && outs[0]) {
+      const capital = own.find((f) => f.direction === 'in' && f.resource === 'Capital');
+      const first = outs[0];
+      if (capital?.qty.kind === 'const' && first.qty.kind === 'const' && capital.period === first.period && first.qty.value > 0)
+        prices[first.resource] = Math.max(0, capital.qty.value - sys.backstopFee * (first.period === 'Weekly' ? 1 : 0)) / first.qty.value;
+    }
+    if (!Object.keys(prices).length)
+      problems.push(`catalog_overrides.json: backstop ${sys.id} (${sys.name}) sells nothing: give it backstopPrices`);
+    if (Object.keys(prices).length !== Object.keys(sys.backstopPrices).length) sys.provenance.backstopPrices = 'default-rule';
+    sys.backstopPrices = prices;
+  }
+
   return { systems, resources, flows, adjacencyRules, assignedCapacities, terrainRules };
 }
 

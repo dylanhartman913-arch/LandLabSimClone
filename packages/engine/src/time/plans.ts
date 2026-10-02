@@ -13,6 +13,9 @@ import { weeklyFactors } from '../periods.ts';
 import { windowDays } from './calendar.ts';
 import type { ClimateTable, DayWeather } from './climate.ts';
 
+/** A backstop can supply up to this many times its catalog weekly output (G12). */
+export const BACKSTOP_CAP_MULT = 3;
+
 export type Shape = 'steady' | 'heating' | 'cooling' | 'sun' | 'rain' | 'wind' | 'growing' | 'window';
 
 export interface FlowPlan {
@@ -42,6 +45,12 @@ export interface SystemPlan {
    * grid power, city water, groceries). Its Flow outputs are recorded as `bought` in the ledger.
    */
   bought: boolean;
+  /**
+   * Backstop (G12): instead of fixed outputs it fills unmet demand for each priced output, up
+   * to `capWeekly` (3 × catalog output) a week, at `prices`, plus `fee` a week. Its Capital input
+   * is replaced by those charges. Unpriced outputs are by-products of its first priced output.
+   */
+  backstop: { fee: number; prices: Record<string, number>; primary: string; capWeekly: Record<string, number> } | null;
   /** Recurring inputs (excluding one-time materials). */
   inputs: FlowPlan[];
   outputs: FlowPlan[];
@@ -109,6 +118,7 @@ export function getPlans(catalog: Catalog, site: Site): Plans {
       bought:
         system.categories.includes('Conventional') &&
         catalog.flows.some((f) => f.systemId === system.id && f.direction === 'in' && f.resource === 'Capital'),
+      backstop: null,
       inputs: [],
       outputs: [],
       materials: [],
@@ -141,6 +151,15 @@ export function getPlans(catalog: Catalog, site: Site): Plans {
       sp.outputs.push(plan);
       if (sp.isHuman && flow.resource === 'Labor') sp.laborWeekly += plan.weekly;
     }
+  }
+
+  for (const sp of bySystem.values()) {
+    const sys = sp.system;
+    if (!sys.backstop) continue;
+    const capWeekly: Record<string, number> = {};
+    for (const o of sp.outputs) capWeekly[o.resource] = (capWeekly[o.resource] ?? 0) + o.weekly * BACKSTOP_CAP_MULT;
+    const primary = sp.outputs.find((o) => sys.backstopPrices[o.resource] !== undefined)?.resource ?? '';
+    sp.backstop = { fee: sys.backstopFee, prices: sys.backstopPrices, primary, capWeekly };
   }
 
   const pools = new Map<string, { resource: string; unitsPer: number }[]>();

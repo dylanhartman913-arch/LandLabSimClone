@@ -64,6 +64,7 @@ test('the new-game wizard sets up site, parcel, household, and kit', async ({ pa
   await page.getByTestId('open-saves').click();
   await page.getByTestId('open-wizard').click();
   await expect(page.getByTestId('new-game')).toBeVisible();
+  await page.getByTestId('custom-game').click();
   await page.getByTestId('site-asheville-nc').click();
   await page.getByTestId('wizard-acres').selectOption('0.25');
   await page.getByTestId('wizard-children').fill('2');

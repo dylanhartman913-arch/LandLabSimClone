@@ -1,7 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import { costFor, getSystem, setupHoursFor, systemCard } from '@homestead/engine';
+import {
+  costFor,
+  designBalance,
+  getSystem,
+  instanceStatuses,
+  setupHoursFor,
+  supplyChain,
+  systemCard,
+  type ChainNode,
+} from '@homestead/engine';
 import { fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
+import { ResourceLink } from './ResourcePage.tsx';
 import { SystemIcon } from './SystemIcon.tsx';
 import { WhyNum } from './Why.tsx';
 
@@ -29,6 +39,8 @@ export function SystemCard() {
   const game = useGame((s) => s.game);
   const [mode, setMode] = useState<'buy' | 'diy'>('buy');
   const [details, setDetails] = useState(false);
+  const [chain, setChain] = useState(false);
+  const canBack = useGame((s) => s.navBack.length > 0);
   const addRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   // Keyboard players land on the card's main action.
@@ -47,6 +59,11 @@ export function SystemCard() {
   return (
     <section className="card" role="dialog" aria-label={`${sys.name} card`} data-testid="system-card">
       <header className="card-head">
+        {canBack && (
+          <button className="btn ghost" onClick={() => st.navigateBack()} aria-label="Back" data-testid="nav-back">
+            ←
+          </button>
+        )}
         <SystemIcon system={sys} size={52} />
         <div>
           <h2>{sys.name}</h2>
@@ -203,13 +220,15 @@ export function SystemCard() {
         </div>
       )}
 
+      <StatusLine systemId={id} instanceId={instanceId} />
+
       <h3>Inputs</h3>
       <ul className="io-list" data-testid="card-inputs">
         {v.inputs.map((i) => (
           <li key={i.view.flow.id}>
             <div className="io-head">
               <span>
-                {i.view.resource}{' '}
+                <ResourceLink name={i.view.resource} />{' '}
                 <span className={`role role-${i.role}`} title={ROLE_HELP[i.role]}>
                   {ROLE_LABEL[i.role]}
                 </span>
@@ -237,12 +256,21 @@ export function SystemCard() {
         ))}
       </ul>
 
+      <div className="chain-toggle">
+        <button className="btn small" onClick={() => setChain(!chain)} aria-expanded={chain} data-testid="show-chain">
+          {chain ? 'Hide supply chain' : 'Show supply chain'}
+        </button>
+      </div>
+      {chain && <SupplyChain systemId={id} near={placedAt(game.instances, inst?.id)} />}
+
       <h3>Outputs</h3>
       <ul className="io-list" data-testid="card-outputs">
         {v.outputs.map((o) => (
           <li key={o.view.flow.id}>
             <div className="io-head">
-              <span>{o.view.resource}</span>
+              <span>
+                <ResourceLink name={o.view.resource} />
+              </span>
               <span className="res-num">
                 <WhyNum value={o.produced} title={`${o.view.resource} produced`} unit={o.view.unit} />{' '}
                 {o.view.periodLabel}
@@ -308,4 +336,107 @@ export function SystemCard() {
       )}
     </section>
   );
+}
+
+/** "Blocked: no Electricity", with a way to the missing input (G11/G13). */
+function StatusLine({ systemId, instanceId }: { systemId: string; instanceId: string | null }) {
+  const game = useGame((s) => s.game);
+  const catalog = useGame((s) => s.catalog);
+  if (!game.instances.some((i) => i.systemId === systemId)) return null;
+  const status = instanceId
+    ? instanceStatuses(game, catalog).get(instanceId)
+    : (() => {
+        const s = designBalance(game, catalog).systems[systemId];
+        return s && s.satisfaction < 1 - 1e-9
+          ? { level: s.satisfaction <= 1e-9 ? 'blocked' : 'partial', limitedBy: s.limitedBy, text: s.status }
+          : undefined;
+      })();
+  if (!status) return null;
+  return (
+    <p className={`status-line ${status.level}`} data-testid="card-status">
+      <span className={`badge-dot ${status.level}`} aria-hidden="true" /> {status.text[0]!.toUpperCase() + status.text.slice(1)}
+      {status.limitedBy && status.limitedBy !== 'Shelter' && (
+        <>
+          {' '}
+          · <ResourceLink name={status.limitedBy} className="find" />
+        </>
+      )}
+    </p>
+  );
+}
+
+/** Pick the cheapest producer for every unmet input down the chain (what "Plan this branch" builds). */
+function branchSystems(node: ChainNode): string[] {
+  if (node.satisfied || !node.options.length) return [];
+  const best = node.options.find((o) => o.inDesign) ?? node.options[0]!;
+  const below = best.inputs.flatMap(branchSystems);
+  return best.inDesign ? below : [best.systemId, ...below];
+}
+
+/** Inputs → producers → their inputs, three levels deep; satisfied branches collapse green (G13). */
+function SupplyChain({ systemId, near }: { systemId: string; near?: { x: number; y: number } }) {
+  const game = useGame((s) => s.game);
+  const catalog = useGame((s) => s.catalog);
+  const tree = supplyChain(game, catalog, systemId, 3);
+  const st = useGame.getState();
+  if (!tree.length) return <p className="muted small">It needs nothing but labor.</p>;
+  return (
+    <div className="chain" data-testid="supply-chain">
+      <ChainLevel nodes={tree} depth={0} />
+      {tree.some((n) => !n.satisfied) && (
+        <button
+          className="btn small"
+          onClick={() => {
+            const ids = tree.flatMap(branchSystems);
+            if (ids.length) st.planAdd(ids, near);
+            else st.toast('Nothing to plan: the missing inputs have no producer in the catalog. Try the market.');
+          }}
+          data-testid="plan-branch"
+        >
+          Plan this branch
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ChainLevel({ nodes, depth }: { nodes: ChainNode[]; depth: number }) {
+  const st = useGame.getState();
+  return (
+    <ul className={`chain-level d${depth}`}>
+      {nodes.map((n) => (
+        <li key={n.resource} className={n.satisfied ? 'ok' : 'short'}>
+          <details open={!n.satisfied}>
+            <summary>
+              <span aria-hidden="true">{n.satisfied ? '✓' : '✗'}</span> <ResourceLink name={n.resource} />{' '}
+              <span className="muted">
+                {n.satisfied ? 'covered' : `${fmtPct(n.met)} covered`}
+                {n.buy !== null ? ` · market $${n.buy < 0.1 ? n.buy.toFixed(4) : n.buy.toFixed(2)}` : ''}
+              </span>
+            </summary>
+            {n.options.length > 0 && (
+              <ul className="chain-options">
+                {n.options.map((o) => (
+                  <li key={o.systemId}>
+                    <button className="link" onClick={() => st.openCard(o.systemId)}>
+                      {o.name}
+                    </button>{' '}
+                    <span className="muted">
+                      {o.inDesign ? 'in your design' : `${fmtMoney(o.cost)} ${o.mode === 'diy' ? 'DIY' : 'to buy'}`}
+                    </span>
+                    {o.inputs.length > 0 && <ChainLevel nodes={o.inputs} depth={depth + 1} />}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </details>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function placedAt(instances: readonly { id: string; x: number; y: number }[], id: string | undefined) {
+  const i = id ? instances.find((x) => x.id === id) : undefined;
+  return i ? { x: i.x, y: i.y } : undefined;
 }

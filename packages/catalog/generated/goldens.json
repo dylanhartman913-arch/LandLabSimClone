@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "source": {
     "file": "LandLab_Sim_Systems_v2.xlsx",
-    "sha256": "b8d81357c7828864e2edc99034e165ca76220e1eff29abbf5eb39df0cae334e0"
+    "sha256": "b92b6bf36fe07032605c186d367e182cf4331a4df3e137d7286a19e82c609895"
   },
   "counts": {
     "S002": 1,
@@ -6088,6 +6088,160 @@
       "count": 0,
       "weeklyTotal": 0,
       "contribution": null
+    },
+    "F0798": {
+      "qty": 0.1,
+      "weeklyPerUnit": 0.1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0799": {
+      "qty": 0.288461538461538,
+      "weeklyPerUnit": 0.288461538461538,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0800": {
+      "qty": 14.3769230769231,
+      "weeklyPerUnit": 14.3769230769231,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0801": {
+      "qty": 55,
+      "weeklyPerUnit": 55,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0802": {
+      "qty": 2,
+      "weeklyPerUnit": 2,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0803": {
+      "qty": 120,
+      "weeklyPerUnit": 120,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0804": {
+      "qty": 15,
+      "weeklyPerUnit": 15,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0805": {
+      "qty": 100,
+      "weeklyPerUnit": 100,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0806": {
+      "qty": 20,
+      "weeklyPerUnit": 20,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0807": {
+      "qty": 75,
+      "weeklyPerUnit": 75,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0808": {
+      "qty": 575,
+      "weeklyPerUnit": 575,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0809": {
+      "qty": 40,
+      "weeklyPerUnit": 40,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0810": {
+      "qty": 1000,
+      "weeklyPerUnit": 1000,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0811": {
+      "qty": 0.25,
+      "weeklyPerUnit": 0.25,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0812": {
+      "qty": 100,
+      "weeklyPerUnit": 0,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0813": {
+      "qty": 200,
+      "weeklyPerUnit": 0,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0814": {
+      "qty": 40,
+      "weeklyPerUnit": 0.769230769230769,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0815": {
+      "qty": 0.05,
+      "weeklyPerUnit": 0.05,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0816": {
+      "qty": 10890,
+      "weeklyPerUnit": 10890,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0817": {
+      "qty": 0.5,
+      "weeklyPerUnit": 0.5,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0818": {
+      "qty": 2,
+      "weeklyPerUnit": 2,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0819": {
+      "qty": 0.1,
+      "weeklyPerUnit": 0.1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
     }
   }
 }

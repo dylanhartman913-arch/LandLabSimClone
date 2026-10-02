@@ -1,4 +1,5 @@
-import { MILESTONES, QUESTS, shortageHints } from '@homestead/engine';
+import { MILESTONES, QUESTS, questView, shortageHints } from '@homestead/engine';
+import type { QuestShow } from '@homestead/catalog';
 import { fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
 
@@ -9,6 +10,7 @@ export function QuestCard() {
   const progress = useGame((s) => s.progress);
   const readOnly = useGame((s) => s.readOnly);
   if (progress.tutorialSkipped || readOnly) return null;
+  if (game.tutorial) return <TutorialCard />;
   const q = QUESTS.find((x) => progress.quests[x.id] === undefined);
   const done = QUESTS.filter((x) => progress.quests[x.id] !== undefined).length;
   const badges = MILESTONES.filter((m) => progress.milestones[m.id] !== undefined);
@@ -92,6 +94,69 @@ export function HintCard() {
           </li>
         ))}
       </ul>
+    </aside>
+  );
+}
+
+/** "Show me": point at the drawer item, node, resource page, or panel a quest is about. */
+export function showMe(show: QuestShow): void {
+  const st = useGame.getState();
+  switch (show.kind) {
+    case 'system': {
+      const sys = st.catalog.systems.find((x) => x.name === show.name);
+      st.setDrawer(true);
+      st.setDrawerTab('systems');
+      st.setDrawerQuery(show.name);
+      if (sys) st.openCard(sys.id);
+      return;
+    }
+    case 'node': {
+      const n = st.game.site.nodes.find((x) => x.type === show.type);
+      if (n) st.focusNode(n.id);
+      return;
+    }
+    case 'resource':
+      st.openResource(show.name);
+      return;
+    case 'panel':
+      st.setPanel(show.panel as Parameters<typeof st.setPanel>[0]);
+      return;
+  }
+}
+
+/** The pinned quest card for a start's quest line (G16): goal, progress, show me, and the row it moves. */
+function TutorialCard() {
+  const game = useGame((s) => s.game);
+  const catalog = useGame((s) => s.catalog);
+  const v = questView(game, catalog);
+  if (!v) return null;
+  const { quest, status } = v;
+  return (
+    <aside className="quest" aria-label="Current quest" data-testid="quest">
+      <div className="quest-top">
+        <span className="muted small">
+          Quest {v.index + 1} of {v.count} · moves <strong>{quest.row}</strong>
+        </span>
+        <button className="btn ghost small" onClick={() => useGame.getState().skipTutorial()} data-testid="skip-tutorial">
+          Skip tutorial
+        </button>
+      </div>
+      <h2 className="quest-title" data-testid="quest-title">
+        {quest.title}
+      </h2>
+      <p className="small">{quest.reason}</p>
+      <div className="bar" role="progressbar" aria-valuenow={Math.round(status.progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Quest progress">
+        <div className="bar-fill" style={{ width: fmtPct(status.progress) }} />
+      </div>
+      <p className="small muted" data-testid="quest-detail">
+        {status.detail}
+      </p>
+      <div className="row">
+        <button className="btn small" onClick={() => showMe(quest.show)} data-testid="quest-show-me">
+          Show me
+        </button>
+        <span className="muted small">Reward from {v.neighbor}</span>
+      </div>
     </aside>
   );
 }

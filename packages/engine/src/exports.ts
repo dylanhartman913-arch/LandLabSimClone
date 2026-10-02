@@ -33,7 +33,7 @@ export interface FlowRecord {
   land: { parcelSqft: number; usedSqft: number; byUse: Record<string, number> };
   electricity: { monthly: FlowRecordMonth[]; importKwh: number; onSiteKwh: number; exportKwh: number };
   water: {
-    /** All Water made or bought (well, rain, city), gal. */
+    /** All Water made or bought (well, rain, city, hauled), gal. */
     withdrawalGal: number;
     /** Water used and not returned as greywater, gal. */
     consumptiveGal: number;
@@ -88,16 +88,17 @@ export function flowRecord(catalog: Catalog, state: GameState, ledgers: readonly
     const m = monthly[monthOfDay(l.day)]!;
     const e = res(l, 'Electricity');
     if (e) {
+      // Bought = backstop/market deliveries (purchased) + conventional services counted in produced.
       const bought = l.bought.Electricity ?? 0;
       m.importKwh += bought;
-      m.onSiteKwh += e.produced - bought;
+      m.onSiteKwh += e.produced - (bought - (e.purchased ?? 0));
       m.exportKwh += e.spilled;
       m.unmetKwh += e.unmet;
       m.peakDayKwh = Math.max(m.peakDayKwh, e.requested);
     }
     const w = res(l, 'Water');
     if (w) {
-      water.withdrawalGal += w.produced;
+      water.withdrawalGal += w.produced + (w.purchased ?? 0);
       water.consumptiveGal += w.consumed;
     }
     water.consumptiveGal -= res(l, 'Greywater')?.produced ?? 0;
@@ -105,7 +106,7 @@ export function flowRecord(catalog: Catalog, state: GameState, ledgers: readonly
     for (const r of foodFamily) {
       const x = res(l, r.name);
       if (!x) continue;
-      const kcal = (x.produced - (l.bought[r.name] ?? 0)) * (r.factorToNeed ?? 1);
+      const kcal = (x.produced - ((l.bought[r.name] ?? 0) - (x.purchased ?? 0))) * (r.factorToNeed ?? 1);
       food.producedKcal += kcal;
       food.importedKcal += (l.bought[r.name] ?? 0) * (r.factorToNeed ?? 1);
     }

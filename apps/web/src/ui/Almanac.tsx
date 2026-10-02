@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { dateLabel, getSystem, type GameEvent } from '@homestead/engine';
-import { fmtNum } from '../lib/format.ts';
+import { fmtMoney, fmtNum } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
 
 type Filter = 'shortages' | 'harvests' | 'builds' | 'weather' | 'money' | 'people';
@@ -28,9 +28,24 @@ function filterOf(e: GameEvent): Filter {
       return 'builds';
     case 'hardship':
     case 'health':
+    case 'went-to-town':
+    case 'came-home':
+      return 'people';
+    case 'purchases-stopped':
+    case 'market':
+      return 'money';
+    case 'quest':
       return 'people';
   }
 }
+
+const NEED_WORDS: Record<string, string> = {
+  drinkingWater: 'drinking water',
+  food: 'food',
+  shelter: 'shelter',
+  heat: 'heat',
+  sanitation: 'sanitation',
+};
 
 /** One line of plain language per engine event. */
 export function describeEvent(
@@ -57,9 +72,21 @@ export function describeEvent(
     case 'imported':
       return `Brought in ${fmtNum(e.amount)} ${e.resource} to build ${instSys(e.instanceId) ?? 'a system'}.`;
     case 'hardship':
-      return `Hardship: only ${Math.round(e.level * 100)}% of ${e.need === 'drinkingWater' ? 'drinking water' : e.need} needs met for 3+ days.`;
+      return `Hardship: only ${Math.round(e.level * 100)}% of ${NEED_WORDS[e.need]} met, and the grace period is over.`;
     case 'health':
-      return `Health fell to ${Math.round(e.health * 100)}%.`;
+      return `Wellbeing fell to ${Math.round(e.wellbeing)}.`;
+    case 'went-to-town':
+      return `${instSys(e.instanceId) ?? 'Someone'} went to stay in town. They can come back once home has food, water, and shelter.`;
+    case 'came-home':
+      return `${instSys(e.instanceId) ?? 'Someone'} came home from town.`;
+    case 'quest':
+      return `Quest done: ${e.title}. ${e.reward}`;
+    case 'purchases-stopped':
+      return `Out of money: purchases stopped (cash ${fmtMoney(e.cash)}). Groceries, power, and market orders wait until there is cash again.`;
+    case 'market':
+      return `Market run (${e.trip === 'delivery' ? 'delivered, $25' : 'own transport'}): ${Object.entries(e.bought)
+        .map(([r, v]) => `${fmtNum(v)} ${r}`)
+        .join(', ')} for ${fmtMoney(e.cost)}.`;
   }
 }
 
@@ -69,6 +96,8 @@ function instanceOf(e: GameEvent): string | undefined {
     case 'imported':
     case 'hardship':
     case 'health':
+    case 'went-to-town':
+    case 'came-home':
       return e.instanceId;
     case 'harvest':
       return e.instanceIds[0];

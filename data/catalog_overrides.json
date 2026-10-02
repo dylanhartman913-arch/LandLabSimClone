@@ -1,7 +1,171 @@
 {
   "version": 1,
-  "systems": {},
-  "resources": {},
+  "systems": {
+    "S013": {
+      "outdoor": true,
+      "note": "Open fire outdoors: its heat warms whoever stands by it, not a shelter (G11)."
+    },
+    "S068": {
+      "outdoor": true,
+      "note": "Open fire outdoors: its heat warms whoever stands by it, not a shelter (G11)."
+    },
+    "S005": {
+      "outdoor": true,
+      "note": "Open fire outdoors: its heat warms whoever stands by it, not a shelter (G11)."
+    },
+    "S028": {
+      "backstop": true,
+      "note": "Backstop (G12): fills whatever the homestead doesn't make, at its price per unit."
+    },
+    "S030": {
+      "backstop": true,
+      "note": "Backstop (G12): fills whatever the homestead doesn't make, at its price per unit."
+    },
+    "S029": {
+      "backstop": true,
+      "backstopFee": 3,
+      "backstopPrices": {
+        "Electricity": 0.15,
+        "Heat": 2.5e-05,
+        "Cooking fuel": 0.3,
+        "Cooling": 1.2e-05
+      },
+      "note": "Grid backstop (G12): $3/week connection; electricity $0.15/kWh, gas heat $0.000025/BTU ($2.50/therm), gas cooking $0.30/hour, cooling $0.000012/BTU (power at COP 3). About the catalog's $45/week for its catalog output."
+    },
+    "S108": {
+      "backstop": true,
+      "backstopFee": 5,
+      "backstopPrices": {
+        "Water": 0.02,
+        "Drinking water": 0.02
+      },
+      "note": "City water backstop (G12): $5/week connection, $0.02/gal: about the catalog's $20/week for its catalog output."
+    },
+    "S115": {
+      "backstop": true,
+      "note": "Backstop (G12): fills whatever the homestead doesn't make, at its price per unit."
+    },
+    "S114": {
+      "backstop": true,
+      "note": "Backstop (G12): fills whatever the homestead doesn't make, at its price per unit."
+    },
+    "S174": {
+      "modifies": [
+        {
+          "to": "category:Shelter",
+          "resource": "Heat",
+          "direction": "in",
+          "multiplier": 0.7,
+          "scope": "host",
+          "note": "Weatherization cuts its house's heat loss by 30%."
+        }
+      ],
+      "note": "Place it on the house it retrofits (G15)."
+    },
+    "S176": {
+      "modifies": [
+        {
+          "to": "S074",
+          "resource": "Electricity",
+          "direction": "in",
+          "multiplier": 0.952381,
+          "scope": "parcel",
+          "note": "A clothesline replaces the dryer: about 1 kWh less per person a week (21 to 20)."
+        }
+      ],
+      "note": "G15: household electricity -2 kWh/week for two people."
+    },
+    "S177": {
+      "modifies": [
+        {
+          "to": "category:Shelter",
+          "resource": "Heat",
+          "direction": "in",
+          "multiplier": 0.2,
+          "scope": "host",
+          "note": "Wool blankets and sleeping bags let the household stay warm at a much lower indoor temperature, so the shelter needs a fifth of the heat (fitted to the bedding rule it replaces; see docs/BALANCE_LOG.md)."
+        }
+      ],
+      "note": "Place it on the shelter it serves (G16, replaces the HEAT_BEDDING_HDD constant)."
+    }
+  },
+  "resources": {
+    "Food": {
+      "marketPrice": 0.0065,
+      "marketUnit": "$/kcal",
+      "note": "Market price (G12, low confidence): ~$90 per 14,000 kcal week."
+    },
+    "Drinking water": {
+      "marketPrice": 1.0,
+      "marketUnit": "$/gal",
+      "note": "Market price (G12, low confidence): bottled."
+    },
+    "Water": {
+      "marketPrice": 0.1,
+      "marketUnit": "$/gal",
+      "note": "Market price (G12, low confidence): hauled delivery."
+    },
+    "Woody biomass": {
+      "marketPrice": 0.1,
+      "marketUnit": "$/lbs",
+      "note": "Market price (G12, low confidence): ~$350 per cord."
+    },
+    "Wood pellets": {
+      "marketPrice": 0.3,
+      "marketUnit": "$/lbs",
+      "note": "Market price (G12, low confidence): bagged pellets."
+    },
+    "Propane": {
+      "marketPrice": 3.0,
+      "marketUnit": "$/gal",
+      "note": "Market price (G12, low confidence): cylinder exchange or delivery."
+    },
+    "Gasoline": {
+      "marketPrice": 3.5,
+      "marketUnit": "$/gal",
+      "note": "Market price (G12, low confidence): pump price."
+    },
+    "Chicken feed": {
+      "marketPrice": 0.35,
+      "marketUnit": "$/lbs",
+      "note": "Market price (G12, low confidence): bagged layer feed."
+    },
+    "Hay": {
+      "marketPrice": 0.15,
+      "marketUnit": "$/lbs",
+      "note": "Market price (G12, low confidence): small square bales."
+    },
+    "Carbon": {
+      "marketPrice": 0.1,
+      "marketUnit": "$/lbs",
+      "note": "Market price (G12, low confidence): straw."
+    },
+    "Compost": {
+      "marketPrice": 0.2,
+      "marketUnit": "$/lbs",
+      "note": "Market price (G12, low confidence): bagged."
+    },
+    "Soil": {
+      "marketPrice": 1.5,
+      "marketUnit": "$/cu ft",
+      "note": "Market price (G12, low confidence): bulk."
+    },
+    "Seeds": {
+      "marketPrice": 3.0,
+      "marketUnit": "$/oz",
+      "note": "Market price (G12, low confidence): seed packets."
+    },
+    "Seedlings": {
+      "marketPrice": 4.0,
+      "marketUnit": "$/plants",
+      "note": "Market price (G12, low confidence): nursery starts."
+    },
+    "Waste lumber": {
+      "marketPrice": 0.25,
+      "marketUnit": "$/lbs",
+      "note": "Market price (G12, low confidence): salvage yard."
+    }
+  },
   "flows": {
     "F0088": {
       "inputRole": "boost",
@@ -404,7 +568,7 @@
       "perSlopePct": -0.03,
       "min": 0.5,
       "max": 1,
-      "note": "Ponds on steep ground hold less: \u22123% per percent of slope, to at most half."
+      "note": "Ponds on steep ground hold less: −3% per percent of slope, to at most half."
     },
     {
       "to": "S105",
@@ -413,7 +577,7 @@
       "perSlopePct": -0.03,
       "min": 0.5,
       "max": 1,
-      "note": "Ponds on steep ground hold less: \u22123% per percent of slope, to at most half."
+      "note": "Ponds on steep ground hold less: −3% per percent of slope, to at most half."
     }
   ]
 }

@@ -62,7 +62,27 @@ export function scoreEntry(e: SearchEntry, query: string): number {
   return score;
 }
 
-export function searchSystems(index: SearchEntry[], query: string): System[] {
+export type SearchMode = 'any' | 'makes' | 'uses';
+
+/** True when some resource the entry makes (or uses) matches every word of the query. */
+function resourceMatch(field: string, query: string): boolean {
+  const words = query.trim().toLowerCase().split(/\s+/).map(stem).filter(Boolean);
+  if (!words.length) return true;
+  return field.split(' | ').some((res) => words.every((w) => res.includes(w)));
+}
+
+/**
+ * Search the drawer. `any` matches names, categories, and resources; `makes` / `uses` (G13)
+ * match only what systems make or use, so "wood pellets" lists the pellet mill and the pellet
+ * stove separately.
+ */
+export function searchSystems(index: SearchEntry[], query: string, mode: SearchMode = 'any'): System[] {
+  if (mode !== 'any') {
+    return index
+      .filter((e) => resourceMatch(mode === 'makes' ? e.makes : e.uses, query))
+      .map((e) => e.system)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
   const scored = index
     .map((e) => ({ e, s: scoreEntry(e, query) }))
     .filter((x) => x.s > 0)

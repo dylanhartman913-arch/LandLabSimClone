@@ -1,0 +1,298 @@
+{
+  "id": "adapt",
+  "neighbor": "Dale, across the street",
+  "quests": [
+    {
+      "id": "ad-bills",
+      "title": "Read your weekly bills",
+      "reason": "Groceries, the grid, city water, and gas: see where the money goes before you change anything.",
+      "row": "Food",
+      "goal": {
+        "kind": "ui",
+        "panel": "market",
+        "label": "Open the Market panel"
+      },
+      "steps": [
+        {
+          "do": "open",
+          "panel": "market"
+        }
+      ],
+      "show": {
+        "kind": "panel",
+        "panel": "market"
+      },
+      "reward": {
+        "line": "Dale lends you his wheelbarrow and a pile of old bricks.",
+        "cash": 50
+      }
+    },
+    {
+      "id": "ad-beds",
+      "title": "Build two raised beds in the lawn",
+      "reason": "Lawn takes water and gives nothing back. Two beds of vegetables is a start.",
+      "row": "Food",
+      "goal": {
+        "kind": "have",
+        "system": "Raised Beds (24 sq ft)",
+        "count": 2
+      },
+      "steps": [
+        {
+          "do": "buy",
+          "resource": "Soil",
+          "amount": 48
+        },
+        {
+          "do": "buy",
+          "resource": "Compost",
+          "amount": 100
+        },
+        {
+          "do": "buy",
+          "resource": "Seeds",
+          "amount": 2
+        },
+        {
+          "do": "place",
+          "system": "Raised Beds (24 sq ft)",
+          "mode": "diy",
+          "count": 2
+        }
+      ],
+      "show": {
+        "kind": "system",
+        "name": "Raised Beds (24 sq ft)"
+      },
+      "reward": {
+        "line": "Dale had extra seed packets.",
+        "stock": {
+          "Seeds": 4
+        }
+      }
+    },
+    {
+      "id": "ad-compost",
+      "title": "Add compost",
+      "reason": "Kitchen scraps become next season's bed food instead of trash.",
+      "row": "Food",
+      "goal": {
+        "kind": "made",
+        "system": "Bokashi Bucket",
+        "resource": "Compost",
+        "atLeast": 0.1
+      },
+      "steps": [
+        {
+          "do": "place",
+          "system": "Bokashi Bucket",
+          "mode": "diy"
+        },
+        {
+          "do": "standing",
+          "resource": "Carbon",
+          "keepAbove": 5,
+          "orderUpTo": 20
+        }
+      ],
+      "show": {
+        "kind": "system",
+        "name": "Bokashi Bucket"
+      },
+      "reward": {
+        "line": "Dale drops off a bag of his coffee grounds.",
+        "stock": {
+          "Coffee grounds": 10
+        }
+      }
+    },
+    {
+      "id": "ad-solar",
+      "title": "Put a 500 W panel and a power station on the porch",
+      "reason": "A small panel won't run the house, but it charges what you need through an outage.",
+      "row": "Electricity",
+      "goal": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "have",
+            "system": "500W Photovoltaic Panels",
+            "count": 1
+          },
+          {
+            "kind": "have",
+            "system": "Portable Power Station (1 kWh)",
+            "count": 1
+          }
+        ]
+      },
+      "steps": [
+        {
+          "do": "place",
+          "system": "500W Photovoltaic Panels",
+          "mode": "diy"
+        },
+        {
+          "do": "place",
+          "system": "Portable Power Station (1 kWh)",
+          "mode": "buy"
+        }
+      ],
+      "show": {
+        "kind": "system",
+        "name": "500W Photovoltaic Panels"
+      },
+      "reward": {
+        "line": "Dale pays you to show him how you wired it.",
+        "cash": 75
+      }
+    },
+    {
+      "id": "ad-barrel",
+      "title": "Install a rain barrel",
+      "reason": "The beds want water in July. The roof is already catching it.",
+      "row": "Water",
+      "goal": {
+        "kind": "have",
+        "system": "Rain Barrel (55 gal)",
+        "count": 1
+      },
+      "steps": [
+        {
+          "do": "place",
+          "system": "Rain Barrel (55 gal)",
+          "mode": "diy"
+        }
+      ],
+      "show": {
+        "kind": "system",
+        "name": "Rain Barrel (55 gal)"
+      },
+      "reward": {
+        "line": "Dale gives you his spare diverter kit.",
+        "cash": 40
+      }
+    },
+    {
+      "id": "ad-weatherize",
+      "title": "Weatherize the house",
+      "reason": "The cheapest heat is the heat you don't lose: air sealing and attic insulation cut heat loss by about 30%.",
+      "row": "Heated shelter",
+      "goal": {
+        "kind": "modified",
+        "system": "Home Weatherization Retrofit",
+        "resource": "Heat"
+      },
+      "steps": [
+        {
+          "do": "place",
+          "system": "Home Weatherization Retrofit",
+          "mode": "diy",
+          "near": "Average Suburban Home",
+          "on": true
+        }
+      ],
+      "show": {
+        "kind": "system",
+        "name": "Home Weatherization Retrofit"
+      },
+      "reward": {
+        "line": "Dale's caulk gun and a leftover roll of insulation come over the fence.",
+        "cash": 150
+      }
+    },
+    {
+      "id": "ad-hens",
+      "title": "Add six hens (check the lot rules)",
+      "reason": "Most towns allow a few hens and no rooster. Six lay about 27 eggs a week.",
+      "row": "Food",
+      "goal": {
+        "kind": "have",
+        "system": "Chicken",
+        "count": 6
+      },
+      "steps": [
+        {
+          "do": "place",
+          "system": "Chicken",
+          "mode": "buy",
+          "count": 6
+        },
+        {
+          "do": "standing",
+          "resource": "Chicken feed",
+          "keepAbove": 10,
+          "orderUpTo": 40
+        }
+      ],
+      "show": {
+        "kind": "system",
+        "name": "Chicken"
+      },
+      "reward": {
+        "line": "Dale trades a bag of feed for a dozen eggs a week.",
+        "stock": {
+          "Chicken feed": 40
+        }
+      }
+    },
+    {
+      "id": "ad-parttime",
+      "title": "Cut to a part-time job and see if the homestead covers the difference",
+      "reason": "Twenty fewer hours at work is twenty more at home, and a shorter commute means one car is enough. Sell the second car, put the commute and the grocery run first, and watch cash and bills for four weeks.",
+      "row": "Est. Required Labor",
+      "goal": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "have",
+            "system": "Part-Time Job (20 hrs)",
+            "count": 1
+          },
+          {
+            "kind": "lacks",
+            "system": "Average Job"
+          },
+          {
+            "kind": "days",
+            "atLeast": 28
+          }
+        ]
+      },
+      "steps": [
+        {
+          "do": "remove",
+          "system": "Average Job"
+        },
+        {
+          "do": "place",
+          "system": "Part-Time Job (20 hrs)",
+          "mode": "buy"
+        },
+        {
+          "do": "priority",
+          "system": "Part-Time Job (20 hrs)",
+          "tier": 0
+        },
+        {
+          "do": "priority",
+          "system": "Big Box Grocery Store",
+          "tier": 0
+        },
+        {
+          "do": "remove",
+          "system": "Average American Vehicle",
+          "count": 1
+        }
+      ],
+      "show": {
+        "kind": "system",
+        "name": "Part-Time Job (20 hrs)"
+      },
+      "reward": {
+        "line": "Dale, who retired early, says he's proud of you.",
+        "cash": 0
+      }
+    }
+  ]
+}
