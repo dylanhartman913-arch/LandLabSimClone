@@ -257,7 +257,9 @@ The diff summary proves the patch added rows only:
 - formula text changed only by range extension;
 - computed values changed only in catalog-wide counts (systems per category, producers per resource).
 
-A patch is idempotent: systems already present by name are skipped. Review the diff summary, and open the workbook in Excel, before merging.
+A patch can also carry `edits`: text-only changes to a row (Categories, Original game tags, Description, Notes), for fixing a row a patch added. Number columns can't be edited this way, so a patch never changes a catalog number.
+
+A patch is idempotent: systems already present by name are skipped, and edits already applied are skipped. Review the diff summary, and open the workbook in Excel, before merging.
 
 **Run by hand only.** `catalog_patch.py` is an authoring tool, and no CI job or npm script calls it. CI never needs Python, openpyxl, or LibreOffice. `npm run catalog:check` reads the workbook with SheetJS (`xlsx` from npm), and uses only the formula text and the cached values saved in the file; it never recalculates. That is why the patch script recalculates in LibreOffice before saving. The G11–G16 audit (`docs/AUDIT_G11_G16.md`) ran the check in a fresh clone after only `npm ci`, with no `soffice` or `python3` on PATH, and it passed.
 
@@ -270,7 +272,7 @@ A patch is idempotent: systems already present by name are skipped. Review the d
 | Part-Time Job (20 hrs) | Labor 20 + Transportation 75 → Capital 575 / week | |
 | Remote Job (40 hrs) | Labor 40 → Capital 1,000 / week | |
 | Sheet-Mulch Lawn Conversion (500 sq ft) | Carbon 100 + Compost 200 (one-time) → Soil 40 per season | |
-| Home Weatherization Retrofit | Labor 0.05 / week; modifier: host shelter Heat × 0.7 | place it on the house |
+| Home Weatherization Retrofit | Labor 0.05 / week; modifier: host shelter Heat × 0.7 | place it on the house; tagged Heating only (patch `g16a-retrofit-heating`) |
 | Suburban Lot (1/4 acre) | Land area 10,890 | |
 | Clothesline | Labor 0.5 → Wellbeing 2 / week; modifier: people's Electricity × 20/21 | |
 

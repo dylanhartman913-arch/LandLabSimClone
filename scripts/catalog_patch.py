@@ -9,6 +9,8 @@ What it does, and nothing else:
   * appends its Flows rows (next F#### ids) with the sheet's own formulas in the
     Unit, Weekly, Count, Total, Checklist row, Contribution, and Key columns;
   * appends a Matrix row per system;
+  * applies `edits`: text-only changes to a system's row (its categories, tags, description,
+    or notes), for fixing a row a patch added. Number columns can't be edited this way;
   * extends every `Systems!$X$2:$X$<last>` range in every sheet to cover the new rows;
   * recalculates the workbook in headless LibreOffice so cached values are current
     (the exporter reads cached values);
@@ -83,6 +85,26 @@ def extend_ranges(wb, old_last: int, new_last: int) -> int:
     return n
 
 
+# Systems columns an edit may change: text only, never a catalog number.
+EDITABLE = {"Categories": 3, "Original game tags": 4, "Description": 6, "Notes": 24}
+
+
+def pending_edits(sysws, patch: dict) -> list[tuple[int, int, str, object, object, dict]]:
+    """(row, col, system, old, new, edit) for every edit whose cell doesn't already hold the new value."""
+    rows = {sysws.cell(r, 2).value: r for r in range(2, last_row(sysws) + 1)}
+    out = []
+    for e in patch.get("edits", []):
+        if e["column"] not in EDITABLE:
+            raise SystemExit(f"catalog_patch: edits may change only {', '.join(EDITABLE)} (not {e['column']!r})")
+        if e["system"] not in rows:
+            raise SystemExit(f"catalog_patch: no system named {e['system']!r} to edit")
+        r, c = rows[e["system"]], EDITABLE[e["column"]]
+        old = sysws.cell(r, c).value
+        if old != e["value"]:
+            out.append((r, c, e["system"], old, e["value"], e))
+    return out
+
+
 def recalc(path: Path) -> None:
     """Open and re-save in LibreOffice with 'always recalculate', so every cached value is fresh."""
     profile = Path(tempfile.mkdtemp(prefix="lo-profile-"))
@@ -136,7 +158,7 @@ def norm(v):
     return v
 
 
-def diff_summary(old: Path, new: Path, patch: dict, added: dict) -> str:
+def diff_summary(old: Path, new: Path, patch: dict, added: dict, edits: list | None = None) -> str:
     ov, nv = cell_map(old, True), cell_map(new, True)
     of, nf = cell_map(old, False), cell_map(new, False)
     lines = [f"# Catalog patch `{patch['patch']}`: xlsx diff summary", "", patch.get("note", ""), ""]
@@ -147,8 +169,18 @@ def diff_summary(old: Path, new: Path, patch: dict, added: dict) -> str:
     for sheet, rows in added.items():
         lines.append(f"| {sheet} | {', '.join(rows) if rows else '(none)'} |")
     lines.append("")
+    if edits:
+        lines.append("## Text edits")
+        lines.append("")
+        lines.append("| System | Column | Was | Now | Why |")
+        lines.append("|---|---|---|---|---|")
+        for _r, _c, name, was, now, e in edits:
+            lines.append(f"| {name} | {e['column']} | {was} | {now} | {e.get('why', '')} |")
+        lines.append("")
     lines.append("## Systems added")
     lines.append("")
+    if not patch["systems"]:
+        lines.append("(none)")
     for s in patch["systems"]:
         lines.append(f"- **{s['name']}** ({s['categories']}): " + "; ".join(
             f"{f['dir'].lower()} {f['resource']} {f['qty'] if not isinstance(f['qty'], dict) else '(' + f['qty']['formula'] + ' formula)'} {f['period']}"
@@ -178,7 +210,7 @@ def diff_summary(old: Path, new: Path, patch: dict, added: dict) -> str:
                     value_changed.append(f"{sheet}!{addr}: {v!r} -> {n!r}")
     lines.append("## Existing cells")
     lines.append("")
-    lines.append(f"- Typed values (numbers and text) changed: **{len(const_changed)}**")
+    lines.append(f"- Typed values (numbers and text) changed: **{len(const_changed)}** (the text edits above, if any; never a number)")
     for c in const_changed[:50]:
         lines.append(f"  - {c}")
     lines.append(f"- Formulas whose text changed (range ends extended to cover the new Systems rows): **{formula_changed}**")
@@ -188,7 +220,8 @@ def diff_summary(old: Path, new: Path, patch: dict, added: dict) -> str:
     lines.append("")
     lines.append(
         "Computed values that change are counts over the whole catalog (systems per category, systems producing or "
-        "using a resource); none of them is a flow quantity, a cost, or a checklist result."
+        "using a resource) and the flags computed from those counts (a category's \"Within target?\"); none of them "
+        "is a flow quantity, a cost, or a checklist result."
     )
     return "\n".join(lines) + "\n"
 
@@ -203,14 +236,17 @@ def main() -> int:
     wb = openpyxl.load_workbook(XLSX)
     sysws, flws, mxws = wb["Systems"], wb["Flows"], wb["Matrix"]
     existing = {sysws.cell(r, 2).value for r in range(2, last_row(sysws) + 1)}
-    todo = [s for s in patch["systems"] if s["name"] not in existing]
-    if not todo:
-        print("catalog_patch: every system in the patch is already in the workbook; nothing to do.")
+    todo = [s for s in patch.get("systems", []) if s["name"] not in existing]
+    edits = pending_edits(sysws, patch)
+    if not todo and not edits:
+        print("catalog_patch: the workbook already has everything in this patch; nothing to do.")
         return 0
+    for r, c, name, old, new, _e in edits:
+        sysws.cell(r, c).value = new
 
     old_sys_last = last_row(sysws)
     new_sys_last = old_sys_last + len(todo)
-    n_ext = extend_ranges(wb, old_sys_last, new_sys_last)
+    n_ext = extend_ranges(wb, old_sys_last, new_sys_last) if todo else 0
 
     next_sid = max(int(sysws.cell(r, 1).value[1:]) for r in range(2, old_sys_last + 1)) + 1
     fl_last = last_row(flws)
@@ -265,7 +301,7 @@ def main() -> int:
             added["Flows"].append(str(fl_last))
 
     if dry:
-        print(f"catalog_patch (dry run): would add {len(todo)} systems, {len(added['Flows'])} flows; extend {n_ext} ranges.")
+        print(f"catalog_patch (dry run): would add {len(todo)} systems, {len(added['Flows'])} flows; extend {n_ext} ranges; {len(edits)} edit(s).")
         return 0
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -274,12 +310,12 @@ def main() -> int:
         staged = Path(tmp) / XLSX.name
         wb.save(staged)
         recalc(staged)
-        summary = diff_summary(before, staged, patch, added)
+        summary = diff_summary(before, staged, {**patch, "systems": todo}, added, edits)
         shutil.copy(staged, XLSX)
     out = ROOT / "docs" / "catalog_patches" / f"{patch['patch']}-diff.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(summary)
-    print(f"catalog_patch: added {len(todo)} systems and {len(added['Flows'])} flows; extended {n_ext} ranges.")
+    print(f"catalog_patch: added {len(todo)} systems and {len(added['Flows'])} flows; extended {n_ext} ranges; {len(edits)} edit(s).")
     print(f"catalog_patch: diff summary in {out.relative_to(ROOT)}. Now run `npm run catalog:export`.")
     return 0
 

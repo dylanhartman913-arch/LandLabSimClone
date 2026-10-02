@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "source": {
     "file": "LandLab_Sim_Systems_v2.xlsx",
-    "sha256": "e0996b519474e9f2b3ec7218ba88d098a6adb40a22dbcb16c18a4654ad82b7a7"
+    "sha256": "15b07ba481feeb2484546bf9bb2f5dd264d2a89a03c338304f0103959f91f359"
   },
   "assumptions": {
     "hdd": 6000,
@@ -12180,7 +12180,6 @@
       "id": "S174",
       "name": "Home Weatherization Retrofit",
       "categories": [
-        "Shelter",
         "Heating"
       ],
       "source": "New (G15 patch)",
