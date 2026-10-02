@@ -887,3 +887,5 @@ Four changes, each in its own commit.
 **Digests:** time digests were re-recorded once, for the removal of the bedding constant (`DIGESTS.md`). The performance commit changed none.
 
 **Known gaps:** winter in a tent with blankets is easier than under the old offset. See `BALANCE_LOG.md`, "What the gates don't show".
+
+**Then a second CI fix (`2a7c9e9`).** With the unit step passing, CI reached Lighthouse, which failed `color-contrast`: the red stockpile chip from G15 was #e0523d on the panel, 3.76:1. A `--bad-text` token (#ff8a75, 6.3:1; the colorblind palette gets #ffb066) is now used for red text. CI is green on `2a7c9e9`.
