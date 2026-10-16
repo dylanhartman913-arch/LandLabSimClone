@@ -24,6 +24,7 @@ test('a fan with no power cools nobody: actual 0, potential shown, and the check
   await openApp(page);
   await place(page, 'GoSun Fan', 104, 120);
   await page.keyboard.press('n');
+  await page.getByTestId('mode-average').click(); // explicitly inspect the planned-design forecast
   const row = page.getByTestId('row-Cooled shelter');
   await expect(row).toBeVisible();
   expect(Number(await page.getByTestId('provided-Cooled shelter').getAttribute('data-value'))).toBe(0);
@@ -71,8 +72,8 @@ test('blocked and partial systems wear a status bubble on the map; B hides them'
   expect(await page.evaluate(() => window.__homestead!.store.getState().prefs.badges)).toBe(true);
 });
 
-test('the top bar shows the potential score beside the actual one', async ({ page }) => {
+test('the top bar labels measured coverage and its supplied ceiling', async ({ page }) => {
   await openApp(page);
   await place(page, 'GoSun Fan', 104, 120);
-  await expect(page.getByTestId('hud-potential')).toContainText(/\d+% if supplied/);
+  await expect(page.getByTestId('hud-potential')).toContainText(/\d+% ceiling if supplied/);
 });

@@ -8,9 +8,10 @@ import { NODE_LABEL } from '../time/gather.ts';
 import { explained, type Explained } from '../provenance.ts';
 import { summarizeLedgers } from '../time/summarize.ts';
 import type { DayLedger, GameState } from '../time/types.ts';
+import { monthOfDay } from '../time/calendar.ts';
 import { designBalance, seasonOf } from './hud.ts';
 
-export type ChecklistMode = 'average' | 'season' | 'worst';
+export type ChecklistMode = 'current' | 'average' | 'completed' | 'season' | 'worst';
 
 export interface ChecklistRowView {
   need: NeedKey;
@@ -90,7 +91,11 @@ function summaryText(rows: ChecklistRowView[], overall: number, mode: ChecklistM
     .filter((r) => r.pct.value < 1);
   const when =
     mode === 'average'
-      ? 'In an average year'
+      ? 'Assuming all planned systems are complete and mature, in an average year'
+      : mode === 'completed'
+        ? 'Forecasting completed systems at maturity, in an average year'
+        : mode === 'current'
+          ? 'Over the last 7 measured days'
       : mode === 'season'
         ? 'This season'
         : 'In the worst week this year';
@@ -105,8 +110,8 @@ function summaryText(rows: ChecklistRowView[], overall: number, mode: ChecklistM
 }
 
 /**
- * The Needs Checklist in three views, all from actual flows (G11). "Average year" is feasible
- * balance mode, exactly. "This season" and "Worst week this year" come from time-mode ledgers.
+ * Explicit planned/completed annual forecasts, or measured current/season/worst-week ledgers.
+ * An empty measured window never falls back to a design forecast.
  * Potential (every input met) is shown beside actual as the ceiling.
  */
 export function checklistView(
@@ -116,7 +121,8 @@ export function checklistView(
   bal: FeasibleResult = designBalance(state, catalog),
 ): ChecklistView {
   const spark = sparklines(state.ledgers);
-  if (mode === 'average' || state.ledgers.length === 0) {
+  if (mode === 'average' || mode === 'completed') {
+    if (mode === 'completed') bal = designBalance(state, catalog, 'completed');
     // What lowers a shelter's heat need (blankets, a retrofit) is named on the heat row's why (G16).
     const heatNotes = shelterHeatNeedNotes(state, catalog).map((n) => `Heat needed: ${n}`);
     const withHeat = (e: Explained, need: string): Explained =>
@@ -134,30 +140,31 @@ export function checklistView(
       sparkline: spark[r.need],
     }));
     return {
-      mode: 'average',
+      mode,
       humans: bal.humans.value,
       rows,
       overall: bal.overallScore,
       potentialOverall: bal.potential.overallScore,
       selfReliance: bal.selfReliance,
-      summary: summaryText(rows, bal.overallScore.value, 'average'),
+      summary: summaryText(rows, bal.overallScore.value, mode),
       range: null,
     };
   }
 
   const year = state.calendar.year;
   let ledgers: DayLedger[];
-  if (mode === 'season') {
-    const season = seasonOf(state.ledgers.at(-1)!.day);
-    ledgers = [];
-    for (let i = state.ledgers.length - 1; i >= 0; i--) {
-      const l = state.ledgers[i]!;
-      if (seasonOf(l.day) !== season) break;
-      ledgers.unshift(l);
-    }
+  if (mode === 'current' || state.ledgers.length === 0) {
+    ledgers = state.ledgers.slice(-7);
+  } else if (mode === 'season') {
+    const key = (day: number, year: number) => {
+      const season = seasonOf(day);
+      return `${year - (season === 'winter' && monthOfDay(day) < 2 ? 1 : 0)}-${season}`;
+    };
+    const season = key(state.calendar.day, year);
+    ledgers = state.ledgers.filter((l) => key(l.day, l.year) === season);
   } else {
     const thisYear = state.ledgers.filter((l) => l.year === year);
-    ledgers = thisYear.length >= 7 ? thisYear : state.ledgers.slice(-7);
+    ledgers = thisYear;
   }
   let window = ledgers;
   if (mode === 'worst' && ledgers.length >= 7) {
@@ -174,8 +181,8 @@ export function checklistView(
     window = ledgers.slice(bestI, bestI + 7);
   }
   const sum = summarizeLedgers(window, catalog);
-  const from = window[0]!.absDay;
-  const to = window.at(-1)!.absDay;
+  const from = window[0]?.absDay ?? state.calendar.absDay;
+  const to = window.at(-1)?.absDay ?? state.calendar.absDay;
   const days = window.length;
   const curtailed = new Map<string, Set<string>>();
   // Average satisfaction of each system over the window (days it ran fully count as 1).
@@ -299,7 +306,7 @@ export function checklistView(
         notes.push(`Short on ${res}: curtails ${names.join(', ')}`);
       }
     }
-    const label = mode === 'season' ? 'this season' : 'the worst week this year';
+    const label = mode === 'current' ? 'the last 7 measured days' : mode === 'season' ? 'this season' : 'the worst week this year';
     // Site values behind the row, so two sites can be compared from the popover.
     const siteKeys: Partial<Record<NeedKey, AssumptionKey[]>> = {
       'Heated shelter': ['hdd'],
@@ -324,9 +331,9 @@ export function checklistView(
         },
       ),
       potential: explained(
-        r.potential,
-        `potential: average weekly output of resources feeding ${r.need} over ${label} if every input were met`,
-        { refs },
+        Math.max(r.potential, r.delivered),
+        `potential: average weekly output of resources feeding ${r.need} over ${label} if every input were met, including at least the measured delivery from stocks`,
+        { refs: { ...refs, productionPotential: r.potential, measuredDelivery: r.delivered } },
       ),
       needed: explained(r.needed, `average weekly requests for resources feeding ${r.need} over ${label}`, {
         refs,
@@ -367,7 +374,7 @@ export function checklistView(
     selfReliance: explained(sum.selfReliance, 'average over rows with any need (labor left out) of % covered × share made at home', {
       refs: { days, fromDay: from, toDay: to },
     }),
-    summary: summaryText(rows, overall.value, mode),
+    summary: days ? summaryText(rows, overall.value, mode) : 'No measured days yet. Run the clock to see current operations; forecasts are available separately.',
     range: { from, to },
   };
 }

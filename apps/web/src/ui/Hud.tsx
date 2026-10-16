@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { designBalance, displayDate, ENGINE_VERSION, hudMetrics, weeklyBills } from '@homestead/engine';
+import { displayDate, ENGINE_VERSION, hudMetrics, weeklyBills } from '@homestead/engine';
 import { fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { useGame, type Speed } from '../store/game.ts';
 import { usePlan } from '../store/plan.ts';
@@ -28,8 +28,7 @@ export function Hud() {
   const st = useGame.getState();
   const setSpeed = useGame((s) => s.setSpeed);
   const zoomToFit = useGame((s) => s.zoomToFit);
-  const bal = useMemo(() => designBalance(game, catalog), [game.instances, game.site, catalog]); // eslint-disable-line react-hooks/exhaustive-deps
-  const m = hudMetrics(game, catalog, bal);
+  const m = hudMetrics(game, catalog);
   const bills = useMemo(() => (m.headline === 'self-reliance' ? weeklyBills(game, catalog) : null), [game.ledgers, m.headline]); // eslint-disable-line react-hooks/exhaustive-deps
   const wk = weatherKind(m.weather, m.season);
   return (
@@ -108,12 +107,12 @@ export function Hud() {
         title="Open the needs checklist (N)"
         data-testid="open-checklist"
       >
-        <ScoreRing score={m.score} label="Off-grid score (average year)" />
+        <ScoreRing score={m.score} label={`Need coverage (${m.measurementLabel.toLowerCase()})`} />
         <span className="hud-sub">
-          Off-grid score
+          Current coverage · {m.measurementLabel.toLowerCase()}
           <br />
           <span className="hud-potential" data-testid="hud-potential">
-            {fmtPct(m.potentialScore.value)} if supplied
+            {fmtPct(m.potentialScore.value)} ceiling if supplied
           </span>
         </span>
       </button>

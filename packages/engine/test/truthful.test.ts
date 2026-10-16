@@ -118,11 +118,11 @@ describe('heat and cooling must reach a shelter', () => {
 });
 
 describe('the score is actual, with potential beside it', () => {
-  it('the HUD score is the feasible score, and the potential score is never lower', () => {
-    const g = newGame({ 'GoSun Fan': 1, 'Bell Tent': 1, 'Human Being': 1, Well: 1 });
+  it('the HUD score is measured coverage, and the ceiling uses the same operating days', () => {
+    const g = run(newGame({ 'GoSun Fan': 1, 'Bell Tent': 1, 'Human Being': 1, Well: 1 }), 7).state;
     const m = hudMetrics(g, catalog);
-    const r = balanceFeasible(catalog, g.site.assumptions, designForGame(g, catalog));
-    expect(m.score.value).toBe(r.overallScore.value);
+    const r = summarizeLedgers(g.ledgers.slice(-7), catalog);
+    expect(m.score.value).toBe(r.overallScore);
     expect(m.potentialScore.value).toBeGreaterThanOrEqual(m.score.value);
   });
 });

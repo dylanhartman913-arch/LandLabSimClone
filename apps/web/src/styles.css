@@ -893,6 +893,7 @@ select {
 
 .sheet-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 16px;
 }
@@ -903,7 +904,8 @@ select {
 }
 
 .sheet-head .seg {
-  min-width: 460px;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .sheet-summary {
@@ -971,6 +973,11 @@ table.checklist td {
   margin-top: 12px;
   border-top: 1px solid var(--line);
   padding-top: 8px;
+}
+
+.strip > p {
+  grid-column: 1 / -1;
+  margin: 0;
 }
 
 .strip ul {

@@ -1,0 +1,241 @@
+{
+  "engineVersion": "0.1.0",
+  "catalogSha256": "b92b6bf36fe07032605c186d367e182cf4331a4df3e137d7286a19e82c609895",
+  "init": {
+    "siteId": "front-range",
+    "seed": 942932905,
+    "settings": {},
+    "start": {
+      "id": "greenfield",
+      "difficulty": "standard",
+      "household": 2
+    }
+  },
+  "actions": [
+    {
+      "kind": "ui",
+      "panel": "work",
+      "at": 0
+    },
+    {
+      "kind": "settings",
+      "settings": {
+        "autoGather": {
+          "waterDays": 3,
+          "woodWeeks": 8,
+          "foodWeeks": 1
+        }
+      },
+      "at": 29
+    },
+    {
+      "kind": "settings",
+      "settings": {
+        "autoGather": {
+          "waterDays": 3,
+          "woodWeeks": 8,
+          "foodWeeks": 4
+        }
+      },
+      "at": 29
+    },
+    {
+      "kind": "place",
+      "systemId": "S124",
+      "x": 28,
+      "y": 106,
+      "mode": "buy",
+      "id": "i13",
+      "at": 29
+    },
+    {
+      "kind": "ui",
+      "panel": "market",
+      "at": 29
+    },
+    {
+      "kind": "buy",
+      "resource": "Food",
+      "amount": 120000,
+      "at": 29
+    },
+    {
+      "kind": "place",
+      "systemId": "S078",
+      "x": 25,
+      "y": 78,
+      "mode": "diy",
+      "id": "i14",
+      "at": 46
+    },
+    {
+      "kind": "buy",
+      "resource": "Soil",
+      "amount": 24,
+      "at": 46
+    },
+    {
+      "kind": "ui",
+      "panel": "saves",
+      "at": 57
+    },
+    {
+      "kind": "place",
+      "systemId": "S056",
+      "x": 144,
+      "y": 129,
+      "mode": "diy",
+      "id": "i15",
+      "at": 57
+    },
+    {
+      "kind": "place",
+      "systemId": "S147",
+      "x": 119,
+      "y": 115,
+      "mode": "diy",
+      "id": "i16",
+      "at": 57
+    },
+    {
+      "kind": "settings",
+      "settings": {
+        "autoGather": {
+          "waterDays": 7,
+          "woodWeeks": 8,
+          "foodWeeks": 4
+        }
+      },
+      "at": 72
+    },
+    {
+      "kind": "place",
+      "systemId": "S024",
+      "x": 155,
+      "y": 107,
+      "mode": "diy",
+      "id": "i17",
+      "at": 76
+    },
+    {
+      "kind": "ui",
+      "panel": "settings",
+      "at": 83
+    },
+    {
+      "kind": "place",
+      "systemId": "S172",
+      "x": 70,
+      "y": 121,
+      "mode": "buy",
+      "id": "i18",
+      "at": 112
+    },
+    {
+      "kind": "buy",
+      "resource": "Food",
+      "amount": 120000,
+      "at": 114
+    },
+    {
+      "kind": "ui",
+      "panel": "almanac",
+      "at": 121
+    },
+    {
+      "kind": "standing",
+      "resource": "Food",
+      "keepAbove": 120000,
+      "at": 149
+    },
+    {
+      "kind": "standing",
+      "resource": "Carbon",
+      "keepAbove": 100,
+      "at": 177
+    },
+    {
+      "kind": "standing",
+      "resource": "Chicken feed",
+      "keepAbove": 100,
+      "at": 177
+    },
+    {
+      "kind": "place",
+      "systemId": "S075",
+      "x": 59,
+      "y": 143,
+      "mode": "diy",
+      "id": "i19",
+      "at": 177
+    },
+    {
+      "kind": "place",
+      "systemId": "S066",
+      "x": 122,
+      "y": 146,
+      "mode": "diy",
+      "id": "i20",
+      "at": 181
+    },
+    {
+      "kind": "place",
+      "systemId": "S066",
+      "x": 166,
+      "y": 137,
+      "mode": "diy",
+      "id": "i21",
+      "at": 181
+    },
+    {
+      "kind": "moveMany",
+      "moves": [
+        {
+          "id": "i21",
+          "x": 163,
+          "y": 134
+        }
+      ],
+      "at": 188
+    },
+    {
+      "kind": "moveMany",
+      "moves": [
+        {
+          "id": "i20",
+          "x": 127,
+          "y": 141
+        }
+      ],
+      "at": 188
+    },
+    {
+      "kind": "settings",
+      "settings": {
+        "constructionShare": 0.9
+      },
+      "at": 195
+    }
+  ],
+  "absDay": 240,
+  "digest": "f90dc93c4f4d1a4a",
+  "expected": {
+    "cash": 10828.936806021547,
+    "people": [
+      {
+        "wellbeing": 0,
+        "health": 0.5,
+        "away": {
+          "since": 227
+        }
+      },
+      {
+        "wellbeing": 0,
+        "health": 0.5,
+        "away": {
+          "since": 227
+        }
+      }
+    ]
+  }
+}

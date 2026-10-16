@@ -1,6 +1,8 @@
 import type { Catalog } from '@homestead/catalog';
 import { explained, type Explained } from '../provenance.ts';
-import { getPlans } from '../time/plans.ts';
+import { plantingReserve } from '../time/food.ts';
+import { climateTable } from '../time/climate.ts';
+import { dailyAmount, getPlans } from '../time/plans.ts';
 import { computeSpatial } from '../time/spatial.ts';
 import type { GameState } from '../time/types.ts';
 import { laborShare, type WellbeingTerm } from '../time/wellbeing.ts';
@@ -37,11 +39,26 @@ export function stockpileView(state: GameState, catalog: Catalog): StockpileItem
     }
     return a;
   };
-  const foodFamily = catalog.resources.filter((r) => r.needsRow === 'Food');
+  const edible = new Set(meta.get('Food')!.satisfiedBy);
+  const foodFamily = catalog.resources.filter((r) => edible.has(r.name));
+  const reserve = plantingReserve(state.instances, plans);
+  const direct: Record<string, number> = {};
+  const spatial = computeSpatial(catalog, state);
+  const climate = climateTable(state.site);
+  // Direct uses (including seed applications and milling) are allocated before meal substitutes.
+  for (const inst of state.instances) {
+    if (inst.status !== 'active' || inst.person?.away) continue;
+    for (const f of plans.bySystem.get(inst.systemId)!.inputs) {
+      if (!edible.has(f.resource) || f.resource === 'Food' || f.role === 'boost' || f.isCapacity) continue;
+      direct[f.resource] = (direct[f.resource] ?? 0) + dailyAmount(f, state.calendar.day, state.weather, climate) * (inst.scale ?? 1) * (spatial.get(inst.id)?.inMult[f.resource] ?? 1);
+    }
+  }
+  const mealAmount = (stocks: Record<string, number>, resource: string) =>
+    Math.max(0, (stocks[resource] ?? 0) - (reserve[resource] ?? 0) - (direct[resource] ?? 0));
   const stockOf = (key: StockpileItem['key'], stocks: Record<string, number>): number => {
     switch (key) {
       case 'food':
-        return foodFamily.reduce((a, r) => a + (stocks[r.name] ?? 0) * (r.factorToNeed ?? 1), 0);
+        return foodFamily.reduce((a, r) => a + mealAmount(stocks, r.name) * (r.factorToNeed ?? 1), 0);
       case 'drinking-water':
         return stocks['Drinking water'] ?? 0;
       case 'firewood':
@@ -78,7 +95,11 @@ export function stockpileView(state: GameState, catalog: Catalog): StockpileItem
         refs: { onHand: stock, dailyUse: daily },
         notes: [
           `${Math.round(stock).toLocaleString('en-US')} ${unit} on hand; the household and its systems use ${daily.toFixed(1)} ${unitName} a day.`,
-          ...(key === 'food' ? ['Every food in stock counts, converted to kcal.'] : []),
+          ...(key === 'food' ? [
+            'Only foods accepted by household meals count; planting reserves and direct resource requests (such as milling or seed applications) are excluded. Future harvests and purchases are not included.',
+            ...foodFamily.filter((r) => (state.stocks[r.name] ?? 0) > 0).map((r) =>
+              `${r.name}: ${mealAmount(state.stocks, r.name).toFixed(2)} ${r.unit} available; ${Math.min(state.stocks[r.name] ?? 0, reserve[r.name] ?? 0).toFixed(2)} ${r.unit} reserved for planting; ${(direct[r.name] ?? 0).toFixed(2)} ${r.unit} requested directly today (may draw from planting stock).`),
+          ] : key === 'drinking-water' ? ['Safe drinking water only; untreated water and future filtering are excluded.'] : []),
         ],
       }),
       trend,

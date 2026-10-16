@@ -1,8 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { SITES } from '@homestead/catalog';
 import {
-  designAdjust,
-  designCounts,
+  designForGame,
   designFromGame,
   flowRecords,
   ledgersCsv,
@@ -465,10 +464,7 @@ function SensitivityTab() {
   const catalog = useGame((s) => s.catalog);
   const t = useMemo(
     () =>
-      sensitivity(catalog, siteAssumptions(game.site), {
-        counts: designCounts(game),
-        adjust: designAdjust(game, catalog),
-      }),
+      sensitivity(catalog, siteAssumptions(game.site), designForGame(game, catalog)),
     [game.instances, game.site, catalog], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const W = 360;
@@ -477,7 +473,7 @@ function SensitivityTab() {
     <div data-testid="sensitivity">
       <p className="muted">
         How far the average-year score moves if each site number is {fmtPct(t.delta)} lower or higher. Longest
-        bars first. The line is today’s score ({fmtPct(t.baseScore)}); the axis runs from {fmtPct(axis.from)} to{' '}
+        bars first. The line is the planned-design forecast score ({fmtPct(t.baseScore)}); the axis runs from {fmtPct(axis.from)} to{' '}
         {fmtPct(axis.to)}.
       </p>
       <table className="tornado" data-testid="tornado">

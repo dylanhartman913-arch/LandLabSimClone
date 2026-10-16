@@ -29,6 +29,8 @@ export interface CardOutput {
 
 export interface CardView {
   systemId: string;
+  basis: string;
+  hasMeasurement: boolean;
   inputs: CardInput[];
   outputs: CardOutput[];
   /** Where the instance sits: adjacency and terrain effects, and assigned capacities. */
@@ -71,7 +73,7 @@ export function systemCard(
   const flows = systemFlows(catalog, systemId, state.site.assumptions);
   const week = new Map(resourceWeek(state, catalog).map((r) => [r.resource, r]));
   const inst = instanceId ? state.instances.find((i) => i.id === instanceId) : undefined;
-  const group = inst ? state.lastDay[instanceGroupKey(catalog, state, inst)] : undefined;
+  const group = inst?.status === 'active' ? state.lastDay[instanceGroupKey(catalog, state, inst)] : undefined;
   const plansAll = getPlans(catalog, state.site);
   const plan = plansAll.bySystem.get(systemId)!;
   const idx = indexCatalog(catalog);
@@ -82,7 +84,15 @@ export function systemCard(
     let share: number;
     let how: string;
     let refs: Record<string, number>;
-    if (inst && group) {
+    if (v.flow.period === 'One-time' && inst?.materialsDrawn) {
+      share = 1;
+      how = 'supplied during construction; not a recurring input';
+      refs = { suppliedDuringConstruction: needed };
+    } else if (inst?.status === 'building' && v.flow.period !== 'One-time') {
+      share = 0;
+      how = 'not operating while under construction';
+      refs = { needed };
+    } else if (inst && group) {
       const rec = group.inputs[v.resource];
       share = rec && rec.requested > 0 ? Math.min(1, rec.granted / rec.requested) : rec ? 1 : 0;
       how = 'this instance yesterday: supply offered ÷ requested';
@@ -148,7 +158,15 @@ export function systemCard(
     let produced = v.qty.value;
     let formula = `${v.qty.explain.formula} (nominal, at full satisfaction)`;
     let refs: Record<string, number> = { nominal: v.qty.value };
-    if (inst && group) {
+    if (inst?.status === 'building' || (inst && !group && v.flow.period !== 'Capacity')) {
+      produced = 0;
+      formula = inst.status === 'building' ? 'no output before construction completes' : 'no operating measurement yet';
+    } else if (inst && v.flow.period === 'Capacity') {
+      const mat = maturity(inst, plan, state.calendar.absDay);
+      produced = v.qty.value * mat * (inst.scale ?? 1);
+      formula = 'completed capacity × maturity × instance scale (not weekly production)';
+      refs = { nominal: v.qty.value, maturity: mat, scale: inst.scale ?? 1 };
+    } else if (inst && group) {
       const human = plan.isHuman;
       const health = inst.person?.health ?? 1;
       const mat = maturity(inst, plan, state.calendar.absDay);
@@ -234,5 +252,15 @@ export function systemCard(
       });
     spatial = { notes: sp?.notes ?? [], links };
   }
-  return { systemId, inputs, outputs, spatial, instance };
+  return {
+    systemId, inputs, outputs, spatial, instance,
+    hasMeasurement: !!group,
+    basis: !inst
+      ? 'Catalog preview: output at full supply and maturity; input bars describe recent design availability, not a promise of output.'
+      : inst.status === 'building'
+        ? 'Under construction: no operating output. Recurring needs begin after completion.'
+        : !group
+          ? 'Completed: awaiting the first operating day. Capacity is available; recurring output has not been measured.'
+          : 'Operating measurement: yesterday’s supply share applied to catalog rates below. Capacity is available space, not weekly production. Design totals below cover the last 7 days.',
+  };
 }

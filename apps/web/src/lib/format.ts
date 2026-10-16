@@ -7,7 +7,7 @@ export function fmtNum(n: number, digits = 1): string {
   if (abs >= 10_000) return `${(n / 1000).toFixed(abs >= 1e5 ? 0 : 1)}k`;
   if (abs >= 100) return Math.round(n).toLocaleString('en-US');
   if (abs >= 10) return n.toFixed(Math.min(digits, 1));
-  if (abs === 0) return '0';
+  if (abs < 1e-9) return '0';
   if (abs < 0.01) return n.toExponential(1);
   return n.toFixed(Math.max(digits, 2)).replace(/\.?0+$/, '');
 }

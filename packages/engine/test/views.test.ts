@@ -3,7 +3,7 @@ import {
   balanceFeasible,
   checklistView,
   designForGame,
-  designBalance,
+  summarizeLedgers,
   flowLinks,
   hudMetrics,
   resourceWeek,
@@ -103,7 +103,7 @@ describe('HUD and drawer numbers carry provenance', () => {
     const s = run(newGame({ 'Human Being': 2, 'Bell Tent': 1 }), 7).state;
     const m = hudMetrics(s, catalog);
     expect(m.laborAvailableWeek.value).toBeGreaterThan(0);
-    expect(m.score.value).toBe(designBalance(s, catalog).overallScore.value);
+    expect(m.score.value).toBe(summarizeLedgers(s.ledgers.slice(-7), catalog).overallScore);
     const rw = resourceWeek(s, catalog);
     expect(rw.find((r) => r.resource === 'Food')!.needed.explain.formula).toMatch(/requests/);
   });

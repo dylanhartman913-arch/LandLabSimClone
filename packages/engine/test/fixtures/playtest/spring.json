@@ -1,0 +1,98 @@
+{
+  "engineVersion": "0.1.0",
+  "catalogSha256": "b92b6bf36fe07032605c186d367e182cf4331a4df3e137d7286a19e82c609895",
+  "init": {
+    "siteId": "front-range",
+    "seed": 942932905,
+    "settings": {},
+    "start": {
+      "id": "greenfield",
+      "difficulty": "standard",
+      "household": 2
+    }
+  },
+  "actions": [
+    {
+      "kind": "ui",
+      "panel": "work",
+      "at": 0
+    },
+    {
+      "kind": "settings",
+      "settings": {
+        "autoGather": {
+          "waterDays": 3,
+          "woodWeeks": 8,
+          "foodWeeks": 1
+        }
+      },
+      "at": 29
+    },
+    {
+      "kind": "settings",
+      "settings": {
+        "autoGather": {
+          "waterDays": 3,
+          "woodWeeks": 8,
+          "foodWeeks": 4
+        }
+      },
+      "at": 29
+    },
+    {
+      "kind": "place",
+      "systemId": "S124",
+      "x": 28,
+      "y": 106,
+      "mode": "buy",
+      "id": "i13",
+      "at": 29
+    },
+    {
+      "kind": "ui",
+      "panel": "market",
+      "at": 29
+    },
+    {
+      "kind": "buy",
+      "resource": "Food",
+      "amount": 120000,
+      "at": 29
+    },
+    {
+      "kind": "place",
+      "systemId": "S078",
+      "x": 25,
+      "y": 78,
+      "mode": "diy",
+      "id": "i14",
+      "at": 46
+    },
+    {
+      "kind": "buy",
+      "resource": "Soil",
+      "amount": 24,
+      "at": 46
+    },
+    {
+      "kind": "ui",
+      "panel": "saves",
+      "at": 57
+    }
+  ],
+  "absDay": 57,
+  "digest": "9544bdc2fdf7f9cf",
+  "expected": {
+    "cash": 7784,
+    "people": [
+      {
+        "wellbeing": 89.49494117612188,
+        "health": 0.9474747058806094
+      },
+      {
+        "wellbeing": 89.49494117612188,
+        "health": 0.9474747058806094
+      }
+    ]
+  }
+}

@@ -14,3 +14,5 @@ export * from './bills.ts';
 export * from './sources.ts';
 export * from './resource.ts';
 export * from './people.ts';
+export * from './labor.ts';
+export * from './reserves.ts';

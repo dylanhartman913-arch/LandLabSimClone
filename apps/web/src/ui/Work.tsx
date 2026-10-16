@@ -7,8 +7,9 @@ import { WhyNum } from './Why.tsx';
 /** Timberborn-style work priorities: who does what first, with weekly caps and auto-gather rules (G14). */
 export function Work() {
   const game = useGame((s) => s.game);
+  const catalog = useGame((s) => s.catalog);
   const st = useGame.getState();
-  const v = useMemo(() => workView(game), [game]);
+  const v = useMemo(() => workView(game, catalog), [game, catalog]);
   const work = game.settings.work ?? {};
   const setPriority = (job: JobId, p: number) =>
     st.setGameSettings({ work: { ...work, priorities: { ...(work.priorities ?? {}), [job]: p } } });
@@ -30,9 +31,16 @@ export function Work() {
         </button>
       </header>
       <p className="muted small">
-        Your household worked <WhyNum value={v.poolWeek} title="Labor this week" unit="h" /> this week. Jobs at priority 1
+        Your household worked <WhyNum value={v.workedWeek} title="Labor worked in the last 7 days" unit="h" /> of <WhyNum value={v.poolWeek} title="Labor available in the last 7 days" unit="h" /> available; <WhyNum value={v.idleWeek} title="Idle labor in the last 7 days" unit="h" /> idle. Jobs at priority 1
         get labor first, then 2, and so on; jobs at the same priority share it. A weekly cap stops a job at that many
         hours; on a gathering job with no rule, the cap also sets how many hours a week to spend on it.
+      </p>
+      <p className="muted small" data-testid="labor-breakdown">
+        Employment <WhyNum value={v.breakdown.employment} title="Employment hours" unit="h" /> ·
+        Maintenance <WhyNum value={v.breakdown.maintenance} title="Maintenance hours" unit="h" /> ·
+        Gathering <WhyNum value={v.breakdown.gathering} title="Gathering hours" unit="h" /> ·
+        Construction <WhyNum value={v.breakdown.construction} title="Construction hours" unit="h" />.
+        Paid jobs share the system-work priority below.
       </p>
       <table className="flows-table work-table" data-testid="work-table">
         <thead>
@@ -96,6 +104,7 @@ export function Work() {
         greens (walking counts as work). Untreated water is boiled on the cooking fire unless you have a filter. 0 turns
         a rule off.
       </p>
+      {v.warnings.map((warning) => <p className="muted small" key={warning} data-testid="water-reserve-warning">{warning}</p>)}
       <div className="mc-form">
         <label>
           Keep water above (days)

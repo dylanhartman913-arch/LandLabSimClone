@@ -1,4 +1,5 @@
 import { NEED_KEYS, type Catalog, type NeedKey, type Resource } from '@homestead/catalog';
+import { plantingReserve } from './food.ts';
 import { indexCatalog } from '../catalog-index.ts';
 import { climateTable, type ClimateTable, type DayWeather } from './climate.ts';
 import {
@@ -559,7 +560,7 @@ function buildRequests(d: Day): void {
 function allocate(d: Day): void {
   const { meta, stocks, direct } = d;
   const reserved: Record<string, number> = {};
-  d.seed = seedReserve(d);
+  d.seed = plantingReserve(d.instances, d.plans);
   d.ordered = [...d.byResource.entries()].sort(
     ([a], [b]) => Number(meta.get(a)!.satisfiedBy.length > 0) - Number(meta.get(b)!.satisfiedBy.length > 0),
   );
@@ -598,25 +599,6 @@ function allocate(d: Day): void {
     const avail = flow ? Math.max(0, (stocks[r] ?? 0) - (reserved[r] ?? 0) - (d.seed[r] ?? 0)) : (d.prev.services[r] ?? 0);
     d.boostSat.set(r, d.unlimited || req <= 0 ? 1 : Math.min(1, avail / req));
   }
-}
-
-/**
- * Seed kept for planting (G16): a season's worth of every food a planted system needs as seed
- * (a potato patch's 25 lbs of seed potatoes) is held back from the household's meals.
- */
-function seedReserve(d: Day): Record<string, number> {
-  const out: Record<string, number> = {};
-  const food = new Set(d.plans.foodFamily);
-  // Planted and still-being-planted systems both keep their seed.
-  for (const inst of d.instances) {
-    const plan = d.plans.bySystem.get(inst.systemId)!;
-    if (plan.isHuman) continue;
-    for (const f of plan.inputs) {
-      if (f.period !== 'Per season' || f.role !== 'required' || !food.has(f.resource) || f.resource === 'Food') continue;
-      out[f.resource] = (out[f.resource] ?? 0) + f.qty * (inst.scale ?? 1);
-    }
-  }
-  return out;
 }
 
 /** Market trips cost 10 miles of Transportation, or a $25 delivery charge without it (G12). */

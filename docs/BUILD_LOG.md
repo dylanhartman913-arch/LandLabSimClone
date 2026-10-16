@@ -889,3 +889,18 @@ Four changes, each in its own commit.
 **Known gaps:** winter in a tent with blankets is easier than under the old offset. See `BALANCE_LOG.md`, "What the gates don't show".
 
 **Then a second CI fix (`2a7c9e9`).** With the unit step passing, CI reached Lighthouse, which failed `color-contrast`: the red stockpile chip from G15 was #e0523d on the panel, 3.76:1. A `--bad-text` token (#ff8a75, 6.3:1; the colorblind palette gets #ffb066) is now used for red text. CI is green on `2a7c9e9`.
+
+
+## Playtest follow-up — Phase 0 and Phase 1 (2026-10-16)
+
+Work isolated from the original local server in branch `codex/phase-0-1`; imported source snapshot is `60fad89`. This is a local extracted-source repository, not a push to the upstream GitHub branch.
+
+**Phase 0:** traced live/forecast accounting, food substitution/reservations, construction, work allocation, town return, sensitivity and report persistence. Exported the actual day-57 and day-240 playtest saves into compact replay fixtures. Audit and classifications: `docs/PHASE_0_1.md`. A replay utility is available as `node --import tsx scripts/replay-playtest.ts <fixture.json> [absolute-day]`.
+
+**Phase 1:** current ledger-based coverage is the default; completed and planned annual forecasts are explicit. Planned forecasts include completed spatial effects; unfinished systems never improve measured history. Food runway excludes seed reserves and direct food uses, with explanations. Work warns when reserve targets exceed completed pooled water storage. HUD and Work share worked/available/idle accounting and employment/maintenance/gathering/construction detail. Cards distinguish previews and operating measurements, show no unfinished output and retain one-time material fulfillment. Capacity labels and floating-point formatting are corrected. Sensitivity receives the same complete design inputs as the planned forecast.
+
+**Validation:** 239 unit tests pass (17 added), typecheck/lint/build/catalog:check pass; all 15 pacing groups pass. Full browser run: 44/46 pass. Tablet drawer-collapse and outhouse-map-card failures reproduce on unchanged snapshot `60fad89` in a detached baseline worktree; no tests were skipped or weakened. Affected browser suite: 11/11 pass, including new fixture-based UI regressions. Screenshots: `docs/screenshots/phase-1/`.
+
+**Digests:** day-57 `9544bdc2fdf7f9cf`, day-240 `f90dc93c4f4d1a4a`; existing simulation digests unchanged. No catalog quantities, prices, rewards, wellbeing or town logic, goldens, or save schema changed.
+
+**Next:** Phase 2 recovery and survival-priority guidance. Confirmed town heat-return and report health/persistence findings are documented, not changed in this patch.

@@ -21,6 +21,7 @@ test('moving a tree next to a cabin lowers its cooling load, and the why says so
   await place(page, 'S084', 100, 150); // log cabin, on open ground
   const oak = await place(page, 'S065', 175, 195); // oak tree, far away
   await page.keyboard.press('n');
+  await page.getByTestId('mode-average').click(); // compare the annual forecast, not unmeasured history
   const far = await coolingNeeded(page);
   await page.keyboard.press('Escape');
   // Drag the oak beside the cabin.
@@ -29,6 +30,7 @@ test('moving a tree next to a cabin lowers its cooling load, and the why says so
   await clickWorld(page, 100, 185);
   await shot(page, 'g7', '01-tree-by-cabin');
   await page.keyboard.press('n');
+  await page.getByTestId('mode-average').click(); // compare the annual forecast, not unmeasured history
   const near = await coolingNeeded(page);
   expect(near).toBeLessThan(far); // the cabin's share drops 10% (the default tent is also a shelter)
   await page.getByTestId('needed-Cooled shelter').click();
@@ -92,6 +94,7 @@ test('the same design on Laramie and Asheville: heat traced to each site’s deg
     await page.goto(`/?design=${param}`);
     await page.waitForSelector('[data-testid="map"][data-ready="true"]');
     await page.keyboard.press('n');
+  await page.getByTestId('mode-average').click(); // compare the annual forecast, not unmeasured history
     const heat = Number(await page.getByTestId('needed-Heated shelter').getAttribute('data-value'));
     await page.getByTestId('needed-Heated shelter').click();
     const hdd = await page.getByTestId('why-assumption-hdd').textContent();

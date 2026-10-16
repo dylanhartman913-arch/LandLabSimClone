@@ -5,6 +5,8 @@ import { dateLabel, monthOfDay } from '../time/calendar.ts';
 import { siteAssumptions } from './site.ts';
 import type { GameState } from '../time/types.ts';
 import type { Design } from '../design.ts';
+import { laborWeek } from './labor.ts';
+import { summarizeLedgers } from '../time/summarize.ts';
 import { computeSpatial } from '../time/spatial.ts';
 
 /** Counts of every placed system (built or building; a child counts 0.6), for balance mode and "My". */
@@ -72,7 +74,14 @@ export function designDelivered(state: GameState, catalog: Catalog): NonNullable
 }
 
 /** The balance-mode design for a game: counts, spatial effects, the site's ambient supply, delivery. */
-export function designForGame(state: GameState, catalog: Catalog): Design {
+export function designForGame(state: GameState, catalog: Catalog, scope: 'planned' | 'completed' = 'planned'): Design {
+  // Forecasts assume completion and maturity. Live simulation state is never mutated.
+  state = {
+    ...state,
+    instances: scope === 'completed'
+      ? state.instances.filter((i) => i.status === 'active')
+      : state.instances.map((i) => i.status === 'building' ? { ...i, status: 'active' as const } : i),
+  };
   return {
     counts: designCounts(state),
     adjust: designAdjust(state, catalog),
@@ -85,8 +94,8 @@ export function designForGame(state: GameState, catalog: Catalog): Design {
  * The "Average year" for the current layout on the game's site: feasible balance (actual flows,
  * with supply chains and placement), with the potential ceiling beside it (G11).
  */
-export function designBalance(state: GameState, catalog: Catalog): FeasibleResult {
-  return balanceFeasible(catalog, siteAssumptions(state.site), designForGame(state, catalog));
+export function designBalance(state: GameState, catalog: Catalog, scope: 'planned' | 'completed' = 'planned'): FeasibleResult {
+  return balanceFeasible(catalog, siteAssumptions(state.site), designForGame(state, catalog, scope));
 }
 
 export type Season = 'spring' | 'summer' | 'fall' | 'winter';
@@ -102,13 +111,14 @@ export function seasonOf(day: number): Season {
 
 export interface HudMetrics {
   date: string;
+  measurementLabel: string;
   season: Season;
   day: number;
   year: number;
   cash: Explained;
   laborUsedWeek: Explained;
   laborAvailableWeek: Explained;
-  /** Overall score from actual flows (G11). */
+  /** Measured need coverage over the last 7 days. */
   score: Explained;
   /** The same score if every input were met (the ceiling). */
   potentialScore: Explained;
@@ -120,17 +130,14 @@ export interface HudMetrics {
 }
 
 /** Everything the top bar shows, each number with its provenance. */
-export function hudMetrics(state: GameState, catalog: Catalog, bal?: FeasibleResult): HudMetrics {
-  const week = state.ledgers.slice(-7);
-  let used = 0;
-  let avail = 0;
-  for (const l of week) {
-    used += l.labor.construction + l.labor.upkeepDelivered;
-    avail += l.labor.pool;
-  }
-  const b = bal ?? designBalance(state, catalog);
+export function hudMetrics(state: GameState, catalog: Catalog): HudMetrics {
+  const labor = laborWeek(state, catalog);
+  const summary = summarizeLedgers(state.ledgers.slice(-7), catalog);
+  // No history is zero measured supply, never a silent forecast fallback.
+  const scored = summary.checklist.filter((r) => r.needed > 0);
   const w = state.weather;
   return {
+    measurementLabel: state.ledgers.length ? `Last ${Math.min(7, state.ledgers.length)} measured days` : 'No measured days yet',
     date: dateLabel(state.calendar.day, state.calendar.year),
     season: seasonOf(state.calendar.day),
     day: state.calendar.day,
@@ -138,15 +145,14 @@ export function hudMetrics(state: GameState, catalog: Catalog, bal?: FeasibleRes
     cash: explained(state.cash, 'starting cash − purchases + refunds + income − running costs', {
       refs: { startingCash: state.settings.startingCash },
     }),
-    laborUsedWeek: explained(used, 'construction + upkeep hours worked over the last 7 days', {
-      refs: { days: week.length },
+    laborUsedWeek: labor.worked,
+    laborAvailableWeek: labor.available,
+    score: explained(summary.overallScore, 'measured need coverage over the last 7 days; no construction forecasts', {
+      refs: { days: state.ledgers.slice(-7).length },
     }),
-    laborAvailableWeek: explained(avail, 'Σ Human Being labor × health over the last 7 days', {
-      refs: { days: week.length },
-    }),
-    score: b.overallScore,
-    potentialScore: b.potential.overallScore,
-    selfReliance: b.selfReliance,
+    potentialScore: explained(scored.length ? scored.reduce((a, r) => a + Math.min(1, Math.max(r.potential, r.delivered) / r.needed), 0) / scored.length : 0,
+      'last 7 days: operating-system potential or measured delivery from stocks, whichever is greater, capped at need'),
+    selfReliance: explained(summary.selfReliance, 'measured self-reliance over the last 7 days'),
     headline: state.start?.headline ?? 'off-grid',
     weather: { hdd: w.hdd, psh: w.psh, precipIn: w.precipIn, growing: w.growing, tags: w.tags },
   };

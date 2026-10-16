@@ -5,7 +5,9 @@ import { costFor, setupHoursFor } from '../time/game.ts';
 import { getPlans } from '../time/plans.ts';
 import { computeSpatial, groupKeyOf } from '../time/spatial.ts';
 import type { GameState } from '../time/types.ts';
-import { JOBS, NODE_JOB, NODE_LABEL, jobCap, jobHours, jobPriority, nodeStockOf, nodeYield, type JobId } from '../time/gather.ts';
+import { JOBS, NODE_JOB, NODE_LABEL, jobCap, jobPriority, nodeStockOf, nodeYield, type JobId } from '../time/gather.ts';
+import { waterReserveWarning } from './reserves.ts';
+import { laborWeek } from './labor.ts';
 import { designBalance } from './hud.ts';
 
 /** A system in the design that makes the resource. */
@@ -346,23 +348,26 @@ export interface WorkRow {
 }
 
 /** The work priorities panel (G14): every job, its priority and cap, and the week's hours. */
-export function workView(state: GameState): { rows: WorkRow[]; auto: { waterDays: number; woodWeeks: number; foodWeeks: number }; poolWeek: Explained } {
+export function workView(state: GameState, catalog?: Catalog): { rows: WorkRow[]; auto: { waterDays: number; woodWeeks: number; foodWeeks: number }; poolWeek: Explained; workedWeek: Explained; idleWeek: Explained; warnings: string[]; breakdown: ReturnType<typeof laborWeek>['breakdown'] } {
   const week = state.ledgers.slice(-7);
+  const totals = laborWeek(state, catalog);
   const rows = JOBS.map((j) => ({
     job: j.id,
     label: j.label,
     priority: jobPriority(state.settings, j.id),
     cap: jobCap(state.settings, j.id),
-    hoursWeek: explained(jobHours(state.ledgers, j.id, 7), `hours worked on "${j.label}" over the last ${week.length} days`),
+    hoursWeek: explained(totals.jobs[j.id] ?? 0, `hours worked on "${j.label}" over the last ${week.length} days`),
     nodes: state.site.nodes.filter((n) => NODE_JOB[n.type] === j.id).length,
   }));
   const ag = state.settings.autoGather ?? {};
   return {
     rows,
     auto: { waterDays: ag.waterDays ?? 0, woodWeeks: ag.woodWeeks ?? 0, foodWeeks: ag.foodWeeks ?? 0 },
-    poolWeek: explained(week.reduce((a, l) => a + l.labor.pool, 0), 'Σ household labor × health over the last 7 days', {
-      refs: { days: week.length },
-    }),
+    breakdown: totals.breakdown,
+    poolWeek: totals.available,
+    workedWeek: totals.worked,
+    idleWeek: totals.idle,
+    warnings: catalog ? waterReserveWarning(state, catalog) : [],
   };
 }
 

@@ -57,6 +57,7 @@ test('card, checklist, why popovers, and flow overlay', async ({ page }) => {
   await page.keyboard.press('n');
   const sheet = page.getByTestId('checklist');
   await expect(sheet).toBeVisible();
+  await page.getByTestId('mode-average').click();
   const bal = await page.evaluate(() => window.__homestead!.balance());
   for (const r of bal) {
     expect(Number(await page.getByTestId(`provided-${r.need}`).getAttribute('data-value'))).toBe(r.provided);

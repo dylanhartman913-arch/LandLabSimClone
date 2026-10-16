@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   costFor,
-  designBalance,
   getSystem,
   instanceStatuses,
   setupHoursFor,
@@ -220,7 +219,8 @@ export function SystemCard() {
         </div>
       )}
 
-      <StatusLine systemId={id} instanceId={instanceId} />
+      <p className="muted small" data-testid="card-basis">{v.basis}</p>
+      {inst?.status === 'active' && v.hasMeasurement && <StatusLine systemId={id} instanceId={instanceId} />}
 
       <h3>Inputs</h3>
       <ul className="io-list" data-testid="card-inputs">
@@ -236,7 +236,7 @@ export function SystemCard() {
               <span className="res-num">
                 <WhyNum value={i.supplied} title={`${i.view.resource} supplied`} /> /{' '}
                 <WhyNum value={i.needed} title={`${i.view.resource} needed`} /> {i.view.unit}{' '}
-                {i.view.flow.period === 'One-time' ? 'to build' : `needed ${i.view.periodLabel}`}
+                {i.view.flow.period === 'One-time' ? (game.instances.find((x) => x.id === inst?.id)?.materialsDrawn ? 'supplied during construction' : 'to build') : `needed ${i.view.periodLabel}`}
               </span>
             </div>
             <div
@@ -343,14 +343,7 @@ function StatusLine({ systemId, instanceId }: { systemId: string; instanceId: st
   const game = useGame((s) => s.game);
   const catalog = useGame((s) => s.catalog);
   if (!game.instances.some((i) => i.systemId === systemId)) return null;
-  const status = instanceId
-    ? instanceStatuses(game, catalog).get(instanceId)
-    : (() => {
-        const s = designBalance(game, catalog).systems[systemId];
-        return s && s.satisfaction < 1 - 1e-9
-          ? { level: s.satisfaction <= 1e-9 ? 'blocked' : 'partial', limitedBy: s.limitedBy, text: s.status }
-          : undefined;
-      })();
+  const status = instanceId ? instanceStatuses(game, catalog).get(instanceId) : undefined;
   if (!status) return null;
   return (
     <p className={`status-line ${status.level}`} data-testid="card-status">

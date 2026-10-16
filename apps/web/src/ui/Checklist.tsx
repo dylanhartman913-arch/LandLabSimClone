@@ -17,7 +17,9 @@ import { SystemIcon } from './SystemIcon.tsx';
 import { WhyNum } from './Why.tsx';
 
 const MODES: { id: ChecklistMode; label: string }[] = [
-  { id: 'average', label: 'Average year' },
+  { id: 'current', label: 'Current operations' },
+  { id: 'completed', label: 'Completed design forecast' },
+  { id: 'average', label: 'Planned design forecast' },
   { id: 'season', label: 'This season' },
   { id: 'worst', label: 'Worst week this year' },
 ];
@@ -56,16 +58,17 @@ export function Checklist() {
   const open = useGame((s) => s.checklistOpen);
   const game = useGame((s) => s.game);
   const catalog = useGame((s) => s.catalog);
-  const [mode, setMode] = useState<ChecklistMode>('average');
-  const bal = useMemo(() => designBalance(game, catalog), [game.instances, game.site, catalog]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [mode, setMode] = useState<ChecklistMode>('current');
+  const bal = useMemo(() => designBalance(game, catalog, mode === 'average' ? 'planned' : 'completed'), [game.instances, game.site, catalog, mode]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!open) return null;
   const st = useGame.getState();
   const v = checklistView(game, catalog, mode, bal);
-  const counts = designCounts(game);
+  const forecast = mode === 'average' || mode === 'completed';
+  const counts = designCounts(game, { activeOnly: mode !== 'average' });
   const week = resourceWeek(game, catalog);
   const inputs = Object.values(bal.resources).filter((r) => r.consumed.value > 0);
   const outputs = Object.values(bal.resources).filter((r) => r.produced.value > 0);
-  const noHistory = mode !== 'average' && game.ledgers.length === 0;
+  const noHistory = !forecast && game.ledgers.length === 0;
   return (
     <div className="sheet" role="dialog" aria-label="Human needs checklist" data-testid="checklist">
       <header className="sheet-head">
@@ -94,7 +97,7 @@ export function Checklist() {
         </button>
       </header>
       <div className="sheet-summary">
-        <ScoreRing score={v.overall} size={72} label="Overall off-grid score" />
+        <ScoreRing score={v.overall} size={72} label={forecast ? "Forecast need coverage" : "Measured need coverage"} />
         <div className="potential-score" data-testid="potential-score">
           <span className="muted">If every input were met</span>
           <WhyNum value={v.potentialOverall} title="Potential score (every input met)" format={fmtPct} />
@@ -102,7 +105,7 @@ export function Checklist() {
           <WhyNum value={v.selfReliance} title="Self-reliance" format={fmtPct} testId="self-reliance" />
         </div>
         <p data-testid="checklist-summary">
-          {noHistory ? 'Run the clock to see how the design does day by day. Showing the average year. ' : ''}
+          {noHistory ? 'No measured history. ' : ''}
           {v.summary}
         </p>
       </div>
@@ -110,10 +113,10 @@ export function Checklist() {
         <thead>
           <tr>
             <th>Human need</th>
-            <th>Actual (per week)</th>
-            <th>Potential (per week)</th>
+            <th>{forecast ? 'Forecast supply' : 'Measured production'} (weekly equivalent; capacities as labeled)</th>
+            <th>Ceiling if supplied</th>
             <th>
-              Needed for {v.humans} human{v.humans === 1 ? '' : 's'} (per week)
+              Needed for {v.humans} human{v.humans === 1 ? '' : 's'} (weekly flows / capacities)
             </th>
             <th>% covered</th>
             <th>Covered?</th>
@@ -136,8 +139,8 @@ export function Checklist() {
               <td>
                 <WhyNum
                   value={r.provided}
-                  title={`${r.need}: actual`}
-                  unit={r.unit}
+                  title={`${r.need}: ${forecast ? 'forecast' : 'measured production'}`}
+                  unit={r.need === 'Shelter' ? `${r.unit} capacity` : r.unit}
                   testId={`provided-${r.need}`}
                 />
               </td>
@@ -145,7 +148,7 @@ export function Checklist() {
                 <WhyNum
                   value={r.potential}
                   title={`${r.need}: potential (every input met)`}
-                  unit={r.unit}
+                  unit={r.need === 'Shelter' ? `${r.unit} capacity` : r.unit}
                   testId={`potential-${r.need}`}
                 />
               </td>
@@ -153,7 +156,7 @@ export function Checklist() {
                 <WhyNum
                   value={r.needed}
                   title={`${r.need}: needed`}
-                  unit={r.unit}
+                  unit={r.need === 'Shelter' ? `${r.unit} capacity` : r.unit}
                   testId={`needed-${r.need}`}
                 />
               </td>
@@ -199,12 +202,13 @@ export function Checklist() {
         </tbody>
       </table>
       <p className="muted small">
-        Actual = what the systems feeding the row really made once missing inputs held them back (heat and
-        cooling only count when they reach a shelter). Potential = what they would make with every input met.
-        Needed = every input feeding the row, so animals, gardens, and shelters add to the need alongside
-        people. % covered = what consumers actually received ÷ needed. Click any number for where it came from.
+        {forecast
+          ? 'Annual forecast assumes maturity and steady site conditions; it excludes stockpiles, gathering, market orders and the time needed to build. Planned design includes unfinished systems; completed design excludes them.'
+          : 'Measured supply and coverage come from daily ledgers, including gathering, purchases and actual construction dates. Coverage also includes supplies drawn from stock; the ceiling includes at least that measured delivery. No future production is credited.'}
+        {' '}Capacities such as shelter are not weekly production. Click a number for its measurement window and explanation.
       </p>
-      <section className="strip" aria-label="Design summary" data-testid="design-strip">
+      <section className="strip" aria-label="Design forecast summary" data-testid="design-strip">
+        <p className="muted">{mode === 'average' ? 'Planned' : 'Completed'} design forecast at maturity; separate from measured history above.</p>
         <div>
           <h3>Inputs ({inputs.length})</h3>
           <ul>
@@ -214,7 +218,7 @@ export function Checklist() {
                   {r.resource}
                 </button>{' '}
                 <span className="muted">
-                  {fmtNum(r.consumed.value)} {r.unit}/wk
+                  {fmtNum(r.consumed.value)} {r.unit}{catalog.resources.find((x) => x.name === r.resource)?.class === 'Capacity' ? ' capacity' : '/wk'}
                   {week.find((w) => w.resource === r.resource)?.short ? ' · short' : ''}
                 </span>
               </li>
@@ -231,7 +235,7 @@ export function Checklist() {
                   <button className="link sys-link" onClick={() => st.openCard(id)}>
                     <SystemIcon system={s} size={18} /> {s.name}
                   </button>{' '}
-                  <span className="muted">×{n}</span>
+                  <span className="muted">×{n}{mode === 'average' && game.instances.some((i) => i.systemId === id && i.status === 'building') ? ' · includes construction' : ' · completed'}</span>
                 </li>
               );
             })}
@@ -246,7 +250,7 @@ export function Checklist() {
                   {r.resource}
                 </button>{' '}
                 <span className="muted">
-                  {fmtNum(r.produced.value)} {r.unit}/wk
+                  {fmtNum(r.produced.value)} {r.unit}{catalog.resources.find((x) => x.name === r.resource)?.class === 'Capacity' ? ' capacity' : '/wk'}
                 </span>
               </li>
             ))}
