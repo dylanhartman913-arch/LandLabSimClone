@@ -2071,3 +2071,25 @@ pre.cli {
     min-width: 120px;
   }
 }
+
+/* Placement forecasts share the engine's range and overlap checks. */
+.placement-preview {
+  position: absolute;
+  z-index: 20;
+  left: 375px;
+  bottom: 75px;
+  width: min(440px, calc(100% - 400px));
+  max-height: 45vh;
+  overflow: auto;
+  pointer-events: none;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: var(--shadow);
+  font-size: 0.85em;
+}
+.placement-preview ul { padding-left: 18px; }
+@media (max-width: 900px) {
+  .placement-preview { left: 12px; top: 12px; bottom: auto; width: min(420px, calc(100% - 24px)); max-height: 35vh; }
+}

@@ -12,6 +12,7 @@ import { fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
 import { ResourceLink } from './ResourcePage.tsx';
 import { SystemIcon } from './SystemIcon.tsx';
+import { ProjectPreview } from './ProjectPreview.tsx';
 import { WhyNum } from './Why.tsx';
 
 const ROLE_LABEL = {
@@ -40,11 +41,13 @@ export function SystemCard() {
   const [details, setDetails] = useState(false);
   const [chain, setChain] = useState(false);
   const canBack = useGame((s) => s.navBack.length > 0);
+  const cardRef = useRef<HTMLElement>(null);
   const addRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   // Keyboard players land on the card's main action.
   useEffect(() => {
     if (!id) return;
+    if (cardRef.current) cardRef.current.scrollTop = 0;
     (addRef.current ?? closeRef.current)?.focus();
   }, [id, instanceId]);
   if (!id) return null;
@@ -56,7 +59,7 @@ export function SystemCard() {
   const hasDiy = sys.costDiy !== undefined;
   const chosen = hasDiy ? mode : 'buy';
   return (
-    <section className="card" role="dialog" aria-label={`${sys.name} card`} data-testid="system-card">
+    <section ref={cardRef} className="card" role="dialog" aria-label={`${sys.name} card`} data-testid="system-card">
       <header className="card-head">
         {canBack && (
           <button className="btn ghost" onClick={() => st.navigateBack()} aria-label="Back" data-testid="nav-back">
@@ -178,6 +181,7 @@ export function SystemCard() {
               {fmtNum(setupHoursFor(catalog, sys.id, chosen))} h of work
             </span>
           </div>
+          <ProjectPreview systemId={sys.id} mode={chosen} />
         </>
       )}
 
@@ -200,7 +204,7 @@ export function SystemCard() {
                 </option>
                 {l.candidates.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} ({c.id}), {Math.round(c.distanceFt)} ft
+                    {c.name} ({c.id}), {c.distanceText}
                   </option>
                 ))}
               </select>

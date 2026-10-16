@@ -3,7 +3,7 @@ import { getSystem, indexCatalog } from '../catalog-index.ts';
 import { explained, type Explained } from '../provenance.ts';
 import { maturity } from '../time/step.ts';
 import { getPlans } from '../time/plans.ts';
-import { computeSpatial, instanceGroupKey } from '../time/spatial.ts';
+import { computeSpatial, instanceGroupKey, rangeDistanceText } from '../time/spatial.ts';
 import type { GameState, Instance } from '../time/types.ts';
 import { resourceWeek, type ResourceWeek } from './resources.ts';
 import { systemFlows, type FlowView } from './system.ts';
@@ -43,7 +43,7 @@ export interface CardView {
       distanceFt: number | null;
       linked: boolean;
       maxDistanceFt: number | null;
-      candidates: { id: string; name: string; distanceFt: number }[];
+      candidates: { id: string; name: string; distanceFt: number; distanceText: string }[];
     }[];
   };
   instance: null | {
@@ -236,7 +236,7 @@ export function systemCard(
           .map((p) => {
             const dx = Math.max(0, Math.abs(p.x - inst.x) - half(p.systemId) - half(inst.systemId));
             const dy = Math.max(0, Math.abs(p.y - inst.y) - half(p.systemId) - half(inst.systemId));
-            return { id: p.id, name: getSystem(catalog, p.systemId).name, distanceFt: Math.hypot(dx, dy) };
+            return { id: p.id, name: getSystem(catalog, p.systemId).name, distanceFt: Math.hypot(dx, dy), distanceText: rangeDistanceText(Math.hypot(dx, dy), a.maxDistanceFt) };
           })
           .filter((c) => a.maxDistanceFt === null || c.distanceFt <= a.maxDistanceFt)
           .sort((x, y) => x.distanceFt - y.distanceFt);

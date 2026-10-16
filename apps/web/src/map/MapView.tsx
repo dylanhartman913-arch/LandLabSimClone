@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Application } from 'pixi.js';
-import { designBalance, gameDigest, getSystem, NODE_LABEL, nodeStockOf, type GameState } from '@homestead/engine';
+import { designBalance, gameDigest, getSystem, NODE_LABEL, nodeStockOf, type GameState, type PlacementPreview } from '@homestead/engine';
 import { fmtNum } from '../lib/format.ts';
 import { useGame, worldToScreen } from '../store/game.ts';
 import { MapScene } from './scene.ts';
@@ -40,6 +40,7 @@ function nodeOptionsAll(g: GameState): { id: string; label: string; text: string
 export function MapView() {
   const host = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<MapScene | null>(null);
+  const [placement, setPlacement] = useState<PlacementPreview | null>(null);
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
   const catalog = useGame((s) => s.catalog);
 
@@ -75,6 +76,7 @@ export function MapView() {
         useGame.getState().setViewport(r.width, r.height);
         useGame.getState().zoomToFit();
         scene = new MapScene(app, catalog);
+        scene.onPlacement = setPlacement;
         scene.onHover = (id, x, y) => setHover(id ? { id, x, y } : null);
         sceneRef.current = scene;
         ro.observe(el);
@@ -117,6 +119,13 @@ export function MapView() {
   const sys = inst ? getSystem(catalog, inst.systemId) : null;
   return (
     <div className="map-host" ref={host} data-testid="map">
+      {placement && <aside className="placement-preview" data-testid="placement-preview" aria-live="polite">
+        <strong className={placement.valid ? '' : 'warn-text'}>{placement.validation}</strong>
+        {placement.warning && <p className="warn-text">{placement.warning}</p>}
+        <ul>{placement.connections.slice(0, 4).map((c, i) => <li key={`${c.id}-${c.resource}-${i}`} data-testid="placement-connection">{c.name}: {c.text}</li>)}</ul>
+        {placement.notes.length > 0 && <p>{placement.notes.join(' ')}</p>}
+        <p className="muted small">{placement.explanation}</p>
+      </aside>}
       {hover && node && (
         <div className="map-tip" style={{ left: hover.x + 14, top: hover.y + 10 }} role="tooltip" data-testid="node-tip">
           <strong>{node.label}</strong>

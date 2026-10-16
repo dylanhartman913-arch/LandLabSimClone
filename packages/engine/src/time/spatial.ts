@@ -55,10 +55,19 @@ interface Source {
 }
 
 /** Gap between two square footprints (0 if they touch or overlap). */
-function gapFt(ax: number, ay: number, ah: number, bx: number, by: number, bh: number): number {
+export function gapFt(ax: number, ay: number, ah: number, bx: number, by: number, bh: number): number {
   const dx = Math.max(0, Math.abs(ax - bx) - ah - bh);
   const dy = Math.max(0, Math.abs(ay - by) - ah - bh);
   return Math.hypot(dx, dy);
+}
+
+/** Keep near-boundary labels consistent with the exact (unrounded) range comparison. */
+export function rangeDistanceText(distance: number, limit: number | null): string {
+  if (limit === null) return `${distance.toFixed(2)} ft (no distance limit)`;
+  if (distance === limit) return `= ${limit} ft limit`;
+  const delta = Math.abs(distance - limit);
+  if (Number(distance.toFixed(2)) === limit) return `${distance > limit ? '>' : '<'} ${limit} ft limit (${distance > limit ? 'outside' : 'inside'} by ${delta.toPrecision(3)} ft)`;
+  return `${distance.toFixed(2)} ft / ${limit} ft limit`;
 }
 
 /**
@@ -287,7 +296,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
       pick.room = Math.max(0, pick.room - need);
       s.assigned[a.resource] = { providerId: pick.inst.id, share, distanceFt: dist(pick.inst) };
       s.notes.push(
-        `Linked to ${sysOf(pick.inst).name} (${pick.inst.id}) ${Math.round(dist(pick.inst))} ft away for ${a.resource}${share < 1 ? `: only ${Math.round(share * 100)}% of the need fits` : ''}.`,
+        `Linked to ${sysOf(pick.inst).name} (${pick.inst.id}) ${rangeDistanceText(dist(pick.inst), a.maxDistanceFt)} away for ${a.resource}${share < 1 ? `: only ${Math.round(share * 100)}% of the need fits` : ''}.`,
       );
     }
   }
@@ -319,7 +328,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
       s.undelivered[o.resource] = true;
       s.notes.push(
         shelters.length
-          ? `Its ${o.resource.toLowerCase()} doesn't reach a shelter: the nearest is ${Math.round(best)} ft away (it must be within ${r.deliveryRadiusFt} ft).`
+          ? `Its ${o.resource.toLowerCase()} doesn't reach a shelter: the nearest is ${rangeDistanceText(best, r.deliveryRadiusFt)}.`
           : `Its ${o.resource.toLowerCase()} has no shelter to reach.`,
       );
     }

@@ -1323,7 +1323,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     gatherUsed: 0,
     gathered: [],
     boiled: null,
-    nodeStock: prev.nodeStock,
+    nodeStock: prev.nodeStock ? { ...prev.nodeStock } : undefined,
     shelterIds,
   };
 

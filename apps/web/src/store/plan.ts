@@ -13,7 +13,7 @@ export interface Scenario {
   siteId: string;
 }
 
-export type PlanTab = 'scenarios' | 'montecarlo' | 'sensitivity' | 'export';
+export type PlanTab = 'scenarios' | 'transition' | 'montecarlo' | 'sensitivity' | 'export';
 
 export interface McState {
   /** What was run (kept so the CLI command can be shown). */

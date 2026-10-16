@@ -924,3 +924,23 @@ Continued on `codex/phase-0-1` after `17a17a3`. No push or upstream PR.
 **Digests:** legacy spring `9544bdc2fdf7f9cf`, winter `f90dc93c4f4d1a4a`; no re-recorded goldens or fixtures. The explicit safer-policy settings action intentionally changes continued-game digests.
 
 **Next:** Phase 3 project previews and placement. Queue-wide emergency priority retains placement order. The short return trial does not guarantee long-term fuel/cash sufficiency; outside crew pricing is initial tuning. Report reconstruction after loading remains outside this phase.
+
+## Playtest follow-up — Phase 3 (2026-10-16)
+
+Continued on `codex/phase-0-1` after `bdb5fb4`, local only.
+
+**LL-07:** catalog cards preview selected-mode purchase/cash balance, setup and simulated finish, optional outside-crew price/duration/cash after both, one-time materials, recurring inputs and money demand, maturity, net demand changes, cold-day heat gap and nominal food calories per adult equivalent. Food timing distinguishes daily growing-season/window output from the event announcing the window. Unused shelters still request heat; the preview explains that verified model rule rather than introducing occupancy balance changes.
+
+**LL-08:** placement and drag overlays draw relevant ranges and targets, show overlap validation separately from operating reach, warn without blocking intentional unconnected plans, and explain footprint-edge distances. Near-cutoff text uses inequalities/margins. Host/parcel rules are labeled appropriately. Moves preserve capacity allocation order and group checks include each selected footprint. The selected-system spatial graphics layer is now attached to the scene.
+
+**LL-09:** Scenarios and Sensitivity share a reconstructed planned-layout annual baseline. Scenario setup effort complements capital and ongoing labor requirements. Sensitivity shows useful precision, percentage-point deltas and inactive-vs-score-unchanged distinctions. Weather risk identifies its fresh reserves, cash and operating policies, marks stale layout snapshots and explains its daily-model differences. A separate Next 90 days forecast preserves the live save's reserves, work, employment, orders, construction, maturity, assistance and town policy.
+
+**Required correctness fix:** full-state preview tests exposed `nodeStock` aliasing in daily gathering. `git blame` identifies baseline `60fad89`, original `time/step.ts:1326`. Copy the map before gathering so forecasts, prior states and Phase 2 return trials do not consume live natural-node reserves. Engine bumped to `0.3.0`; schema unchanged. This is state isolation, not a balance-constant change.
+
+**Validation:** 269/269 unit tests (13 added), typecheck, lint, build and catalog:check pass. All 15 legacy pacing groups and all 15 safer-policy groups pass across three sites × three seeds. Full browser sweep: 51/53 pass, including the four new Phase 3 flows. The two failures are the tablet drawer-collapse and outhouse map-card scenarios previously reproduced against imported baseline `60fad89`; their assertions remain intact. Final targeted rerun: 6/6 pass, covering all four Phase 3 flows plus both unchanged keyboard scenarios after the capacity, daily-rate/percentage and card-focus adjustments. Browser CLI/Monte Carlo agreement, existing planning/export scenarios, Phase 1 accounting and Phase 2 recovery pass.
+
+**Release example:** spring fixture starts at $7,784. A $6,000 DIY yurt leaves $1,784, or $384 after a five-day $1,400 crew; its new heat demand is visible before placement. A heater's $600 purchase plus $2,100/eight-day crew is disclosed before commitment; browser test checks reach, purchases it, books the crew, verifies $5,084 remaining, and completes it in eight days. The bed and coop previews respectively show roughly 3.7 and 275 kcal/adult/day with full inputs and maturity, rather than implying food independence.
+
+**Digests:** historic spring `9544bdc2fdf7f9cf` and winter `f90dc93c4f4d1a4a` remain unchanged. No fixture/golden updates, new dependencies, catalog quantities, startup resources, rewards or wellbeing threshold changes. Report, limitations and screenshots: `docs/PHASE_3.md`.
+
+**Next:** Phase 4 controlled strategy and balance evaluation. Annual mature ceilings remain distinct from actual-state survival forecasts. Empty-shelter heating, material imports, default weather-risk reserves, sample-position assumptions and the bounded forecast horizon are explicitly described for review.

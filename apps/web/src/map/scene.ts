@@ -3,6 +3,8 @@ import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import type { Catalog, System } from '@homestead/catalog';
 import {
   canPlace,
+  placementPreview,
+  type PlacementPreview,
   computeSpatial,
   FLOW_GROUPS,
   flowLinks,
@@ -97,6 +99,7 @@ export class MapScene {
   private highlight = new Graphics();
   /** Effect radius and assigned-capacity links for the selected system. */
   private spatialGfx = new Graphics();
+  private placementGfx = new Graphics();
   private flowLines = new Graphics();
   private flowDots = new Graphics();
   /** Build-plan ghosts (G13): planned systems, not yet built. */
@@ -116,6 +119,7 @@ export class MapScene {
   private lastGame: GameState | null = null;
   private lastSeason = '';
   hovered: string | null = null;
+  onPlacement: (preview: PlacementPreview | null) => void = () => {};
   onHover: (id: string | null, sx: number, sy: number) => void = () => {};
   private pops: { root: Container; t0: number }[] = [];
   private floats: { g: Graphics; t0: number; x: number; y: number }[] = [];
@@ -138,6 +142,8 @@ export class MapScene {
       this.peopleLayer,
       this.badges,
       this.highlight,
+      this.spatialGfx,
+      this.placementGfx,
       this.flowLines,
       this.flowDots,
       this.overlay,
@@ -173,6 +179,7 @@ export class MapScene {
     if (!prev || s.highlightResource !== prev.highlightResource || s.game !== prev.game)
       this.syncHighlight(s);
     if (!prev || s.tool !== prev.tool) this.syncTool(s);
+    if (!prev || s.tool !== prev.tool || s.game !== prev.game) this.updateGhost();
     if (prev && s.kbCursor !== prev.kbCursor) this.updateGhost();
     if (prev && s.events !== prev.events) this.onEvents(s, prev);
     if (!prev || s.overlay !== prev.overlay || s.game !== prev.game || s.selection !== prev.selection)
@@ -605,6 +612,13 @@ export class MapScene {
         .fill({ color: 0xfff4d6, alpha: 0.05 })
         .stroke({ width: 0.8, color: 0xfff4d6, alpha: 0.6 });
     }
+    for (const f of this.catalog.flows.filter((f) => f.systemId === sys.id && f.direction === 'out')) {
+      const r = this.catalog.resources.find((r) => r.name === f.resource);
+      if (r?.deliversTo === 'shelter') {
+        const radius = r.deliveryRadiusFt;
+        g.roundRect(inst.x - half - radius, inst.y - half - radius, (half + radius) * 2, (half + radius) * 2, radius).stroke({ width: 0.8, color: 0x8fd3ff, alpha: 0.8 });
+      }
+    }
     const sp = computeSpatial(this.catalog, s.game).get(inst.id);
     for (const a of Object.values(sp?.assigned ?? {})) {
       const p = a.providerId ? s.game.instances.find((i) => i.id === a.providerId) : null;
@@ -658,6 +672,7 @@ export class MapScene {
     const kb = s.kbCursor;
     if (s.tool.kind !== 'place' || (!this.pointer.inside && !kb)) {
       this.ghost.visible = false;
+      if (!(this.drag?.kind === 'move' && this.drag.moved)) { this.placementGfx.clear(); this.onPlacement(null); }
       return;
     }
     const sys = getSystem(this.catalog, s.tool.systemId);
@@ -676,6 +691,18 @@ export class MapScene {
       .fill({ color, alpha: 0.25 })
       .stroke({ width: 1, color });
     this.ghostSprite.tint = ok ? 0xffffff : 0xff9a8a;
+    this.drawPlacement(placementPreview(s.game, this.catalog, sys.id, x, y));
+  }
+
+  private drawPlacement(v: PlacementPreview): void {
+    const g = this.placementGfx.clear();
+    for (const r of v.radii) if (r > 0) g.roundRect(v.x - v.half - r, v.y - v.half - r, (v.half + r) * 2, (v.half + r) * 2, r).fill({ color: 0x8fd3ff, alpha: 0.06 }).stroke({ width: 0.8, color: 0x8fd3ff, alpha: 0.8 });
+    for (const c of v.connections) {
+      const color = c.inRange ? 0x7ed957 : 0xff8a75;
+      g.rect(c.x - c.half, c.y - c.half, c.half * 2, c.half * 2).stroke({ width: 1.4, color });
+      g.moveTo(v.x, v.y).lineTo(c.x, c.y).stroke({ width: 0.7, color, alpha: 0.7 });
+    }
+    this.onPlacement(v);
   }
 
   // --- Frame ------------------------------------------------------------------
@@ -883,6 +910,9 @@ export class MapScene {
 
   private previewMove(dx: number, dy: number): void {
     const s = useGame.getState();
+    const moves = s.selection.map((id) => s.game.instances.find((i) => i.id === id)).filter((i) => i !== undefined).map((i) => ({ id: i.id, x: snapTo(i.x + dx, s.prefs.snap), y: snapTo(i.y + dy, s.prefs.snap) }));
+    const first = moves[0];
+    if (first) this.drawPlacement(placementPreview(s.game, this.catalog, s.game.instances.find((i) => i.id === first.id)!.systemId, first.x, first.y, moves));
     for (const id of s.selection) {
       const v = this.views.get(id);
       const inst = s.game.instances.find((i) => i.id === id);
@@ -896,6 +926,8 @@ export class MapScene {
     if (this.pinch.size < 2) this.pinchStart = null;
     const d = this.drag;
     this.drag = null;
+    this.placementGfx.clear();
+    this.onPlacement(null);
     const s = useGame.getState();
     if (d?.kind === 'move' && d.moved) {
       const ok = s.moveSelection(d.dx, d.dy);

@@ -1,14 +1,16 @@
 import { useMemo, useRef, useState } from 'react';
 import { SITES } from '@homestead/catalog';
 import {
-  designForGame,
+  planningBaseline,
+  planningFingerprint,
+  transitionForecast,
+  weatherRiskPolicy,
   designFromGame,
   flowRecords,
   ledgersCsv,
   monteCarloTable,
   scenarioSummary,
   sensitivity,
-  siteAssumptions,
   type DesignFile,
   type MonteCarloResult,
   type MonteCarloSpec,
@@ -23,6 +25,7 @@ import { WhyNum } from './Why.tsx';
 
 const TABS: { id: PlanTab; label: string }[] = [
   { id: 'scenarios', label: 'Scenarios' },
+  { id: 'transition', label: 'Next 90 days' },
   { id: 'montecarlo', label: 'Weather risk' },
   { id: 'sensitivity', label: 'Sensitivity' },
   { id: 'export', label: 'Export' },
@@ -56,6 +59,8 @@ export function Plan() {
           ✕
         </button>
       </header>
+      <PlanningBasis />
+      {tab === 'transition' && <TransitionTab />}
       {tab === 'scenarios' && <Scenarios />}
       {tab === 'montecarlo' && <CurrentMonteCarlo />}
       {tab === 'sensitivity' && <SensitivityTab />}
@@ -63,6 +68,30 @@ export function Plan() {
     </section>
   );
 }
+
+function PlanningBasis() {
+  const game = useGame((s) => s.game);
+  const catalog = useGame((s) => s.catalog);
+  const v = useMemo(() => planningBaseline(game, catalog), [game, catalog]);
+  return <p className="muted small" data-testid="planning-basis">Annual baseline: all placed systems, completed and mature, including construction; same site, layout, links and spatial modifiers in Scenarios and Sensitivity. Current layout score <WhyNum value={v.summary.overall} title="Shared annual planning baseline" format={finePct} testId="planning-score" />. Unpurchased build-plan ghosts are excluded. Next 90 days uses current reserves, wellbeing, construction and policies.</p>;
+}
+
+function TransitionTab() {
+  const game = useGame((s) => s.game);
+  const catalog = useGame((s) => s.catalog);
+  const v = useMemo(() => transitionForecast(game, catalog), [game, catalog]);
+  return <div data-testid="transition-forecast"><h3>Current save: next {v.days} days</h3>
+    <p>Preserves stocks, cash, construction, maturity, work priorities, employment, market orders, auto-gather, tutorial assistance and town rules. Assumes no new player actions. Real-weather projections follow the current seed. This short projection does not prove long-term stability.</p>
+    <p>Cash at end <WhyNum value={v.cashEnd} title="Projected cash at end" format={fmtMoney} /> · minimum <WhyNum value={v.minCash} title="Minimum projected cash" format={fmtMoney} />.</p>
+    <p>Lowest individual wellbeing {v.minWellbeing ? <WhyNum value={v.minWellbeing} title="Minimum projected wellbeing" /> : 'no residents'} · away at end: {v.awayEnd.join(', ') || 'none'}.</p>
+    <p>{v.firstShortage ? `${v.firstShortage.need} first falls below full demand in ${v.firstShortage.days} days.` : 'No essential supply deficit projected during this window.'}</p>
+    <ul>{v.completions.map((c) => <li key={c.id}>{c.name} ({c.id}): completes in {c.days} days.</li>)}</ul>
+    <button className="btn" onClick={() => useGame.getState().setPanel('work')}>Change schedule and recovery in Work</button>
+  </div>;
+}
+
+const finePct = (n: number) => `${(n * 100).toFixed(4)}%`;
+const points = (n: number) => `${n > 0 ? '+' : ''}${n !== 0 && Math.abs(n) < 0.00005 ? n.toExponential(2) : n.toFixed(4)} pp`;
 
 // --- Scenarios ------------------------------------------------------------------
 
@@ -100,8 +129,7 @@ function Scenarios() {
     <div data-testid="scenarios">
       <p className="muted">
         Pin up to {MAX_SCENARIOS} designs and compare them side by side. The average year is balance mode (the
-        “80%” model); a bad week is the 10th percentile of each run’s worst week in real weather (the “90%”
-        model), from Weather risk.
+        steady-state supply model); a bad week is the 10th percentile of each run’s worst week in real weather, from Weather risk. Purchase and setup figures are replacement requirements for the entire design, not cash remaining in your save.
       </p>
       <div className="row-actions">
         <button
@@ -181,6 +209,7 @@ function Scenarios() {
               ))}
               <MetricRow label="Purchase cost" summaries={summaries} get={(s) => s.cost.buy} format={fmtMoney} />
               <MetricRow label="Cheapest build" summaries={summaries} get={(s) => s.cost.cheapest} format={fmtMoney} />
+              <MetricRow label="Setup labor (full catalog hours)" summaries={summaries} get={(s) => s.labor.setup} unit="h" />
               <MetricRow label="Labor needed (h/week)" summaries={summaries} get={(s) => s.labor.required} />
               <MetricRow label="Labor available (h/week)" summaries={summaries} get={(s) => s.labor.available} />
               <MetricRow label="Land used" summaries={summaries} get={(s) => s.land.used} unit="sq ft" />
@@ -320,6 +349,8 @@ function CurrentMonteCarlo() {
         Runs the layout on the map, built and mature, through many years of real weather (dry and wet years, warm
         and cold ones, late frosts, heat waves, hail) on {game.site.name}. Each seed is one possible run of years.
       </p>
+      <p className="muted small" data-testid="weather-policy">{weatherRiskPolicy(catalog, designFromGame(catalog, game, 'Current layout'), game.site.id)}</p>
+      {mc && planningFingerprint(mc.spec.design, mc.spec.siteId) !== planningFingerprint(designFromGame(catalog, game, 'Current layout'), game.site.id) && <p className="warn-text" data-testid="weather-stale">Results describe an earlier layout snapshot. Run again to analyze the current map.</p>}
       <div className="mc-form">
         <div className="row-actions">
           <button className="btn ghost small" onClick={() => preset('quick')}>
@@ -392,6 +423,7 @@ function McResult({ result, spec }: { result: MonteCarloResult; spec: MonteCarlo
   return (
     <div className="mc-result">
       <h3>Worst-week coverage per need, across runs</h3>
+      <p className="muted small">Run snapshot: {spec.design.name} on {spec.siteId}. {weatherRiskPolicy(useGame.getState().catalog, spec.design, spec.siteId)}</p>
       <table className="mc-table" data-testid="mc-table">
         <thead>
           <tr>
@@ -463,8 +495,7 @@ function SensitivityTab() {
   const game = useGame((s) => s.game);
   const catalog = useGame((s) => s.catalog);
   const t = useMemo(
-    () =>
-      sensitivity(catalog, siteAssumptions(game.site), designForGame(game, catalog)),
+    () => { const b = planningBaseline(game, catalog); return sensitivity(catalog, b.assumptions, b.design); },
     [game.instances, game.site, catalog], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const W = 360;
@@ -473,7 +504,7 @@ function SensitivityTab() {
     <div data-testid="sensitivity">
       <p className="muted">
         How far the average-year score moves if each site number is {fmtPct(t.delta)} lower or higher. Longest
-        bars first. The line is the planned-design forecast score ({fmtPct(t.baseScore)}); the axis runs from {fmtPct(axis.from)} to{' '}
+        bars first. The line is the planned-design forecast score ({finePct(t.baseScore)}); the axis runs from {fmtPct(axis.from)} to{' '}
         {fmtPct(axis.to)}.
       </p>
       <table className="tornado" data-testid="tornado">
@@ -483,15 +514,15 @@ function SensitivityTab() {
             return (
               <tr key={b.key}>
                 <th scope="row">{b.label}</th>
-                <td className="num">{fmtPct(b.low)}</td>
+                <td className="num">{finePct(b.low)}<br />{points(b.lowDelta)}</td>
                 <td>
-                  <svg width={W} height={16} role="img" aria-label={`${b.label}: ${fmtPct(b.low)} at −${fmtPct(t.delta)}, ${fmtPct(b.high)} at +${fmtPct(t.delta)}`}>
+                  <svg width={W} height={16} role="img" aria-label={`${b.label}: ${finePct(b.low)} at −${fmtPct(t.delta)}, ${finePct(b.high)} at +${fmtPct(t.delta)}`}>
                     <rect x={0} y={7} width={W} height={2} className="axis" />
                     <rect x={g.x} y={2} width={g.w} height={12} className={b.high >= b.low ? 'bar-up' : 'bar-down'} />
                     <rect x={g.base - 1} y={0} width={2} height={16} className="base-line" />
                   </svg>
                 </td>
-                <td className="num">{fmtPct(b.high)}</td>
+                <td className="num">{finePct(b.high)}<br />{points(b.highDelta)}<br /><span className="muted small">{b.activity === 'inactive' ? 'No modeled flow changes' : b.activity === 'no-score-change' ? 'Flows change; score unchanged' : 'Score responds'}</span></td>
               </tr>
             );
           })}
@@ -521,8 +552,8 @@ function SensitivityTab() {
                   {f.side === 'provides' ? 'makes' : 'needs'} {f.resource}
                 </td>
                 <td className="num">{fmtNum(f.weekly)}</td>
-                <td className="num">{fmtPct(f.low)}</td>
-                <td className="num">{fmtPct(f.high)}</td>
+                <td className="num">{finePct(f.low)}</td>
+                <td className="num">{finePct(f.high)}</td>
               </tr>
             ))}
           </tbody>

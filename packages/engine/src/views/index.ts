@@ -17,3 +17,6 @@ export * from './people.ts';
 export * from './labor.ts';
 export * from './reserves.ts';
 export * from './recovery.ts';
+export * from './project.ts';
+export * from './placement.ts';
+export * from './planning.ts';

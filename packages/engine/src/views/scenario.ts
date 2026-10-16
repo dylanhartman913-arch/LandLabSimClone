@@ -1,9 +1,10 @@
-import { getSite, type AssumptionKey, type Assumptions, type Catalog, type NeedKey } from '@homestead/catalog';
+import { getSite, evalQtyExpr, type AssumptionKey, type Assumptions, type Catalog, type NeedKey } from '@homestead/catalog';
 import type { BalanceResult, ChecklistRow } from '../balance/balance.ts';
 import { balanceFeasible } from '../balance/feasible.ts';
 import { getSystem } from '../catalog-index.ts';
 import type { Design, DesignFile } from '../design.ts';
 import { explained, type Explained } from '../provenance.ts';
+import { weeklyFactor } from '../periods.ts';
 import { gameFromDesign } from '../scenario.ts';
 import { designForGame } from './hud.ts';
 import { siteAssumptions } from './site.ts';
@@ -38,7 +39,7 @@ export interface ScenarioSummary {
   checklist: ChecklistRow[];
   overall: Explained;
   cost: { buy: Explained; cheapest: Explained };
-  labor: { required: Explained; available: Explained };
+  labor: { required: Explained; available: Explained; setup: Explained };
   land: { used: Explained; available: Explained };
   /** Days of stored water and battery power at the design's use rate. */
   autonomy: { water: Explained; battery: Explained };
@@ -59,7 +60,7 @@ export function scenarioSummary(catalog: Catalog, file: DesignFile, siteId?: str
     checklist: b.checklist,
     overall: b.overallScore,
     cost: { buy: b.summary.costBuy, cheapest: b.summary.costCheapest },
-    labor: { required: b.summary.laborRequired, available: b.summary.laborAvailable },
+    labor: { required: b.summary.laborRequired, available: b.summary.laborAvailable, setup: b.summary.setupLaborHrs },
     land: { used: b.summary.landUsed, available: b.summary.landAvailable },
     autonomy: { water: b.summary.waterDays, battery: b.summary.batteryDays },
     cashPerYear: explained(net.value * 52, 'capital net ($/week) × 52', {
@@ -78,6 +79,9 @@ export interface TornadoBar {
   high: number;
   /** |high − low|. */
   swing: number;
+  lowDelta: number;
+  highDelta: number;
+  activity: 'inactive' | 'no-score-change' | 'responsive';
 }
 
 export interface FlowEffect {
@@ -125,7 +129,14 @@ export function sensitivity(
       balanceFeasible(catalog, { ...assumptions, [key]: assumptions[key] * f }, design).overallScore.value;
     const low = at(1 - delta);
     const high = at(1 + delta);
-    return { key, label: ASSUMPTION_LABELS[key], base: base.overallScore.value, low, high, swing: Math.abs(high - low) };
+    const flowChanges = catalog.flows.some((f) => {
+      if (!(design.counts[f.systemId]! > 0)) return false;
+      const sys = getSystem(catalog, f.systemId);
+      const amount = (factor: number) => { const a = { ...assumptions, [key]: assumptions[key] * factor }; return evalQtyExpr(f.qty, sys, a) * weeklyFactor(catalog, f.period, a); };
+      return Math.abs(amount(1 + delta) - amount(1 - delta)) > 1e-12;
+    });
+    const responsive = Math.max(Math.abs(low - base.overallScore.value), Math.abs(high - base.overallScore.value)) > 1e-12;
+    return { key, label: ASSUMPTION_LABELS[key], base: base.overallScore.value, low, high, swing: Math.abs(high - low), lowDelta: (low - base.overallScore.value) * 100, highDelta: (high - base.overallScore.value) * 100, activity: !flowChanges ? 'inactive' : responsive ? 'responsive' : 'no-score-change' };
   });
   bars.sort((a, b) => b.swing - a.swing || a.key.localeCompare(b.key));
 
