@@ -1,0 +1,23 @@
+{
+  "schema": "homestead.design.v1",
+  "name": "Suburban baseline",
+  "description": "A conventional household of four: suburban home on a mortgage, grid power, city water, groceries, two cars, and two jobs.",
+  "site": "front-range",
+  "counts": {
+    "Human Being": 4,
+    "30 Year Mortgage and Interest": 1,
+    "Sunlight": 1,
+    "Rainfall": 1,
+    "Average Suburban Home": 1,
+    "Central Power Plant (Coal / NatGas / Nuclear)": 1,
+    "Municipal Water Hookup": 1,
+    "Big Box Grocery Store": 1,
+    "Factory Farmed Food (Family of Four)": 1,
+    "Septic Tank & Drain Field": 1,
+    "Average American Vehicle": 2,
+    "Heat Pump (Mini-Split)": 1,
+    "Propane Range": 1,
+    "Gas Station": 1,
+    "Average Job": 2
+  }
+}

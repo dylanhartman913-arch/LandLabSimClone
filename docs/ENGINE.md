@@ -1,0 +1,518 @@
+# Engine
+
+`packages/engine` is pure TypeScript: no React, PixiJS, DOM, `Math.random()`, or `Date.now()` (ESLint enforces this, and `test/purity.test.ts` proves the rule fires). It has two modes over one catalog:
+
+- **Balance mode** answers "on average, does this design cover a household?" It is the spreadsheet's math and must reproduce the spreadsheet exactly.
+- **Time mode** answers "does it actually work in February of a dry year?" (see the time section below).
+
+## Provenance
+
+Every number the engine returns is an `Explained`:
+
+```ts
+interface Explained { value: number; explain: Explain }
+interface Explain {
+  formula: string;                 // plain language
+  terms: Term[];                   // flow-level contributions, spreadsheet row order
+  refs?: Record<string, number>;   // named intermediates (provided, needed, …)
+  assumptions?: AssumptionKey[];   // site values this number depends on
+  notes?: string[];
+}
+interface Term { flowId; systemId; count; qty; period; factor; needFactor?; value }
+```
+
+Provenance is built while computing, never reconstructed afterwards. For any checklist cell, `Σ term.qty × term.factor × term.count × (term.needFactor ?? 1)` equals the value (tested).
+
+## Balance mode
+
+Two functions, one shape (`BalanceResult`):
+
+```ts
+balancePotential(catalog, assumptions, design): BalanceResult   // the spreadsheet: parity applies here
+balanceFeasible(catalog, assumptions, design): FeasibleResult   // what players see (G11; see "Actual and potential")
+```
+
+`balancePotential` is the spreadsheet's math: every system makes its nominal output, with no input check. The sections below describe it. `balanceFeasible` starts from the same terms and curtails them.
+
+### Quantities and periods
+
+- `evalQty(flow, system, assumptions)` evaluates the flow's `QtyExpr` (see `docs/CATALOG.md`) in the spreadsheet's left-to-right order, e.g. heat load = `((area × loss-factor × HDD) × 24) ÷ 52`.
+- `weeklyEquivalent(qty, period)` = `qty × timesPerYear ÷ 52`. `Per season` uses *Growing seasons per year*; `One-time` is 0; `Capacity` is 1.
+
+### Formulas (each mirrors a spreadsheet column)
+
+| Output | Formula | Sheet |
+|---|---|---|
+| Flow weekly total | `(qty × weekly factor) × count` | Flows!J |
+| Contribution to need | `weekly total × Resources factor` | Flows!L |
+| Resource produced / consumed | `Σ weekly totals` of output / input flows | Resources!I, J |
+| Resource net | `produced − consumed` | Resources!K |
+| Resource status | Ambient → Site-supplied; both 0 → Not in design; `net < −0.0001·max(consumed,1)` → Deficit; `net > 0.0001·max(produced,1)` → Surplus; else Balanced | Resources!L |
+| Checklist provided / needed | `Σ contributions` of output / input flows whose resource feeds the row | Needs Checklist!C, D |
+| % covered | `needed = 0 ? 0 : min(1, provided ÷ needed)` | Needs Checklist!E |
+| Covered? | `needed = 0 ? n/a : % ≥ 1 ? ✓ : ✗` | Needs Checklist!F |
+| Overall score | mean % over rows with `needed > 0` (0 if none) | Needs Checklist!B3 |
+| Systems placed | `Σ counts − humans − Σ counts of zero-footprint systems whose category is exactly Land` | Design Summary!B6 |
+| Costs, setup labor, land used | `Σ per-system value × count` (cheapest = min(buy, DIY), buy if no DIY) | B8-B10, B14 |
+| Labor available / required | checklist Labor row provided / needed | B11-B12 |
+| Land available; water, battery, food storage; capital in/out; wellbeing | Σ weekly totals of the named resource's outputs (inputs for capital out) | B13, B16, B18, B20-B22, B24 |
+| Days of water | `water storage ÷ ((Water need + Drinking water need) ÷ 7)`, 0 if no need | B17 |
+| Days of battery | `battery kWh ÷ (Electricity need ÷ 7)`, 0 if no need | B19 |
+| Resources in deficit | count of status = Deficit | B25 |
+
+Sums walk flows in spreadsheet row order (system by system; the exporter's row order is system-contiguous, and the engine falls back to sorting terms by row if it is not) so floating-point sums follow `SUMIFS`.
+
+### Parity contract
+
+`test/parity.test.ts` runs `balance` on the counts saved in the xlsx (`goldens.json`) and asserts every per-flow quantity and weekly equivalent, every checklist cell, the overall score, every Design Summary metric, and every Resources balance row within 1e-9 relative (absolute floor 1e-9). A parity failure is an engine bug by definition; never edit the golden.
+
+Handoff numbers for the starter design: overall score 48.5%, Heated shelter need 697,846 BTU/wk, Food 4,979 of 16,000 kcal/wk.
+
+### Regression digests
+
+`designs/` holds four designs (`starter`, `offgrid-cabin-family`, `suburban-baseline`, `tent-and-nothing`). `test/balance-designs.test.ts` hashes each balance result (values only, 12 significant digits, FNV-1a 64) against `test/digests.json`. After an intended change, rerun with `UPDATE_DIGESTS=1` and record why in the build log.
+
+### Performance
+
+1,000 balance calls on a 200-instance design: ~75-110 ms in Node (budget 200 ms). Per-catalog lookups (flows by system, formula strings, frozen results for untouched resources) are cached in a `WeakMap` keyed by the catalog object.
+
+## Time mode
+
+Time mode is the game: a daily clock with stocks, storage limits, seasons, curtailment, construction, and people whose health depends on what the design delivers. It lives in `packages/engine/src/time/` and is pure: every function takes a state and returns a new one.
+
+```ts
+initGame(catalog, site, settings, seed): GameState
+canPlace(catalog, state, systemId, x, y): { ok: true } | { ok: false; reason; blockers }
+placeSystem(catalog, state, systemId, x, y, buildMode: 'buy' | 'diy' | 'prebuilt'): { state, instanceId }
+moveSystem(catalog, state, instanceId, x, y) / removeSystem(state, instanceId) / setPriority(state, instanceId, tier)
+placeDesign(catalog, state, counts, buildMode?)   // lay out a balance-mode design (tests, CLI, starter kits)
+stepDay(state, catalog): { state, events, ledger }
+stepDays(state, catalog, n): { state, events, ledgers }
+summarizeLedgers(ledgers, catalog): Summary     // or summarize(state, catalog, { from, to })
+```
+
+The catalog is passed explicitly rather than stored in the state, so a save stays small and the same state can be replayed against an edited catalog.
+
+### State
+
+`GameState` is plain JSON (no Maps, Sets, or classes) so saves are trivial:
+
+| Field | Meaning |
+|---|---|
+| `calendar` | `{ day (0-364), year (0-based), absDay }` on a 365-day engine calendar. Display seasons are the UI's job. |
+| `rng` | 32-bit integer state of the seeded generator (mulberry32). Only the engine advances it. |
+| `cash` | Dollars. The Capital stock. |
+| `stocks` | Amount on hand for every Flow resource, in its canonical unit. |
+| `direct` | Yesterday's output usable today by daytime loads without storage (electricity from panels). |
+| `services` | Yesterday's total output of each Service resource (pollination, pest control), the supply for boosts. |
+| `instances` | `{ id, systemId, x, y, status: 'building' \| 'active', buildMode, paid, setupHoursNeeded, setupHoursDone, materialsDrawn, activeSince, priority, person? }`. Instances are copied only when they change, so a quiet day allocates almost nothing. |
+| `lastDay` | Yesterday's result per group (`systemId\|priority`): satisfaction, the limiting input, boost multiplier, per-instance inputs requested/received, and outputs per instance at full maturity. Cards and the flow overlay read this. |
+| `weather` | The current day's ambient values. |
+| `ledgers` | The last 730 daily ledgers (below). |
+| `settings` | Parcel size, starting cash, weather mode, construction share, and so on. |
+
+### Site and climate
+
+A site (`data/sites/*.json`) gives scalar assumptions (the same keys as the spreadsheet's Assumptions sheet) and 12 monthly *shapes* for HDD, CDD, peak sun hours, precipitation, and a wind capacity-factor multiplier. The engine rescales the shapes so annual totals equal the scalars:
+
+- HDD, CDD, precipitation on day *d* of month *m* = `annual × shape[m] ÷ Σ shape ÷ daysIn(m)`.
+- Peak sun hours and wind CF on day *d* = `annual mean × shape[m] ÷ (day-weighted mean of shape)`.
+
+`front-range` reproduces the spreadsheet's Assumptions exactly; `laramie-wy` and `asheville-nc` are the other presets. Average-year mode (the "80%" model) uses these values directly. Real-weather mode (the "90%" model, below) multiplies them by seeded draws.
+
+### Flow shaping
+
+Every recurring flow's daily amount is `weekly equivalent ÷ 7 × shape(day)`, where each shape averages exactly 1 over the year, so a year of time mode matches balance mode when nothing runs short:
+
+| Shape | Applies to | shape(day) |
+|---|---|---|
+| steady | most flows | 1 |
+| heating | heat-load inputs, Heat outputs, fuel for heating-only systems | day HDD ÷ (annual HDD ÷ 365) |
+| cooling | cool-load inputs, Cooling outputs, power for cooling-only systems | day CDD ÷ (annual CDD ÷ 365) |
+| sun | `sun` and `pv` quantities | day PSH ÷ annual mean PSH |
+| rain | `rain` and `rainCapture` quantities | day precip ÷ (annual ÷ 365) |
+| wind | `wind` quantities | day wind CF ÷ annual CF |
+| growing-season | per-season flows; garden irrigation and weekly garden yields | 365 ÷ season days inside the season, else 0 |
+| window | yearly harvests and applications | 365 ÷ window days inside weeks *start*–*end*, else 0 |
+
+Climate-linked quantity kinds (heat load, PV, rain…) take their shape from the kind; typed constants take it from the flow's catalog `timing`.
+
+### Daily step, in order
+
+1. **Weather** and ambient resources for the day. An ambient resource is available if the site supplies it (`site.ambient`) or an active instance outputs it (e.g. Stream Frontage).
+2. **Construction starts.** A newly placed instance draws its one-time inputs from stocks. Missing materials are brought in and recorded in the ledger as `imported` (the game never blocks on a missing bag of soil, but it tells you).
+3. **Requests.** Each active instance requests every input for today: `weekly ÷ 7 × shape`. Capacity inputs request their nominal amount.
+4. **Labor.** Pool = Σ Human Being labor output today × health factor. Construction gets first call on up to `constructionShare` (default 0.6) of the pool, split across building instances in placement order. The rest is the day's Labor supply for upkeep. Buy-mode placement needs 25% of the setup hours; DIY needs 100%; prebuilt needs none.
+5. **Allocation**, per resource, from the start-of-day stock (outputs arrive at the end of the day, so the step is order-independent):
+   - *Flow and Money:* by priority tier (0 people, 1 animals, 2 everything else; a player can raise or lower an instance), proportional within a tier. A request for Food (kcal) is met from any food-family stock, most perishable first, converted through the Resources factor; direct requests for a food (seed potatoes) are reserved first.
+   - *Direct use:* a resource with `directUseShare` (Electricity: 0.5) can serve up to that share of today's demand from yesterday's output without storage (daytime loads running off the panels). The rest of the output must fit in storage; unused direct supply is lost at day end.
+   - *Capacity:* satisfaction = min(1, available ÷ required), shared by every consumer; nothing is used up. Available = Σ nominal capacity outputs of active instances.
+   - *Service (boost):* the same share rule, with available = Σ yesterday's actual service outputs.
+   - *Ambient:* 1 if available, else 0.
+6. **Production.** An instance's satisfaction is the minimum over its `required`, `capacity`, and `ambient` inputs (Leontief). It consumes only `satisfaction × request` of each required input and returns the rest to stock. `need` inputs (people, shelter heat and cooling) consume what they are given and never curtail output. Outputs = `daily nominal × satisfaction × Π(1 − w × (1 − boost satisfaction)) × maturity(age)`, with `maturity = min(1, age ÷ yearsToFullOutput)`. Human Being outputs scale by health instead.
+7. **People.** Each Human Being tracks the fraction of food, drinking water, heat (the household's delivered ÷ needed shelter heat), and shelter it received over a rolling 7 days. Health = `max(0.3, 1 − Σ weight × (1 − 7-day average))` with weights food 0.35, drinking water 0.45, heat 0.25, shelter 0.20. A hardship event fires when a need stays below 80% for 3 days in a row, and again every 7 days it persists.
+8. **Storage and loss**, at the end of the day:
+   - Non-storable resources (Heat, Cooling, Cooking fuel, Transportation, Sanitation, Labor) that went unused are lost (`spilled`).
+   - Production is added to stocks.
+   - Pooled stocks are capped by their storage (Water storage + 50 gal; Battery storage + 0; Food storage + 10 cu ft pantry). Overflow is `spilled`, shared across the pool's resources in proportion to volume.
+   - Perishables spoil at `spoilPerWeek ÷ 7` a day. The share of food that fits in real food storage (cellar, freezer; not the pantry buffer) spoils 80% slower.
+9. **Money.** Capital outputs add to cash; Capital inputs were allocated from cash in step 5, so a design with no cash curtails its Capital-dependent systems. Placement can push cash below zero (debt); nothing that needs cash runs until it recovers.
+10. **Ledger and events.** The day's ledger records, per resource, `start, produced, consumed, spilled, spoiled, requested, unmet`, per checklist row `provided, needed, delivered` (in row units), cash in and out, and labor. Events: `shortage` (first day a resource goes short, naming the curtailed instances), `shortage-ended`, `spill` (first day of electricity spill), `spoilage` (weekly total), `harvest`, `built`, `hardship`, `health`.
+
+Conservation holds for every storable resource, every day: `start + produced − consumed − spilled − spoiled = end` (tested to 1e-9).
+
+### Constants
+
+| Constant | Value | Where |
+|---|---|---|
+| Buy setup fraction | 0.25 | `time/constants.ts` |
+| DIY setup fraction | 1.0 | |
+| Construction share of labor | 0.6 (setting) | |
+| Refund on removal | 25% of what was paid if built, 100% if still building | |
+| Health weights | food 0.35, drinking water 0.45, heat 0.25, shelter 0.20 | |
+| Health floor | 0.3 | |
+| Hardship | below 80% for 3+ days; repeats every 7 days | |
+| Cold-storage spoilage cut | 80% for the stored share | |
+| Boost weight (default) | 0.15 | catalog default rule |
+| Arrival supplies | 28,000 kcal Food, 20 gal Drinking water, 100 gal Water (setting) | |
+
+### Groups
+
+Active instances of the same system at the same priority make identical requests and receive identical shares, so each day is computed once per group (system × priority). Only maturity (plants) and health (people) are applied per instance. This is what keeps a 200-instance year fast.
+
+### Balance agreement
+
+Two tests in `test/time-invariants.test.ts` compare year 2 of time mode (front-range, average year, everything prebuilt) with balance mode:
+
+1. **With every input supplied** (`settings.unlimitedSupply`: requests always met, shortfalls recorded as `supplied`, no storage caps), provided and needed agree within 5% on every row for the starter, off-grid cabin, and suburban designs; in practice they agree to 0.00%, which shows the seasonal shapes preserve annual totals.
+2. **With real supply**, the starter design's needed column agrees on every row, and six rows' provided column differs by more than 5%. Each difference is a curtailment chain the balance sheet cannot see (it assumes every system runs at its rated flow), and the test checks each cause:
+
+| Row | Time vs balance | Why |
+|---|---|---|
+| Water | 0 vs 1,000 gal/wk | The Well needs 3 kWh/wk. One panel with no battery gives only daytime power, and people (tier 0) use it first, so the Well (tier 2) never runs. Raising the Well's priority or adding a battery fixes it. |
+| Food | ~350 vs 4,979 kcal/wk | With no water, the hens and the raised beds are curtailed (Leontief on Water). |
+| Sanitation | ~3 vs 35 lbs/wk | The Composting Outhouse needs Carbon (cover material) and nothing in the design makes any. |
+| Transportation | 0 vs 50 mi/wk | The Cargo Bike needs its rider's calories (2,000 kcal/wk of Food); the household eats first. |
+| Cooled shelter | ~16 vs 10,000 BTU/wk | The Poplar's shade cooling needs summer water. |
+| Est. Required Labor | 15 vs 50 h/wk | With no drinking water, heat, or food, health falls to the 0.3 floor and labor with it. |
+
+Electricity's provided column agrees (14 kWh/wk); only its delivery is storage-limited (29% of need vs 58% in balance mode). Heated shelter, Drinking water, Cooking fuel, and Shelter agree.
+
+### Performance
+
+One simulated year of a 196-instance design: ~40-55 ms in plain Node (budget 150 ms). The test bundles `bench/year.ts` with esbuild and times it in a child Node process, so the test runner's module transform is not in the measurement. Splitting the daily step into one function per phase matters: as a single 500-line function V8's optimizing compiler gave up on it and a year took ~140 ms.
+
+### Known simplifications
+
+- One allocation pass. An instance that is short of one input returns the unused share of its other inputs to stock, but that returned stock is not re-offered to other consumers until tomorrow.
+- A day-long buffer is the only battery model: electricity produced today is usable tomorrow up to battery capacity. With no battery, daytime loads can still use up to half their demand directly (`directUseShare` 0.5) and the rest spills. Within-day timing (solar noon vs. night load) is not modeled.
+- Input requests are not reduced for immature plants.
+
+## Saves and replay
+
+Every design change in the app goes through one engine function, `applyAction(catalog, state, action)`, and is appended to an action log with the absolute day it happened on:
+
+```ts
+type Action = { at: number } & (
+  | { kind: 'place'; systemId; x; y; mode; id }   | { kind: 'remove'; id }
+  | { kind: 'move'; id; x; y }                      | { kind: 'moveMany'; moves }
+  | { kind: 'priority'; id; priority }              | { kind: 'settings'; settings }
+  | { kind: 'insert'; instance; cashDelta; index? } | { kind: 'delete'; id; cashDelta });
+```
+
+Undo and redo are logged as the `insert` / `delete` / `moveMany` / `priority` / `settings` actions they perform, so replay never needs the undo stack. `replay(catalog, init, actions, untilAbsDay)` starts a game from `{ siteId, seed, settings }`, steps days between actions, and applies each on its day. `gameDigest(state)` fingerprints calendar, cash, RNG, stocks, instances, and settings.
+
+A `.homestead.json` save (`homestead.save.v1`) holds the init, the action log, the day, the digest, a state snapshot for fast loading, the engine version, and the catalog's sha256. Loading replays the log and compares digests: a match is "Replay verified"; a mismatch (for example after the catalog changed) falls back to the snapshot and says so. In real weather the digest also covers `weatherLog`, every year's draws.
+
+**Damaged saves (G10).** `saveProblems(file, catalog)` lists everything wrong with a file in plain language (not a save, missing fields, an unreadable snapshot with no date, stocks, site, or ledgers, systems the catalog no longer has); `validateSave` throws a `SaveError` carrying that list. The app never replaces the running game with a file that fails these checks: it shows the list and offers the newest autosave that passes them. It keeps two autosaves (`autosave`, and `autosave-prev`, which is only overwritten by an autosave that itself passes the checks), so one damaged autosave always leaves a good one behind.
+
+## Reports and root causes
+
+`buildReport(state, catalog, 'season' | 'year', ledgers, title)` summarizes a range: coverage by month per checklist row, the top three shortages, cash in / out / purchases / refunds, labor hours by system (the ledger records upkeep hours per system each day), construction hours, spoilage, spilled power, and average health.
+
+Each shortage gets a root-cause chain from `rootCauseChain`: start at the system most often curtailed by the short resource (or, for needs that never curtail, the system that asked for it), then walk upstream: among the resource's producers in the design, find one that was itself mostly limited by something (≥25% of days) and recurse. The chain ends at a terminal cause:
+
+- nothing in the design makes the resource;
+- the producers' output is seasonal and this range is ≥15% below their annual average ("500W Photovoltaic Panels produces 42% less Electricity in winter");
+- more than 20% of what was made spilled for lack of storage;
+- otherwise, the producers simply make too little.
+
+`suggestFixes` lists catalog systems that make the resource and that the player can afford, cheapest per unit of weekly output, with what else each needs.
+
+## Space (G7)
+
+`computeSpatial(catalog, state)` turns the catalog's spatial rules (see `docs/CATALOG.md`) into per-instance effects: input and output multipliers, `require` gates, and assigned-capacity links, each with a plain-language note. It is cached on a key of positions, status, links, and scale. Instances with identical effects share a group, so the daily step stays fast.
+
+- **Time mode:** requests × input multipliers; outputs (and capacity provided) × output multipliers; a boost with no source in range gets 0; an assigned capacity is satisfied by the linked provider's share, not the pool. Buildings still under construction project and provide nothing.
+- **Balance mode:** `designBalance` passes each system's average multiplier as `design.adjust`; matching flow terms carry `adjust` and the row's provenance lists the reasons ("Shade trees within 30 ft … In range: Oak Tree (i8)"). Spreadsheet parity uses no adjustments and is unchanged.
+- **Household scale:** an instance's `scale` (children 0.6) multiplies its requests, outputs, and labor.
+- **Links:** `setLink` / action `link` choose a provider for an assigned capacity (undoable).
+
+
+## Real weather (G9)
+
+`settings.weatherMode: 'real'` draws one set of values per game year from the game's seeded RNG (`drawYearWeather` in `time/weather.ts`; every constant is in `REAL_WEATHER`). Average mode draws nothing, so its games, digests, and RNG state are unchanged.
+
+| Draw | Distribution | Effect |
+|---|---|---|
+| Precipitation | Lognormal, mean 1, CV 0.25 on arid sites (< 20 in/yr, e.g. Laramie), 0.15 otherwise (Box-Muller from two uniforms) | Every day's precipitation × the multiplier (rain catchment, ponds, swales, pasture). Tagged "dry year" below 0.8 and "wet year" above 1.2 |
+| Degree days | u ~ Uniform(−1, 1); HDD × (1 − 0.08u), CDD × (1 + 0.08u) | A warm year needs less heat and more cooling, within ±8% |
+| Late frost | 30% of years; 21–30 days (uniform integer) | The growing season starts that many days late ("last frost (N days late)"); growing-season flows are zero until then |
+| Heat waves | 0, 1, or 2 per summer with probabilities 0.5 / 0.35 / 0.15; 5–10 days each, starting June 1 – August 31, not overlapping | Each day's CDD becomes base × 2 + 6 |
+| Hail | 15% of years; a day inside the (possibly shortened) growing season | Growing-season flows × 0 for 7 days (`DayWeather.growMult`): a week of garden output lost |
+
+Each year always consumes exactly 12 RNG values, whatever happens, so one outcome never shifts the draws of the next. The year's draws live in `state.yearWeather`, and every year's are appended to `state.weatherLog`, which is part of the save's state snapshot and of `gameDigest` (so an imported real-weather save is checked against its replayed weather). Sun hours and wind are not varied (the roadmap names no distribution for them).
+
+`Math.log`, `cos`, `exp`, and `sqrt` are used for the draws. The app, its workers, and the CLI all run on V8, so results agree to the bit; another JavaScript engine could differ in the last digit.
+
+## Monte Carlo (G9)
+
+`monteCarloRun(catalog, spec, k)` builds the design (`gameFromDesign`: prebuilt and mature, at the layout's exact positions when the design file has one, else laid out automatically on 5 acres), runs it for `spec.years` years in real weather with seed `baseSeed + k`, and records per checklist row the lowest 7-day coverage over the run (non-overlapping weeks, as `summarizeLedgers`), the number of months with any hardship event, each year's overall score, and each year's precipitation multiplier.
+
+`aggregateMonteCarlo(spec, runs)` turns runs (in seed order) into per-row min / P10 / median / P90 / mean (linear-interpolated quantiles) and a 10-bin histogram, the share of runs with any hardship month, hardship months per year, mean and P10 of yearly scores, and a digest of all of it. `monteCarloTable(result)` formats the table to one decimal place; the app and the CLI both print those strings.
+
+- **CLI:** `npm run sim -- montecarlo designs/x.json --site laramie-wy --years 10 --seeds 200 [--seed 1] [--json out.json]`.
+- **App:** Plan → Weather risk runs the layout on the map in Web Workers (up to four; seeds dealt round-robin, results put back in seed order before aggregating). It shows progress, can be cancelled (workers are terminated), and offers the exact design file and CLI command that reproduce its numbers.
+- **Parity:** each seed is independent and pure, so the worker count cannot change the result. `montecarlo.test.ts` runs the CLI in a child process and compares its JSON and printed table with the engine's; `decision.spec.ts` does the same with the numbers the app shows.
+- **Cost:** ~40–55 ms per simulated year for the shipped designs, so 10 years × 200 seeds is ~1.5 minutes of CPU, spread over the workers. The Quick preset (3 × 40) takes a few seconds.
+
+## Scenarios, sensitivity, and exports (G9)
+
+- **Design files with layouts.** `DesignFile` gains optional `parcelAcres` and `layout` (system, x, y, scale, priority, and assigned-capacity links by layout index). `designFromGame` writes one from the current game; `gameFromDesign` rebuilds it. Files without a layout behave as before.
+- **Scenario compare.** `scenarioSummary(catalog, file, siteId)` is balance mode for the design with its layout's spatial effects (`designForBalance`): the checklist, overall score, purchase and cheapest cost, labor needed and available, land used, days of stored water and battery, and cash per year (capital net × 52). All `Explained`. The app pins up to three and adds each one's Monte Carlo P10 worst week beside the average year: the "80%" and "90%" views together.
+- **Sensitivity.** `sensitivity(catalog, assumptions, design, 0.2)`: the overall score with each site assumption at −20% and +20%, sorted by swing (the tornado); then, for the weakest row the design provides anything for, the ten flows whose ±20% moves that row's coverage most (each flow's term in the row's provided or needed sum, varied alone).
+- **Ledger additions.** `DayLedger.bought` is Flow output from systems that buy from outside (a Conventional system with a Capital input: grid power, city water, groceries), and `DayLedger.hardships` counts people entering hardship that day. Neither changes any existing summary or digest.
+- **Flow record** (`homestead.flow_record.v1`, `flowRecord` / `flowRecords`): per game year, land by use (footprint by first category), monthly electricity bought / made on site / spilled (no net metering is modeled, so "export" is surplus with nowhere to go) / peak single-day demand / unmet, water drawn (all Water produced) vs used up (Water consumed − Greywater produced), food grown vs bought vs eaten (kcal), fuel used by type (Propane, Gasoline, Woody biomass, Wood pellets, Wood chips), spending, cash, labor, and the months anyone entered hardship. CLI: `run … --flow-record records.json`.
+- **Daily CSV** (`ledgersCsv`): one row per day with health, cash, labor, weather, each checklist row's needed and delivered, and stock / produced / consumed / unmet for every flow resource that moved. CLI: `run … --csv ledgers.csv`.
+- **Map PNG** is the app's (`MapScene.snapshotPng`).
+
+
+## Actual and potential (G11)
+
+Every output has two numbers. **Potential** is what a system makes if every input is met: the spreadsheet's number, where parity applies (`balancePotential`, and `NeedDay.potential` / `ResourceDay.potential` in time mode). **Actual** is what it made after missing inputs curtailed it. The checklist, the HUD score, scenarios, sensitivity, and reports use actual. Potential appears beside it as a labeled ceiling ("if every input were met").
+
+**Feasible balance** (`balanceFeasible`). The steady state with curtailment, as weekly averages:
+
+1. Every system in the design starts at satisfaction 1.
+2. Each pass:
+   - Compute each resource's supply from current satisfactions × boosts. Capacity outputs don't scale.
+   - Ration each Flow resource by priority tier, proportionally within a tier. Direct requests go first; substitutes (Food ← eggs, vegetables…) draw on what is left.
+   - Set each system's satisfaction to the minimum over its required inputs (grant ÷ request), capacity inputs (supply ÷ requests), and ambient inputs (met if the site supplies it, `design.ambient`, or a system in the design outputs it).
+   - `need` inputs (people, shelters' heat) are rationed but never switch anything off. Money is not rationed.
+   - Boost inputs scale output by 1 − weight × (1 − share met).
+3. Stop when nothing changes by more than 1e-9, or after 200 passes. Satisfactions only decrease, so this converges to the largest feasible state; real designs take 2–10 passes.
+4. The pass in which each system first fell below 1 is recorded (`curtailedAt`), so chains read in order: "the well, then the beds".
+
+**Storage in balance mode.** Time mode's storage rules apply as weekly averages:
+- **Electricity:** half of demand can run straight off production; the other half must pass through batteries, one charge a day. Available = min(½P, ½D) + min(½P, 7 × battery kWh).
+- **Other stored resources:** a day's production must fit in its storage pool (capacity plus the pool's small buffer), shared across the pool's members. City water with no tank is limited by the 50-gal buffer, as in time mode.
+
+**Coverage** is what consumers actually received ÷ needed, as in time mode. Actual provided (what was made) and potential are shown beside it. **Overall score** = the average actual coverage over rows with any need; the potential score is shown smaller beside it.
+
+**Delivery.** Heat and Cooling (`Resource.deliversTo: 'shelter'`) only count when the producer reaches a shelter. That means one of:
+- it is a shelter;
+- it has no footprint, so it is carried inside one (a fan) or is a utility hookup;
+- its footprint is within `deliveryRadiusFt` of a shelter's, edge to edge: 10 ft for heat, 30 ft for cooling.
+
+Otherwise the output is made but potential only: in time mode it's recorded as `ResourceDay.undelivered` and nothing can use it.
+
+Systems marked `outdoor` (Firepit, Biochar Kiln Firepit, Biochar Double Barrel Retort) never deliver. For balance mode, `designForGame` passes each system's delivered share from its placed instances. A count-only design assumes delivery, unless it has no shelter at all or the system is outdoor. `placeDesign` now puts stoves, fans, and shade trees beside the first shelter with room, so auto-laid-out designs deliver.
+
+**Statuses.**
+- `FeasibleResult.systems[id]` gives `satisfaction`, `limitedBy`, `curtailedAt`, and a status: "running", "partial: 40% of Water", or "blocked: no Electricity".
+- Each checklist row lists the systems holding it back (`blocked`), and so does the time-mode checklist view (from the ledgers' curtailed lists and the current layout's delivery).
+- `instanceStatuses(state, catalog)` gives each placed system's status for the map badges. It uses yesterday's group result, or the feasible balance before the clock has run.
+
+**Agreement.** With every input supplied, time-mode potential matches `balancePotential` within 5% on every row. With real supply, feasible balance matches time mode's year-2 overall coverage within 5 points for the starter, off-grid cabin, and suburban designs (`truthful.test.ts`).
+
+The one known gap is seasonal: in time mode, trees whose water need falls in summer still drop autumn leaves after it ends; a weekly steady state keeps them curtailed all year.
+
+**Fixed in G11:** spatial output multipliers (chickens by the compost, trees near a turbine, swales on a slope) were applied to capacity outputs only in time mode. They now multiply flow outputs too.
+
+
+## Market, backstops, and self-reliance (G12)
+
+**Backstops.** Conventional services marked `backstop` in the overrides stop producing fixed weekly amounts:
+- Big Box Grocery Store
+- Factory Farmed Food
+- Central Power Plant
+- Municipal Water Hookup
+- Gas Station
+- Farm & Feed Store
+
+"Propane Tank & Delivery" is not in the catalog; propane comes from the market.
+
+Each day, after on-site supply is allocated (step 5b, `dispatchBackstops`), they fill the unmet requests for what they sell:
+- **Order:** cheapest seller first, then by tier and proportionally within a tier.
+- **Cap:** up to 3 × their catalog weekly output (`BACKSTOP_CAP_MULT`), scaled by their own satisfaction (a grocery run needs its 10 miles of transport).
+- **Price:** each unit is paid from cash at `backstopPrices`. The default is the resource's market price; failing that, the system's weekly bill ÷ its first output.
+- **Connection fee:** charged every day whether used or not (grid $3/week, city water $5/week).
+
+Their Capital input is replaced by those charges. Unpriced outputs (a grocery's food waste) are by-products of what was delivered. Deliveries go into stock as `ResourceDay.purchased` and count toward the checklist row; nothing is curtailed. The conservation identity is now start + produced + purchased − consumed − spilled − spoiled = end.
+
+Validation mode (`unlimitedSupply`) keeps backstops as fixed producers, so time-mode potential still matches the spreadsheet.
+
+**Market.**
+- **Priced resources:** `Resource.marketPrice` / `marketUnit` / `marketAvailable`, set in the overrides; see CATALOG.md for the table and its low confidence. Electricity is not sold; it comes through a grid connection.
+- **Orders:** `buyAtMarket(catalog, state, resource, amount)` (action `buy`) queues an order for the next trip. `setStandingOrder(…, keepAbove, orderUpTo = 1.5 × keepAbove)` (action `standing`) buys up to `orderUpTo` whenever the stock is below `keepAbove`.
+- **Trips:** step 2b (`marketTrip`) makes one trip a day for all orders. It uses 10 miles of Transportation from stock, or costs $25 for delivery without it. Goods arrive in stock the same morning, as `purchased`. Partial orders are filled when cash runs short.
+- **Out of money:** while cash is at or below zero, nothing is bought (backstops or market). The first such day logs a `purchases-stopped` event and a toast.
+
+**Ledger.** `DayLedger.spend` holds dollars per resource for backstops and market, connection fees, and delivery; all of it is included in `cash.out`. `bought` (G9) now holds backstop and market deliveries plus conventional services' output. `NeedDay.bought` is the same in each row's units.
+
+**Self-reliance.**
+- **Per row:** 1 − bought ÷ provided over a period (time mode), or 1 − supply from backstops and Capital-paid conventional systems ÷ all supply (feasible balance).
+- **Headline:** the average over rows with any need of coverage × self-reliance. The household's own labor is left out, because it measures where supply comes from, not effort.
+- **Use:** the checklist shows it per row ("Made at home") and overall. G15's adapt start makes it the headline.
+
+**Feasible balance with backstops.** Backstop supply is left out of the first rationing. Then each sold resource's unmet requests are topped up to the cap (no cash limit in a steady state). Backstop terms scale to what was delivered, and their Capital terms become the bill. `FeasibleResult.backstops` gives units delivered, `bills` by resource, `fees`, and the weekly total.
+
+**Views.**
+- `weeklyBills(state)`: this week's total, the last 12 weeks, the trend, and lines by item.
+- `marketView(state, catalog)`: price, stock, days left at last week's use, pending orders, and standing orders.
+- `resourceSources(catalog, resource, nodes)`: producers, conventional sources, nodes, and market price.
+
+**Tests.**
+- `market.test.ts`: full coverage at full price.
+- `market.test.ts`: four raised beds and a 6 kW array cut the grocery and grid bills by exactly the vegetables eaten × price and the solar used × price, to the cent.
+- `market.test.ts`: purchases stop at zero cash.
+- `market.test.ts`: fees, trips and delivery, standing orders, replay.
+- `sources.audit.test.ts`: every Flow input has a producer, a node, or a market listing. Inputs with a single source are printed as warnings.
+
+
+## Where things come from (G13)
+
+- `resourcePage(state, catalog, resource, nodes)` describes one resource:
+  - what it is, its unit and class, stock on hand, room in its storage pool, and spoilage;
+  - the last 12 weeks made / bought / used;
+  - **In your design:** producers with actual and potential output a week (yesterday × 7, or the average year before the clock runs) and the input holding them back;
+  - **On your land:** natural nodes (G14);
+  - **You could build:** catalog producers, non-conventional first, cheapest per unit of weekly output first, each with its inputs marked "you have this" (something in the design makes it, there is stock, or the site supplies it);
+  - **Buy:** the market price;
+  - **Where it goes:** consumers in the design with requested and received, catalog systems that use it, and what happens to the unused rest.
+- `supplyChain(state, catalog, systemId, depth = 3)` covers required, capacity, and ambient inputs (not labor or money). For each one it gives whether the average year already covers it, the market price, and the three cheapest non-conventional producers, each expanded to its own inputs.
+- "Plan this branch" (UI) takes, for every unmet input, the producer already in the design or else the cheapest, recursively.
+- `planTotals(catalog, items)` gives the cost and setup hours of a build plan, with terms.
+
+## The land provides: nodes and gathering (G14)
+
+**Natural nodes** are site data (`data/sites/<id>.json`, `nodes`), not catalog systems. Each node has a type, a position (as a fraction of the parcel's side), a resource, a yield per labor hour, optional by-products (`extra`), a stock and a maximum stock (both `null` means unlimited), regrowth per day, the months it regrows in, and three optional flags:
+- `untreated`: the water needs a filter or boiling before anyone drinks it;
+- `rainFill` and `evaporatePerDay`: a rain pool, filled by precipitation and drying out;
+- `droughtSensitive`: in a dry real-weather year (G9), yield × max(0.2, precipitation multiplier).
+
+Stocks are tracked lazily in `state.nodeStock`. A node nobody has worked costs nothing to track: it is full, or a rain pool follows the last 10 days of rain. Once worked, it regrows by `regrowPerDay` in its months, up to `maxStock`.
+
+**Jobs** (`time/gather.ts`): fetch water, gather firewood, forage, build, look after systems (upkeep), dig clay, rake leaves. Each has a priority 1–5 and an optional weekly hour cap (`settings.work`). The defaults are:
+- gathering water, wood, and food: 1;
+- construction: 2;
+- upkeep: 3;
+- clay and leaves: 4.
+
+The labor pool goes to priority 1 first, then proportionally within a priority. A cap limits a job to what is left of its hours over the last 7 days. With no nodes or rules, labor behaves as before G14: construction, then upkeep.
+
+**Auto-gather rules** (`settings.autoGather`): "keep water above N days" (`waterDays`), "firewood above N weeks" (`woodWeeks`), "food above N weeks" (`foodWeeks`). Each day a rule asks for the gap, limited two ways:
+- at most 2 days of use per day (`RESTOCK_DAYS`);
+- at most 40% of the labor pool per job (`MAX_GATHER_SHARE`).
+
+This keeps survival foraging from starving upkeep. A gathering job with a weekly cap and no rule works its cap as standing hours (for example, dig 7 hours of clay a week).
+
+**Gathering** works the nearest node first, depleting it. Walking costs labor: 1 minute per 50 ft each way per hour-long trip, so a node 300 ft away yields 1/(1 + 0.2) of its rate per labor hour. By-products come along: wild greens yield Green biomass plus a little Vegetables fruit fiber herbs. Every haul is a `GatherRecord` on the day's ledger (node, resource, amount, hours, walking hours).
+
+**Boiling:** with no filter in the design, untreated water short of the drinking-water rule is boiled over the cooking fire:
+- 4 gallons per hour of cooking fuel (`BOIL_GAL_PER_FUEL_HOUR`);
+- 0.05 labor hours per gallon (`BOIL_LABOR_PER_GAL`).
+
+The ledger records `boiled`, and the checklist's "why" says, for example, "Drinking water: 6 gal from the spring via boiling, 0.3 h labor."
+
+**Views:**
+- `nodeOptions(state, resource)` lists the nodes for a resource page (distance, yield, stock).
+- `workView(state)` lists jobs, priorities, caps, and last week's hours.
+
+## Wellbeing v2 (G15)
+
+Each person has **wellbeing** from 0 to 100, starting at 75 (`time/wellbeing.ts`). It replaces the old 7-day health average. Every constant below is tunable data: change it only through the G16 tuning loop and record the change in `docs/BALANCE_LOG.md`.
+
+**Survival needs** have a grace period before they cost anything:
+
+| Need | Short when share met is under | Grace | Penalty a day past grace | Drift when partly met |
+|---|---|---|---|---|
+| Drinking water | 80% | 1 day | 10 × (1 − met) | 0.5 × (1 − met) |
+| Food | 50% (or 20%) | 4 days (1 day) | 4 × (1 − met) | 0.4 × (1 − met) |
+| Shelter | 50% | 2 days | 5 × (1 − met) | 0.2 × (1 − met) |
+| Heat (only days with HDD > 10) | 50% | 1 night | 5 × (1 − met) | 0.3 × (1 − met) |
+| Sanitation | 50% | 7 days | 2 × (1 − met) | 0.1 × (1 − met) |
+
+- **Heat** is measured against the shelter's own heat need: delivered ÷ needed on the checklist's Heated shelter row. Bedding is an item, not a rule: Wool Blankets & Sleeping Bags placed on a shelter multiply its heat need by 0.2 (a host modifier, see "Modifiers"). The greenfield tent has them. The old `HEAT_BEDDING_HDD` constant is gone (G16; see `docs/BALANCE_LOG.md`).
+- **Thresholds have a tolerance:** a share within 1e-9 of a "short" threshold is not short, so 17.5 ÷ 35 is exactly half.
+- **Comfort needs** only drift: points a day × (1 − met):
+  - electricity 0.25;
+  - cooling 0.25 (only days with CDD > 5);
+  - transportation 0.15;
+  - hot water 0.15;
+  - cooked meals 0.2.
+- **Recovery** applies when every survival need is met: +0.6, plus up to +0.4 more in proportion to comfort coverage. Wellbeing points (a Service: the firepit, the clothesline) add 0.05 per point per person per week, up to +0.5.
+- **The day's change** is recovery − penalties − drift, with survival penalties and drift × the difficulty multiplier (`settings.wellbeingMult`: Gentle 0.5). No day costs more than 8 points.
+- **Labor:** a person's labor = nominal × (0.5 + 0.5 × wellbeing ÷ 100).
+- **Hardship events** fire the first day a survival need passes its grace, then weekly while it lasts.
+- **Going to town.** At 0, a person goes to stay in town (`person.away`): they leave every group, consume nothing, and make nothing. They come home, at wellbeing 50, after 14 days or more, once nobody at home is going short, a shelter stands, and there is a week of their food and 3 days of their drinking water on hand. Nobody dies.
+  - This happens only when `settings.peopleLeave` is on. The two game starts turn it on. Design analysis (validation, Monte Carlo, scenarios, the old tests) leaves it off, so a household stays fixed at wellbeing 0 and its demand never disappears.
+- Each person keeps today's terms in `person.why`. `peopleView` turns them into the HUD bar and its "why". The day ledger carries the average `wellbeing` of the people at home and the number `away`.
+
+## Two ways to start (G15)
+
+Start configs are data in `data/starts/<id>.json`, validated by `StartSchema` (`@homestead/catalog`). `gameFromStart(catalog, site, start, { difficulty, household, seed })` builds the game:
+- the land;
+- the systems already running (prebuilt, no construction; `perPerson` entries scale with the household);
+- the stockpile × (household ÷ default) × the difficulty's `stockMult`;
+- cash, auto-gather rules, and `backstopCapMult`;
+- the difficulty's `wellbeingMult` and `weatherMode`;
+- `peopleLeave: true`.
+
+`startDay: "spring"` is 30 days before the site's last spring frost: March 21 in Asheville, April 5 on the Front Range, May 6 in Laramie. Each site gets a month to prepare beds, and the winter is about 9 months away.
+
+The kit was already running "yesterday". The start steps one silent day and keeps only its direct-use output, non-storable flows (the house's sanitation, the cars' miles), services, and group results, so every row is covered on day 1. Saves record `init.start = { id, difficulty, household }`, and replay rebuilds the game from it.
+
+| | Adapt your home | Start from the ground up |
+|---|---|---|
+| Land | ¼ acre (Suburban Lot) | 1 acre |
+| Running | house, job, two cars, grocery, grid, city water, gas station | wall tent, tiny stove, firepit, 500 W panel, power station, fan, filter, rain barrel, humanure bucket |
+| Stockpile (household of 2) | 28,000 kcal | 200,000 kcal, 40 gal drinking water, 800 lbs firewood, 8 oz seed, 100 lbs sawdust |
+| Cash | $15,000 | $8,000 |
+| HUD leads with | Self-reliance and weekly bills | Off-grid score |
+
+The stockpile view (`stockpileView`) shows days of food (every food in kcal), drinking water, firewood, and battery at today's use, each with a 7-day trend. It turns red under 3 days.
+
+## Modifiers (G15)
+
+A system can change another system's flow (`systems.<id>.modifies` in the overrides). The exporter turns each modifier into an adjacency rule with `scope`:
+- `host`: the modifier sits on the receiver, with its centre inside the footprint. Example: the Home Weatherization Retrofit placed on a house scales the house's Heat request by 0.7.
+- `parcel`: anywhere on the parcel. Example: a Clothesline scales each person's Electricity request by 20/21, about 1 kWh a week less each.
+- Wool Blankets & Sleeping Bags (host): the shelter's Heat request × 0.2.
+- Host and parcel modifiers that stack `once` are keyed by their source system, so blankets and a retrofit on one house both apply (0.7 × 0.2). Other `once` rules, such as trees near a turbine, still apply once per multiplier however many sources reach them.
+- `shelterHeatNeedNotes` lists what lowers each shelter's heat need. The checklist's Heated shelter row and the people bar's "why" both show it.
+
+## Tutorials, bots, and pacing gates (G16)
+
+**Quest lines** are data (`data/quests/<line>.json`, validated by `QuestLineSchema`). A start names its line in `tutorial`. Each quest has:
+- a title, a one-line reason, and the checklist row it moves;
+- a **goal**: have N of a system; a system made X yesterday; gathered X since the quest began; a stock; an auto-gather setting; N cold days warm enough; home-grown food share over N days; a modifier in effect; a system gone; N days passed; or a panel opened;
+- **steps**: the cheapest way to do it, which the tutorial-following bot does;
+- a **show me** target: a drawer item, a node, a resource page, or a panel;
+- a **reward** from a neighbor: cash, or a stockpile top-up.
+
+The tutorial's state lives in the game (`state.tutorial`). At the end of each day, `stepDay` checks the current quest. When it is done, the reward lands between days (cash as a refund; stock straight in), the next quest begins, and a `quest` event fires. Rewards therefore replay exactly. Opening a panel a quest asks for, and skipping the tutorial, are logged actions (`ui`, `tutorial`).
+
+**Engine rules added while tuning:**
+- **Upkeep** is job priority 1, alongside survival gathering. Construction is 2.
+- **Flow boosts** (scraps, greens, carbon for hens) draw on stock left after direct requests. They used to read 0.
+- **Seed is kept from meals:** a planted system's per-season food seed (a potato patch's seed potatoes) is held back from the household.
+- **Weekly bills** include each system's running cost (house, cars) as its own line.
+
+**Bots** (`packages/cli/bots/`) are deterministic policies, and each logs its moves as replayable actions:
+- `idle`: does nothing;
+- `tutorialFollower`: does the current quest's steps once, then waits;
+- `greedy`: weekly, builds the cheapest system per unit of the worst row it can afford;
+- `adaptUpgrader`: one adapt project a month, in order.
+
+`playBot` runs a start with a bot. `GATES` and `runGates` are the five pacing gates. They run in Vitest (`packages/cli/test/pacing.test.ts`), through `npm run test:pacing` (a table; exits 1 on a miss), and as their own CI job.

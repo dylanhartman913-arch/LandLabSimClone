@@ -1,0 +1,22 @@
+{
+  "schema": "homestead.design.v1",
+  "name": "Starter homestead",
+  "description": "The design saved in the spreadsheet (Systems column R): one person, a bell tent, a well, one panel, raised beds, chickens, and a few trees.",
+  "site": "front-range",
+  "counts": {
+    "500W Photovoltaic Panels": 1,
+    "Bell Tent": 1,
+    "Composting Outhouse": 1,
+    "Compost Piles": 1,
+    "Oak Tree": 1,
+    "Land Title ($50k)": 1,
+    "Sunlight": 1,
+    "Human Being": 1,
+    "Chicken Coop (12 hens)": 1,
+    "Cargo Bike": 1,
+    "Poplar Tree": 1,
+    "Raised Beds (24 sq ft)": 1,
+    "Well": 1,
+    "Rainfall": 1
+  }
+}

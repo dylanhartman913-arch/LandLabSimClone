@@ -1,0 +1,390 @@
+{
+  "schema": "homestead.site.v1",
+  "id": "asheville-nc",
+  "name": "Blue Ridge valley, North Carolina",
+  "description": "A humid mountain valley: mild winters, warm wet summers, less sun, and about 47 inches of rain. A creek runs along the parcel.",
+  "latitude": 35.6,
+  "elevationFt": 2100,
+  "assumptions": {
+    "hdd": 3760,
+    "cdd": 1000,
+    "psh": 4.5,
+    "pvDerate": 0.8,
+    "precipIn": 47,
+    "galPerSqftIn": 0.623,
+    "windCf": 0.1,
+    "hydroCf": 0.85,
+    "seasonsPerYear": 1
+  },
+  "monthly": {
+    "hdd": [
+      760,
+      620,
+      500,
+      260,
+      90,
+      10,
+      0,
+      0,
+      40,
+      250,
+      520,
+      710
+    ],
+    "cdd": [
+      0,
+      0,
+      0,
+      0,
+      60,
+      200,
+      310,
+      280,
+      130,
+      20,
+      0,
+      0
+    ],
+    "psh": [
+      3.0,
+      3.7,
+      4.5,
+      5.4,
+      5.6,
+      5.8,
+      5.6,
+      5.2,
+      4.7,
+      4.3,
+      3.3,
+      2.8
+    ],
+    "precipIn": [
+      3.7,
+      3.8,
+      4.3,
+      3.9,
+      4.2,
+      4.4,
+      4.3,
+      4.3,
+      3.8,
+      3.2,
+      3.5,
+      3.6
+    ],
+    "windCfMult": [
+      1.2,
+      1.2,
+      1.2,
+      1.1,
+      0.95,
+      0.85,
+      0.8,
+      0.8,
+      0.85,
+      0.95,
+      1.05,
+      1.15
+    ]
+  },
+  "growingSeason": {
+    "startDay": 110,
+    "endDay": 293
+  },
+  "ambient": {
+    "Sunlight": true,
+    "Rainfall": true,
+    "Wind": true,
+    "Stream flow": true
+  },
+  "terrain": {
+    "slopePct": 12,
+    "aspect": "south",
+    "stream": {
+      "points": [
+        [
+          0.0,
+          0.718
+        ],
+        [
+          0.287,
+          0.789
+        ],
+        [
+          0.574,
+          0.766
+        ],
+        [
+          1.0,
+          0.837
+        ]
+      ],
+      "widthFt": 8
+    },
+    "existingTrees": [
+      {
+        "x": 0.096,
+        "y": 0.096,
+        "species": "Tulip poplar"
+      },
+      {
+        "x": 0.191,
+        "y": 0.167,
+        "species": "White oak"
+      },
+      {
+        "x": 0.909,
+        "y": 0.191,
+        "species": "Red maple"
+      }
+    ],
+    "coordinates": "fractions of the parcel side (0-1), so terrain scales with parcel size"
+  },
+  "notes": "Approximate NOAA normals for Asheville Regional Airport. The stream enables micro-hydro (Stream flow is site-supplied).",
+  "nodes": [
+    {
+      "id": "deadfall-1",
+      "type": "deadfall",
+      "x": 0.15,
+      "y": 0.2,
+      "resource": "Woody biomass",
+      "yieldPerHour": 40,
+      "stock": 2500,
+      "maxStock": 2500,
+      "regrowPerDay": 7,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "deadfall-2",
+      "type": "deadfall",
+      "x": 0.7,
+      "y": 0.15,
+      "resource": "Woody biomass",
+      "yieldPerHour": 40,
+      "stock": 2500,
+      "maxStock": 2500,
+      "regrowPerDay": 7,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "deadfall-3",
+      "type": "deadfall",
+      "x": 0.85,
+      "y": 0.6,
+      "resource": "Woody biomass",
+      "yieldPerHour": 40,
+      "stock": 1500,
+      "maxStock": 1500,
+      "regrowPerDay": 4,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "creek-1",
+      "type": "creek",
+      "x": 0.574,
+      "y": 0.766,
+      "resource": "Water",
+      "yieldPerHour": 25,
+      "stock": null,
+      "maxStock": null,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "untreated": true,
+      "droughtSensitive": true
+    },
+    {
+      "id": "greens-1",
+      "type": "wild-greens",
+      "x": 0.3,
+      "y": 0.8,
+      "resource": "Green biomass",
+      "yieldPerHour": 6,
+      "extra": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "perHour": 1.0
+        }
+      ],
+      "stock": 200,
+      "maxStock": 200,
+      "regrowPerDay": 5,
+      "months": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "greens-2",
+      "type": "wild-greens",
+      "x": 0.7,
+      "y": 0.9,
+      "resource": "Green biomass",
+      "yieldPerHour": 6,
+      "extra": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "perHour": 1.0
+        }
+      ],
+      "stock": 200,
+      "maxStock": 200,
+      "regrowPerDay": 5,
+      "months": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "berries-1",
+      "type": "berry-thicket",
+      "x": 0.55,
+      "y": 0.88,
+      "resource": "Vegetables fruit fiber herbs",
+      "yieldPerHour": 2,
+      "stock": 0,
+      "maxStock": 120,
+      "regrowPerDay": 2.5,
+      "months": [
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "berries-2",
+      "type": "berry-thicket",
+      "x": 0.1,
+      "y": 0.7,
+      "resource": "Vegetables fruit fiber herbs",
+      "yieldPerHour": 2,
+      "stock": 0,
+      "maxStock": 120,
+      "regrowPerDay": 2.5,
+      "months": [
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "clay-1",
+      "type": "clay-bank",
+      "x": 0.9,
+      "y": 0.9,
+      "resource": "Soil",
+      "yieldPerHour": 3,
+      "stock": null,
+      "maxStock": null,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "leaves-1",
+      "type": "leaf-litter",
+      "x": 0.2,
+      "y": 0.1,
+      "resource": "Carbon",
+      "yieldPerHour": 20,
+      "stock": 0,
+      "maxStock": 1500,
+      "regrowPerDay": 25,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "id": "leaves-2",
+      "type": "leaf-litter",
+      "x": 0.75,
+      "y": 0.25,
+      "resource": "Carbon",
+      "yieldPerHour": 20,
+      "stock": 0,
+      "maxStock": 800,
+      "regrowPerDay": 15,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    }
+  ]
+}

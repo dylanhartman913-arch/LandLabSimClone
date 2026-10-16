@@ -1,0 +1,7 @@
+packages/catalog/generated/
+data/
+docs/screenshots/
+package-lock.json
+CLAUDE.md
+docs/
+*.md

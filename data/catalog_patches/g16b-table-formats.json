@@ -1,0 +1,6 @@
+{
+  "patch": "g16b-table-formats",
+  "source": "New (G15 patch)",
+  "note": "Extend the Systems column R data validation (whole number >= 0) and the Matrix IN/OUT/I/O highlighting to every row, including the G15 rows 170-177. They stopped at row 169. Formats only; no values change.",
+  "systems": []
+}

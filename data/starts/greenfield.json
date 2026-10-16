@@ -1,0 +1,124 @@
+{
+  "id": "greenfield",
+  "title": "Start from the ground up",
+  "pitch": "Raw land, a starter camp and a few weeks of supplies. Build something that feeds itself before the stockpile runs out.",
+  "parcelAcres": 1,
+  "startDay": "spring",
+  "household": {
+    "default": 2,
+    "min": 1,
+    "max": 4
+  },
+  "instances": [
+    {
+      "system": "Canvas Wall Tent + Stove Jack",
+      "x": 0.5,
+      "y": 0.5
+    },
+    {
+      "system": "Wool Blankets & Sleeping Bags",
+      "x": 0.5,
+      "y": 0.5
+    },
+    {
+      "system": "Human Being",
+      "x": 0.5,
+      "y": 0.5,
+      "perPerson": true
+    },
+    {
+      "system": "Tiny Wood Stove",
+      "x": 0.548,
+      "y": 0.5
+    },
+    {
+      "system": "GoSun Fan",
+      "x": 0.5,
+      "y": 0.5
+    },
+    {
+      "system": "Firepit",
+      "x": 0.5,
+      "y": 0.6
+    },
+    {
+      "system": "500W Photovoltaic Panels",
+      "x": 0.42,
+      "y": 0.42
+    },
+    {
+      "system": "Portable Power Station (1 kWh)",
+      "x": 0.45,
+      "y": 0.42
+    },
+    {
+      "system": "Drinking Water Filter",
+      "x": 0.548,
+      "y": 0.47
+    },
+    {
+      "system": "Rain Barrel (55 gal)",
+      "x": 0.548,
+      "y": 0.53
+    },
+    {
+      "system": "Humanure Bucket System",
+      "x": 0.43,
+      "y": 0.56
+    }
+  ],
+  "stockpile": {
+    "Food": 200000,
+    "Drinking water": 40,
+    "Woody biomass": 800,
+    "Seeds": 8,
+    "Carbon": 100
+  },
+  "cash": 8000,
+  "autoGather": {
+    "waterDays": 3,
+    "woodWeeks": 2,
+    "foodWeeks": 1
+  },
+  "tutorial": "greenfield",
+  "headline": "off-grid",
+  "difficulty": {
+    "gentle": {
+      "label": "Gentle",
+      "blurb": "Slow wellbeing loss, a bigger stockpile.",
+      "wellbeingMult": 0.5,
+      "stockMult": 1.5,
+      "weatherMode": "average"
+    },
+    "standard": {
+      "label": "Standard",
+      "blurb": "An average year, every year.",
+      "wellbeingMult": 1,
+      "stockMult": 1,
+      "weatherMode": "average"
+    },
+    "real": {
+      "label": "Real weather",
+      "blurb": "Droughts, cold snaps, and good years, drawn from the site's history.",
+      "wellbeingMult": 1,
+      "stockMult": 1,
+      "weatherMode": "real"
+    }
+  },
+  "preview": {
+    "kit": [
+      "A canvas wall tent with a tiny wood stove, wool blankets, and sleeping bags",
+      "A firepit for cooking and evenings",
+      "A 500 W panel, a power station, and a fan",
+      "A water filter and a rain barrel",
+      "A humanure bucket toilet"
+    ],
+    "stockpile": [
+      "About 7 weeks of canned and dry food",
+      "40 gallons of bottled water",
+      "800 lbs of seasoned firewood",
+      "8 oz of seed and 100 lbs of sawdust",
+      "$8,000"
+    ]
+  }
+}

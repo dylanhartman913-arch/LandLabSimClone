@@ -1,0 +1,166 @@
+{
+  "patch": "g15",
+  "source": "New (G15 patch)",
+  "note": "G15 catalog additions (HOMESTEAD_SIM_PLAYABILITY_ROADMAP.md, session G15, item 6). Rows only: no existing number changes.",
+  "systems": [
+    {
+      "name": "Rain Barrel (55 gal)",
+      "categories": "Water-System; Storage",
+      "description": "A 55-gallon barrel under a small catchment of its own: a shed roof, a tarp, or a gutter off a tent fly.",
+      "buy": 120,
+      "diy": 60,
+      "setup": 1,
+      "upkeep": 0.1,
+      "footprint": 4,
+      "lifespan": 10,
+      "catchment": 100,
+      "captureEff": 0.8,
+      "inputs": "Rainfall",
+      "outputs": "Water",
+      "confidence": "medium",
+      "notes": "Water out = catchment x rainfall x 0.623 gal/sq ft-in x efficiency. Brings its own 100 sq ft catchment, so it needs no Roofing area.",
+      "flows": [
+        { "dir": "Input", "resource": "Labor", "qty": 0.1, "period": "Weekly", "note": "Weekly upkeep hours (Systems column K)." },
+        { "dir": "Input", "resource": "Rainfall", "qty": { "formula": "rain" }, "period": "Weekly" },
+        { "dir": "Output", "resource": "Water", "qty": { "formula": "rainCapture" }, "period": "Weekly" },
+        { "dir": "Output", "resource": "Water storage", "qty": 55, "period": "Capacity" }
+      ]
+    },
+    {
+      "name": "Pellet Mill (small)",
+      "categories": "Biomass; Energy",
+      "description": "A small flat-die mill that presses dry wood chips into stove pellets.",
+      "buy": 2500,
+      "diy": null,
+      "setup": 4,
+      "upkeep": 2,
+      "footprint": 16,
+      "lifespan": 10,
+      "inputs": "Wood chips; Electricity",
+      "outputs": "Wood pellets",
+      "confidence": "low",
+      "notes": "About 100 lbs of pellets a week from 120 lbs of chips; the rest is moisture and fines.",
+      "flows": [
+        { "dir": "Input", "resource": "Labor", "qty": 2, "period": "Weekly", "note": "Weekly upkeep hours (Systems column K)." },
+        { "dir": "Input", "resource": "Wood chips", "qty": 120, "period": "Weekly" },
+        { "dir": "Input", "resource": "Electricity", "qty": 15, "period": "Weekly" },
+        { "dir": "Output", "resource": "Wood pellets", "qty": 100, "period": "Weekly" }
+      ]
+    },
+    {
+      "name": "Part-Time Job (20 hrs)",
+      "categories": "Conventional",
+      "description": "Twenty hours a week at median hourly pay, with a shorter commute.",
+      "buy": 0,
+      "diy": null,
+      "setup": 0,
+      "upkeep": 0,
+      "footprint": 0,
+      "lifespan": 40,
+      "inputs": "Labor; Transportation",
+      "outputs": "Capital",
+      "confidence": "medium",
+      "notes": "Trades income for about 20 hours a week of homestead labor.",
+      "flows": [
+        { "dir": "Input", "resource": "Labor", "qty": 20, "period": "Weekly" },
+        { "dir": "Input", "resource": "Transportation", "qty": 75, "period": "Weekly" },
+        { "dir": "Output", "resource": "Capital", "qty": 575, "period": "Weekly" }
+      ]
+    },
+    {
+      "name": "Remote Job (40 hrs)",
+      "categories": "Conventional",
+      "description": "A full-time job worked from home: no commute.",
+      "buy": 0,
+      "diy": null,
+      "setup": 0,
+      "upkeep": 0,
+      "footprint": 0,
+      "lifespan": 40,
+      "inputs": "Labor",
+      "outputs": "Capital",
+      "confidence": "medium",
+      "notes": "Pays a little less than the average job but needs no transportation.",
+      "flows": [
+        { "dir": "Input", "resource": "Labor", "qty": 40, "period": "Weekly" },
+        { "dir": "Output", "resource": "Capital", "qty": 1000, "period": "Weekly" }
+      ]
+    },
+    {
+      "name": "Sheet-Mulch Lawn Conversion (500 sq ft)",
+      "categories": "Garden",
+      "description": "Cardboard and browns laid over lawn and topped with compost; the grass rots into planting soil.",
+      "buy": 400,
+      "diy": 100,
+      "setup": 6,
+      "upkeep": 0.25,
+      "footprint": 500,
+      "lifespan": 3,
+      "inputs": "Carbon; Compost",
+      "outputs": "Soil",
+      "confidence": "low",
+      "notes": "Builds about 40 cu ft of soil over a growing season.",
+      "flows": [
+        { "dir": "Input", "resource": "Labor", "qty": 0.25, "period": "Weekly", "note": "Weekly upkeep hours (Systems column K)." },
+        { "dir": "Input", "resource": "Carbon", "qty": 100, "period": "One-time" },
+        { "dir": "Input", "resource": "Compost", "qty": 200, "period": "One-time" },
+        { "dir": "Output", "resource": "Soil", "qty": 40, "period": "Per season" }
+      ]
+    },
+    {
+      "name": "Home Weatherization Retrofit",
+      "categories": "Shelter; Heating",
+      "description": "Air sealing, attic insulation, and weatherstripping on an existing home.",
+      "buy": 3000,
+      "diy": 1200,
+      "setup": 30,
+      "upkeep": 0.05,
+      "footprint": 0,
+      "lifespan": 30,
+      "inputs": "Labor",
+      "outputs": "(modifies its host shelter)",
+      "confidence": "medium",
+      "notes": "Cuts the host shelter's heat loss by about 30% (engine modifier, catalog_overrides.json).",
+      "flows": [
+        { "dir": "Input", "resource": "Labor", "qty": 0.05, "period": "Weekly", "note": "Weekly upkeep hours (Systems column K): a yearly check of seals and weatherstripping." }
+      ]
+    },
+    {
+      "name": "Suburban Lot (1/4 acre)",
+      "categories": "Land",
+      "description": "A quarter-acre suburban lot, usually bought with the house on it.",
+      "buy": 100000,
+      "diy": null,
+      "setup": 0,
+      "upkeep": 0,
+      "footprint": 0,
+      "lifespan": 100,
+      "inputs": "N/A",
+      "outputs": "Land area",
+      "confidence": "medium",
+      "notes": "Lot rules (setbacks, animal limits) vary by town.",
+      "flows": [
+        { "dir": "Output", "resource": "Land area", "qty": 10890, "period": "Capacity" }
+      ]
+    },
+    {
+      "name": "Clothesline",
+      "categories": "Tools",
+      "description": "A line and two posts: sun-dried laundry instead of the electric dryer.",
+      "buy": 40,
+      "diy": 15,
+      "setup": 1,
+      "upkeep": 0.5,
+      "footprint": 20,
+      "lifespan": 10,
+      "inputs": "Labor",
+      "outputs": "Wellbeing",
+      "confidence": "medium",
+      "notes": "Saves about 1 kWh per person a week of dryer power (engine modifier, catalog_overrides.json).",
+      "flows": [
+        { "dir": "Input", "resource": "Labor", "qty": 0.5, "period": "Weekly", "note": "Weekly upkeep hours (Systems column K): hanging and folding." },
+        { "dir": "Output", "resource": "Wellbeing", "qty": 2, "period": "Weekly" }
+      ]
+    }
+  ]
+}

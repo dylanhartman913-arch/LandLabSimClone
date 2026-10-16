@@ -1,0 +1,316 @@
+{
+  "schema": "homestead.site.v1",
+  "id": "front-range",
+  "name": "Front Range foothills, Colorado",
+  "description": "High plains at the foot of the Rockies: cold dry winters, sunny, about 15 inches of precipitation a year. Matches the spreadsheet's Assumptions sheet exactly.",
+  "latitude": 39.7,
+  "elevationFt": 5400,
+  "assumptions": {
+    "hdd": 6000,
+    "cdd": 800,
+    "psh": 5,
+    "pvDerate": 0.8,
+    "precipIn": 15,
+    "galPerSqftIn": 0.623,
+    "windCf": 0.15,
+    "hydroCf": 0.85,
+    "seasonsPerYear": 1
+  },
+  "monthly": {
+    "hdd": [
+      1060,
+      870,
+      760,
+      520,
+      270,
+      70,
+      0,
+      10,
+      150,
+      450,
+      790,
+      1050
+    ],
+    "cdd": [
+      0,
+      0,
+      0,
+      0,
+      10,
+      170,
+      330,
+      240,
+      50,
+      0,
+      0,
+      0
+    ],
+    "psh": [
+      3.6,
+      4.3,
+      5.2,
+      6.0,
+      6.3,
+      6.8,
+      6.6,
+      6.1,
+      5.4,
+      4.5,
+      3.6,
+      3.2
+    ],
+    "precipIn": [
+      0.4,
+      0.4,
+      1.0,
+      1.7,
+      2.1,
+      1.9,
+      2.2,
+      1.9,
+      1.2,
+      1.0,
+      0.6,
+      0.5
+    ],
+    "windCfMult": [
+      1.15,
+      1.15,
+      1.25,
+      1.3,
+      1.1,
+      0.9,
+      0.75,
+      0.7,
+      0.8,
+      0.95,
+      1.1,
+      1.15
+    ]
+  },
+  "growingSeason": {
+    "startDay": 125,
+    "endDay": 278
+  },
+  "ambient": {
+    "Sunlight": true,
+    "Rainfall": true,
+    "Wind": true,
+    "Stream flow": false
+  },
+  "terrain": {
+    "slopePct": 3,
+    "aspect": "east",
+    "stream": null,
+    "existingTrees": [
+      {
+        "x": 0.144,
+        "y": 0.191,
+        "species": "Ponderosa pine"
+      },
+      {
+        "x": 0.837,
+        "y": 0.144,
+        "species": "Ponderosa pine"
+      }
+    ],
+    "coordinates": "fractions of the parcel side (0-1), so terrain scales with parcel size"
+  },
+  "notes": "Monthly shapes approximate NOAA 1991-2020 Denver-area normals; scalar values are the spreadsheet's. Monthly arrays are shapes: the engine rescales them so the annual totals equal the scalars.",
+  "nodes": [
+    {
+      "id": "deadfall-1",
+      "type": "deadfall",
+      "x": 0.2,
+      "y": 0.26,
+      "resource": "Woody biomass",
+      "yieldPerHour": 40,
+      "stock": 1500,
+      "maxStock": 1500,
+      "regrowPerDay": 4,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "deadfall-2",
+      "type": "deadfall",
+      "x": 0.78,
+      "y": 0.2,
+      "resource": "Woody biomass",
+      "yieldPerHour": 40,
+      "stock": 900,
+      "maxStock": 900,
+      "regrowPerDay": 4,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "spring-1",
+      "type": "spring",
+      "x": 0.86,
+      "y": 0.82,
+      "resource": "Water",
+      "yieldPerHour": 25,
+      "stock": null,
+      "maxStock": null,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "untreated": true,
+      "droughtSensitive": true
+    },
+    {
+      "id": "greens-1",
+      "type": "wild-greens",
+      "x": 0.32,
+      "y": 0.82,
+      "resource": "Green biomass",
+      "yieldPerHour": 6,
+      "extra": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "perHour": 1.0
+        }
+      ],
+      "stock": 200,
+      "maxStock": 200,
+      "regrowPerDay": 5,
+      "months": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "id": "greens-2",
+      "type": "wild-greens",
+      "x": 0.6,
+      "y": 0.9,
+      "resource": "Green biomass",
+      "yieldPerHour": 6,
+      "extra": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "perHour": 1.0
+        }
+      ],
+      "stock": 200,
+      "maxStock": 200,
+      "regrowPerDay": 5,
+      "months": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "id": "clay-1",
+      "type": "clay-bank",
+      "x": 0.08,
+      "y": 0.6,
+      "resource": "Soil",
+      "yieldPerHour": 3,
+      "stock": null,
+      "maxStock": null,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "leaves-1",
+      "type": "leaf-litter",
+      "x": 0.16,
+      "y": 0.12,
+      "resource": "Carbon",
+      "yieldPerHour": 20,
+      "stock": 0,
+      "maxStock": 800,
+      "regrowPerDay": 15,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "id": "pools-1",
+      "type": "rain-pools",
+      "x": 0.5,
+      "y": 0.65,
+      "resource": "Water",
+      "yieldPerHour": 10,
+      "stock": 0,
+      "maxStock": 200,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "untreated": true,
+      "rainFill": 150,
+      "evaporatePerDay": 0.25
+    }
+  ]
+}

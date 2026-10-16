@@ -1,0 +1,25 @@
+{
+  "patch": "g16c-wool-blankets",
+  "source": "New (G16 patch)",
+  "note": "Wool Blankets & Sleeping Bags: bedding for a shelter's household, replacing the engine's hidden bedding constant (HEAT_BEDDING_HDD). Its effect (the host shelter's heat need x a multiplier) is an engine modifier in catalog_overrides.json, like the weatherization retrofit. Rows only.",
+  "systems": [
+    {
+      "name": "Wool Blankets & Sleeping Bags",
+      "categories": "Heating",
+      "description": "Wool blankets and cold-rated sleeping bags for everyone who sleeps in the shelter.",
+      "buy": 300,
+      "diy": null,
+      "setup": 0,
+      "upkeep": 0.1,
+      "footprint": 0,
+      "lifespan": 10,
+      "inputs": "Labor",
+      "outputs": "(modifies its host shelter)",
+      "confidence": "low",
+      "notes": "Lowers the host shelter's heat need: people stay warm at a lower indoor temperature (engine modifier, catalog_overrides.json).",
+      "flows": [
+        { "dir": "Input", "resource": "Labor", "qty": 0.1, "period": "Weekly", "note": "Weekly upkeep hours (Systems column K): airing and washing." }
+      ]
+    }
+  ]
+}

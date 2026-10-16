@@ -1,0 +1,12 @@
+{
+  "schema": "homestead.design.v1",
+  "name": "Tent and nothing",
+  "description": "One person in a bell tent on open land. The floor every design is measured against.",
+  "site": "front-range",
+  "counts": {
+    "Human Being": 1,
+    "Bell Tent": 1,
+    "Sunlight": 1,
+    "Rainfall": 1
+  }
+}
