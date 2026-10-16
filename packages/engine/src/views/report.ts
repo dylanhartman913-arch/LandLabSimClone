@@ -53,6 +53,9 @@ export interface Report {
   spoiled: Record<string, number>;
   spilledPower: number;
   averageHealth: number;
+  wellbeingDays: number;
+  averageWellbeing: number | null;
+  averageResidentLabor: number | null;
 }
 
 const SEASON_WORD: Record<Season, string> = {
@@ -272,5 +275,8 @@ export function buildReport(
     spoiled,
     spilledPower: sum.resources['Electricity']?.spilled ?? 0,
     averageHealth: sum.averageHealth,
+    wellbeingDays: ledgers.filter((l) => l.wellbeing !== null).length,
+    averageWellbeing: ledgers.some((l) => l.wellbeing !== null) ? ledgers.reduce((a, l) => a + (l.wellbeing ?? 0), 0) / ledgers.filter((l) => l.wellbeing !== null).length : null,
+    averageResidentLabor: ledgers.some((l) => l.wellbeing !== null) ? ledgers.filter((l) => l.wellbeing !== null).reduce((a, l) => a + l.health, 0) / ledgers.filter((l) => l.wellbeing !== null).length : null,
   };
 }

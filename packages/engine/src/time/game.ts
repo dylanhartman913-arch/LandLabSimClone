@@ -12,6 +12,7 @@ import {
   REFUND_BUILT,
   SQFT_PER_ACRE,
 } from './constants.ts';
+import { CONTRACTOR_RATE } from './recovery.ts';
 import { seedState } from './rng.ts';
 import { newWellbeing } from './wellbeing.ts';
 import type { BuildMode, GameSettings, GameState, Instance, PersonState } from './types.ts';
@@ -210,7 +211,7 @@ export function moveSystem(
 
 /** Refund for removing an instance: 25% of what was paid if built, 100% if still building. */
 export function refundFor(inst: Instance): number {
-  return inst.paid * (inst.status === 'building' ? REFUND_BUILDING : REFUND_BUILT);
+  return inst.paid * (inst.status === 'building' ? REFUND_BUILDING : REFUND_BUILT) + (inst.contractor ? Math.max(0, inst.contractor.hours - inst.contractor.worked) * CONTRACTOR_RATE : 0);
 }
 
 export function removeSystem(state: GameState, instanceId: string): GameState {

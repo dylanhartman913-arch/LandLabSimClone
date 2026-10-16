@@ -1,3 +1,4 @@
+import { CONTRACTOR_HOURS_PER_DAY, recoverResidents } from './recovery.ts';
 import { NEED_KEYS, type Catalog, type NeedKey, type Resource } from '@homestead/catalog';
 import { plantingReserve } from './food.ts';
 import { indexCatalog } from '../catalog-index.ts';
@@ -454,8 +455,8 @@ function laborPool(d: Day): void {
   const settings = d.prev.settings;
   const demand = new Map<JobId, number>();
   let remaining = 0;
-  for (const inst of d.instances) if (inst.status === 'building') remaining += Math.max(0, inst.setupHoursNeeded - inst.setupHoursDone);
-  demand.set('construction', Math.min(remaining, pool * settings.constructionShare));
+  for (const inst of d.instances) if (inst.status === 'building' && !inst.contractor) remaining += Math.max(0, inst.setupHoursNeeded - inst.setupHoursDone);
+  demand.set('construction', Math.min(remaining, (settings.emergencyConstruction ? pool : pool * settings.constructionShare)));
   let upkeep = 0;
   for (const q of d.byResource.get('Labor') ?? []) upkeep += q.amount;
   demand.set('upkeep', upkeep);
@@ -469,14 +470,14 @@ function laborPool(d: Day): void {
   }
   for (const [job, dm] of demand) {
     const cap = jobCap(settings, job);
-    if (cap !== null) demand.set(job, Math.min(dm, Math.max(0, cap - jobHours(d.prev.ledgers, job, 6))));
+    if (cap !== null && !(job === 'construction' && settings.emergencyConstruction)) demand.set(job, Math.min(dm, Math.max(0, cap - jobHours(d.prev.ledgers, job, 6))));
   }
   // Priority 1 first, proportionally within a priority.
   const granted = new Map<JobId, number>();
   let avail = pool;
-  const levels = [...new Set([...demand.keys()].map((j) => jobPriority(settings, j)))].sort((a, b) => a - b);
+  const levels = [...new Set([...demand.keys()].map((j) => (j === 'construction' && settings.emergencyConstruction ? 0 : jobPriority(settings, j))))].sort((a, b) => a - b);
   for (const lv of levels) {
-    const jobs = [...demand.entries()].filter(([j]) => jobPriority(settings, j) === lv);
+    const jobs = [...demand.entries()].filter(([j]) => (j === 'construction' && settings.emergencyConstruction ? 0 : jobPriority(settings, j)) === lv);
     const total = jobs.reduce((a, [, v]) => a + v, 0);
     if (total <= 0) continue;
     const share = total <= avail ? 1 : avail / total;
@@ -490,10 +491,10 @@ function laborPool(d: Day): void {
   for (let i = 0; i < d.instances.length; i++) {
     if (d.instances[i]!.status !== 'building') continue;
     const inst = touch(d, i);
-    const give = Math.min(Math.max(0, inst.setupHoursNeeded - inst.setupHoursDone), cap);
+    const give = Math.min(Math.max(0, inst.setupHoursNeeded - inst.setupHoursDone), inst.contractor ? CONTRACTOR_HOURS_PER_DAY : cap);
     inst.setupHoursDone += give;
-    cap -= give;
-    used += give;
+    if (inst.contractor) inst.contractor = { ...inst.contractor, worked: inst.contractor.worked + give };
+    else { cap -= give; used += give; }
     if (inst.setupHoursNeeded - inst.setupHoursDone <= EPS) d.completed.push(i);
   }
   d.constructionUsed = used;
@@ -1042,9 +1043,10 @@ function updatePeople(d: Day): void {
       d.people++;
     }
   }
+
   // Someone in town comes home once home could keep them: a shelter, a week of food, and
   // three days of drinking water on hand, and nobody at home going short today.
-  for (let i = 0; i < d.instances.length; i++) {
+  if (!d.prev.settings.safeRecovery) for (let i = 0; i < d.instances.length; i++) {
     const p = d.instances[i]!.person;
     if (!p?.away || d.absDay - p.away.since < WB_AWAY_MIN_DAYS || anyShort) continue;
     const plan = d.plans.bySystem.get(d.instances[i]!.systemId)!;
@@ -1347,7 +1349,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   const ledgers = prev.ledgers.length >= LEDGER_DAYS_KEPT ? prev.ledgers.slice(1) : prev.ledgers.slice();
   ledgers.push(ledger);
   const nextDay = day + 1;
-  const state: GameState = {
+  let state: GameState = {
     ...prev,
     rng,
     calendar:
@@ -1368,6 +1370,9 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     pendingCash: { purchases: 0, refunds: 0 },
     flags,
   };
+  const recovery = recoverResidents(state, catalog);
+  state = recovery.state;
+  for (const instanceId of recovery.returned) d.events.push({ kind: 'came-home', absDay, instanceId });
   // The tutorial (G16): a finished quest's reward lands between days.
   if (state.tutorial && !state.tutorial.skipped) {
     const t = advanceTutorial(state, catalog);

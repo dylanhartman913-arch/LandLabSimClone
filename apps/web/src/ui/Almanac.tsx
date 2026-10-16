@@ -76,7 +76,7 @@ export function describeEvent(
     case 'health':
       return `Wellbeing fell to ${Math.round(e.wellbeing)}.`;
     case 'went-to-town':
-      return `${instSys(e.instanceId) ?? 'Someone'} went to stay in town. They can come back once home has food, water, and shelter.`;
+      return `${instSys(e.instanceId) ?? 'Someone'} went to stay in town. Open Work for recovery requirements, operating checks and construction help.`;
     case 'came-home':
       return `${instSys(e.instanceId) ?? 'Someone'} came home from town.`;
     case 'quest':

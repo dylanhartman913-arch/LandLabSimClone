@@ -174,6 +174,7 @@ export interface GameStore {
   undo(): void;
   redo(): void;
   setGameSettings(s: Partial<GameSettings>): void;
+  hireConstruction(id: string): void;
   setCamera(c: Partial<Camera>): void;
   setViewport(width: number, height: number): void;
   zoomToFit(): void;
@@ -209,7 +210,7 @@ let planKey = 1;
 export const DEFAULT_INIT: GameInit = {
   siteId: DEFAULT_SITE_ID,
   seed: 2026,
-  settings: { startDay: 90, startingStocks: { Food: 240_000, 'Drinking water': 40 } },
+  settings: { safeRecovery: true, startDay: 90, startingStocks: { Food: 240_000, 'Drinking water': 40 } },
 };
 
 /** The default starting layout as actions (so it is part of the replayable log). */
@@ -353,6 +354,12 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     loadGame(init, actions, game, opts = {}) {
+      // Preserve the historic log, then record the policy transition at the continuation day.
+      if (!opts.readOnly && !game.settings.safeRecovery) {
+        const r = apply(game, { kind: 'settings', settings: { safeRecovery: true } });
+        game = r.game;
+        actions = [...actions, r.action];
+      }
       set({
         progress: opts.progress ?? EMPTY_PROGRESS,
         init,
@@ -622,6 +629,12 @@ export const useGame = create<GameStore>()((set, get) => {
       } catch {
         get().toast(`Can't redo the ${describeCommand(cmd)}: something is in the way`, 'warn');
       }
+    },
+
+    hireConstruction(id) {
+      if (!guard()) return;
+      const r = apply(get().game, { kind: 'hireConstruction', id });
+      set((s) => ({ game: r.game, actions: [...s.actions, r.action], undoStack: [], redoStack: [] }));
     },
 
     setGameSettings(settings) {

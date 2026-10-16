@@ -14,6 +14,10 @@ export interface GameSettings {
   weatherMode: WeatherMode;
   /** Share of each day's labor pool that construction may use first. */
   constructionShare: number;
+  /** Emergency work takes resident labor before employment, upkeep and fetching; ignores construction cap/share. */
+  emergencyConstruction?: boolean;
+  /** v0.2 town-return policy. Absent in legacy replay logs; enabled by a logged settings action on continuation. */
+  safeRecovery?: boolean;
   /** Day of year the game starts on (0 = Jan 1). */
   startDay?: number;
   /** Stocks on day one (arrival supplies). */
@@ -78,6 +82,8 @@ export interface Instance {
   setupHoursDone: number;
   /** Materials drawn (construction has started). */
   materialsDrawn: boolean;
+  /** Prepaid outside construction. Hours already worked remain sunk on removal. */
+  contractor?: { hours: number; worked: number };
   /** Absolute day the instance became active (prebuilt plants are backdated to maturity). */
   activeSince: number | null;
   /** Allocation tier; lower is served first. Defaults to the system's priority tier. */

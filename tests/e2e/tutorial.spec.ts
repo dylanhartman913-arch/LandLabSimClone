@@ -76,15 +76,17 @@ test('the first five greenfield quests, with show me and the neighbor’s reward
   await untilQuestChanges(page, 'Start a compost pile with leaf litter and kitchen scraps');
   await shot(page, 'g16', '04-quest-compost-done');
 
-  // 5. Auto-gather: keep a week of water, set in the Work panel.
-  await expect(title(page)).toHaveText('Set an auto-gather rule so you never run out of water');
+  // 5. Auto-gather: configure a seven-day target; this does not prove a stored reserve.
+  await expect(title(page)).toHaveText('Configure a seven-day water gathering target');
+  await expect(page.getByTestId('quest-detail')).toContainText('does not prove a reserve exists');
+  await expect(page.getByTestId('quest-assistance')).toContainText('80,000 kcal Food');
   await page.getByTestId('quest-show-me').click();
   await expect(page.getByTestId('work')).toBeVisible();
   await page.getByTestId('auto-water').fill('7');
   await page.getByTestId('auto-water').blur();
   await shot(page, 'g16', '05-quest-autowater-work-panel');
   await page.getByTestId('open-work').click();
-  await untilQuestChanges(page, 'Set an auto-gather rule so you never run out of water', 3);
+  await untilQuestChanges(page, 'Configure a seven-day water gathering target', 3);
   await expect(title(page)).toHaveText('Add a chicken coop and keep the hens fed');
   const done = await page.evaluate(() => Object.keys(window.__homestead!.store.getState().game.tutorial!.done));
   expect(done).toHaveLength(5);

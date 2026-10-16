@@ -65,7 +65,7 @@ export function PeopleBar() {
             </div>
             <div className="person-why muted small" data-testid={`person-why-${p.id}`}>
               {p.away
-                ? 'Staying in town until home has food, water, and shelter'
+                ? <button className="link" onClick={() => useGame.getState().setPanel('work')}>In town · open recovery checks</button>
                 : p.topReason
                   ? `${p.topReason.points >= 0 ? '▲' : '▼'} ${p.topReason.label}`
                   : 'Steady'}

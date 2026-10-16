@@ -904,3 +904,23 @@ Work isolated from the original local server in branch `codex/phase-0-1`; import
 **Digests:** day-57 `9544bdc2fdf7f9cf`, day-240 `f90dc93c4f4d1a4a`; existing simulation digests unchanged. No catalog quantities, prices, rewards, wellbeing or town logic, goldens, or save schema changed.
 
 **Next:** Phase 2 recovery and survival-priority guidance. Confirmed town heat-return and report health/persistence findings are documented, not changed in this patch.
+
+## Playtest follow-up — Phase 2 (2026-10-16)
+
+Continued on `codex/phase-0-1` after `17a17a3`. No push or upstream PR.
+
+**LL-04:** Work exposes the construction queue, remaining work, simulated finish forecasts and competing commitments. Emergency construction takes resident labor before employment/fetching/upkeep and overrides the normal construction cap/share. Prepaid outside crews cost $35/h and supply 8 h/project/day, with exact insufficient-cash explanations and refunds for unworked hours. Crew purchases are replay actions. Safer town return checks the whole household's shelter and prepared reserves, then trials its operating survival needs with employment and gathering contention. One arrival day restarts daily services, followed by three checked days. Work and the people bar expose recovery requirements.
+
+**LL-05:** immediate survival warnings precede weekly design advice; town recovery precedes comfort/independence gaps. Alerts group affected residents and show grace deadlines, supply consequences and actions. Hot-weather cooling and low Carbon/feed reserves are surfaced. Historical reports distinguish resident wellbeing from labor factor, state the day range and exclude empty-home days.
+
+**LL-06:** Show me prefers owned operating systems. Gathering guidance explains work caps/rules. Water automation promises configuration, explicitly not a proved reserve. Early stabilization/winter guidance is independent of late quest progress. Rewards show amounts and identify assistance. Quest ordering, IDs, goals, rewards and catalog quantities are unchanged.
+
+**Compatibility:** engine `0.2.0`, same save schema. Historic logs without `safeRecovery` preserve legacy return semantics and both recorded digests. New UI games enable the safer policy; loading an older save appends a settings action at continuation, after original replay verification. Read-only loads do not migrate. Crew actions replay deterministically. No existing tests were removed or weakened; the browser tutorial's two title references changed to the corrected wording and gained reserve/assistance assertions.
+
+**Validation:** 256/256 unit tests pass (17 added). Typecheck, lint, build and catalog:check pass. All 15 existing pacing gate groups pass; the new policy independently passes all 15 groups on the same three sites × three seeds. Full browser sweep initially passed 46/49; its tutorial title/progression mismatch was corrected and the entire five-quest scenario passed on rerun. All three new recovery browser scenarios pass on the final build, alongside the prior accounting/start regressions. The two remaining browser failures are the tablet drawer-collapse and outhouse map-card scenarios reproduced against imported baseline `60fad89` during Phase 0/1; their assertions remain intact. Thus 47 of 49 browser scenarios have passing results, with those two baseline failures still open.
+
+**Release replay:** actual day-240 fixture starts with $10,828.94 and zero resident labor. Stalled heaters quote $247.05 / one day and $2,100 / eight days. Paid crews, system maintenance ahead of gathering, and recurring fuel/Carbon/food orders bring both residents home; after 30 days both remain above 50 wellbeing while the remote job remains and is worked. An unchanged cold continuation does not return residents over the following 21 days. Full policy, balance rationale, limits and screenshots: `docs/PHASE_2.md`; initial parameters are also in `BALANCE_LOG.md`.
+
+**Digests:** legacy spring `9544bdc2fdf7f9cf`, winter `f90dc93c4f4d1a4a`; no re-recorded goldens or fixtures. The explicit safer-policy settings action intentionally changes continued-game digests.
+
+**Next:** Phase 3 project previews and placement. Queue-wide emergency priority retains placement order. The short return trial does not guarantee long-term fuel/cash sufficiency; outside crew pricing is initial tuning. Report reconstruction after loading remains outside this phase.

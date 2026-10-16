@@ -147,8 +147,8 @@
     },
     {
       "id": "gf-autowater",
-      "title": "Set an auto-gather rule so you never run out of water",
-      "reason": "Keep a week of water on hand without thinking about it. While you're at it, a standing grocery order keeps the pantry from running dry.",
+      "title": "Configure a seven-day water gathering target",
+      "reason": "Set a target, then check Work for storage limits and gathering labor: this quest verifies configuration, not seven days of safe water in stock. Add storage and verify drinking water reserves before expanding. A standing grocery order can protect food access if cash and delivery are available.",
       "row": "Drinking water",
       "goal": {
         "kind": "setting",

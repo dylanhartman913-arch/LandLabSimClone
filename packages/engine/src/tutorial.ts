@@ -98,7 +98,7 @@ export function goalStatus(state: GameState, catalog: Catalog, goal: QuestGoal, 
     case 'setting': {
       const v = state.settings.autoGather?.[goal.rule] ?? 0;
       const what = goal.rule === 'waterDays' ? 'days of water' : goal.rule === 'woodWeeks' ? 'weeks of firewood' : 'weeks of food';
-      return { done: v >= goal.atLeast, progress: Math.min(1, v / goal.atLeast), detail: `auto-gather keeps ${v} ${what} (goal ${goal.atLeast})` };
+      return { done: v >= goal.atLeast, progress: Math.min(1, v / goal.atLeast), detail: `auto-gather target set to ${v} ${what} (goal ${goal.atLeast}); this does not prove a reserve exists` };
     }
     case 'warm': {
       let n = 0;
@@ -157,6 +157,7 @@ export interface QuestView {
   count: number;
   status: GoalStatus;
   neighbor: string;
+  rewardText: string;
 }
 
 /** The pinned quest card's content. */
@@ -165,7 +166,7 @@ export function questView(state: GameState, catalog: Catalog): QuestView | null 
   if (!q) return null;
   const line = tutorialLine(state)!;
   const t = state.tutorial!;
-  return { quest: q, index: t.current, count: line.quests.length, status: goalStatus(state, catalog, q.goal, t.since, t.ui), neighbor: line.neighbor };
+  return { quest: q, index: t.current, count: line.quests.length, status: goalStatus(state, catalog, q.goal, t.since, t.ui), neighbor: line.neighbor, rewardText: [`$${q.reward.cash.toFixed(0)}`, ...Object.entries(q.reward.stock).map(([r, v]) => `${v.toLocaleString("en-US")} ${catalog.resources.find((x) => x.name === r)?.unit ?? ""} ${r}`)].join(" + ") };
 }
 
 /**

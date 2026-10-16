@@ -34,8 +34,10 @@ export function Reports() {
       {r && (
         <>
           <p>
-            Overall coverage <strong>{fmtPct(r.overallScore)}</strong>, average health{' '}
-            <strong>{fmtPct(r.averageHealth)}</strong>.
+            Historical coverage <strong>{fmtPct(r.overallScore)}</strong>, days {r.fromAbsDay}–{r.toAbsDay}.
+            {' '}Average resident wellbeing {r.averageWellbeing === null ? '— (nobody home)' : `${fmtNum(r.averageWellbeing)} / 100`}.
+            {' '}Average resident labor factor {r.averageResidentLabor === null ? '—' : fmtPct(r.averageResidentLabor)} (0.5 + 0.5 × wellbeing / 100).
+            {' '}Daily averages cover {r.wellbeingDays} days with residents present; empty-home days are excluded. Current wellbeing is shown in the people bar.
           </p>
           <h3>What ran short, and why</h3>
           {r.shortages.length === 0 && <p className="muted">Nothing ran short. Well done.</p>}

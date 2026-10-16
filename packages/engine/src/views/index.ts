@@ -16,3 +16,4 @@ export * from './resource.ts';
 export * from './people.ts';
 export * from './labor.ts';
 export * from './reserves.ts';
+export * from './recovery.ts';

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { workView, type JobId } from '@homestead/engine';
-import { fmtNum } from '../lib/format.ts';
+import { workView, constructionView, townRecoveryView, winterPreparation, type JobId } from '@homestead/engine';
+import { fmtNum, fmtMoney } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
 import { WhyNum } from './Why.tsx';
 
@@ -10,6 +10,8 @@ export function Work() {
   const catalog = useGame((s) => s.catalog);
   const st = useGame.getState();
   const v = useMemo(() => workView(game, catalog), [game, catalog]);
+  const queue = useMemo(() => constructionView(game, catalog), [game, catalog]);
+  const recovery = useMemo(() => townRecoveryView(game, catalog), [game, catalog]);
   const work = game.settings.work ?? {};
   const setPriority = (job: JobId, p: number) =>
     st.setGameSettings({ work: { ...work, priorities: { ...(work.priorities ?? {}), [job]: p } } });
@@ -42,6 +44,26 @@ export function Work() {
         Construction <WhyNum value={v.breakdown.construction} title="Construction hours" unit="h" />.
         Paid jobs share the system-work priority below.
       </p>
+      <h3>Recovery and construction</h3>
+      {recovery.people.length > 0 && <div data-testid="town-recovery">
+        <p>{recovery.people.join(', ')} are staying in town after wellbeing reached zero. Causes: {recovery.causes.join(', ') || 'see wellbeing history'}.</p>
+        <p>Return automatically after at least {recovery.minimumStay} days away and all checks pass. Minimum stay remaining: {recovery.days} days.</p>
+        <ul>{recovery.checks.map((check) => <li key={check}>{check}</li>)}</ul>
+        {!recovery.checks.length && <p>Supplies and operating checks pass; waiting for the minimum stay to end.</p>}
+      </div>}
+      <p className="small">{winterPreparation(game)}</p>
+      <label><input type="checkbox" checked={game.settings.emergencyConstruction ?? false} onChange={(e) => st.setGameSettings({ emergencyConstruction: e.target.checked })} data-testid="emergency-construction" /> Emergency construction</label>
+      <p className="muted small">Takes resident labor before employment, fetching, upkeep and other gathering. Ignores the construction share and cap. Income, safe water and sanitation may fall; turn it off after the urgent build. Paid crews use no resident labor.</p>
+      <p className="small muted">Finish forecasts simulate up to 365 days under current settings, including competing jobs, weekly caps, supplies, wellbeing and possible seasonal town returns. Changes to these can change the date. Completed systems begin operating the following day.</p>
+      {!queue.length && <p>No projects under construction.</p>}
+      <ul data-testid="construction-queue">{queue.map((q) => <li key={q.id} data-testid={`project-${q.id}`}>
+        <button className="link" onClick={() => st.openCard(game.instances.find((i) => i.id === q.id)!.systemId, q.id)}>{q.name}</button>: {fmtNum(q.remaining)} h remaining · {q.eta === null ? 'No completion within 365 days; check labor, caps, priorities and town recovery.' : `forecast ${q.eta} days`}.
+        {q.contractor ? <p>Prepaid crew booked: {q.quote.hoursPerDay} h/day; no resident labor required.</p> : <>
+          <p>Outside crew: {fmtMoney(q.quote.cost)} prepaid at {fmtMoney(q.quote.rate)}/h, {q.quote.hoursPerDay} h/day, {q.quote.days} days. Unworked crew hours refunded on removal; completed work is not refunded.</p>
+          <button className="btn small" disabled={!!q.quote.blocked} onClick={() => st.hireConstruction(q.id)} data-testid={`hire-${q.id}`}>Book crew · {fmtMoney(q.quote.cost)}</button>
+          {q.quote.blocked && <p>{q.quote.blocked}</p>}
+        </>}
+      </li>)}</ul>
       <table className="flows-table work-table" data-testid="work-table">
         <thead>
           <tr>

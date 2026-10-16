@@ -1,4 +1,4 @@
-import { MILESTONES, QUESTS, questView, shortageHints } from '@homestead/engine';
+import { MILESTONES, QUESTS, questView, shortageHints, survivalAlerts, winterPreparation } from '@homestead/engine';
 import type { QuestShow } from '@homestead/catalog';
 import { fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
@@ -61,7 +61,14 @@ export function HintCard() {
   const catalog = useGame((s) => s.catalog);
   const dismissed = useGame((s) => s.progress.dismissedHints);
   const readOnly = useGame((s) => s.readOnly);
-  if (readOnly || game.ledgers.length < 7) return null;
+  if (readOnly) return null;
+  const urgent = survivalAlerts(game, catalog)[0];
+  if (urgent) return <aside className="hint" aria-label="Hint" data-testid="hint">
+    <strong>{urgent.title}</strong><p className="small">{urgent.detail}</p>
+    {urgent.resource && <button className="btn small" onClick={() => useGame.getState().openResource(urgent.resource!)}>Find {urgent.resource} sources</button>}
+    {urgent.work && <button className="btn small" onClick={() => useGame.getState().setPanel('work')}>Recovery and construction</button>}
+  </aside>;
+  if (game.ledgers.length < 7) return null;
   const hints = shortageHints(game, catalog).filter(
     (h) => dismissed[h.resource] === undefined || game.calendar.absDay - dismissed[h.resource]! > 28,
   );
@@ -104,6 +111,8 @@ export function showMe(show: QuestShow): void {
   switch (show.kind) {
     case 'system': {
       const sys = st.catalog.systems.find((x) => x.name === show.name);
+      const owned = sys && st.game.instances.find((i) => i.systemId === sys.id && i.status === 'active') || (sys && st.game.instances.find((i) => i.systemId === sys.id));
+      if (owned) { st.focusInstance(owned.id); st.openCard(owned.systemId, owned.id); return; }
       st.setDrawer(true);
       st.setDrawerTab('systems');
       st.setDrawerQuery(show.name);
@@ -145,6 +154,8 @@ function TutorialCard() {
         {quest.title}
       </h2>
       <p className="small">{quest.reason}</p>
+      <p className="small muted">Stabilize safe water and storage, food access and recurring consumables before adding more systems. {winterPreparation(game)}</p>
+      {quest.goal.kind === 'gathered' && <p className="small">Open Work and set a weekly cap for the gathering job (firewood: 6 h/week), or an auto-gather reserve rule. Pointing at a node alone does not start work.</p>}
       <div className="bar" role="progressbar" aria-valuenow={Math.round(status.progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Quest progress">
         <div className="bar-fill" style={{ width: fmtPct(status.progress) }} />
       </div>
@@ -155,7 +166,7 @@ function TutorialCard() {
         <button className="btn small" onClick={() => showMe(quest.show)} data-testid="quest-show-me">
           Show me
         </button>
-        <span className="muted small">Reward from {v.neighbor}</span>
+        <span className="muted small" data-testid="quest-assistance">Assistance from {v.neighbor}: {v.rewardText}. Outside supplies and cash are assistance; they are not production by your systems.</span>
       </div>
     </aside>
   );

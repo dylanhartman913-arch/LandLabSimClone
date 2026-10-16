@@ -1,5 +1,6 @@
 import { getSite, getStart, type Catalog, type Difficulty } from '@homestead/catalog';
 import { gameFromStart } from './time/start.ts';
+import { hireConstruction } from './time/recovery.ts';
 import { digest } from './digest.ts';
 import {
   buyAtMarket,
@@ -34,6 +35,7 @@ export interface GameInit {
 export type Action = { at: number } & (
   | { kind: 'place'; systemId: string; x: number; y: number; mode: BuildMode; id: string; scale?: number }
   | { kind: 'remove'; id: string }
+  | { kind: 'hireConstruction'; id: string }
   | { kind: 'move'; id: string; x: number; y: number }
   | { kind: 'moveMany'; moves: { id: string; x: number; y: number }[] }
   | { kind: 'priority'; id: string; priority: number }
@@ -65,6 +67,8 @@ export function applyAction(catalog: Catalog, s: GameState, a: Action): GameStat
       if (r.instanceId !== a.id) throw new Error(`Replay diverged: expected ${a.id}, placed ${r.instanceId}`);
       return r.state;
     }
+    case 'hireConstruction':
+      return hireConstruction(s, a.id);
     case 'remove':
       return removeSystem(s, a.id);
     case 'move':

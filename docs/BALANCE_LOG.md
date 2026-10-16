@@ -181,3 +181,11 @@ If winter should bite again:
 - lower the multiplier only for warm days.
 
 Either is an engine change and was not made here.
+
+## Phase 2 recovery policy (2026-10-16)
+
+New, opt-in replay policy `settings.safeRecovery` preserves historic logs while preventing the recorded cold return loop. Keep the existing wellbeing weights, grace periods, departure threshold, 14-day town stay and 50-wellbeing return. Require whole-household shelter, a week of prepared Food, three days of safe water, and a prospective three-day survival trial after one arrival day. Trial includes real work contention and spatial supply; no free output is credited to the live game.
+
+Outside construction: $35/hour, eight hours/project/day, fully prepaid, unused crew hours refunded on removal. The 40-hour remote job nominally pays $25/hour, so outsourcing carries a 40% hourly premium. A DIY mass heater plus a full crew costs $2,700 (33.75% of the standard $8,000 starting cash) and takes eight days; the recorded partially finished heater costs $247.05 to finish in one day. Multiple prepaid crews can work concurrently. These are initial recovery tuning parameters; catalog quantities and startup supplies are untouched.
+
+The actual winter save recovers with both crews, existing employment retained, maintenance prioritized over gathering and recurring fuel/Carbon/grocery orders. Both residents remain home above 50 wellbeing at day 270. Legacy and safer-policy pacing gates pass across all three sites and three seeds. This validates feasibility and existing start pacing; it does not establish a final economy balance for every project or household.
