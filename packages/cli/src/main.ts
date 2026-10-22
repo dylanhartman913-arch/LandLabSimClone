@@ -2,6 +2,7 @@ import { ENGINE_VERSION } from '@homestead/engine';
 import { DEFAULT_SITE_ID, getSite } from '@homestead/catalog';
 import { numFlag, parseArgs } from './args.ts';
 import { runBalance } from './commands/balance.ts';
+import { runCompare } from './commands/compare.ts';
 import { runMonteCarlo } from './commands/montecarlo.ts';
 import { runPacing } from './commands/pacing.ts';
 import { runTime } from './commands/run.ts';
@@ -16,6 +17,8 @@ Usage:
   npm run sim -- montecarlo <design.json> [--site <id>] [--years N] [--seeds N] [--seed N]
                  [--weather real|average] [--json out.json]
   npm run sim -- pacing      (the playtest bots' pacing gates; exits 1 if any misses)
+  npm run sim -- compare [--md report.md] [--json runs.json] [--days N]
+                 (LL-10 controlled first-year strategy comparisons)
 
 Monte Carlo runs seeds N, N+1, … (default 1) in real weather; the app's Monte Carlo
 panel shows the same numbers for the same design file, site, years, and seeds.
@@ -29,6 +32,16 @@ function main(argv: string[]): number {
       const r = runPacing();
       console.log(r.text);
       return r.pass ? 0 : 1;
+    }
+    case 'compare': {
+      console.log(
+        runCompare({
+          md: typeof args.flags.md === 'string' ? args.flags.md : undefined,
+          json: typeof args.flags.json === 'string' ? args.flags.json : undefined,
+          days: numFlag(args.flags, 'days', 365),
+        }),
+      );
+      return 0;
     }
     case 'balance': {
       if (!designPath) break;

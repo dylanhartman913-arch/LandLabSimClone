@@ -18,6 +18,8 @@ export interface GameSettings {
   emergencyConstruction?: boolean;
   /** v0.2 town-return policy. Absent in legacy replay logs; enabled by a logged settings action on continuation. */
   safeRecovery?: boolean;
+  /** v0.4 labor fix: upkeep hours a system could not use go to jobs still short. Absent in legacy logs; enabled on continuation. */
+  reuseIdleLabor?: boolean;
   /** Day of year the game starts on (0 = Jan 1). */
   startDay?: number;
   /** Stocks on day one (arrival supplies). */

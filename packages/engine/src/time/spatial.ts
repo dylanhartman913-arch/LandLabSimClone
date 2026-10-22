@@ -64,7 +64,7 @@ export function gapFt(ax: number, ay: number, ah: number, bx: number, by: number
 /** Keep near-boundary labels consistent with the exact (unrounded) range comparison. */
 export function rangeDistanceText(distance: number, limit: number | null): string {
   if (limit === null) return `${distance.toFixed(2)} ft (no distance limit)`;
-  if (distance === limit) return `= ${limit} ft limit`;
+  if (distance === limit) return `= ${limit} ft limit (in range)`;
   const delta = Math.abs(distance - limit);
   if (Number(distance.toFixed(2)) === limit) return `${distance > limit ? '>' : '<'} ${limit} ft limit (${distance > limit ? 'outside' : 'inside'} by ${delta.toPrecision(3)} ft)`;
   return `${distance.toFixed(2)} ft / ${limit} ft limit`;
@@ -296,7 +296,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
       pick.room = Math.max(0, pick.room - need);
       s.assigned[a.resource] = { providerId: pick.inst.id, share, distanceFt: dist(pick.inst) };
       s.notes.push(
-        `Linked to ${sysOf(pick.inst).name} (${pick.inst.id}) ${rangeDistanceText(dist(pick.inst), a.maxDistanceFt)} away for ${a.resource}${share < 1 ? `: only ${Math.round(share * 100)}% of the need fits` : ''}.`,
+        `Linked to ${sysOf(pick.inst).name} (${pick.inst.id}) for ${a.resource}, edge-to-edge gap ${rangeDistanceText(dist(pick.inst), a.maxDistanceFt)}${share < 1 ? `: only ${Math.round(share * 100)}% of the need fits` : ''}.`,
       );
     }
   }
@@ -328,7 +328,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
       s.undelivered[o.resource] = true;
       s.notes.push(
         shelters.length
-          ? `Its ${o.resource.toLowerCase()} doesn't reach a shelter: the nearest is ${rangeDistanceText(best, r.deliveryRadiusFt)}.`
+          ? `Its ${o.resource.toLowerCase()} doesn't reach a shelter: the nearest shelter's edge-to-edge gap is ${rangeDistanceText(best, r.deliveryRadiusFt)}. Move it closer or add a shelter within range.`
           : `Its ${o.resource.toLowerCase()} has no shelter to reach.`,
       );
     }

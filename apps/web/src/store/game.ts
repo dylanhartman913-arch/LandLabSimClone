@@ -175,6 +175,8 @@ export interface GameStore {
   redo(): void;
   setGameSettings(s: Partial<GameSettings>): void;
   hireConstruction(id: string): void;
+  /** Book every step of the engine's recovery route as ordinary logged actions. Clears undo (it buys crews). */
+  bookRecoveryRoute(actions: ActionBody[]): void;
   setCamera(c: Partial<Camera>): void;
   setViewport(width: number, height: number): void;
   zoomToFit(): void;
@@ -210,7 +212,7 @@ let planKey = 1;
 export const DEFAULT_INIT: GameInit = {
   siteId: DEFAULT_SITE_ID,
   seed: 2026,
-  settings: { safeRecovery: true, startDay: 90, startingStocks: { Food: 240_000, 'Drinking water': 40 } },
+  settings: { safeRecovery: true, reuseIdleLabor: true, startDay: 90, startingStocks: { Food: 240_000, 'Drinking water': 40 } },
 };
 
 /** The default starting layout as actions (so it is part of the replayable log). */
@@ -355,8 +357,11 @@ export const useGame = create<GameStore>()((set, get) => {
 
     loadGame(init, actions, game, opts = {}) {
       // Preserve the historic log, then record the policy transition at the continuation day.
-      if (!opts.readOnly && !game.settings.safeRecovery) {
-        const r = apply(game, { kind: 'settings', settings: { safeRecovery: true } });
+      const upgrades: Partial<GameSettings> = {};
+      if (!game.settings.safeRecovery) upgrades.safeRecovery = true;
+      if (!game.settings.reuseIdleLabor) upgrades.reuseIdleLabor = true;
+      if (!opts.readOnly && Object.keys(upgrades).length) {
+        const r = apply(game, { kind: 'settings', settings: upgrades });
         game = r.game;
         actions = [...actions, r.action];
       }
@@ -635,6 +640,24 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!guard()) return;
       const r = apply(get().game, { kind: 'hireConstruction', id });
       set((s) => ({ game: r.game, actions: [...s.actions, r.action], undoStack: [], redoStack: [] }));
+    },
+
+    bookRecoveryRoute(actions) {
+      if (!guard()) return;
+      let game = get().game;
+      const logged: Action[] = [];
+      try {
+        for (const body of actions) {
+          const r = apply(game, body);
+          game = r.game;
+          logged.push(r.action);
+        }
+      } catch (e) {
+        get().toast(e instanceof Error ? e.message : String(e), 'warn');
+        return;
+      }
+      set((s) => ({ game, actions: [...s.actions, ...logged], undoStack: [], redoStack: [] }));
+      get().toast(`Recovery route booked: ${logged.length} step${logged.length === 1 ? '' : 's'}.`);
     },
 
     setGameSettings(settings) {

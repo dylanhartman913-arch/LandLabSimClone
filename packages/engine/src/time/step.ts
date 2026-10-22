@@ -116,6 +116,8 @@ interface Day {
   pool: number;
   constructionUsed: number;
   laborForUpkeep: number;
+  /** Jobs still short of labor after the first allocation, priority order (reuses idle upkeep hours). */
+  laborShort: { job: JobId; hours: number; plan: GatherPlan | undefined }[];
   completed: number[];
   byResource: Map<string, Request[]>;
   ordered: [string, Request[]][];
@@ -485,11 +487,27 @@ function laborPool(d: Day): void {
     for (const [j, v] of jobs) granted.set(j, share < 1 && jobs.length === 1 ? avail : v * share);
     avail = share < 1 ? 0 : Math.max(0, avail - total);
   }
-  // Construction, in placement order.
-  let cap = granted.get('construction') ?? 0;
+  const used = build(d, granted.get('construction') ?? 0, true);
+  d.laborForUpkeep = granted.get('upkeep') ?? 0;
+  for (const j of JOBS) if (j.id.startsWith('gather')) gather(d, j.id, granted.get(j.id) ?? 0, plans.get(j.id));
+  d.res['Labor']!.consumed += used + d.gatherUsed;
+  for (const lv of levels)
+    for (const [job, v] of demand) {
+      const p = job === 'construction' && settings.emergencyConstruction ? 0 : jobPriority(settings, job);
+      const short = v - (granted.get(job) ?? 0);
+      if (job !== 'upkeep' && p === lv && short > EPS) d.laborShort.push({ job, hours: short, plan: plans.get(job) });
+    }
+}
+
+/** Resident construction, in placement order, up to `cap` hours; crews work their own hours once a day. */
+function build(d: Day, cap: number, crews: boolean): number {
   let used = 0;
   for (let i = 0; i < d.instances.length; i++) {
-    if (d.instances[i]!.status !== 'building') continue;
+    const before = d.instances[i]!;
+    if (before.status !== 'building') continue;
+    // The reuse pass only adds resident hours to unfinished, uncrewed projects.
+    if (!crews && (before.contractor || before.setupHoursNeeded - before.setupHoursDone <= EPS)) continue;
+    if (!crews && cap <= EPS) break;
     const inst = touch(d, i);
     const give = Math.min(Math.max(0, inst.setupHoursNeeded - inst.setupHoursDone), inst.contractor ? CONTRACTOR_HOURS_PER_DAY : cap);
     inst.setupHoursDone += give;
@@ -497,11 +515,37 @@ function laborPool(d: Day): void {
     else { cap -= give; used += give; }
     if (inst.setupHoursNeeded - inst.setupHoursDone <= EPS) d.completed.push(i);
   }
-  d.constructionUsed = used;
-  if (used > 0) d.byJob.construction = used;
-  d.laborForUpkeep = granted.get('upkeep') ?? 0;
-  for (const j of JOBS) if (j.id.startsWith('gather')) gather(d, j.id, granted.get(j.id) ?? 0, plans.get(j.id));
-  d.res['Labor']!.consumed += used + d.gatherUsed;
+  d.constructionUsed += used;
+  if (used > 0) d.byJob.construction = (d.byJob.construction ?? 0) + used;
+  return used;
+}
+
+/**
+ * Step 6d: upkeep hours granted to systems that could not run (a job with no transport, a
+ * filter with no water) go to jobs still short today, in priority order, instead of being lost.
+ * Gathering done now lands in stock for tomorrow's use.
+ */
+function reuseIdleLabor(d: Day): void {
+  let idle = d.laborForUpkeep - d.laborUsed;
+  for (const s of d.laborShort) {
+    if (idle <= EPS) break;
+    const hours = Math.min(idle, s.hours);
+    let used: number;
+    if (s.job === 'construction') used = build(d, hours, false);
+    else {
+      const before = d.gatherUsed;
+      const f = s.plan && s.plan.hours > EPS ? s.hours / s.plan.hours : 1;
+      const rest = s.plan && {
+        want: Object.fromEntries(Object.entries(s.plan.want).map(([r, w]) => [r, w * f])),
+        boil: s.plan.boil * f,
+        hours: s.hours,
+      };
+      gather(d, s.job, hours, rest);
+      used = d.gatherUsed - before;
+    }
+    idle -= used;
+    d.res['Labor']!.consumed += used;
+  }
 }
 
 /** Step 3: each group's requests for today, and the capacity it provides. */
@@ -1291,6 +1335,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     pool: 0,
     constructionUsed: 0,
     laborForUpkeep: 0,
+    laborShort: [],
     completed: [],
     byResource: new Map(),
     ordered: [],
@@ -1336,6 +1381,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   dispatchBackstops(d); // 5b
   satisfy(d); // 6
   consume(d);
+  if (prev.settings.reuseIdleLabor) reuseIdleLabor(d); // 6d
   produce(d);
   updatePeople(d); // 7
   storeAndSpoil(d); // 8

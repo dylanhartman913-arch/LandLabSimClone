@@ -944,3 +944,39 @@ Continued on `codex/phase-0-1` after `bdb5fb4`, local only.
 **Digests:** historic spring `9544bdc2fdf7f9cf` and winter `f90dc93c4f4d1a4a` remain unchanged. No fixture/golden updates, new dependencies, catalog quantities, startup resources, rewards or wellbeing threshold changes. Report, limitations and screenshots: `docs/PHASE_3.md`.
 
 **Next:** Phase 4 controlled strategy and balance evaluation. Annual mature ceilings remain distinct from actual-state survival forecasts. Empty-shelter heating, material imports, default weather-risk reserves, sample-position assumptions and the bounded forecast horizon are explicitly described for review.
+
+## First implementation batch — items 4, 5 and 6 (2026-10-22)
+
+Continued on `codex/phase-0-1` after `65249bf`, local only. Most of items 4 (LL-05/LL-06), 5 (LL-08) and 6 (LL-04) shipped in Phases 2–3; this closes the remaining gaps.
+
+**Item 4 — early consumable warnings:** the low-reserve alert now covers every storable, buyable, non-survival input (fuel, seed, seedlings, hay, compost, soil, pellets, gasoline/propane), not only Carbon and Chicken feed. It looks `CONSUMABLE_WARN_DAYS` (7) ahead with today's weather then average climate, so seed warns before the growing season and heating fuel before cold. Demand is net of yesterday's on-site production; resources an active usage-priced backstop tops up are skipped (cash runway covers those). Detail names the consuming systems; alerts sort by days on hand. Water quest wording was already corrected in Phase 2. Pantry/food runway stays with item 2.
+
+**Item 5 — boundary text:** the heater note and capacity-link notes now say the distance is an edge-to-edge gap, the heater note says how to fix it, and an exact-limit distance reads `= N ft limit (in range)`. Existing `> / <` margin text is unchanged.
+
+**Item 6 — finite zero-labor recovery route:** `recoveryRoute` (engine, `views/recovery.ts`) turns the Phase 2 pieces into one route for a household in town: prepaid crews for unfinished projects that restore a survival row (cheapest first while cash lasts; unfunded crews state the exact missing amount), upkeep ahead of gathering, and a standing order for each bought survival or consumable input that lacks one (7 days of use, 3 for drinking water; skipped where a backstop already tops it up). The route is simulated on a copy, never assumed: return day within 60 days, whether everyone is still home 30 days later, the day they leave again if not, crew cost, market spend and cash at return, or the exact return checks still failing. Work shows it with one Book button that logs the ordinary `hireConstruction` / `settings` / `standing` actions (replayable; clears undo like a crew booking). On the day-240 winter save it books both heaters ($2,347), upkeep first, drinking-water and firewood orders; forecast home day 2 and still home 30 days later. Booked for real, both residents stay home 90 days above 50 wellbeing with the remote job kept. An early draft that skipped orders when 14 days of stock was on hand ran out of firewood around day 60 and the household left on day 75; that is why every bought input now gets an order.
+
+**Validation:** 277/277 unit tests (8 added), typecheck, lint, catalog:check and all pacing gates pass. Browser sweep 52/54 on a fresh `npm run build`, including the new route scenario; failures are the two baseline cases (tablet drawer-collapse, outhouse map-card), and the outhouse case was re-confirmed failing with these changes stashed. Correction: an earlier 51/53 sweep for items 4–5 ran against a stale `dist/` (Playwright serves `npm run preview`); rebuild before browser runs. No goldens, fixtures, catalog quantities or digests changed. Screenshot: `docs/screenshots/phase-4/recovery-route.png`.
+
+**Gaps:** the route only books existing projects; with none, it names the failing check but does not choose a system to buy. Crew price ($35/h) and order levels are initial tuning. Standing orders persist after return.
+
+## Phase 4 — LL-10 controlled first-year comparisons (2026-10-22)
+
+Continued on `codex/phase-0-1` after the first-batch items 4–6 (uncommitted), local only. Measurement only: no balance constants, catalog quantities, rewards or starting resources changed.
+
+**Shipped:** `packages/cli/bots/compare.ts` (strategy variants on the tutorial route, fixed-day decisions, a schedule replayer for tutorial-off, year-1 metrics, winter-save rescue) and `npm run sim -- compare [--md] [--json] [--days]`. Seven comparisons × 2–3 variants × (3 Standard + 9 real-weather runs), plus the recorded winter save; about 3 s. Results: `docs/PHASE_4_COMPARISONS.md` (generated) and findings in `docs/PHASE_4.md`.
+
+**Headline:** the tutorial route is a viable Standard first year (0/12 departures), but it ends with about $430 and a 0–9 day pantry. Removing gifts, adding a yurt, a cistern or a $2,100 crew all end in a cash-out food collapse. A remote job pays well but starves upkeep (sanitation), and the household leaves by day 53. There is no per-adult job limit.
+
+**Likely defect found (open, unfixed):** a job stopped by another missing input still claims its labor share in `laborPool` (`time/step.ts:459–461`); the hours are lost. Part-time job without transport: −2.86 h/day worked, heater 60 days later. Also open: slightly negative cash (to −$62), starter shelter at 56% of two-adult need.
+
+**Validation:** 5 new CLI tests, including that the comparison baseline plays the identical game to the pacing `tutorialFollower` (actions and digest). 282/282 unit tests (all pacing gates included), typecheck and lint pass. No browser-facing changes in this phase. Digests unchanged.
+
+## Labor fix — stalled systems no longer discard labor (2026-10-22)
+
+Continued on `codex/phase-0-1`, uncommitted. Engine `0.4.0`; save schema unchanged.
+
+**Fix:** `reuseIdleLabor` (`time/step.ts`, step 6d) gives upkeep hours granted to systems that could not run to jobs still short that day, in priority order: resident construction, then gathering (lands for tomorrow). It never reduces any grant and skips crewed projects. It is gated by `settings.reuseIdleLabor`: `NewGame` and the default game set it; `loadGame` appends one settings action at continuation for older saves (merged with `safeRecovery` when both are missing); the load message says so. Legacy logs replay unchanged.
+
+**Tests:** 4 new engine tests (leak gone with the setting, a working job still competes, legacy keeps recorded behavior, labor sums to the pool) and a pacing suite under new-game rules (5 gates × 3 sites × 3 seeds). The comparison harness now runs with the app's new-game settings. 291/291 unit tests pass. Spring `9544bdc2fdf7f9cf` and winter `f90dc93c4f4d1a4a` replay digests and all `digests.json` values unchanged.
+
+**Comparisons rerun:** the part-time-job-without-transport variant now matches no job (heater day 25 in every run, was ~80). All other headline findings are unchanged (`docs/PHASE_4.md`).

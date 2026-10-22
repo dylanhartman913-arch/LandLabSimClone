@@ -98,6 +98,17 @@ describe('placement reach and overlap are independent', () => {
     expect(gapFt(0, 0, 2, 20, 0, 3)).toBe(15);
   });
 
+  it('a heater a hair outside reach is never told "10 ft away, must be within 10 ft", and the gap is edge to edge', () => {
+    const p = boundary();
+    const s = place(shelter(), 'Rocket Mass Heater', p.x + 0.001, p.y).state;
+    const note = computeSpatial(catalog, s).get(s.instances.at(-1)!.id)!.notes.join(' ');
+    expect(note).toContain("doesn't reach a shelter");
+    expect(note).toContain('edge-to-edge gap');
+    expect(note).toContain(`> ${p.radius} ft limit (outside by`);
+    expect(note).not.toMatch(new RegExp(`\\b${p.radius}(\\.00)? ft /`));
+    expect(rangeDistanceText(p.radius, p.radius)).toBe(`= ${p.radius} ft limit (in range)`);
+  });
+
   it('an overlapping heater still shows reach while independently failing placement validation', () => {
     const v = placementPreview(shelter(), catalog, heater, 100, 100);
     expect(v.valid).toBe(false);

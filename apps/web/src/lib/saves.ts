@@ -126,6 +126,7 @@ export function loadSave(file: unknown, opts: { verify?: boolean } = {}): LoadRe
   const progress = (file as { progress?: Progress }).progress;
   useGame.getState().loadGame(save.init, save.actions, state, progress ? { progress } : {});
   if (!state.settings.safeRecovery) message += ' Town recovery upgraded: open Work for the safer household return checks.';
+  if (!state.settings.reuseIdleLabor) message += ' Labor upgraded: hours a stalled system cannot use now go to construction and gathering.';
   return { verified, message };
 }
 

@@ -158,3 +158,42 @@ describe('reserves and work describe what can actually be used', () => {
     expect(waterReserveWarning(active, catalog)).toEqual([]);
   });
 });
+
+describe('labor held for a system that cannot run is not lost', () => {
+  // One adult, a big DIY build allowed the whole pool: upkeep (priority 1) and construction compete.
+  const game = (counts: Record<string, number>) =>
+    place(newGame({ 'Human Being': 1, ...counts }, { settings: { constructionShare: 1, reuseIdleLabor: true } }), 'Yurt', 140, 140, 'diy').state;
+  const day = (counts: Record<string, number>) => run(game(counts), 1).ledgers[0]!;
+
+  it('a part-time job with no transport earns nothing and leaves its hours to construction', () => {
+    const without = day({});
+    const stalled = day({ 'Part-Time Job (20 hrs)': 1 });
+    const job = sysId('Part-Time Job (20 hrs)');
+    expect(stalled.curtailed.find((c) => c.systemId === job)?.limitedBy).toBe('Transportation');
+    expect(stalled.laborBySystem[job] ?? 0).toBe(0);
+    expect(stalled.labor.pool).toBeCloseTo(without.labor.pool, 9);
+    expect(stalled.labor.construction).toBeCloseTo(without.labor.construction, 9);
+    expect(stalled.labor.unused).toBeCloseTo(without.labor.unused, 9);
+  });
+
+  it('a job that can run still takes its labor first', () => {
+    const without = day({});
+    const working = day({ 'Remote Job (40 hrs)': 1 });
+    expect(working.laborBySystem[sysId('Remote Job (40 hrs)')]).toBeGreaterThan(0);
+    expect(working.labor.construction).toBeLessThan(without.labor.construction);
+  });
+
+  it('legacy logs without the setting keep their recorded behavior', () => {
+    const legacy = run(
+      place(newGame({ 'Human Being': 1, 'Part-Time Job (20 hrs)': 1 }, { settings: { constructionShare: 1 } }), 'Yurt', 140, 140, 'diy').state,
+      1,
+    ).ledgers[0]!;
+    expect(legacy.labor.construction).toBeCloseTo(day({}).labor.construction - 20 / 7, 9);
+  });
+
+  it('reused hours never pay an outside crew twice or exceed the pool', () => {
+    const l = run(game({ 'Part-Time Job (20 hrs)': 1 }), 1).ledgers[0]!;
+    const byJob = Object.values(l.labor.byJob ?? {}).reduce((a, h) => a + h!, 0);
+    expect(byJob + l.labor.unused).toBeCloseTo(l.labor.pool, 9);
+  });
+});

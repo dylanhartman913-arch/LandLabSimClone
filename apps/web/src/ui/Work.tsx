@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { workView, constructionView, townRecoveryView, winterPreparation, type JobId } from '@homestead/engine';
+import { workView, constructionView, townRecoveryView, recoveryRoute, winterPreparation, type JobId } from '@homestead/engine';
 import { fmtNum, fmtMoney } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
 import { WhyNum } from './Why.tsx';
@@ -12,6 +12,7 @@ export function Work() {
   const v = useMemo(() => workView(game, catalog), [game, catalog]);
   const queue = useMemo(() => constructionView(game, catalog), [game, catalog]);
   const recovery = useMemo(() => townRecoveryView(game, catalog), [game, catalog]);
+  const route = useMemo(() => recoveryRoute(game, catalog), [game, catalog]);
   const work = game.settings.work ?? {};
   const setPriority = (job: JobId, p: number) =>
     st.setGameSettings({ work: { ...work, priorities: { ...(work.priorities ?? {}), [job]: p } } });
@@ -50,6 +51,16 @@ export function Work() {
         <p>Return automatically after at least {recovery.minimumStay} days away and all checks pass. Minimum stay remaining: {recovery.days} days.</p>
         <ul>{recovery.checks.map((check) => <li key={check}>{check}</li>)}</ul>
         {!recovery.checks.length && <p>Supplies and operating checks pass; waiting for the minimum stay to end.</p>}
+      </div>}
+      {route && <div data-testid="recovery-route">
+        <h4>Recovery route</h4>
+        <p className="small">Works with zero resident labor. Simulated with this game's weather and current settings for up to {route.horizon} days, then {route.stayDays} days after return. Real weather and later changes can alter it.</p>
+        {route.steps.length > 0 && <ol>{route.steps.map((step) => <li key={step.label}><strong>{step.label}</strong>{step.cost > 0 ? ` · ${fmtMoney(step.cost)} now` : ''}<br /><span className="small">{step.detail}</span></li>)}</ol>}
+        {route.unfunded.length > 0 && <ul data-testid="route-unfunded">{route.unfunded.map((u) => <li key={u}>{u}</li>)}</ul>}
+        <p data-testid="route-outcome">{route.returnDay === null
+          ? `No return within ${route.horizon} days on this route. Still failing: ${route.remaining.join(' ')}`
+          : `Forecast: home on day ${route.returnDay}${route.leftAgain !== null ? `, but back to town ${route.leftAgain - route.returnDay} days later; secure fuel, food and cash before booking` : route.staysHome ? `, still home ${route.stayDays} days later` : ''}. Crews ${fmtMoney(route.upfront)} now; market purchases until return about ${fmtMoney(route.marketSpend)}; cash at return about ${fmtMoney(route.cashAtReturn ?? 0)}.`}</p>
+        {route.steps.length > 0 && <button className="btn small" onClick={() => st.bookRecoveryRoute(route.actions)} data-testid="book-route">Book recovery route · {fmtMoney(route.upfront)}</button>}
       </div>}
       <p className="small">{winterPreparation(game)}</p>
       <label><input type="checkbox" checked={game.settings.emergencyConstruction ?? false} onChange={(e) => st.setGameSettings({ emergencyConstruction: e.target.checked })} data-testid="emergency-construction" /> Emergency construction</label>

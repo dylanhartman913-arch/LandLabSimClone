@@ -62,6 +62,33 @@ test('winter recovery is visible, priced, finite and works with employment retai
   await shot(page, 'phase-2', 'winter-returned');
 });
 
+test('one priced recovery route books crews, upkeep and orders and brings the household home', async ({ page }) => {
+  await openApp(page);
+  await loadWinter(page);
+  await page.getByRole('button', { name: 'Recovery and construction', exact: true }).click();
+  const route = page.getByTestId('recovery-route');
+  await expect(route).toContainText('Works with zero resident labor');
+  await expect(route).toContainText('Book a crew for Rocket Mass Heater (i20)');
+  await expect(route).toContainText('Standing order: keep Woody biomass above');
+  await expect(page.getByTestId('route-outcome')).toContainText('Forecast: home on day');
+  await expect(page.getByTestId('route-outcome')).toContainText('still home 30 days later');
+  await expect(page.getByTestId('book-route')).toContainText('$2,347');
+  await shot(page, 'phase-4', 'recovery-route');
+  await page.getByTestId('book-route').click();
+  await expect(page.getByTestId('project-i21')).toContainText('Prepaid crew booked');
+  await page.evaluate(() => window.__homestead!.store.getState().tick(30));
+  const result = await page.evaluate(() => {
+    const st = window.__homestead!.store.getState();
+    return {
+      people: st.game.instances.filter((i) => i.person).map((i) => ({ away: !!i.person!.away, wellbeing: i.person!.wellbeing })),
+      kinds: st.actions.map((a) => a.kind),
+    };
+  });
+  expect(result.people.every((p) => !p.away && p.wellbeing > 50)).toBe(true);
+  expect(result.kinds.filter((k) => k === 'hireConstruction')).toHaveLength(2);
+  expect(result.kinds).toContain('standing');
+});
+
 test('insufficient cash explains the exact shortfall without booking a crew', async ({ page }) => {
   await openApp(page);
   await loadWinter(page);

@@ -32,3 +32,28 @@ describe('Phase 2 return policy preserves pacing', () => {
       }
     });
 });
+
+describe('new-game rules (safer return + idle labor reuse) preserve pacing', () => {
+  const rules = { safeRecovery: true, reuseIdleLabor: true };
+  for (const gate of GATES)
+    it(gate.id, () => {
+      const g = {
+        ...gate,
+        makeBot: () => {
+          const bot = gate.makeBot();
+          return {
+            ...bot,
+            act: ((catalog, state, actions) => {
+              if (!state.settings.reuseIdleLabor) {
+                actions.push({ at: state.calendar.absDay, kind: 'settings', settings: rules });
+                state = { ...state, settings: { ...state.settings, ...rules } };
+              }
+              return bot.act(catalog, state, actions);
+            }) as typeof bot.act,
+          };
+        },
+      };
+      for (const result of runGates({ gates: [g] }))
+        expect(result.pass, `${gate.id} on ${result.site}: ${result.runs.map((r) => r.detail).join('; ')}`).toBe(true);
+    });
+});

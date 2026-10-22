@@ -30,7 +30,7 @@ export function NewGame() {
     const init: GameInit = {
       siteId,
       seed: Math.floor(Math.random() * 2 ** 31), // UI-side: the seed is then saved with the game
-      settings: { safeRecovery: true },
+      settings: { safeRecovery: true, reuseIdleLabor: true },
       start: { id: startId, difficulty, household },
     };
     try {

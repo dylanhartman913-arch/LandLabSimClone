@@ -1,5 +1,5 @@
 import { catalog as defaultCatalog, getSite, getStart, type Catalog, type Difficulty } from '@homestead/catalog';
-import { gameFromStart, stepDay, type Action, type DayLedger, type GameEvent, type GameState } from '@homestead/engine';
+import { gameFromStart, stepDay, type Action, type DayLedger, type GameEvent, type GameSettings, type GameState } from '@homestead/engine';
 import type { Bot } from './types.ts';
 
 export interface PlayOptions {
@@ -9,6 +9,8 @@ export interface PlayOptions {
   seed?: number;
   days: number;
   catalog?: Catalog;
+  /** Game settings on top of the start's, as a new game's init would set them. */
+  settings?: Partial<GameSettings>;
 }
 
 export interface PlayResult {
@@ -22,6 +24,7 @@ export interface PlayResult {
 export function playBot(bot: Bot, o: PlayOptions): PlayResult {
   const catalog = o.catalog ?? defaultCatalog;
   let state = gameFromStart(catalog, getSite(o.site), getStart(o.start), { difficulty: o.difficulty ?? 'standard', seed: o.seed ?? 1 });
+  if (o.settings) state = { ...state, settings: { ...state.settings, ...o.settings } };
   const ledgers: DayLedger[] = [];
   const events: GameEvent[] = [];
   const actions: Action[] = [];
