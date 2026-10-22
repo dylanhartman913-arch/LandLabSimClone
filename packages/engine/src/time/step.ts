@@ -322,6 +322,18 @@ function hoursFor(d: Day, job: JobId, resource: string, amount: number): number 
   return hours;
 }
 
+/** Pool members that overflow before the rest (v0.6, `safeWaterFirst`): untreated water before safe water. */
+const SPILL_FIRST: Record<string, string[]> = { 'Water storage': ['Water'] };
+
+/** Free room in a storage pool now, in the units of its members (unitsPer 1 for water). */
+function poolRoom(d: Day, capRes: string): number {
+  const members = d.plans.pools.get(capRes) ?? [];
+  const cap = (d.capAvail.get(capRes) ?? 0) + (d.plans.poolBuffer.get(capRes) ?? 0);
+  let volume = 0;
+  for (const m of members) volume += (d.stocks[m.resource] ?? 0) / m.unitsPer;
+  return cap - volume;
+}
+
 /** An auto-gather rule tops up at most this many days of use per day, so it never monopolizes labor. */
 const RESTOCK_DAYS = 2;
 /** …and each auto-gather job takes at most this share of the day's labor. */
@@ -346,7 +358,16 @@ function planGathering(d: Day): Map<JobId, GatherPlan> {
       (g) => g.plan.inputs.some((i) => i.resource === 'Water') && g.plan.outputs.some((o) => o.resource === 'Drinking water'),
     );
     const boil = filter ? 0 : Math.min(drinkGap, stock('Cooking fuel') * BOIL_GAL_PER_FUEL_HOUR);
-    const want = gap + boil;
+    // v0.6: fetch only what storage can hold by tonight: free room, plus today's use, minus what
+    // rain and treatment added to the pool yesterday (fetching and boiling excluded).
+    let inflow = 0;
+    const last = d.prev.ledgers.at(-1);
+    if (last) {
+      const fetched = (last.gathered ?? []).filter((g) => g.resource === 'Water').reduce((a, g) => a + g.amount, 0);
+      inflow = Math.max(0, (last.resources['Water']?.produced ?? 0) - fetched) + Math.max(0, (last.resources['Drinking water']?.produced ?? 0) - (last.boiled?.gal ?? 0));
+    }
+    const room = d.prev.settings.safeWaterFirst ? Math.max(0, poolRoom(d, 'Water storage') + daily - inflow) : Infinity;
+    const want = Math.min(gap, room) + boil;
     const h = want > EPS ? hoursFor(d, 'gather-water', 'Water', want) : 0;
     if (h > EPS || boil > EPS) out.set('gather-water', { want: { Water: want }, boil, hours: h + boil * BOIL_LABOR_PER_GAL });
   }
@@ -1144,11 +1165,24 @@ function storeAndSpoil(d: Day): void {
       let volume = 0;
       for (const m of members) volume += (stocks[m.resource] ?? 0) / m.unitsPer;
       if (volume > cap + EPS) {
-        const f = (volume - cap) / volume;
+        // v0.6: listed members (untreated water) overflow first; the rest share what is left.
+        let over = volume - cap;
+        const first = d.prev.settings.safeWaterFirst ? (SPILL_FIRST[capRes] ?? []) : [];
         for (const m of members) {
-          const spill = (stocks[m.resource] ?? 0) * f;
+          if (!first.includes(m.resource)) continue;
+          const spill = Math.min(stocks[m.resource] ?? 0, over * m.unitsPer);
           stocks[m.resource] = (stocks[m.resource] ?? 0) - spill;
           res[m.resource]!.spilled += spill;
+          over -= spill / m.unitsPer;
+          volume -= spill / m.unitsPer;
+        }
+        if (over > EPS) {
+          const f = over / volume;
+          for (const m of members) {
+            const spill = (stocks[m.resource] ?? 0) * f;
+            stocks[m.resource] = (stocks[m.resource] ?? 0) - spill;
+            res[m.resource]!.spilled += spill;
+          }
         }
       }
     }

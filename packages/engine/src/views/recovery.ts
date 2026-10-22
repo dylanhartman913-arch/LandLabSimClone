@@ -1,6 +1,9 @@
 import type { Catalog } from '@homestead/catalog';
-import type { GameState } from '../time/types.ts';
-import { contractorQuote, returnChecks } from '../time/recovery.ts';
+import type { BuildMode, GameState } from '../time/types.ts';
+import { CONTRACTOR_RATE, contractorQuote, returnCheckItems, returnChecks, SURVIVAL_RESOURCE } from '../time/recovery.ts';
+import { costFor, setupHoursFor } from '../time/game.ts';
+import { findSpot } from '../kits.ts';
+import { homeOf } from '../time/gather.ts';
 import { stepDay } from '../time/step.ts';
 import { dailyAmount, getPlans } from '../time/plans.ts';
 import { climateTable } from '../time/climate.ts';
@@ -9,6 +12,7 @@ import {
   COOL_CDD_MIN,
   FOOD_SEVERE_GRACE,
   WB_AWAY_MIN_DAYS,
+  SURVIVAL_NEEDS,
   type SurvivalNeed,
 } from '../time/wellbeing.ts';
 import { peopleView } from './people.ts';
@@ -48,12 +52,18 @@ export function townRecoveryView(state: GameState, catalog: Catalog) {
   const waits = state.instances
     .filter((i) => i.person?.away)
     .map((i) => Math.max(0, WB_AWAY_MIN_DAYS - (state.calendar.absDay - 1 - i.person!.away!.since)));
+  // Survival needs only: comfort gaps (cooling, transport, hot water) don't send people to town.
+  const survival = new Map(SURVIVAL_NEEDS.map((k) => [SURVIVAL[k].label, SURVIVAL_RESOURCE[k]]));
+  const items = away.length ? returnCheckItems(state, catalog) : [];
+  const causes = [
+    ...new Set(away.flatMap((p) => p.why.filter((t) => t.points < 0).map((t) => t.label.split(':')[0]!))),
+  ].filter((c) => survival.has(c));
   return {
     people: away.map((p) => `${p.label} (${p.id})`),
-    causes: [
-      ...new Set(away.flatMap((p) => p.why.filter((t) => t.points < 0).map((t) => t.label.split(':')[0]))),
-    ],
-    checks: away.length ? returnChecks(state, catalog) : [],
+    causes,
+    /** What to look for first: the first failing check's resource, else the first cause. */
+    resource: items.find((c) => c.resource)?.resource ?? (causes[0] ? survival.get(causes[0])! : null),
+    checks: items.map((c) => c.text),
     minimumStay: WB_AWAY_MIN_DAYS,
     days: waits.length ? Math.max(...waits) : 0,
   };
@@ -75,9 +85,9 @@ export function survivalAlerts(state: GameState, catalog: Catalog): SurvivalAler
     out.push({
       id: 'town-recovery',
       title: 'Household recovery comes first',
-      resource: 'Heat',
+      resource: recovery.resource,
       work: true,
-      detail: `${recovery.people.join(', ')} are in town after wellbeing reached zero. Causes at departure: ${recovery.causes.join(', ') || 'see each person’s wellbeing history'}. Residents in town supply no labor. ${recovery.checks.join(' ')} Minimum stay remaining: ${recovery.days} days. Book a paid crew in Work to finish critical projects.`,
+      detail: `${recovery.people.join(', ')} are in town after wellbeing reached zero. Causes at departure: ${recovery.causes.join(', ') || 'see each person’s wellbeing history'}. Residents in town supply no labor. ${recovery.checks.join(' ')} Minimum stay remaining: ${recovery.days} days. Work shows a priced recovery route home.`,
     });
   const last = state.ledgers.at(-1);
   const rows: [SurvivalNeed, string, string][] = [
@@ -228,6 +238,80 @@ export interface RecoveryStep {
  */
 export function recoveryRoute(state: GameState, catalog: Catalog) {
   if (!state.instances.some((i) => i.person?.away)) return null;
+  let route = routeFrom(state, catalog);
+  // Existing projects and orders cannot bring people home: propose the cheapest new system for each
+  // failing need, proven by the same simulation, one need at a time.
+  const proposals: RecoveryStep[] = [];
+  let base = state;
+  let unbuildable: string | null = null;
+  for (let k = 0; k < ROUTE_MAX_PROPOSALS && route.returnDay === null; k++) {
+    const need = route.failing.find((c) => c.resource && c.resource !== 'Food')?.resource;
+    if (!need) break;
+    const next = proposeFor(base, catalog, need);
+    if (!next) {
+      unbuildable = need;
+      break;
+    }
+    proposals.push(next.step);
+    base = next.state;
+    route = next.route;
+  }
+  return {
+    ...route,
+    steps: [...proposals, ...route.steps],
+    actions: [...proposals.map((p) => p.action), ...route.actions],
+    upfront: proposals.reduce((a, p) => a + p.cost, 0) + route.upfront,
+    cash: state.cash,
+    unbuildable: unbuildable
+      ? `No affordable catalog system fixes ${unbuildable} in the simulation from here; cash after the steps above is $${Math.max(0, base.cash - route.upfront).toFixed(2)}.`
+      : null,
+  };
+}
+
+/** At most this many new systems in one route, and candidates simulated per need. */
+export const ROUTE_MAX_PROPOSALS = 3;
+const PROPOSAL_CANDIDATES = 4;
+
+/** The cheapest system (purchase + crew) that clears a failing need when placed by the home shelter. */
+function proposeFor(state: GameState, catalog: Catalog, resource: string) {
+  const makers = new Set(catalog.flows.filter((f) => f.direction === 'out' && f.resource === resource).map((f) => f.systemId));
+  const shelters = new Set(catalog.flows.filter((f) => f.direction === 'out' && f.resource === 'Shelter').map((f) => f.systemId));
+  const options: { id: string; name: string; mode: BuildMode; cost: number; total: number }[] = [];
+  for (const sys of catalog.systems) {
+    if (!makers.has(sys.id) || sys.backstop || sys.categories.includes('Conventional') || sys.categories.includes('Household')) continue;
+    const modes: BuildMode[] = sys.costDiy !== null && sys.costDiy !== undefined ? ['diy', 'buy'] : ['buy'];
+    const best = modes
+      .map((mode) => {
+        const cost = costFor(catalog, sys.id, mode);
+        return { id: sys.id, name: sys.name, mode, cost, total: cost + setupHoursFor(catalog, sys.id, mode) * CONTRACTOR_RATE };
+      })
+      .sort((a, b) => a.total - b.total)[0]!;
+    if (best.total <= state.cash + 1e-9) options.push(best);
+  }
+  options.sort((a, b) => a.total - b.total || a.name.localeCompare(b.name));
+  const home = homeOf(state, shelters);
+  for (const o of options.slice(0, PROPOSAL_CANDIDATES)) {
+    const spot = findSpot(catalog, state, o.id, home.x + 14, home.y);
+    if (!spot) continue;
+    const action: ActionBody = { kind: 'place', systemId: o.id, x: spot.x, y: spot.y, mode: o.mode, id: `i${state.nextInstanceId}` };
+    const next = applyAction(catalog, state, { ...action, at: state.calendar.absDay } as Action);
+    const route = routeFrom(next, catalog);
+    if (route.returnDay === null && route.failing.some((c) => c.resource === resource)) continue;
+    return {
+      state: next,
+      route,
+      step: {
+        label: `Build ${o.name} (${o.mode === 'diy' ? 'DIY' : 'bought'})`,
+        detail: `Cheapest catalog system that fixes ${resource} in this simulation: $${o.cost.toFixed(2)} now, with its crew below. Placed next to the home shelter; if you place it elsewhere yourself, check the route again.`,
+        cost: o.cost,
+        action,
+      } satisfies RecoveryStep,
+    };
+  }
+  return null;
+}
+
+function routeFrom(state: GameState, catalog: Catalog) {
   const plans = getPlans(catalog, state.site);
   const climate = climateTable(state.site);
   const steps: RecoveryStep[] = [];
@@ -350,6 +434,7 @@ export function recoveryRoute(state: GameState, catalog: Catalog) {
     cashAtReturn,
     leftAgain,
     remaining: returnDay === null ? returnChecks(s, catalog) : [],
+    failing: returnDay === null ? returnCheckItems(s, catalog) : [],
   };
 }
 export type RecoveryRoute = NonNullable<ReturnType<typeof recoveryRoute>>;

@@ -25,6 +25,11 @@ export function waterReserveWarning(state: GameState, catalog: Catalog): string[
   }
   const target = daily * targetDays;
   return target > capacity + 1e-9
-    ? [`The ${targetDays}-day water target needs about ${Math.ceil(target)} gal, but completed shared water storage holds ${Math.floor(capacity)} gal (raw and drinking water together). Add storage or lower the target; filtering and gathering labor can still limit safe water.`]
+    ? [
+        `The ${targetDays}-day water target needs about ${Math.ceil(target)} gal, but completed shared water storage holds ${Math.floor(capacity)} gal (raw and drinking water together), about ${(capacity / daily).toFixed(1)} days at current use. Add storage or lower the target; filtering and gathering labor can still limit safe water.` +
+          (state.settings.safeWaterFirst
+            ? ' Fetching stops when storage is full, and untreated water overflows before safe water.'
+            : ' Water fetched beyond storage spills, taking safe drinking water with it.'),
+      ]
     : [];
 }

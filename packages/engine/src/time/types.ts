@@ -20,6 +20,10 @@ export interface GameSettings {
   safeRecovery?: boolean;
   /** v0.4 labor fix: upkeep hours a system could not use go to jobs still short. Absent in legacy logs; enabled on continuation. */
   reuseIdleLabor?: boolean;
+  /** v0.5 town return: shelter must meet the survival threshold, not 100% of need. Absent in legacy logs; enabled on continuation. */
+  survivalShelterReturn?: boolean;
+  /** v0.6 water storage: raw water spills before safe water, and fetching stops at free room. Absent in legacy logs; enabled on continuation. */
+  safeWaterFirst?: boolean;
   /** Day of year the game starts on (0 = Jan 1). */
   startDay?: number;
   /** Stocks on day one (arrival supplies). */

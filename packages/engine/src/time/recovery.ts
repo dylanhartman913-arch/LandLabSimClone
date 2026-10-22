@@ -3,7 +3,16 @@ import type { GameState, Instance, PersonState } from './types.ts';
 import { getPlans, dailyAmount } from './plans.ts';
 import { climateTable } from './climate.ts';
 import { stepDay } from './step.ts';
-import { HEAT_HDD_MIN, SURVIVAL, WB_AWAY_MIN_DAYS, WB_RETURN_AT, laborShare } from './wellbeing.ts';
+import { HEAT_HDD_MIN, SURVIVAL, WB_AWAY_MIN_DAYS, WB_RETURN_AT, laborShare, type SurvivalNeed } from './wellbeing.ts';
+
+/** The resource whose supply fixes each survival need (what a recovery proposal builds or finds). */
+export const SURVIVAL_RESOURCE: Record<SurvivalNeed, string> = {
+  drinkingWater: 'Drinking water',
+  food: 'Food',
+  shelter: 'Shelter',
+  heat: 'Heat',
+  sanitation: 'Sanitation',
+};
 
 /** Balance policy, not catalog system prices. Paid in full; one eight-hour crew per project. */
 export const CONTRACTOR_RATE = 35;
@@ -52,8 +61,18 @@ function returningPerson(person: PersonState): PersonState {
   };
 }
 
+/** One failed return check: the resource that would fix it (null: stock or cash), and its explanation. */
+export interface ReturnCheck {
+  resource: string | null;
+  text: string;
+}
+
 /** The same whole-household return checks drive the simulation and its explanation. */
 export function returnChecks(state: GameState, catalog: Catalog): string[] {
+  return returnCheckItems(state, catalog).map((c) => c.text);
+}
+
+export function returnCheckItems(state: GameState, catalog: Catalog): ReturnCheck[] {
   const plans = getPlans(catalog, state.site);
   const climate = climateTable(state.site);
   const household = state.instances.filter((i) => i.person);
@@ -82,17 +101,27 @@ export function returnChecks(state: GameState, catalog: Catalog): string[] {
             .reduce((b, f) => b + f.qty * (i.scale ?? 1), 0),
         0,
       );
-  const out: string[] = [];
-  if (capacity('Shelter') + 1e-9 < need('Shelter'))
-    out.push('Complete enough shelter for the whole household.');
+  const out: ReturnCheck[] = [];
+  // v0.5: shelter is judged by the same survival threshold as the return trial; the starter tent
+  // covers about half of two adults, so demanding 100% stranded every greenfield household in town.
+  const shelterNeed = need('Shelter') * (state.settings.survivalShelterReturn ? SURVIVAL.shelter.short : 1);
+  if (capacity('Shelter') + 1e-9 < shelterNeed)
+    out.push({
+      resource: 'Shelter',
+      text: state.settings.survivalShelterReturn
+        ? `Complete shelter for at least ${Math.round(SURVIVAL.shelter.short * 100)}% of the whole household's need (${Math.ceil(shelterNeed)} sq ft; completed ${Math.floor(capacity('Shelter'))} sq ft).`
+        : 'Complete enough shelter for the whole household.',
+    });
   if ((state.stocks.Food ?? 0) + 1e-9 < 7 * need('Food'))
-    out.push(
-      `Stock ${Math.ceil(7 * need('Food'))} kcal of prepared Food for a week for the whole household.`,
-    );
+    out.push({
+      resource: null,
+      text: `Stock ${Math.ceil(7 * need('Food'))} kcal of prepared Food for a week for the whole household.`,
+    });
   if ((state.stocks['Drinking water'] ?? 0) + 1e-9 < 3 * need('Drinking water'))
-    out.push(
-      `Stock ${Math.ceil(3 * need('Drinking water'))} gal of safe drinking water for three days for the whole household.`,
-    );
+    out.push({
+      resource: null,
+      text: `Stock ${Math.ceil(3 * need('Drinking water'))} gal of safe drinking water for three days for the whole household.`,
+    });
   // Trial the actual returning household, at its return wellbeing and labor. Requiring live
   // heat/sanitation while everyone is away deadlocks labor-dependent stoves and toilets.
   // No eligible away people in the trial => recoverResidents never recurses into this check.
@@ -103,7 +132,7 @@ export function returnChecks(state: GameState, catalog: Catalog): string[] {
       return { ...i, person: returningPerson(i.person) };
     }),
   };
-  const failed = new Set<string>();
+  const failed = new Set<SurvivalNeed>();
   for (let day = 0; day <= RETURN_TRIAL_DAYS; day++) {
     const result = stepDay({ ...trial, settings: { ...trial.settings, peopleLeave: false } }, catalog);
     trial = result.state;
@@ -120,15 +149,16 @@ export function returnChecks(state: GameState, catalog: Catalog): string[] {
       if (key === 'heat' && result.ledger.weather.hdd <= HEAT_HDD_MIN) continue;
       const n = result.ledger.needs[row];
       if (n.needed > 1e-9 && n.delivered / n.needed < SURVIVAL[key].short - 1e-9)
-        failed.add(SURVIVAL[key].label);
+        failed.add(key);
     }
   }
-  for (const label of failed)
-    out.push(
-      `${label} fails the three-day return trial after one arrival day, with the whole household at ${WB_RETURN_AT} wellbeing, current work commitments and available inputs. Complete, connect and supply systems, or lower competing work priorities, before return.`,
-    );
+  for (const key of failed)
+    out.push({
+      resource: SURVIVAL_RESOURCE[key],
+      text: `${SURVIVAL[key].label} fails the three-day return trial after one arrival day, with the whole household at ${WB_RETURN_AT} wellbeing, current work commitments and available inputs. Complete, connect and supply systems, or lower competing work priorities, before return.`,
+    });
   if (household.some((i) => !i.person!.away && Object.values(i.person!.short).some((n) => n > 0)))
-    out.push('Resolve survival shortages for residents already at home.');
+    out.push({ resource: null, text: 'Resolve survival shortages for residents already at home.' });
   return out;
 }
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { catalog, newGame, place, run, sysId } from './time-helpers.ts';
+import { getSite, getStart } from '@homestead/catalog';
+import { advanceTo, catalog, newGame, place, run, sysId } from './time-helpers.ts';
 import {
   applyAction,
   constructionView,
@@ -17,7 +18,9 @@ import {
   townRecoveryView,
   winterPreparation,
   buildReport,
+  gameFromStart,
   recoveryRoute,
+  type GameState,
   type Action,
   type GameInit,
 } from '../src/index.ts';
@@ -307,5 +310,60 @@ describe('a finite recovery route with zero resident labor', () => {
 
   it('a household at home has no recovery route', () => {
     expect(recoveryRoute(newGame({ 'Human Being': 1 }), catalog)).toBeNull();
+  });
+});
+
+describe('LL-13: the household the game starts with can always come home', () => {
+  const NEW = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true };
+  /** A greenfield household sent to town 20 days ago, as in the Oct 22 playtest, in late summer. */
+  const inTown = (settings: Partial<GameState['settings']>, drop: (name: string) => boolean = () => false) => {
+    let s = gameFromStart(catalog, getSite('front-range'), getStart('greenfield'), {});
+    s = { ...s, settings: { ...s.settings, ...settings, startDay: 0 } };
+    s = advanceTo(s, 230);
+    return {
+      ...s,
+      instances: s.instances
+        .filter((i) => !drop(catalog.systems.find((x) => x.id === i.systemId)!.name))
+        .map((i) => (i.person ? { ...i, person: { ...i.person, wellbeing: 0, away: { since: s.calendar.absDay - 20 } } } : i)),
+    };
+  };
+
+  it('the starter tent (about half of two adults’ need) meets the survival shelter level for return', () => {
+    expect(returnChecks(inTown(NEW), catalog).join(' ')).not.toContain('shelter');
+  });
+
+  it('legacy safer-return games keep the full-shelter rule they were recorded with', () => {
+    expect(returnChecks(inTown({ safeRecovery: true }), catalog)).toContain('Complete enough shelter for the whole household.');
+  });
+
+  it('with no shelter left, the route proposes the cheapest shelter, places and crews it, and the simulation brings everyone home', () => {
+    const s = inTown(NEW, (n) => n === 'Canvas Wall Tent + Stove Jack');
+    expect(returnChecks(s, catalog).join(' ')).toContain('Complete shelter for at least 50%');
+    const route = recoveryRoute(s, catalog)!;
+    const placed = route.actions[0]!;
+    expect(placed.kind).toBe('place');
+    expect(route.steps[0]!.label).toMatch(/^Build /);
+    expect(route.actions.some((a) => a.kind === 'hireConstruction' && a.id === (placed as { id: string }).id)).toBe(true);
+    expect(route.returnDay).not.toBeNull();
+    expect(route.staysHome).toBe(true);
+    expect(route.unbuildable).toBeNull();
+    const booked = route.actions.reduce((g, b) => applyAction(catalog, g, { ...b, at: g.calendar.absDay } as Action), s);
+    const r = run(booked, route.returnDay! + 5);
+    expect(r.state.instances.filter((i) => i.person).every((i) => !i.person!.away)).toBe(true);
+  });
+
+  it('a route that cannot be afforded says what it could not fix', () => {
+    const route = recoveryRoute({ ...inTown(NEW, (n) => n === 'Canvas Wall Tent + Stove Jack'), cash: 5 }, catalog)!;
+    expect(route.returnDay).toBeNull();
+    expect(route.unbuildable).toContain('Shelter');
+  });
+
+  it('the recovery alert points at the failing need and lists only survival causes', () => {
+    const s = inTown(NEW, (n) => n === 'Canvas Wall Tent + Stove Jack');
+    const view = townRecoveryView(s, catalog);
+    expect(view.resource).toBe('Shelter');
+    const alert = survivalAlerts(s, catalog).find((a) => a.id === 'town-recovery')!;
+    expect(alert.resource).toBe('Shelter');
+    for (const c of view.causes) expect(['Drinking water', 'Food', 'Shelter', 'Heat', 'Sanitation']).toContain(c);
   });
 });

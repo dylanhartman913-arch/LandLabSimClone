@@ -45,3 +45,12 @@ Following the roadmap's lever order:
 4. Re-price the outside crew only after 1–3, using the `rescue` comparison as the check.
 
 Limits: one start, two adults, bot policy (not a novice). The release gate's novice-discoverability check still needs a human playtest.
+
+## Update after LL-13 and LL-16 (engine 0.6.0)
+
+The tables in `PHASE_4_COMPARISONS.md` were regenerated with the new-game rules, now including `survivalShelterReturn` and `safeWaterFirst`. LL-13 changed no table (in these runs households still can't return for other reasons, and the bots never book a recovery route). LL-16 did, because fetching no longer hauls water that spills:
+
+- **Remote job:** 1/3 Standard and 3/9 real-weather runs now keep the household home all year (was 0/3 and 0/9); year-end cash reaches up to $52k. Employment still starves upkeep in the other runs (LL-23).
+- **Tutorial baseline:** worst real-weather wellbeing 74 (was 65); worst-case short days 7 (was 9); year-end cash median $386 Standard (was $434).
+- **Late cistern:** 0/9 real-weather departures (was 1/9).
+- **Bell Tent on day 30:** worse in real weather (median minimum wellbeing 42, was 74; same 3/9 departures). Not yet explained; check before balance work.

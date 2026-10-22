@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { getSite } from '@homestead/catalog';
-import { checklistView, nodeStockOf, nodeYield, placeSystem, summarizeLedgers, type GameState, type YearWeather } from '../src/index.ts';
+import { getSite, getStart } from '@homestead/catalog';
+import { checklistView, gameFromStart, nodeStockOf, nodeYield, placeSystem, summarizeLedgers, type GameState, type YearWeather } from '../src/index.ts';
 import { catalog, newGame, run } from './time-helpers.ts';
 
 const camp = (settings: Partial<GameState['settings']> = {}, site = 'front-range') =>
@@ -98,5 +98,43 @@ describe('the land provides', () => {
     const before = worked.nodeStock![id]!;
     const rested = run({ ...worked, settings: { ...worked.settings, autoGather: {} } }, 10).state;
     expect(rested.nodeStock![id]!).toBeGreaterThan(before);
+  });
+});
+
+describe('LL-16: a water target never spills the safe water', () => {
+  // The Oct 22 playtest: greenfield, two adults, the tutorial's 7-day water target set on day 8.
+  const waterQuest = (settings: Partial<GameState['settings']>) => {
+    let s = gameFromStart(catalog, getSite('front-range'), getStart('greenfield'), {});
+    s = { ...s, settings: { ...s.settings, ...settings } };
+    s = run(s, 8).state;
+    s = { ...s, settings: { ...s.settings, autoGather: { ...s.settings.autoGather, waterDays: 7 } } };
+    const r = run(s, 20);
+    const last10 = r.ledgers.slice(-10);
+    return {
+      safe: r.state.stocks['Drinking water'] ?? 0,
+      rawSpill: last10.reduce((a, l) => a + l.resources['Water']!.spilled, 0) / 10,
+      safeSpill: r.ledgers.reduce((a, l) => a + l.resources['Drinking water']!.spilled, 0),
+      fetched: last10.reduce((a, l) => a + (l.labor.byJob?.['gather-water'] ?? 0), 0) / 10,
+    };
+  };
+
+  it('safe drinking water stays in storage when the raw-water target exceeds it', () => {
+    const fixed = waterQuest({ safeWaterFirst: true });
+    expect(fixed.safeSpill).toBeLessThan(1e-6);
+    expect(fixed.safe).toBeGreaterThan(40);
+  });
+
+  it('fetching stops at free storage room instead of hauling water that spills', () => {
+    const legacy = waterQuest({});
+    const fixed = waterQuest({ safeWaterFirst: true });
+    expect(legacy.rawSpill).toBeGreaterThan(20);
+    expect(fixed.rawSpill).toBeLessThan(2);
+    expect(fixed.fetched).toBeLessThan(legacy.fetched);
+  });
+
+  it('legacy logs keep the recorded drain (the playtest reproduction)', () => {
+    const legacy = waterQuest({});
+    expect(legacy.safe).toBeLessThan(10);
+    expect(legacy.safeSpill).toBeGreaterThan(30);
   });
 });

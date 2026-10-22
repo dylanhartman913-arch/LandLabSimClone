@@ -56,6 +56,7 @@ export function Work() {
         <h4>Recovery route</h4>
         <p className="small">Works with zero resident labor. Simulated with this game's weather and current settings for up to {route.horizon} days, then {route.stayDays} days after return. Real weather and later changes can alter it.</p>
         {route.steps.length > 0 && <ol>{route.steps.map((step) => <li key={step.label}><strong>{step.label}</strong>{step.cost > 0 ? ` · ${fmtMoney(step.cost)} now` : ''}<br /><span className="small">{step.detail}</span></li>)}</ol>}
+        {route.unbuildable && <p data-testid="route-unbuildable">{route.unbuildable}</p>}
         {route.unfunded.length > 0 && <ul data-testid="route-unfunded">{route.unfunded.map((u) => <li key={u}>{u}</li>)}</ul>}
         <p data-testid="route-outcome">{route.returnDay === null
           ? `No return within ${route.horizon} days on this route. Still failing: ${route.remaining.join(' ')}`

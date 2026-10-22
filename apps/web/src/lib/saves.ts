@@ -127,6 +127,8 @@ export function loadSave(file: unknown, opts: { verify?: boolean } = {}): LoadRe
   useGame.getState().loadGame(save.init, save.actions, state, progress ? { progress } : {});
   if (!state.settings.safeRecovery) message += ' Town recovery upgraded: open Work for the safer household return checks.';
   if (!state.settings.reuseIdleLabor) message += ' Labor upgraded: hours a stalled system cannot use now go to construction and gathering.';
+  if (!state.settings.survivalShelterReturn) message += ' Town return upgraded: shelter needs to meet the survival level, not full comfort.';
+  if (!state.settings.safeWaterFirst) message += ' Water storage upgraded: untreated water overflows before safe water, and fetching stops when storage is full.';
   return { verified, message };
 }
 

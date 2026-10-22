@@ -33,8 +33,8 @@ describe('Phase 2 return policy preserves pacing', () => {
     });
 });
 
-describe('new-game rules (safer return + idle labor reuse) preserve pacing', () => {
-  const rules = { safeRecovery: true, reuseIdleLabor: true };
+describe('new-game rules (safer return, idle labor reuse, survival-level shelter return, safe water first) preserve pacing', () => {
+  const rules = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true };
   for (const gate of GATES)
     it(gate.id, () => {
       const g = {
@@ -44,7 +44,7 @@ describe('new-game rules (safer return + idle labor reuse) preserve pacing', () 
           return {
             ...bot,
             act: ((catalog, state, actions) => {
-              if (!state.settings.reuseIdleLabor) {
+              if (!state.settings.safeWaterFirst) {
                 actions.push({ at: state.calendar.absDay, kind: 'settings', settings: rules });
                 state = { ...state, settings: { ...state.settings, ...rules } };
               }

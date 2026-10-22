@@ -980,3 +980,25 @@ Continued on `codex/phase-0-1`, uncommitted. Engine `0.4.0`; save schema unchang
 **Tests:** 4 new engine tests (leak gone with the setting, a working job still competes, legacy keeps recorded behavior, labor sums to the pool) and a pacing suite under new-game rules (5 gates × 3 sites × 3 seeds). The comparison harness now runs with the app's new-game settings. 291/291 unit tests pass. Spring `9544bdc2fdf7f9cf` and winter `f90dc93c4f4d1a4a` replay digests and all `digests.json` values unchanged.
 
 **Comparisons rerun:** the part-time-job-without-transport variant now matches no job (heater day 25 in every run, was ~80). All other headline findings are unchanged (`docs/PHASE_4.md`).
+
+## LL-13 — town return is reachable for the starting household (2026-10-22)
+
+Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-13). Continued on `codex/phase-0-1` after `e2cfd9f`. Engine `0.5.0`; save schema unchanged.
+
+**Return rule:** the shelter return check now uses the survival threshold (`SURVIVAL.shelter.short`, 50%), the same one the return trial applies, instead of 100% of nominal need. The Oct 22 playtest showed the greenfield starter tent covers about 56% of two adults, so every greenfield household that went to town was stranded. Gated by `settings.survivalShelterReturn`: `NewGame` and the default game set it, `loadGame` appends it at continuation with the other upgrades, and the load message says so. Legacy and `safeRecovery`-only logs keep the full-shelter rule and their digests.
+
+**Route proposals:** return checks are now structured (`returnCheckItems`: resource + text). When the existing projects and orders cannot bring the household home, `recoveryRoute` tries the cheapest catalog systems (purchase plus crew, buy or DIY, no backstops/conventional) for the first failing need, placed by the home shelter. It simulates each and keeps the first that clears the check, up to 3 needs. Its place action leads the route, and the existing crew logic books it. If nothing affordable works, `unbuildable` says which need, and the Work panel shows it. No shelter at all: DIY Bell Tent $300 + $105 crew, home on day 1; about 32 ms.
+
+**Alert:** the town-recovery alert's button follows the first failing check (it was hard-coded to Heat). Departure causes list survival needs only, and the copy points to the route in Work.
+
+**Validation:** 5 new engine tests (starter tent passes; legacy keeps full shelter; no-shelter route proposes, crews and returns; unaffordable route names the need; alert resource and causes). 296/296 unit tests. Pacing passes under legacy, safer-return and full new-game rules (3 sites × 3 seeds). Browser 52/54 on a fresh build (same two baseline failures). The LL-10 comparison tables are unchanged: in those runs the households still can't return for other reasons (no cash, or employment starving sanitation), and the bots don't book recovery routes. Digests unchanged.
+
+## LL-16 — water storage keeps safe water first (2026-10-22)
+
+Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-16). Engine `0.6.0`; save schema unchanged.
+
+**Fix:** in the shared Water storage pool, untreated Water overflows before Drinking water (`SPILL_FIRST`, `storeAndSpoil`). Any remaining overflow is shared as before. Auto-gather water trips are sized to tonight's free room: room now, plus today's use, minus yesterday's non-fetched inflow (rain, treatment). Work's storage warning gives the storage limit in days and says which overflow rule applies. Gated by `settings.safeWaterFirst`, wired like the earlier flags (new games, default game, continuation, load message, comparison harness, new-game pacing suite).
+
+**Regression:** `gather.test.ts` replays the Oct 22 sequence (greenfield, 7-day target set on day 8, 20 days). Legacy drains safe water below 10 gal with more than 30 gal spilled; with the fix, 0 safe water spills, over 40 gal stays, raw spill falls from about 36 to under 2 gal/day, and fetching hours drop.
+
+**Validation:** 299/299 unit tests; pacing passes under legacy and full new-game rules; browser 52/54 on a fresh build (same two baseline failures); digests unchanged. Comparisons regenerated. Remote-job survival improved and the Bell Tent real-weather variant worsened (see `PHASE_4.md` update; the latter is unexplained).
