@@ -1432,6 +1432,35 @@ table.mini .bad {
   border-left-color: var(--warn);
 }
 
+/* Needs and bottlenecks (LL-14): every alert, grouped, scrolling inside the side stack. */
+.alerts-body {
+  max-height: 45vh;
+  overflow-y: auto;
+}
+
+.alerts-group {
+  margin: 8px 0 2px;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.alert-item {
+  border-top: 1px solid var(--line);
+  padding: 4px 0;
+}
+
+.alert-item summary {
+  cursor: pointer;
+}
+
+.alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .quest h2,
 .quest h3 {
   margin: 4px 0;

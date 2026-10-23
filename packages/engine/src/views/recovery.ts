@@ -77,9 +77,23 @@ export interface SurvivalAlert {
   detail: string;
   resource: string | null;
   work?: boolean;
-  /** Days until the problem bites, for warnings about the future (ranking, LL-14). */
+  /** Days until the problem bites: 0 when it already does (today's shortages, residents in town). */
   days?: number;
+  /** LL-14 section: act now (survival within a week), coming up, supplies for production, comfort. */
+  group?: AlertGroup;
+  /** Wellbeing weight of what is at stake, to break ties between equal deadlines. */
+  weight?: number;
+  /** A shortage already happening; `days` then counts down to wellbeing penalties. */
+  current?: boolean;
 }
+
+export type AlertGroup = 'now' | 'soon' | 'supplies' | 'comfort';
+export const ALERT_GROUPS: { id: AlertGroup; label: string }[] = [
+  { id: 'now', label: 'Act now' },
+  { id: 'soon', label: 'Coming up' },
+  { id: 'supplies', label: 'Supplies for production' },
+  { id: 'comfort', label: 'Comfort' },
+];
 
 /** Warn this many days before cash reaches zero at the recent rate of spending. */
 export const CASH_WARN_DAYS = 30;
@@ -155,6 +169,9 @@ export function survivalAlerts(
         title: `${resource} needs attention now`,
         resource,
         work: true,
+        days: grace,
+        weight: SURVIVAL[need].weight,
+        current: true,
         detail: `${affected.map((p) => `${p.label} (${p.id})`).join(', ')}: ${Math.round((n.delivered / n.needed) * 100)}% met yesterday. ${grace ? `${grace} day${grace === 1 ? '' : 's'} until wellbeing penalties if the shortage persists` : 'Wellbeing penalties apply now'}; ${eta.length ? `about ${Math.min(...eta)} days to town at yesterday’s net wellbeing loss` : 'departure timing depends on wellbeing'}. Restore supply and required inputs; building projects do not supply anything yet.`,
       });
     }
@@ -220,7 +237,7 @@ export function survivalAlerts(
   if (cash.days <= CASH_WARN_DAYS)
     consumables.push({
       id: 'cash-runway',
-      title: `Cash reaches $0 in about ${Math.floor(cash.days)} days`,
+      title: `Cash reaches $0 in about ${Math.floor(cash.days)} day${Math.floor(cash.days) === 1 ? '' : 's'}`,
       resource: null,
       days: cash.days,
       detail: `$${Math.max(0, state.cash).toFixed(0)} at $${(cash.burn * 7).toFixed(0)}/week net spending over the last ${Math.min(28, state.ledgers.length)} days. Largest: ${cash.lines.slice(0, 3).map(([k, v]) => `${k} $${v.toFixed(0)}/wk`).join(', ') || 'none'}. Market orders, backstops and running costs stop when cash runs out. Cut spending, add income, or grow what you buy.`,
@@ -271,10 +288,13 @@ export function survivalAlerts(
   const other = consumables.filter((a) => a.survival === false).map(({ survival: _, ...a }) => a);
   const ahead: SurvivalAlert[] = [];
   if (forecast && home) {
+    const inDays = (n: number) => `in about ${n} day${n === 1 ? '' : 's'}`;
+    // Shortages already listed for today aren't news from the forecast.
+    const now = new Set(out.map((a) => a.resource));
     const events = [
-      forecast.departureDay !== null && { days: forecast.departureDay, text: `residents leave for town in about ${forecast.departureDay} days` },
-      forecast.firstHarm && { days: forecast.firstHarm.days, text: `${forecast.firstHarm.need} falls short in about ${forecast.firstHarm.days} days` },
-      forecast.cashZeroDay !== null && { days: forecast.cashZeroDay, text: `cash reaches $0 in about ${forecast.cashZeroDay} days` },
+      forecast.departureDay !== null && { days: forecast.departureDay, text: `residents leave for town ${inDays(forecast.departureDay)}` },
+      forecast.firstHarm && !now.has(forecast.firstHarm.need) && { days: forecast.firstHarm.days, text: `${forecast.firstHarm.need} falls short ${inDays(forecast.firstHarm.days)}` },
+      forecast.cashZeroDay !== null && { days: forecast.cashZeroDay, text: `cash reaches $0 ${inDays(forecast.cashZeroDay)}` },
     ].filter((e): e is { days: number; text: string } => !!e);
     if (events.length) {
       const head = forecast.departureDay !== null ? events[0]! : [...events].sort((a, b) => a.days - b.days)[0]!;
@@ -288,8 +308,37 @@ export function survivalAlerts(
       });
     }
   }
-  return [...out, ...vital, ...ahead, ...other, ...comfort];
+  // LL-14: every alert is shown; sections first, then the soonest deadline, then what is at stake.
+  const order = new Map(ALERT_GROUPS.map((g, k) => [g.id, k]));
+  // A shortage already happening replaces the runway warning about the same supply.
+  const current = new Set(out.map((a) => a.id));
+  const redundant = (id: string) => (id === 'food-runway' && current.has('food')) || (id === 'water-runway' && current.has('drinkingWater'));
+  const ranked: SurvivalAlert[] = [
+    ...out.map((a) => ({ ...a, group: 'now' as const, days: a.days ?? 0, weight: a.weight ?? 100 })),
+    ...vital.filter((a) => !redundant(a.id)).map((a) => ({ ...a, group: (a.days ?? 0) <= CONSUMABLE_WARN_DAYS ? ('now' as const) : ('soon' as const), weight: a.weight ?? VITAL_WEIGHT[a.id] ?? 2 })),
+    ...ahead.map((a) => ({ ...a, group: 'soon' as const, weight: 1 })),
+    ...other.map((a) => ({ ...a, group: 'supplies' as const, weight: 1 })),
+    ...comfort.map((a) => ({ ...a, group: 'comfort' as const, days: 0, weight: 1 })),
+  ];
+  return ranked
+    .map((a, k) => ({ a, k }))
+    .sort(
+      (x, y) =>
+        order.get(x.a.group!)! - order.get(y.a.group!)! ||
+        (x.a.id === 'town-recovery' ? -1 : y.a.id === 'town-recovery' ? 1 : 0) ||
+        x.a.days! - y.a.days! ||
+        y.a.weight! - x.a.weight! ||
+        x.k - y.k,
+    )
+    .map(({ a }) => a);
 }
+
+/** What a runway protects, in wellbeing weight (SURVIVAL weights; cash keeps every order running). */
+const VITAL_WEIGHT: Record<string, number> = {
+  'water-runway': SURVIVAL.drinkingWater.weight,
+  'food-runway': SURVIVAL.food.weight,
+  'cash-runway': SURVIVAL.food.weight,
+};
 
 /** Warn this many days ahead of running out of a consumable input. */
 export const CONSUMABLE_WARN_DAYS = 7;

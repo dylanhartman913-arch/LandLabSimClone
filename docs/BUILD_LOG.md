@@ -1029,3 +1029,18 @@ The novice replay showed exhausted chicken feed holding the single hint slot for
 **Novice replay (quest steps without the unmentioned standing orders, new-game rules, all three sites):** the top alert forecasts the departure from day ~22, about 60 days before hunger; "Food runs out" reaches the top 6–7 days ahead. Carbon runs out the same week and reaches the top only a day ahead, because food is due first and the UI shows one alert. That needs LL-14's list.
 
 **Validation:** 7 engine tests and 1 novice-replay test (`packages/cli/test/alerts.test.ts`). 307/307 unit tests, typecheck, lint, pacing; browser 52/54 on a fresh build (same two baseline failures).
+
+## LL-14 — one ranked list of every alert (2026-10-22)
+
+Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-14). Continued after `06d35e5`. Read-only views; digests and comparison tables unchanged.
+
+**Engine:** each `SurvivalAlert` now has a section (`group`: Act now / Coming up / Supplies for production / Comfort), `days` and a severity `weight`. For today's shortages, `days` is the days to wellbeing penalties (`current: true`); for a runway, it's the days until the shortage. The list is sorted by section, then deadline, then weight; town recovery stays first.
+
+- A survival runway due within 7 days moves into Act now.
+- A runway for a supply that's already short today is dropped as redundant.
+- The forecast no longer repeats a shortage listed for today.
+- Titles pluralize correctly.
+
+**UI:** the single hint slot is replaced by Needs and bottlenecks (`HintCard`, `data-testid="hint"` kept). It shows every alert, grouped and ranked; each row shows its deadline chip and actions (sources, Market, the forecast tab in Plan, Work), and the most urgent row is open. Weekly design advice moves to an Improve section with the same dismiss rule. The list scrolls within 45vh and collapses to its most urgent line while placing (part of LL-12).
+
+**Validation:** 2 engine tests (sections in order, deadlines ascending within a section, current shortages marked, no forecast repeat) and the browser test `alerts.spec.ts` (food and water runways both visible under Act now, deadlines ascending, Market action present, collapses while placing). 309/309 unit tests; browser 53/55 on a fresh build (same two baseline failures). Screenshot: `docs/screenshots/ll-14/needs-and-bottlenecks.png`.

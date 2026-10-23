@@ -1,8 +1,9 @@
-import { useRef } from 'react';
-import { MILESTONES, QUESTS, questView, shortageHints, survivalAlerts, transitionForecast, winterPreparation } from '@homestead/engine';
+import { useRef, useState } from 'react';
+import { ALERT_GROUPS, MILESTONES, QUESTS, questView, shortageHints, survivalAlerts, transitionForecast, winterPreparation, type SurvivalAlert } from '@homestead/engine';
 import type { QuestShow } from '@homestead/catalog';
 import { fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
+import { usePlan } from '../store/plan.ts';
 
 /** The current tutorial quest, pinned top-right: one at a time, skippable. */
 export function QuestCard() {
@@ -56,59 +57,122 @@ function Badges({ titles }: { titles: string[] }) {
   );
 }
 
-/** When a shortage has lasted a week: what could fix it, cheapest per unit of shortfall covered. */
+/**
+ * Needs and bottlenecks (LL-14): every active alert, grouped and ranked by deadline, with direct
+ * actions; design advice after them in Improve. Collapses to one line while placing.
+ */
 export function HintCard() {
   const game = useGame((s) => s.game);
   const catalog = useGame((s) => s.catalog);
   const dismissed = useGame((s) => s.progress.dismissedHints);
   const readOnly = useGame((s) => s.readOnly);
+  const placing = useGame((s) => s.tool.kind === 'place');
   const actionCount = useGame((s) => s.actions.length);
+  const [open, setOpen] = useState(true);
   // The 90-day projection is a full simulation: refresh it weekly, and whenever the player acts.
   const forecast = useRef<{ key: string; value: ReturnType<typeof transitionForecast> } | null>(null);
   if (readOnly) return null;
   const key = `${Math.floor(game.calendar.absDay / 7)}:${actionCount}`;
   if (forecast.current?.key !== key) forecast.current = { key, value: transitionForecast(game, catalog) };
-  const urgent = survivalAlerts(game, catalog, forecast.current.value)[0];
-  if (urgent) return <aside className="hint" aria-label="Hint" data-testid="hint">
-    <strong>{urgent.title}</strong><p className="small">{urgent.detail}</p>
-    {urgent.resource && <button className="btn small" onClick={() => useGame.getState().openResource(urgent.resource!)}>Find {urgent.resource} sources</button>}
-    {['food-runway', 'water-runway', 'cash-runway'].includes(urgent.id) && <button className="btn small" onClick={() => useGame.getState().setPanel('market')}>Open Market</button>}
-    {urgent.work && <button className="btn small" onClick={() => useGame.getState().setPanel('work')}>Recovery and construction</button>}
-  </aside>;
-  if (game.ledgers.length < 7) return null;
-  const hints = shortageHints(game, catalog).filter(
-    (h) => dismissed[h.resource] === undefined || game.calendar.absDay - dismissed[h.resource]! > 28,
-  );
-  const h = hints[0];
-  if (!h) return null;
+  const alerts = survivalAlerts(game, catalog, forecast.current.value);
+  const hints =
+    game.ledgers.length < 7
+      ? []
+      : shortageHints(game, catalog).filter(
+          (h) => dismissed[h.resource] === undefined || game.calendar.absDay - dismissed[h.resource]! > 28,
+        );
+  if (!alerts.length && !hints.length) return null;
   const st = useGame.getState();
+  const expanded = open && !placing;
+  const top = alerts[0];
   return (
-    <aside className="hint" aria-label="Hint" data-testid="hint">
+    <aside className="hint alerts" aria-label="Needs and bottlenecks" data-testid="hint">
       <div className="quest-top">
         <strong>
-          <span aria-hidden="true">⚠</span> Short on {h.resource} all week
+          {alerts.length ? `Needs and bottlenecks (${alerts.length})` : 'Improve'}
         </strong>
-        <button className="btn ghost small" onClick={() => st.dismissHint(h.resource)} aria-label="Dismiss hint">
-          ✕
+        <button className="btn ghost small" onClick={() => setOpen(!open)} aria-expanded={expanded} aria-label={expanded ? 'Collapse needs' : 'Expand needs'}>
+          {expanded ? '−' : '+'}
         </button>
       </div>
-      <p className="small muted">
-        About {fmtNum(h.shortfall)} {h.unit} a week missing. Systems that could cover it, cheapest per unit covered:
-      </p>
-      <ul className="hint-list">
-        {h.fixes.map((f) => (
-          <li key={f.systemId}>
-            <button className="link" onClick={() => st.openCard(f.systemId)}>
-              {f.name}
-            </button>{' '}
-            <span className="small">
-              {fmtMoney(f.cost)} {f.mode === 'diy' ? 'DIY' : ''}, covers {fmtNum(f.covers)} {h.unit}/wk
-              {f.needs.length ? `; also needs ${f.needs.join(', ')}` : ''}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {!expanded && top && <p className="small" data-testid="alerts-collapsed">{top.title} · {deadline(top)}</p>}
+      {expanded && (
+        <div className="alerts-body">
+          {ALERT_GROUPS.map((g) => {
+            const items = alerts.filter((a) => a.group === g.id);
+            if (!items.length) return null;
+            return (
+              <section key={g.id} data-testid={`alerts-${g.id}`}>
+                <h4 className="alerts-group">{g.label}</h4>
+                {items.map((a) => (
+                  <details key={a.id} open={a === top} data-testid={`alert-${a.id}`} className="alert-item">
+                    <summary>
+                      <strong>{a.title}</strong> <span className="chip small">{deadline(a)}</span>
+                    </summary>
+                    <p className="small">{a.detail}</p>
+                    <AlertActions alert={a} />
+                  </details>
+                ))}
+              </section>
+            );
+          })}
+          {hints.length > 0 && (
+            <section data-testid="alerts-improve">
+              <h4 className="alerts-group">Improve</h4>
+              {hints.slice(0, 3).map((h) => (
+                <details key={h.resource} className="alert-item" open={!alerts.length && h === hints[0]}>
+                  <summary>
+                    <span aria-hidden="true">⚠</span> Short on {h.resource} all week{' '}
+                    <button className="btn ghost small" onClick={() => st.dismissHint(h.resource)} aria-label={`Dismiss ${h.resource} hint`}>
+                      ✕
+                    </button>
+                  </summary>
+                  <p className="small muted">
+                    About {fmtNum(h.shortfall)} {h.unit} a week missing. Systems that could cover it, cheapest per unit covered:
+                  </p>
+                  <ul className="hint-list">
+                    {h.fixes.map((f) => (
+                      <li key={f.systemId}>
+                        <button className="link" onClick={() => st.openCard(f.systemId)}>
+                          {f.name}
+                        </button>{' '}
+                        <span className="small">
+                          {fmtMoney(f.cost)} {f.mode === 'diy' ? 'DIY' : ''}, covers {fmtNum(f.covers)} {h.unit}/wk
+                          {f.needs.length ? `; also needs ${f.needs.join(', ')}` : ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ))}
+            </section>
+          )}
+        </div>
+      )}
     </aside>
+  );
+}
+
+/** Today's shortages count down to wellbeing penalties; warnings count down to the shortage. */
+function deadline(a: SurvivalAlert): string {
+  const d = Math.floor(a.days ?? 0);
+  if (a.current) return d ? `penalties in ${d} d` : 'penalties now';
+  return d ? `in about ${d} d` : 'now';
+}
+
+function AlertActions({ alert }: { alert: SurvivalAlert }) {
+  const st = useGame.getState();
+  return (
+    <div className="alert-actions">
+      {alert.resource && <button className="btn small" onClick={() => st.openResource(alert.resource!)}>Find {alert.resource} sources</button>}
+      {['food-runway', 'water-runway', 'cash-runway'].includes(alert.id) && <button className="btn small" onClick={() => st.setPanel('market')}>Open Market</button>}
+      {alert.id === 'forecast' && (
+        <button className="btn small" onClick={() => { usePlan.getState().setTab('transition'); usePlan.getState().setOpen(true); }}>
+          See the forecast
+        </button>
+      )}
+      {alert.work && <button className="btn small" onClick={() => st.setPanel('work')}>Recovery and construction</button>}
+    </div>
   );
 }
 

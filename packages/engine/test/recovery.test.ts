@@ -21,6 +21,7 @@ import {
   gameFromStart,
   recoveryRoute,
   transitionForecast,
+  ALERT_GROUPS,
   type GameState,
   type Action,
   type GameInit,
@@ -436,5 +437,39 @@ describe('LL-15: food, safe water and cash warn before they run out', () => {
     expect(alert.title).toMatch(/^Forecast: residents leave for town in about \d+ days$/);
     expect(alert.detail).toContain('Food');
     expect(survivalAlerts(s, catalog).some((a) => a.id === 'forecast')).toBe(false);
+  });
+});
+
+describe('LL-14: one ranked list of every alert', () => {
+  // The default new-game camp, two days in, with a pantry and safe water a few days from empty and no heat.
+  const crisis = () => {
+    const s = run(
+      newGame({ 'Human Being': 2, 'Bell Tent': 1, 'Humanure Bucket System': 1 }, { settings: { startDay: 90, peopleLeave: true, startingStocks: { Food: 240_000, 'Drinking water': 40, Carbon: 3 } } }),
+      2,
+    ).state;
+    return { ...s, stocks: { ...s.stocks, Food: 8000, 'Drinking water': 4 } };
+  };
+
+  it('sections come in order and deadlines never decrease within a section', () => {
+    const s = crisis();
+    const alerts = survivalAlerts(s, catalog, transitionForecast(s, catalog));
+    const order = ALERT_GROUPS.map((g) => g.id);
+    const groups = alerts.map((a) => order.indexOf(a.group!));
+    expect(groups).toEqual([...groups].sort((a, b) => a - b));
+    for (const g of order) {
+      const days = alerts.filter((a) => a.group === g && a.id !== 'town-recovery').map((a) => a.days!);
+      expect(days).toEqual([...days].sort((a, b) => a - b));
+    }
+    expect(alerts.filter((a) => a.group === 'now').map((a) => a.id)).toEqual(expect.arrayContaining(['food-runway', 'water-runway']));
+  });
+
+  it('today’s shortages are marked current and the forecast doesn’t repeat them', () => {
+    const s = crisis();
+    const alerts = survivalAlerts(s, catalog, transitionForecast(s, catalog));
+    const heat = alerts.find((a) => a.id === 'heat')!;
+    expect(heat.current).toBe(true);
+    const fc = alerts.find((a) => a.id === 'forecast');
+    expect(fc?.title ?? '').not.toContain('Heat falls short');
+    expect(alerts.every((a) => !/ 1 days/.test(a.title))).toBe(true);
   });
 });
