@@ -20,6 +20,7 @@ import {
   buildReport,
   gameFromStart,
   recoveryRoute,
+  transitionForecast,
   type GameState,
   type Action,
   type GameInit,
@@ -365,5 +366,75 @@ describe('LL-13: the household the game starts with can always come home', () =>
     const alert = survivalAlerts(s, catalog).find((a) => a.id === 'town-recovery')!;
     expect(alert.resource).toBe('Shelter');
     for (const c of view.causes) expect(['Drinking water', 'Food', 'Shelter', 'Heat', 'Sanitation']).toContain(c);
+  });
+});
+
+describe('LL-15: food, safe water and cash warn before they run out', () => {
+  const camp = (stocks: Record<string, number>, extra: Record<string, number> = {}, settings: Partial<GameState['settings']> = {}) =>
+    run(
+      newGame({ 'Human Being': 2, 'Canvas Wall Tent + Stove Jack': 1, ...extra }, { settings: { startDay: 150, startingStocks: stocks, ...settings } }),
+      1,
+    ).state;
+
+  it('a pantry a few days from empty warns while meals are still fully met', () => {
+    const s = camp({ Food: 20_000, 'Drinking water': 60 });
+    expect(s.ledgers.at(-1)!.needs.Food.delivered).toBeCloseTo(s.ledgers.at(-1)!.needs.Food.needed, 6);
+    const food = survivalAlerts(s, catalog).find((a) => a.id === 'food-runway')!;
+    expect(food.title).toMatch(/^Food runs out in about [1-6] days?$/);
+    expect(food.days).toBeLessThanOrEqual(7);
+    expect(food.detail).toContain('standing order');
+  });
+
+  it('edible harvest in stock counts toward the pantry', () => {
+    const s = camp({ Food: 20_000, 'Root crops': 200, 'Drinking water': 60 });
+    const food = survivalAlerts(s, catalog).find((a) => a.id === 'food-runway');
+    expect(food?.days ?? Infinity).toBeGreaterThan(survivalAlerts(camp({ Food: 20_000, 'Drinking water': 60 }), catalog).find((a) => a.id === 'food-runway')!.days!);
+  });
+
+  it('a standing grocery order the household can pay for silences the food warning', () => {
+    let s = camp({ Food: 20_000, 'Drinking water': 60 });
+    s = setStandingOrder(catalog, s, 'Food', 28_000, 84_000);
+    expect(survivalAlerts(s, catalog).some((a) => a.id === 'food-runway')).toBe(false);
+  });
+
+  it('bottled water with nothing treating more warns; a working filter does not', () => {
+    expect(survivalAlerts(camp({ Food: 200_000, 'Drinking water': 6 }), catalog).find((a) => a.id === 'water-runway')!.title).toMatch(
+      /^Safe drinking water runs out in about \d days$/,
+    );
+    const filtered = camp({ Food: 200_000, 'Drinking water': 6, Water: 50 }, { 'Drinking Water Filter': 1 });
+    expect(survivalAlerts(filtered, catalog).some((a) => a.id === 'water-runway')).toBe(false);
+  });
+
+  it('spending with no income warns a month ahead of reaching zero cash', () => {
+    let s = run(
+      newGame({ 'Human Being': 2, 'Canvas Wall Tent + Stove Jack': 1 }, { settings: { startDay: 150, startingCash: 900, startingStocks: { 'Drinking water': 60 } } }),
+      0,
+    ).state;
+    s = setStandingOrder(catalog, s, 'Food', 14_000, 42_000);
+    s = run(s, 14).state;
+    const cash = survivalAlerts(s, catalog).find((a) => a.id === 'cash-runway')!;
+    expect(cash.title).toMatch(/^Cash reaches \$0 in about \d+ days$/);
+    expect(cash.days).toBeLessThanOrEqual(30);
+    expect(cash.detail).toContain('Food');
+  });
+
+  it('runway warnings rank ahead of cooling comfort', () => {
+    const s = camp({ Food: 20_000, 'Drinking water': 60 });
+    const l = s.ledgers.at(-1)!;
+    const hot = { ...s, ledgers: [{ ...l, weather: { ...l.weather, cdd: 10 }, needs: { ...l.needs, 'Cooled shelter': { ...l.needs['Cooled shelter'], needed: 100, delivered: 0 } } }] };
+    const ids = survivalAlerts(hot, catalog).map((a) => a.id);
+    expect(ids.indexOf('food-runway')).toBeLessThan(ids.indexOf('cooling'));
+  });
+
+  it('the 90-day forecast headline names the first harmful shortage and the departure', () => {
+    // A toilet with sawdust, past the day-1 service warm-up (LL-17), so food is the first real harm.
+    const s = run(camp({ Food: 60_000, 'Drinking water': 300, Carbon: 300 }, { 'Humanure Bucket System': 2 }, { peopleLeave: true }), 2).state;
+    const fc = transitionForecast(s, catalog);
+    expect(fc.firstHarm?.need).toBe('Food');
+    expect(fc.departureDay).not.toBeNull();
+    const alert = survivalAlerts(s, catalog, fc).find((a) => a.id === 'forecast')!;
+    expect(alert.title).toMatch(/^Forecast: residents leave for town in about \d+ days$/);
+    expect(alert.detail).toContain('Food');
+    expect(survivalAlerts(s, catalog).some((a) => a.id === 'forecast')).toBe(false);
   });
 });

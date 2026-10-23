@@ -1,4 +1,5 @@
-import { MILESTONES, QUESTS, questView, shortageHints, survivalAlerts, winterPreparation } from '@homestead/engine';
+import { useRef } from 'react';
+import { MILESTONES, QUESTS, questView, shortageHints, survivalAlerts, transitionForecast, winterPreparation } from '@homestead/engine';
 import type { QuestShow } from '@homestead/catalog';
 import { fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
@@ -61,11 +62,17 @@ export function HintCard() {
   const catalog = useGame((s) => s.catalog);
   const dismissed = useGame((s) => s.progress.dismissedHints);
   const readOnly = useGame((s) => s.readOnly);
+  const actionCount = useGame((s) => s.actions.length);
+  // The 90-day projection is a full simulation: refresh it weekly, and whenever the player acts.
+  const forecast = useRef<{ key: string; value: ReturnType<typeof transitionForecast> } | null>(null);
   if (readOnly) return null;
-  const urgent = survivalAlerts(game, catalog)[0];
+  const key = `${Math.floor(game.calendar.absDay / 7)}:${actionCount}`;
+  if (forecast.current?.key !== key) forecast.current = { key, value: transitionForecast(game, catalog) };
+  const urgent = survivalAlerts(game, catalog, forecast.current.value)[0];
   if (urgent) return <aside className="hint" aria-label="Hint" data-testid="hint">
     <strong>{urgent.title}</strong><p className="small">{urgent.detail}</p>
     {urgent.resource && <button className="btn small" onClick={() => useGame.getState().openResource(urgent.resource!)}>Find {urgent.resource} sources</button>}
+    {['food-runway', 'water-runway', 'cash-runway'].includes(urgent.id) && <button className="btn small" onClick={() => useGame.getState().setPanel('market')}>Open Market</button>}
     {urgent.work && <button className="btn small" onClick={() => useGame.getState().setPanel('work')}>Recovery and construction</button>}
   </aside>;
   if (game.ledgers.length < 7) return null;

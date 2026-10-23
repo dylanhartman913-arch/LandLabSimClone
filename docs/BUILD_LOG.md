@@ -1002,3 +1002,30 @@ Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-16). Engine `0.6.0`; save schema unchange
 **Regression:** `gather.test.ts` replays the Oct 22 sequence (greenfield, 7-day target set on day 8, 20 days). Legacy drains safe water below 10 gal with more than 30 gal spilled; with the fix, 0 safe water spills, over 40 gal stays, raw spill falls from about 36 to under 2 gal/day, and fetching hours drop.
 
 **Validation:** 299/299 unit tests; pacing passes under legacy and full new-game rules; browser 52/54 on a fresh build (same two baseline failures); digests unchanged. Comparisons regenerated. Remote-job survival improved and the Bell Tent real-weather variant worsened (see `PHASE_4.md` update; the latter is unexplained).
+
+## LL-15 — food, safe water and cash warn before they run out (2026-10-22)
+
+Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-15). Continued after `17de530`. Read-only views; no simulation change, no settings gate, digests and comparison tables unchanged.
+
+**Runway alerts (`survivalAlerts`):**
+
+- **Food:** prepared Food plus edible harvest in stock, excluding the planting reserve (seed potatoes), against yesterday's need net of home-grown supply.
+- **Safe drinking water:** stock against need net of yesterday's filtering and boiling.
+- **Cash:** `cashRunway` gives days at the last four weeks' net spending, excluding purchases, and names the largest weekly lines; it warns at 30 days or less.
+- **Standing orders:** a resource with a standing order is not warned about while cash lasts more than 7 days. This also applies to the item-4 consumable warnings.
+
+**Forecast:** `transitionForecast` now reports `firstHarm` (first shortage below the survival threshold), `departureDay` and `cashZeroDay`. Given a forecast, `survivalAlerts` adds a headline alert. The hint card refreshes the forecast weekly and on any player action, and offers Open Market for food, water and cash warnings.
+
+**Ranking (interim, before LL-14):**
+
+1. Town recovery and today's survival shortages.
+2. Runways that keep people alive (food, water, cash, and inputs to sanitation, heat, cooking fuel or safe water), by deadline.
+3. The forecast.
+4. Production-only inputs (feed, seed, compost).
+5. Comfort (cooling).
+
+The novice replay showed exhausted chicken feed holding the single hint slot for weeks; this ordering stops that.
+
+**Novice replay (quest steps without the unmentioned standing orders, new-game rules, all three sites):** the top alert forecasts the departure from day ~22, about 60 days before hunger; "Food runs out" reaches the top 6–7 days ahead. Carbon runs out the same week and reaches the top only a day ahead, because food is due first and the UI shows one alert. That needs LL-14's list.
+
+**Validation:** 7 engine tests and 1 novice-replay test (`packages/cli/test/alerts.test.ts`). 307/307 unit tests, typecheck, lint, pacing; browser 52/54 on a fresh build (same two baseline failures).

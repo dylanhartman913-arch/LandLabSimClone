@@ -5,7 +5,15 @@ import { explained } from '../provenance.ts';
 import { designFromGame, gameFromDesign } from '../scenario.ts';
 import { stepDay } from '../time/step.ts';
 import type { GameState } from '../time/types.ts';
-import { HEAT_HDD_MIN } from '../time/wellbeing.ts';
+import { HEAT_HDD_MIN, SURVIVAL, type SurvivalNeed } from '../time/wellbeing.ts';
+
+const HARM_ROWS: [SurvivalNeed, 'Drinking water' | 'Food' | 'Shelter' | 'Heated shelter' | 'Sanitation'][] = [
+  ['drinkingWater', 'Drinking water'],
+  ['food', 'Food'],
+  ['shelter', 'Shelter'],
+  ['heat', 'Heated shelter'],
+  ['sanitation', 'Sanitation'],
+];
 import { designForBalance, scenarioSummary } from './scenario.ts';
 
 export function planningBaseline(state: GameState, catalog: Catalog) {
@@ -40,6 +48,10 @@ export function transitionForecast(state: GameState, catalog: Catalog, days = 90
     : null;
   const completions: { id: string; name: string; days: number }[] = [];
   let firstShortage: { need: string; days: number } | null = null;
+  // A shortage below the survival threshold: the first one that costs wellbeing.
+  let firstHarm: { need: string; days: number } | null = null;
+  let departureDay: number | null = null;
+  let cashZeroDay: number | null = state.cash <= 0 ? 0 : null;
   for (let day = 1; day <= days; day++) {
     const result = stepDay(forecast, catalog);
     forecast = result.state;
@@ -53,6 +65,17 @@ export function transitionForecast(state: GameState, catalog: Catalog, days = 90
           name: catalog.systems.find((s) => s.id === e.systemId)!.name,
           days: day,
         });
+    if (departureDay === null && result.events.some((e) => e.kind === 'went-to-town')) departureDay = day;
+    if (cashZeroDay === null && forecast.cash <= 0) cashZeroDay = day;
+    if (!firstHarm && result.ledger.away < forecast.instances.filter((i) => i.person).length)
+      for (const [key, need] of HARM_ROWS) {
+        if (key === 'heat' && result.ledger.weather.hdd <= HEAT_HDD_MIN) continue;
+        const n = result.ledger.needs[need];
+        if (n.needed > 1e-9 && n.delivered / n.needed < SURVIVAL[key].short - 1e-9) {
+          firstHarm = { need: need === 'Heated shelter' ? 'Heat' : need, days: day };
+          break;
+        }
+      }
     if (!firstShortage)
       for (const need of ['Drinking water', 'Food', 'Shelter', 'Heated shelter', 'Sanitation'] as const) {
         if (need === 'Heated shelter' && result.ledger.weather.hdd <= HEAT_HDD_MIN) continue;
@@ -66,6 +89,9 @@ export function transitionForecast(state: GameState, catalog: Catalog, days = 90
   return {
     days,
     firstShortage,
+    firstHarm,
+    departureDay,
+    cashZeroDay,
     completions,
     cashEnd: explained(
       forecast.cash,

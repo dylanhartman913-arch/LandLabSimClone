@@ -6,6 +6,7 @@ import { findSpot } from '../kits.ts';
 import { homeOf } from '../time/gather.ts';
 import { stepDay } from '../time/step.ts';
 import { dailyAmount, getPlans } from '../time/plans.ts';
+import { plantingReserve } from '../time/food.ts';
 import { climateTable } from '../time/climate.ts';
 import {
   SURVIVAL,
@@ -16,6 +17,7 @@ import {
   type SurvivalNeed,
 } from '../time/wellbeing.ts';
 import { peopleView } from './people.ts';
+import type { transitionForecast } from './planning.ts';
 import { JOBS, jobPriority, type JobId } from '../time/gather.ts';
 import { applyAction, type Action, type ActionBody } from '../replay.ts';
 
@@ -75,10 +77,40 @@ export interface SurvivalAlert {
   detail: string;
   resource: string | null;
   work?: boolean;
+  /** Days until the problem bites, for warnings about the future (ranking, LL-14). */
+  days?: number;
 }
 
-/** Today's survival first; prospective consumables second. Annual design advice is elsewhere. */
-export function survivalAlerts(state: GameState, catalog: Catalog): SurvivalAlert[] {
+/** Warn this many days before cash reaches zero at the recent rate of spending. */
+export const CASH_WARN_DAYS = 30;
+
+/** Days of cash at the last four weeks' net spending (running costs, market, backstops, fees; not purchases). */
+export function cashRunway(state: GameState, catalog?: Catalog) {
+  const recent = state.ledgers.slice(-28);
+  if (recent.length < 7) return { days: Infinity, burn: 0, lines: [] as [string, number][] };
+  const burn = recent.reduce((a, l) => a + l.cash.out - l.cash.in, 0) / recent.length;
+  const lines = new Map<string, number>();
+  const add = (k: string, v: number) => v > 0 && lines.set(k, (lines.get(k) ?? 0) + v);
+  for (const l of recent) {
+    for (const [r, v] of Object.entries(l.spend.market)) add(r, v);
+    for (const [r, v] of Object.entries(l.spend.backstop)) add(r, v);
+    for (const [id, v] of Object.entries(l.spend.running ?? {})) add(catalog?.systems.find((x) => x.id === id)?.name ?? id, v);
+    add('Delivery fees', l.spend.delivery);
+    add('Connection fees', l.spend.fees);
+  }
+  return {
+    days: burn > 1e-9 ? Math.max(0, state.cash) / burn : Infinity,
+    burn,
+    lines: [...lines].sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, (v / recent.length) * 7] as [string, number]),
+  };
+}
+
+/** Today's survival first; then supplies, cash and the forecast by deadline; comfort last. Annual design advice is elsewhere. */
+export function survivalAlerts(
+  state: GameState,
+  catalog: Catalog,
+  forecast?: Pick<ReturnType<typeof transitionForecast>, 'firstHarm' | 'departureDay' | 'cashZeroDay' | 'days'>,
+): SurvivalAlert[] {
   const out: SurvivalAlert[] = [];
   const recovery = townRecoveryView(state, catalog);
   if (recovery.people.length)
@@ -126,6 +158,7 @@ export function survivalAlerts(state: GameState, catalog: Catalog): SurvivalAler
         detail: `${affected.map((p) => `${p.label} (${p.id})`).join(', ')}: ${Math.round((n.delivered / n.needed) * 100)}% met yesterday. ${grace ? `${grace} day${grace === 1 ? '' : 's'} until wellbeing penalties if the shortage persists` : 'Wellbeing penalties apply now'}; ${eta.length ? `about ${Math.min(...eta)} days to town at yesterday’s net wellbeing loss` : 'departure timing depends on wellbeing'}. Restore supply and required inputs; building projects do not supply anything yet.`,
       });
     }
+  const comfort: SurvivalAlert[] = [];
   if (
     last &&
     last.weather.cdd > COOL_CDD_MIN &&
@@ -133,7 +166,7 @@ export function survivalAlerts(state: GameState, catalog: Catalog): SurvivalAler
     last.needs['Cooled shelter'].delivered / last.needs['Cooled shelter'].needed < 0.5 &&
     peopleView(state).some((p) => !p.away)
   ) {
-    out.push({
+    comfort.push({
       id: 'cooling',
       title: 'Cooling is short in hot weather',
       resource: 'Cooling',
@@ -144,9 +177,56 @@ export function survivalAlerts(state: GameState, catalog: Catalog): SurvivalAler
   }
   const plans = getPlans(catalog, state.site);
   const climate = climateTable(state.site);
-  const consumables: (SurvivalAlert & { days: number })[] = [];
+  const cash = cashRunway(state, catalog);
+  // A standing order the household can keep paying for already answers a low reserve.
+  const ordered = (resource: string) =>
+    (state.market?.standing ?? []).some((o) => o.resource === resource && o.keepAbove > 0) && cash.days > CONSUMABLE_WARN_DAYS;
+  const consumables: (SurvivalAlert & { days: number; survival?: boolean })[] = [];
+  const home = peopleView(state).filter((p) => !p.away).length > 0;
+  if (last && home) {
+    // Prepared Food plus edible harvest in stock, against yesterday's need net of home-grown supply.
+    const n = last.needs.Food;
+    const grown = Math.max(0, n.provided - n.bought);
+    const net = n.needed - grown;
+    // Seed potatoes and grain kept for planting are not meals (the engine reserves them too).
+    const seed = plantingReserve(state.instances, plans);
+    let kcal = 0;
+    for (const r of plans.foodFamily)
+      kcal += Math.max(0, (state.stocks[r] ?? 0) - (seed[r] ?? 0)) * (catalog.resources.find((x) => x.name === r)!.factorToNeed ?? 1);
+    const days = net > 1e-9 ? kcal / net : Infinity;
+    if (days <= CONSUMABLE_WARN_DAYS && !ordered('Food'))
+      consumables.push({
+        id: 'food-runway',
+        title: `Food runs out in about ${Math.floor(days)} day${Math.floor(days) === 1 ? '' : 's'}`,
+        resource: 'Food',
+        work: true,
+        days,
+        detail: `${Math.round(kcal).toLocaleString('en-US')} kcal of prepared and stored food against ${Math.round(net).toLocaleString('en-US')} kcal/day not covered by yesterday's home-grown supply. Meals are still met; after that, hunger costs wellbeing within days. Buy groceries or set a standing order in Market, or add food production.`,
+      });
+    const w = last.needs['Drinking water'];
+    const wNet = w.needed - (last.resources['Drinking water']?.produced ?? 0);
+    const safe = state.stocks['Drinking water'] ?? 0;
+    const wDays = wNet > 1e-9 ? safe / wNet : Infinity;
+    if (wDays <= CONSUMABLE_WARN_DAYS && !ordered('Drinking water'))
+      consumables.push({
+        id: 'water-runway',
+        title: `Safe drinking water runs out in about ${Math.floor(wDays)} day${Math.floor(wDays) === 1 ? '' : 's'}`,
+        resource: 'Drinking water',
+        work: true,
+        days: wDays,
+        detail: `${safe.toFixed(1)} gal of safe water against ${wNet.toFixed(1)} gal/day more than filtering and boiling made yesterday. Untreated water does not count. Supply the filter with water, boil on the cooking fire, or set a standing order in Market.`,
+      });
+  }
+  if (cash.days <= CASH_WARN_DAYS)
+    consumables.push({
+      id: 'cash-runway',
+      title: `Cash reaches $0 in about ${Math.floor(cash.days)} days`,
+      resource: null,
+      days: cash.days,
+      detail: `$${Math.max(0, state.cash).toFixed(0)} at $${(cash.burn * 7).toFixed(0)}/week net spending over the last ${Math.min(28, state.ledgers.length)} days. Largest: ${cash.lines.slice(0, 3).map(([k, v]) => `${k} $${v.toFixed(0)}/wk`).join(', ') || 'none'}. Market orders, backstops and running costs stop when cash runs out. Cut spending, add income, or grow what you buy.`,
+    });
   for (const r of catalog.resources) {
-    if (!isConsumable(r)) continue;
+    if (!isConsumable(r) || ordered(r.name)) continue;
     // A usage-priced backstop tops this up on demand while cash lasts; cash runway is reported elsewhere.
     if (
       state.instances.some(
@@ -180,11 +260,35 @@ export function survivalAlerts(state: GameState, catalog: Catalog): SurvivalAler
       resource: r.name,
       work: true,
       days: onHand,
+      survival: feedsSurvival(r.name, plans, state),
       detail: `${onHand.toFixed(1)} days on hand${startsIn > 0 ? ` once demand starts in ${startsIn} day${startsIn === 1 ? '' : 's'}` : ''} at full demand from completed systems${made > 1e-9 ? ', net of yesterday’s on-site production' : ''}; future gathering, substitutions and orders are not counted. Without it, the systems that use it ${consumerConsequence(r.name, plans, state)}. Open sources to buy or set a standing order; gathering needs a work cap or rule and resident labor.`,
     });
   }
+  // Supplies that keep people alive (meals, safe water, cash for orders, sawdust, fuel) rank first by
+  // deadline; the forecast next; inputs whose loss only slows production (feed, seed) after it.
   consumables.sort((a, b) => a.days - b.days);
-  return [...out, ...consumables.map(({ days: _, ...a }) => a)];
+  const vital = consumables.filter((a) => a.survival !== false).map(({ survival: _, ...a }) => a);
+  const other = consumables.filter((a) => a.survival === false).map(({ survival: _, ...a }) => a);
+  const ahead: SurvivalAlert[] = [];
+  if (forecast && home) {
+    const events = [
+      forecast.departureDay !== null && { days: forecast.departureDay, text: `residents leave for town in about ${forecast.departureDay} days` },
+      forecast.firstHarm && { days: forecast.firstHarm.days, text: `${forecast.firstHarm.need} falls short in about ${forecast.firstHarm.days} days` },
+      forecast.cashZeroDay !== null && { days: forecast.cashZeroDay, text: `cash reaches $0 in about ${forecast.cashZeroDay} days` },
+    ].filter((e): e is { days: number; text: string } => !!e);
+    if (events.length) {
+      const head = forecast.departureDay !== null ? events[0]! : [...events].sort((a, b) => a.days - b.days)[0]!;
+      ahead.push({
+        id: 'forecast',
+        title: `Forecast: ${head.text}`,
+        resource: forecast.firstHarm ? (forecast.firstHarm.need === 'Heat' ? 'Heat' : forecast.firstHarm.need) : null,
+        work: true,
+        days: Math.min(...events.map((e) => e.days)),
+        detail: `If nothing changes over the next ${forecast.days} days: ${events.sort((a, b) => a.days - b.days).map((e) => e.text).join('; ')}. The projection keeps current stocks, orders, work and weather; it is not a promise. Plan → Next 90 days shows the details.`,
+      });
+    }
+  }
+  return [...out, ...vital, ...ahead, ...other, ...comfort];
 }
 
 /** Warn this many days ahead of running out of a consumable input. */
@@ -193,6 +297,16 @@ export const CONSUMABLE_WARN_DAYS = 7;
 /** Buyable stock that systems burn or use up: fuel, seed, feed, bedding, amendments. Survival needs have their own alerts. */
 function isConsumable(r: Catalog['resources'][number]): boolean {
   return r.storable && r.class === 'Flow' && !r.needsRow && r.marketAvailable;
+}
+
+/** Survival services an input keeps running: sanitation, heat, cooking fuel and safe water. */
+const VITAL_OUTPUTS = new Set(['Sanitation', 'Heat', 'Cooking fuel', 'Drinking water']);
+
+function feedsSurvival(resource: string, plans: ReturnType<typeof getPlans>, state: GameState): boolean {
+  return state.instances.some((i) => {
+    const p = plans.bySystem.get(i.systemId)!;
+    return i.status === 'active' && p.inputs.some((f) => f.resource === resource && f.role !== 'boost') && p.outputs.some((o) => VITAL_OUTPUTS.has(o.resource));
+  });
 }
 
 function consumerConsequence(resource: string, plans: ReturnType<typeof getPlans>, state: GameState): string {
