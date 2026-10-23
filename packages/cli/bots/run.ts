@@ -2,6 +2,9 @@ import { catalog as defaultCatalog, getSite, getStart, type Catalog, type Diffic
 import { gameFromStart, stepDay, type Action, type DayLedger, type GameEvent, type GameSettings, type GameState } from '@homestead/engine';
 import type { Bot } from './types.ts';
 
+/** What a new game started in the app sets (NewGame.tsx): the same rules a player gets today. */
+export const NEW_GAME_SETTINGS = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, serviceWarmUp: true };
+
 export interface PlayOptions {
   start: string;
   site: string;

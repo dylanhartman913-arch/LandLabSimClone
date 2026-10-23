@@ -9,4 +9,6 @@ export interface Bot {
   name: string;
   /** Act before today is simulated; return the new state (actions already applied and logged). */
   act(catalog: Catalog, state: GameState, log: Action[]): GameState;
+  /** What the bot saw, for gates that judge warnings (day offset from the start, alert id). */
+  seen?: { day: number; id: string }[];
 }

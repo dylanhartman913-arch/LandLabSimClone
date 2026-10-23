@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { currentQuest, survivalAlerts, transitionForecast } from '@homestead/engine';
-import { playBot } from '../bots/index.ts';
+import { NOVICE_GATE, noviceBot, playBot, runGates } from '../bots/index.ts';
 import { doStep } from '../bots/steps.ts';
 import { NEW_GAME_SETTINGS } from '../bots/compare.ts';
 import type { Bot } from '../bots/types.ts';
@@ -41,5 +41,16 @@ describe('LL-15: the novice who never set up supplies is warned well before the 
     expect(harm - food.day).toBeGreaterThanOrEqual(5);
     // Exhausted chicken feed (production only) never outranks the survival warnings.
     expect(top.filter((t) => t.day >= forecast.day && t.day < harm).every((t) => t.id !== 'Chicken feed')).toBe(true);
+  });
+});
+
+describe('LL-48: the novice gate has teeth', () => {
+  it('a novice who ignores the alerts (the Oct 22 playtest) fails it; one who acts on them passes', () => {
+    const ignoring = { ...NOVICE_GATE, makeBot: () => noviceBot({ react: false }) };
+    const [front] = runGates({ gates: [ignoring], sites: ['front-range'], seeds: [1] });
+    expect(front!.pass).toBe(false);
+    expect(front!.runs[0]!.detail).toMatch(/left on day \d+/);
+    const [acting] = runGates({ gates: [NOVICE_GATE], sites: ['front-range'], seeds: [1] });
+    expect(acting!.pass).toBe(true);
   });
 });

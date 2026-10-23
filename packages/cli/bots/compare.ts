@@ -19,7 +19,7 @@ import {
   type GameState,
 } from '@homestead/engine';
 import winterFixture from '../../engine/test/fixtures/playtest/winter.json' with { type: 'json' };
-import { playBot, type PlayResult } from './run.ts';
+import { NEW_GAME_SETTINGS, playBot, type PlayResult } from './run.ts';
 import { doStep } from './steps.ts';
 import type { Bot } from './types.ts';
 
@@ -32,8 +32,7 @@ import type { Bot } from './types.ts';
 export const COMPARE_SITES = ['front-range', 'laramie-wy', 'asheville-nc'];
 export const COMPARE_SEEDS = [1, 2, 3];
 export const COMPARE_DAYS = 365;
-/** What a new game started in the app sets (NewGame.tsx): the same rules a player gets today. */
-export const NEW_GAME_SETTINGS = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, serviceWarmUp: true };
+export { NEW_GAME_SETTINGS } from './run.ts';
 
 /** A decision taken on a fixed day offset from the start, whatever the run has done so far. */
 interface Decision {

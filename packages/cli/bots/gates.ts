@@ -4,6 +4,8 @@ import { adaptUpgraderBot } from './adaptUpgrader.ts';
 import { idleBot } from './idle.ts';
 import { playBot, type PlayResult } from './run.ts';
 import { tutorialFollowerBot } from './tutorialFollower.ts';
+import { noviceBot } from './novice.ts';
+import { NEW_GAME_SETTINGS } from './run.ts';
 import type { Bot } from './types.ts';
 
 export const GATE_SEEDS = [1, 2, 3];
@@ -25,8 +27,10 @@ export interface Gate {
   rule: string;
   days: number;
   makeBot(): Bot;
-  /** One run's verdict. */
-  check(r: PlayResult, site: string, catalog: Catalog): { pass: boolean; detail: string };
+  /** Settings a new game would start with (default: the start's own). */
+  settings?: Partial<GameState['settings']>;
+  /** One run's verdict; `bot` is the instance that played it. */
+  check(r: PlayResult, site: string, catalog: Catalog, bot: Bot): { pass: boolean; detail: string };
   /** Across seeds on one site (default: every seed passes). */
   combine?(runs: GateRun[]): boolean;
 }
@@ -74,6 +78,33 @@ function billsChange(r: PlayResult): { first: number; last: number } {
   };
   return { first: avg(r.ledgers.slice(7, 35)), last: avg(r.ledgers.slice(-28)) };
 }
+
+/**
+ * LL-48: the Oct 22 playtest's novice — quest text only, reacting to Act now — with the rules a
+ * new game gets. Every departure must have been warned two weeks ahead (forecast or Act now), and
+ * nobody leaves before day 300. Exported for the tests that show it fails when alerts are ignored.
+ */
+export const NOVICE_GATE: Gate = {
+  id: 'greenfield-novice',
+  start: 'greenfield',
+  difficulty: 'real',
+  bot: 'novice',
+  rule: 'a novice who follows the quest text and acts on Act now stays home through day 300, and every departure is warned 14+ days ahead',
+  days: 365,
+  settings: NEW_GAME_SETTINGS,
+  makeBot: noviceBot,
+  check(r, _site, _catalog, bot) {
+    const start = r.ledgers[0]!.absDay;
+    const left = [...new Set(r.events.filter((e) => e.kind === 'went-to-town').map((e) => e.absDay - start))];
+    const unwarned = left.filter((d) => !(bot.seen ?? []).some((s) => s.day <= d - NOVICE_WARNING_DAYS));
+    const first = left.length ? Math.min(...left) : Infinity;
+    return {
+      pass: first >= 300 && unwarned.length === 0,
+      detail: `${left.length ? `left on day ${left.join(', ')}` : 'stayed home'}${unwarned.length ? `; unwarned departures on day ${unwarned.join(', ')}` : ''}`,
+    };
+  },
+};
+export const NOVICE_WARNING_DAYS = 14;
 
 /** The pacing gates (playability roadmap, G16). CI fails if any misses. */
 export const GATES: Gate[] = [
@@ -151,6 +182,7 @@ export const GATES: Gate[] = [
       return { pass: fall >= 0.2 && low >= 70, detail: `bills $${first.toFixed(0)} → $${last.toFixed(0)} a week (${(fall * 100).toFixed(0)}% lower), lowest wellbeing ${low.toFixed(0)}` };
     },
   },
+  NOVICE_GATE,
 ];
 
 export interface GateResult {
@@ -168,8 +200,10 @@ export function runGates(opts: { gates?: Gate[]; sites?: string[]; seeds?: numbe
     for (const site of opts.sites ?? GATE_SITES) {
       const runs: GateRun[] = [];
       for (const seed of opts.seeds ?? GATE_SEEDS) {
-        const r = playBot(gate.makeBot(), { start: gate.start, site, difficulty: gate.difficulty, seed, days: gate.days, catalog, ...(opts.settings ? { settings: opts.settings } : {}) });
-        runs.push({ site, seed, ...gate.check(r, site, catalog) });
+        const bot = gate.makeBot();
+        const settings = { ...gate.settings, ...opts.settings };
+        const r = playBot(bot, { start: gate.start, site, difficulty: gate.difficulty, seed, days: gate.days, catalog, ...(Object.keys(settings).length ? { settings } : {}) });
+        runs.push({ site, seed, ...gate.check(r, site, catalog, bot) });
       }
       out.push({ gate, site, runs, pass: gate.combine ? gate.combine(runs) : runs.every((x) => x.pass) });
     }

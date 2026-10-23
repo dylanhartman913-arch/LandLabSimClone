@@ -1054,3 +1054,15 @@ Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-17). Continued after `977cae2`. Engine `0
 **Fix:** with `settings.serviceWarmUp` (read only when a game starts, through `startGame`/`gameFromStart`), a second silent day starts from the first day's household by-products (Organic waste, Food waste, Greywater). Those by-products carry into day 1, the stockpile stays exactly as the start defines it, and the eve's shortage flags carry over, so only shortages that first appear on day 1 are announced. `NewGame`, the bots (`playBot`/`runGates` gain start settings) and the comparison harness enable it. Legacy inits replay unchanged.
 
 **Validation:** 3 engine tests in `starts.test.ts` (day-1 sanitation equals the steady state on all three sites, with no sanitation shortage event or alert; stockpile identical; legacy keeps the recorded gap). Greenfield day 1–2 events went from 5–6 shortages and a sanitation alert to none on all sites. 312/312 unit tests; pacing passes under legacy and full new-game rules (now applied from the start); browser 53/55 on a fresh build (same two baseline failures). Comparisons regenerated: the tutorial baseline's 2 essential-short days were this artifact (now 0; lowest wellbeing 75). The unexplained Bell Tent variant moved again (real-weather median lowest wellbeing 31); still open.
+
+## LL-48 — a novice bot in the pacing gates (2026-10-23)
+
+Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-48), the last item of the first batch. Continued after `5f42d1b`. Bots and tests only; no engine or app change.
+
+**Bot (`packages/cli/bots/novice.ts`):** reproduces the Oct 22 playtest's novice. It does each quest's own steps except the standing orders the quest text never mentions, and reacts only to Act now in Needs and bottlenecks. For a supply about to run out, it sets a standing order for 7 days of the last week's use; with residents in town, it books the recovery route when the game says it works. The forecast refreshes weekly, as in the hint card. `noviceBot({ react: false })` ignores the alerts, as in the playtest.
+
+**Gate (`greenfield-novice`, real weather, 3 sites × 3 seeds, new-game settings):** nobody leaves before day 300, and every departure was preceded by a forecast or Act now alert at least 14 days earlier. Gates may now carry start settings, and `check` receives the bot instance (for what it saw). `NEW_GAME_SETTINGS` moved to `bots/run.ts` and is shared by the gates and the comparisons.
+
+**Results:** Front Range and Asheville stay home all year in every seed; orders are set around day 75 (Food) and day 79 (Carbon), before both cliffs. Laramie leaves on days 339–347 when cash runs out with no income (LL-24); each departure was warned. The alert-ignoring novice fails the gate (left on day ~87), which is the playtest outcome.
+
+**Validation:** gate passes in `pacing.test.ts` and both policy suites; the teeth test in `alerts.test.ts`. 316/316 unit tests, typecheck, lint.
