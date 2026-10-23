@@ -1,6 +1,7 @@
 import type { Catalog, Difficulty, Site, Start } from '@homestead/catalog';
 import { initGame, parcelSideFt, placeSystem } from './game.ts';
 import { stepDay } from './step.ts';
+import { getPlans } from './plans.ts';
 import { newTutorial } from '../tutorial.ts';
 import type { GameState } from './types.ts';
 
@@ -17,6 +18,8 @@ export interface StartOptions {
   /** Adults in the household (defaults to the start's default). */
   household?: number;
   seed?: number;
+  /** v0.7 (`settings.serviceWarmUp`): a second silent day, fed by the household's own by-products. */
+  warmUp?: boolean;
 }
 
 /**
@@ -59,10 +62,25 @@ export function gameFromStart(catalog: Catalog, site: Site, start: Start, opts: 
   }
   // The kit was already running yesterday: carry over one silent day's direct-use output and
   // group results (so the house's sanitation and the cars' miles count on day 1), nothing else.
-  const eve = stepDay({ ...s, calendar: { ...s.calendar, day: (startDay + 364) % 365 } }, catalog).state;
+  const eveCal = { ...s.calendar, day: (startDay + 364) % 365 };
+  let eve = stepDay({ ...s, calendar: eveCal }, catalog).state;
+  // v0.7: on that silent day the toilet had no organic waste yet (people make it during the day), so
+  // day 1 showed 0% sanitation. A second silent day starts with the first day's household by-products;
+  // they carry into day 1 too. The stockpile stays exactly as the start defines it.
+  const byproducts = new Set<string>();
+  if (opts.warmUp) {
+    const plans = getPlans(catalog, site);
+    for (const i of s.instances)
+      if (i.person) for (const o of plans.bySystem.get(i.systemId)!.outputs) if (o.resource !== 'Labor' && start.stockpile[o.resource] === undefined) byproducts.add(o.resource);
+    const made = (g: GameState) => Object.fromEntries([...byproducts].map((r) => [r, g.stocks[r] ?? 0]));
+    eve = stepDay({ ...s, calendar: eveCal, stocks: { ...s.stocks, ...made(eve) }, direct: eve.direct, services: eve.services, lastDay: eve.lastDay }, catalog).state;
+  }
   const carried: Record<string, number> = { ...s.stocks };
   for (const r of catalog.resources) if (r.class === 'Flow' && !r.storable && eve.stocks[r.name] !== undefined) carried[r.name] = eve.stocks[r.name]!;
-  s = { ...s, stocks: carried, direct: eve.direct, services: eve.services, lastDay: eve.lastDay };
+  for (const r of byproducts) if (eve.stocks[r] !== undefined) carried[r] = eve.stocks[r]!;
+  // With the warm-up, yesterday's steady gaps (the starter toilet covers half of two adults) are not
+  // announced as new on day 1; a shortage that first appears on day 1 still is.
+  s = { ...s, stocks: carried, direct: eve.direct, services: eve.services, lastDay: eve.lastDay, ...(opts.warmUp ? { flags: eve.flags } : {}) };
   return {
     ...s,
     start: { id: start.id, difficulty, household: people, headline: start.headline, tutorial: start.tutorial },

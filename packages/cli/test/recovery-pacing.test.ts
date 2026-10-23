@@ -33,8 +33,8 @@ describe('Phase 2 return policy preserves pacing', () => {
     });
 });
 
-describe('new-game rules (safer return, idle labor reuse, survival-level shelter return, safe water first) preserve pacing', () => {
-  const rules = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true };
+describe('new-game rules (safer return, idle labor reuse, survival-level shelter return, safe water first, service warm-up) preserve pacing', () => {
+  const rules = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, serviceWarmUp: true };
   for (const gate of GATES)
     it(gate.id, () => {
       const g = {
@@ -53,7 +53,7 @@ describe('new-game rules (safer return, idle labor reuse, survival-level shelter
           };
         },
       };
-      for (const result of runGates({ gates: [g] }))
+      for (const result of runGates({ gates: [g], settings: rules }))
         expect(result.pass, `${gate.id} on ${result.site}: ${result.runs.map((r) => r.detail).join('; ')}`).toBe(true);
     });
 });

@@ -23,7 +23,7 @@ export interface PlayResult {
 /** Play a start with a bot for `days` days: each morning the bot acts, then the day runs. */
 export function playBot(bot: Bot, o: PlayOptions): PlayResult {
   const catalog = o.catalog ?? defaultCatalog;
-  let state = gameFromStart(catalog, getSite(o.site), getStart(o.start), { difficulty: o.difficulty ?? 'standard', seed: o.seed ?? 1 });
+  let state = gameFromStart(catalog, getSite(o.site), getStart(o.start), { difficulty: o.difficulty ?? 'standard', seed: o.seed ?? 1, warmUp: o.settings?.serviceWarmUp === true });
   if (o.settings) state = { ...state, settings: { ...state.settings, ...o.settings } };
   const ledgers: DayLedger[] = [];
   const events: GameEvent[] = [];

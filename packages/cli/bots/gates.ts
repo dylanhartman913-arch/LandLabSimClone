@@ -161,14 +161,14 @@ export interface GateResult {
 }
 
 /** Run every gate on every site and seed. */
-export function runGates(opts: { gates?: Gate[]; sites?: string[]; seeds?: number[]; catalog?: Catalog } = {}): GateResult[] {
+export function runGates(opts: { gates?: Gate[]; sites?: string[]; seeds?: number[]; catalog?: Catalog; settings?: Partial<GameState['settings']> } = {}): GateResult[] {
   const catalog = opts.catalog ?? defaultCatalog;
   const out: GateResult[] = [];
   for (const gate of opts.gates ?? GATES) {
     for (const site of opts.sites ?? GATE_SITES) {
       const runs: GateRun[] = [];
       for (const seed of opts.seeds ?? GATE_SEEDS) {
-        const r = playBot(gate.makeBot(), { start: gate.start, site, difficulty: gate.difficulty, seed, days: gate.days, catalog });
+        const r = playBot(gate.makeBot(), { start: gate.start, site, difficulty: gate.difficulty, seed, days: gate.days, catalog, ...(opts.settings ? { settings: opts.settings } : {}) });
         runs.push({ site, seed, ...gate.check(r, site, catalog) });
       }
       out.push({ gate, site, runs, pass: gate.combine ? gate.combine(runs) : runs.every((x) => x.pass) });

@@ -1,6 +1,8 @@
 import { catalog, getSite, getStart, type Difficulty } from '@homestead/catalog';
 import { describe, expect, it } from 'vitest';
 import {
+  startGame,
+  survivalAlerts,
   buyAtMarket,
   checklistView,
   initGame,
@@ -217,5 +219,34 @@ describe('wool blankets replace the hidden bedding constant (G16)', () => {
     const b = g.instances.find((i) => i.systemId === blankets())!;
     const t = g.instances.find((i) => i.systemId === sysId('Canvas Wall Tent + Stove Jack'))!;
     expect([b.x, b.y]).toEqual([t.x, t.y]);
+  });
+});
+
+describe('LL-17: no day-1 false alarm', () => {
+  const firstDays = (warmUp: boolean, site = 'front-range') => {
+    const init = { siteId: site, seed: 1, settings: warmUp ? { serviceWarmUp: true } : {}, start: { id: 'greenfield', difficulty: 'standard' as const, household: 2 } };
+    const s = startGame(catalog, init);
+    const r = stepDays(s, catalog, 3);
+    return { s, r, san: r.ledgers.map((l) => l.needs.Sanitation.delivered / l.needs.Sanitation.needed) };
+  };
+
+  it('the starter toilet works from day 1 because the household made organic waste yesterday', () => {
+    for (const site of ['front-range', 'laramie-wy', 'asheville-nc']) {
+      const { san, r } = firstDays(true, site);
+      expect(san[0]).toBeCloseTo(san[2]!, 6);
+      // The starter toilet's steady half coverage was already true yesterday: not news on day 1.
+      expect(r.events.some((e) => e.kind === 'shortage' && e.resource === 'Sanitation')).toBe(false);
+      expect(survivalAlerts(r.state, catalog).some((a) => a.id === 'sanitation')).toBe(false);
+    }
+  });
+
+  it('the warm-up leaves the stockpile exactly as the start defines it', () => {
+    const a = firstDays(true).s;
+    const b = firstDays(false).s;
+    for (const [r, v] of Object.entries(b.stocks)) if (getStart('greenfield').stockpile[r] !== undefined) expect(a.stocks[r]).toBe(v);
+  });
+
+  it('legacy starts keep the recorded day-1 sanitation gap', () => {
+    expect(firstDays(false).san[0]).toBe(0);
   });
 });

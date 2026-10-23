@@ -1044,3 +1044,13 @@ Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-14). Continued after `06d35e5`. Read-only
 **UI:** the single hint slot is replaced by Needs and bottlenecks (`HintCard`, `data-testid="hint"` kept). It shows every alert, grouped and ranked; each row shows its deadline chip and actions (sources, Market, the forecast tab in Plan, Work), and the most urgent row is open. Weekly design advice moves to an Improve section with the same dismiss rule. The list scrolls within 45vh and collapses to its most urgent line while placing (part of LL-12).
 
 **Validation:** 2 engine tests (sections in order, deadlines ascending within a section, current shortages marked, no forecast repeat) and the browser test `alerts.spec.ts` (food and water runways both visible under Act now, deadlines ascending, Market action present, collapses while placing). 309/309 unit tests; browser 53/55 on a fresh build (same two baseline failures). Screenshot: `docs/screenshots/ll-14/needs-and-bottlenecks.png`.
+
+## LL-17 — no day-1 false alarm (2026-10-22)
+
+Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-17). Continued after `977cae2`. Engine `0.7.0`; save schema unchanged.
+
+**Cause:** the start's silent "eve" day began with no Organic waste (people make it during the day), so the starter toilet stalled on the eve and day 1 showed 0% sanitation. Every steady starter-kit gap (hot water, electricity, transportation) was also announced as a new shortage on day 1, and the game auto-paused.
+
+**Fix:** with `settings.serviceWarmUp` (read only when a game starts, through `startGame`/`gameFromStart`), a second silent day starts from the first day's household by-products (Organic waste, Food waste, Greywater). Those by-products carry into day 1, the stockpile stays exactly as the start defines it, and the eve's shortage flags carry over, so only shortages that first appear on day 1 are announced. `NewGame`, the bots (`playBot`/`runGates` gain start settings) and the comparison harness enable it. Legacy inits replay unchanged.
+
+**Validation:** 3 engine tests in `starts.test.ts` (day-1 sanitation equals the steady state on all three sites, with no sanitation shortage event or alert; stockpile identical; legacy keeps the recorded gap). Greenfield day 1–2 events went from 5–6 shortages and a sanitation alert to none on all sites. 312/312 unit tests; pacing passes under legacy and full new-game rules (now applied from the start); browser 53/55 on a fresh build (same two baseline failures). Comparisons regenerated: the tutorial baseline's 2 essential-short days were this artifact (now 0; lowest wellbeing 75). The unexplained Bell Tent variant moved again (real-weather median lowest wellbeing 31); still open.

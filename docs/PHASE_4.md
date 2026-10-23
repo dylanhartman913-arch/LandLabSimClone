@@ -54,3 +54,7 @@ The tables in `PHASE_4_COMPARISONS.md` were regenerated with the new-game rules,
 - **Tutorial baseline:** worst real-weather wellbeing 74 (was 65); worst-case short days 7 (was 9); year-end cash median $386 Standard (was $434).
 - **Late cistern:** 0/9 real-weather departures (was 1/9).
 - **Bell Tent on day 30:** worse in real weather (median minimum wellbeing 42, was 74; same 3/9 departures). Not yet explained; check before balance work.
+
+## Update after LL-17 (engine 0.7.0)
+
+Runs now start with the service warm-up. The tutorial baseline's essential-short days drop from 2 to 0, and its lowest wellbeing rises from 74 to 75; both were the day-1 sanitation artifact. The Bell Tent variant's real-weather median lowest wellbeing is now 31 (Standard 31). Investigate before balance work.

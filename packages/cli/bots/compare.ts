@@ -33,7 +33,7 @@ export const COMPARE_SITES = ['front-range', 'laramie-wy', 'asheville-nc'];
 export const COMPARE_SEEDS = [1, 2, 3];
 export const COMPARE_DAYS = 365;
 /** What a new game started in the app sets (NewGame.tsx): the same rules a player gets today. */
-export const NEW_GAME_SETTINGS = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true };
+export const NEW_GAME_SETTINGS = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, serviceWarmUp: true };
 
 /** A decision taken on a fixed day offset from the start, whatever the run has done so far. */
 interface Decision {
