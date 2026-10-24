@@ -564,6 +564,9 @@ export type Start = z.infer<typeof StartSchema>;
  * - lacks: no active instance of a system.
  * - days: this many days since the quest began.
  * - ui: the player did something in the interface (opened a panel); bots count it as done.
+ * - standing: a standing order keeps `resource` above some level (LL-18).
+ * - staysWarm: this many cold days (HDD above `hddAbove`) since the quest began with residents at
+ *   home and the household's heat at least at the survival level, so nobody suffers from cold (LL-18).
  */
 export const QuestGoalSchema: z.ZodType<QuestGoal, z.ZodTypeDef, unknown> = z.lazy(() =>
   z.union([
@@ -583,6 +586,8 @@ export const QuestGoalSchema: z.ZodType<QuestGoal, z.ZodTypeDef, unknown> = z.la
     z.object({ kind: z.literal('lacks'), system: z.string() }).strict(),
     z.object({ kind: z.literal('days'), atLeast: z.number().int().min(1) }).strict(),
     z.object({ kind: z.literal('ui'), panel: z.string(), label: z.string() }).strict(),
+    z.object({ kind: z.literal('standing'), resource: z.string() }).strict(),
+    z.object({ kind: z.literal('staysWarm'), hddAbove: z.number(), days: z.number().int().min(1) }).strict(),
   ]),
 );
 export type QuestGoal =
@@ -597,7 +602,9 @@ export type QuestGoal =
   | { kind: 'modified'; system: string; resource: string }
   | { kind: 'lacks'; system: string }
   | { kind: 'days'; atLeast: number }
-  | { kind: 'ui'; panel: string; label: string };
+  | { kind: 'ui'; panel: string; label: string }
+  | { kind: 'standing'; resource: string }
+  | { kind: 'staysWarm'; hddAbove: number; days: number };
 
 /**
  * The cheapest way a quest suggests to do it (G16): what the tutorial-following bot does,

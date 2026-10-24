@@ -1066,3 +1066,37 @@ Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-48), the last item of the first batch. Co
 **Results:** Front Range and Asheville stay home all year in every seed; orders are set around day 75 (Food) and day 79 (Carbon), before both cliffs. Laramie leaves on days 339–347 when cash runs out with no income (LL-24); each departure was warned. The alert-ignoring novice fails the gate (left on day ~87), which is the playtest outcome.
 
 **Validation:** gate passes in `pacing.test.ts` and both policy suites; the teeth test in `alerts.test.ts`. 316/316 unit tests, typecheck, lint.
+
+## LL-18 — a tutorial that keeps teaching through the season (2026-10-24)
+
+Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-18), first Phase 7 item. Continued after `4ad8b90`. Engine `0.8.0`; save schema unchanged.
+
+**Seasonal line (`data/quests/greenfield-seasons.json`), chosen at start by `settings.tutorialSeasons`:** saved games keep the line they started with, and their replays are unchanged.
+
+| # | Quest | Change |
+|---|---|---|
+| 1–3 | Water, firewood, bed | Unchanged |
+| 4 | Compost | Text names the Carbon standing order its steps set |
+| 5 | Water target | Text names the grocery order |
+| 6 | Hens | Text names the feed order; Show me opens the coop |
+| 7 | Keep supplies coming (new) | Goal: standing orders for Food, Carbon and Chicken feed |
+| 8 | Build the heater before the cold (new, summer) | Goal: heater built and a 4-week wood rule; takes the old cold quest's reward |
+| 9 | Grow 25% of your food | Moved before winter; Show me opens the quail hutch |
+| 10 | Put up a winter woodpile (new) | Goal: 1,200 lbs of firewood in stock, gathered or bought; the step buys 600 lbs, about $60, because one Laramie deadfall can't supply it |
+| 11 | First cold snap | Now `staysWarm`: three cold days with residents home and household heat at the survival level, so an unheated second shelter no longer blocks it; the text says it waits for the cold |
+
+Neighbor assistance totals are identical ($2,600 cash plus the same stock).
+
+**Engine:** goal kinds `standing` (a standing order exists) and `staysWarm` (survival heat on cold days with someone home). **Novice bot:** sets a scripted standing order when the quest text names its resource.
+
+**UI:** the stabilization paragraph shows on quest 1 only; the cold-day line shows on quest 1 and heating quests. Show me's drawer filter clears once the card closes or placement starts.
+
+**Effect:** the tutorial and novice bots finish all 11 quests on every site and seed. The last summer quest is done by days 53–75, and the cold-snap quest completes on the first cold days (151–289). Nobody leaves home. On this line, a novice who ignores alerts survives on the quest text alone; on the original line it still fails the novice gate.
+
+LL-10 comparisons (regenerated; the harness drops gf-heater's steps in the winter variants and prices gifts from the line actually played):
+
+- **Tutorial baseline:** year-end cash median $980 (was $365). Gifts received in year 1 are $3,248, because the food quest's $500 no longer waits behind winter.
+- **Bell Tent on day 30:** median lowest wellbeing 75 (was 31), short days 3 (was 19). This resolves the open Bell Tent question: the variant suffered from the unmentioned supply orders.
+- **Yurt:** days away 144 (was 182).
+
+**Validation:** 6 engine tests (line selection, named orders, Show me targets, unchanged totals, `staysWarm` vs `warm`, `standing`); 2 CLI tests (whole line in year 1 on all sites; quest text alone suffices on the seasonal line); the teeth test now pins the original line. 324/324 unit tests, typecheck, lint, catalog:check; browser 53/55 on a fresh build (same two baseline failures).

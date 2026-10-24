@@ -1,5 +1,6 @@
 import { getQuestLine, type Catalog, type QuestDef, type QuestGoal, type QuestLine } from '@homestead/catalog';
 import { computeSpatial } from './time/spatial.ts';
+import { SURVIVAL } from './time/wellbeing.ts';
 import type { DayLedger, GameState } from './time/types.ts';
 
 /** Where a game's tutorial stands (G16). Lives in the game state, so rewards replay exactly. */
@@ -137,6 +138,20 @@ export function goalStatus(state: GameState, catalog: Catalog, goal: QuestGoal, 
     case 'ui': {
       const ok = ui.includes(goal.panel);
       return { done: ok, progress: ok ? 1 : 0, detail: goal.label };
+    }
+    case 'standing': {
+      const o = state.market?.standing.find((x) => x.resource === goal.resource && x.keepAbove > 0);
+      return { done: !!o, progress: o ? 1 : 0, detail: o ? `standing order keeps ${goal.resource} above ${fmt(o.keepAbove)}` : `no standing order for ${goal.resource} yet (Market → Keep above)` };
+    }
+    case 'staysWarm': {
+      let n = 0;
+      for (const l of state.ledgers)
+        if (l.absDay >= since && l.weather.hdd > goal.hddAbove && l.wellbeing !== null && heatShare(l) >= SURVIVAL.heat.short - 1e-9) n++;
+      return {
+        done: n >= goal.days,
+        progress: Math.min(1, n / goal.days),
+        detail: `${Math.min(n, goal.days)} of ${goal.days} cold days with nobody suffering from cold`,
+      };
     }
   }
 }

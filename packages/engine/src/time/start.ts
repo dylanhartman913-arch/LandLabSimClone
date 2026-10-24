@@ -3,6 +3,7 @@ import { initGame, parcelSideFt, placeSystem } from './game.ts';
 import { stepDay } from './step.ts';
 import { getPlans } from './plans.ts';
 import { newTutorial } from '../tutorial.ts';
+import { QUEST_LINES } from '@homestead/catalog';
 import type { GameState } from './types.ts';
 
 /** Days before the last spring frost that a `spring` start begins. */
@@ -20,6 +21,8 @@ export interface StartOptions {
   seed?: number;
   /** v0.7 (`settings.serviceWarmUp`): a second silent day, fed by the household's own by-products. */
   warmUp?: boolean;
+  /** v0.8 (`settings.tutorialSeasons`): the start's seasonal quest line, when it has one (LL-18). */
+  tutorialSeasons?: boolean;
 }
 
 /**
@@ -84,6 +87,11 @@ export function gameFromStart(catalog: Catalog, site: Site, start: Start, opts: 
   return {
     ...s,
     start: { id: start.id, difficulty, household: people, headline: start.headline, tutorial: start.tutorial },
-    ...(start.tutorial ? { tutorial: newTutorial(start.tutorial, s.calendar.absDay) } : {}),
+    ...(start.tutorial ? { tutorial: newTutorial(tutorialLineFor(start.tutorial, opts.tutorialSeasons), s.calendar.absDay) } : {}),
   };
+}
+
+/** The seasonal line (`<line>-seasons`) keeps teaching through summer; legacy games keep the original. */
+function tutorialLineFor(line: string, seasons?: boolean): string {
+  return seasons && QUEST_LINES[`${line}-seasons`] ? `${line}-seasons` : line;
 }

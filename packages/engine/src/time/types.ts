@@ -26,6 +26,8 @@ export interface GameSettings {
   safeWaterFirst?: boolean;
   /** v0.7 start: services warm up on household by-products, so day 1 has no false shortage. Only read when a game starts. */
   serviceWarmUp?: boolean;
+  /** v0.8 start: the seasonal tutorial line (summer goals, named supply orders, warmth by residents). Only read when a game starts. */
+  tutorialSeasons?: boolean;
   /** Day of year the game starts on (0 = Jan 1). */
   startDay?: number;
   /** Stocks on day one (arrival supplies). */

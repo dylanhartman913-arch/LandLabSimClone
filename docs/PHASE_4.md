@@ -58,3 +58,12 @@ The tables in `PHASE_4_COMPARISONS.md` were regenerated with the new-game rules,
 ## Update after LL-17 (engine 0.7.0)
 
 Runs now start with the service warm-up. The tutorial baseline's essential-short days drop from 2 to 0, and its lowest wellbeing rises from 74 to 75; both were the day-1 sanitation artifact. The Bell Tent variant's real-weather median lowest wellbeing is now 31 (Standard 31). Investigate before balance work.
+
+## Update after LL-18 (engine 0.8.0)
+
+New games use the seasonal tutorial line, which names the supply orders and moves the food and heater quests before winter.
+
+- **Tutorial baseline:** year-end cash median $980 (was $365). Gifts received in year 1 are $3,248 (the food quest now completes within the year; line totals unchanged).
+- **Bell Tent on day 30:** median lowest wellbeing 75 (was 31). Explained: the variant lacked the supply orders the old quest text never mentioned.
+- **Yurt:** days away 144 (was 182).
+- **Remote job and paid crew:** unchanged.

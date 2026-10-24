@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { currentQuest, survivalAlerts, transitionForecast } from '@homestead/engine';
-import { NOVICE_GATE, noviceBot, playBot, runGates } from '../bots/index.ts';
+import { getQuestLine } from '@homestead/catalog';
+import { NOVICE_GATE, noviceBot, playBot, runGates, tutorialFollowerBot } from '../bots/index.ts';
 import { doStep } from '../bots/steps.ts';
 import { NEW_GAME_SETTINGS } from '../bots/compare.ts';
 import type { Bot } from '../bots/types.ts';
@@ -45,12 +46,33 @@ describe('LL-15: the novice who never set up supplies is warned well before the 
 });
 
 describe('LL-48: the novice gate has teeth', () => {
-  it('a novice who ignores the alerts (the Oct 22 playtest) fails it; one who acts on them passes', () => {
-    const ignoring = { ...NOVICE_GATE, makeBot: () => noviceBot({ react: false }) };
+  it('on the original quest line, a novice who ignores the alerts (the Oct 22 playtest) fails it; one who acts on them passes', () => {
+    const { tutorialSeasons: _, ...original } = NEW_GAME_SETTINGS;
+    const ignoring = { ...NOVICE_GATE, settings: original, makeBot: () => noviceBot({ react: false }) };
     const [front] = runGates({ gates: [ignoring], sites: ['front-range'], seeds: [1] });
     expect(front!.pass).toBe(false);
     expect(front!.runs[0]!.detail).toMatch(/left on day \d+/);
-    const [acting] = runGates({ gates: [NOVICE_GATE], sites: ['front-range'], seeds: [1] });
+    const [acting] = runGates({ gates: [{ ...NOVICE_GATE, settings: original }], sites: ['front-range'], seeds: [1] });
     expect(acting!.pass).toBe(true);
+  });
+
+  it('on the seasonal line (LL-18), the quest text alone gets that novice through the year', () => {
+    const ignoring = { ...NOVICE_GATE, makeBot: () => noviceBot({ react: false }) };
+    expect(runGates({ gates: [ignoring], sites: ['front-range'], seeds: [1] })[0]!.pass).toBe(true);
+  });
+});
+
+describe('LL-18: summer has goals, and the whole line finishes in year 1', () => {
+  it('on every site the tutorial completes, with every quest but the cold snap done well before the cold', () => {
+    for (const site of ['front-range', 'laramie-wy', 'asheville-nc']) {
+      const r = playBot(tutorialFollowerBot(), { start: 'greenfield', site, difficulty: 'real', seed: 2, days: 365, settings: NEW_GAME_SETTINGS });
+      const start = r.ledgers[0]!.absDay;
+      const done = r.state.tutorial!.done;
+      expect(r.state.tutorial!.line).toBe('greenfield-seasons');
+      expect(Object.keys(done)).toHaveLength(getQuestLine('greenfield-seasons').quests.length);
+      const beforeCold = Object.entries(done).filter(([id]) => id !== 'gf-cold').map(([, d]) => d - start);
+      expect(Math.max(...beforeCold)).toBeLessThan(done['gf-cold']! - start - 60);
+      expect(Math.max(...beforeCold)).toBeGreaterThan(45);
+    }
   });
 });

@@ -205,7 +205,7 @@ export function measure(r: PlayResult, catalog: Catalog, extraSkipped = 0): RunM
   let best30 = 0;
   for (let k = 30; k <= ledgers.length; k += 5)
     best30 = Math.max(best30, homegrownShare({ ledgers: ledgers.slice(0, k) } as unknown as GameState, catalog, 30));
-  const quests = new Map(getQuestLine('greenfield').quests.map((q) => [q.id, q.reward]));
+  const quests = new Map(getQuestLine(r.state.tutorial?.line ?? 'greenfield').quests.map((q) => [q.id, q.reward]));
   let subsidy = 0;
   for (const e of r.events as GameEvent[]) {
     if (e.kind !== 'quest') continue;
@@ -248,6 +248,7 @@ export interface Comparison {
   variants: Variant[];
 }
 
+// The heater, wood rule and wood order: gf-cold's steps on the original line, gf-heater's on the seasonal one (LL-18).
 const coldSteps: QuestStep[] = getQuestLine('greenfield').quests.find((q) => q.id === 'gf-cold')!.steps;
 const earlyPrep: Decision = { day: (s) => Math.max(0, firstColdDay(s) - 60), label: 'winter prep 60 days early', apply: steps(coldSteps) };
 const latePrep: Decision = { day: (s) => Math.max(0, firstColdDay(s) - 7), label: 'winter prep 7 days early', apply: steps(coldSteps) };
@@ -314,16 +315,16 @@ export const COMPARISONS: Comparison[] = [
     question: 'Is the warning lead time sufficient for real construction ETAs?',
     variants: [
       { id: 'tutorial', label: 'Winter steps when the tutorial reaches them', bot: () => routeBot() },
-      { id: 'early', label: 'Heater, wood rule and order 60 days before first cold', bot: () => routeBot({ withoutQuestSteps: ['gf-cold'], decisions: [earlyPrep] }) },
-      { id: 'late', label: 'The same 7 days before first cold', bot: () => routeBot({ withoutQuestSteps: ['gf-cold'], decisions: [latePrep] }) },
+      { id: 'early', label: 'Heater, wood rule and order 60 days before first cold', bot: () => routeBot({ withoutQuestSteps: ['gf-cold', 'gf-heater'], decisions: [earlyPrep] }) },
+      { id: 'late', label: 'The same 7 days before first cold', bot: () => routeBot({ withoutQuestSteps: ['gf-cold', 'gf-heater'], decisions: [latePrep] }) },
     ],
   },
   {
     id: 'rescue',
     question: 'Does recovery have a reasonable price and duration?',
     variants: [
-      { id: 'household', label: 'Late heater built by household labor', bot: () => routeBot({ withoutQuestSteps: ['gf-cold'], decisions: [latePrep] }) },
-      { id: 'crew', label: 'Late heater with a paid crew booked the same day', bot: () => routeBot({ withoutQuestSteps: ['gf-cold'], decisions: [latePrep, crewForHeater] }) },
+      { id: 'household', label: 'Late heater built by household labor', bot: () => routeBot({ withoutQuestSteps: ['gf-cold', 'gf-heater'], decisions: [latePrep] }) },
+      { id: 'crew', label: 'Late heater with a paid crew booked the same day', bot: () => routeBot({ withoutQuestSteps: ['gf-cold', 'gf-heater'], decisions: [latePrep, crewForHeater] }) },
     ],
   },
   {

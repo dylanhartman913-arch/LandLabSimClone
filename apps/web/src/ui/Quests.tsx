@@ -188,6 +188,12 @@ export function showMe(show: QuestShow): void {
       st.setDrawerTab('systems');
       st.setDrawerQuery(show.name);
       if (sys) st.openCard(sys.id);
+      // The filter only points at the tile: clear it once the card closes or placement starts.
+      const off = useGame.subscribe((s) => {
+        if (s.cardSystemId === sys?.id && s.tool.kind !== 'place') return;
+        if (s.drawerQuery === show.name) s.setDrawerQuery('');
+        off();
+      });
       return;
     }
     case 'node': {
@@ -225,7 +231,12 @@ function TutorialCard() {
         {quest.title}
       </h2>
       <p className="small">{quest.reason}</p>
-      <p className="small muted">Stabilize safe water and storage, food access and recurring consumables before adding more systems. {winterPreparation(game)}</p>
+      {(v.index === 0 || quest.row === 'Heated shelter') && (
+        <p className="small muted" data-testid="quest-season">
+          {v.index === 0 ? 'Stabilize safe water and storage, food access and recurring consumables before adding more systems. ' : ''}
+          {winterPreparation(game)}
+        </p>
+      )}
       {quest.goal.kind === 'gathered' && <p className="small">Open Work and set a weekly cap for the gathering job (firewood: 6 h/week), or an auto-gather reserve rule. Pointing at a node alone does not start work.</p>}
       <div className="bar" role="progressbar" aria-valuenow={Math.round(status.progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Quest progress">
         <div className="bar-fill" style={{ width: fmtPct(status.progress) }} />

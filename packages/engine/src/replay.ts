@@ -103,6 +103,7 @@ export function startGame(catalog: Catalog, init: GameInit): GameState {
       household: init.start.household,
       seed: init.seed,
       warmUp: init.settings.serviceWarmUp === true,
+      tutorialSeasons: init.settings.tutorialSeasons === true,
     });
     return Object.keys(init.settings).length ? { ...g, settings: { ...g.settings, ...init.settings } } : g;
   }

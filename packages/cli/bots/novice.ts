@@ -8,7 +8,7 @@ const ORDER_DAYS = 7;
 
 /**
  * The October 22 playtest's novice (LL-48): does what each quest's visible text asks — its own
- * steps, minus the standing orders the text never mentions — and reacts only to what the Needs
+ * steps, minus standing orders whose resource the text never names — and reacts only to what the Needs
  * and bottlenecks list puts under Act now: a standing order for a supply about to run out, and the
  * recovery route when residents are in town. The forecast refreshes weekly, as in the hint card.
  */
@@ -38,7 +38,9 @@ export function noviceBot(o: { react?: boolean } = {}): Bot {
       const q = currentQuest(state);
       if (q && !quests.has(q.id)) {
         quests.add(q.id);
-        for (const step of q.steps) if (step.do !== 'standing') state = doStep(catalog, state, step, log, []);
+        // A standing order counts as asked for only when the quest's text names its resource.
+        for (const step of q.steps)
+          if (step.do !== 'standing' || q.reason.toLowerCase().includes(step.resource.toLowerCase())) state = doStep(catalog, state, step, log, []);
         if (q.goal.kind === 'ui') state = doStep(catalog, state, { do: 'open', panel: q.goal.panel }, log, []);
       }
       if ((state.calendar.absDay - start) % 7 === 0) forecast = transitionForecast(state, catalog);
