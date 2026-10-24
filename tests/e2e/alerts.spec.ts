@@ -27,3 +27,21 @@ test('needs and bottlenecks: simultaneous cliffs are all visible, ranked, and fo
   await expect(page.getByTestId('alerts-collapsed')).toBeVisible();
   await expect(page.getByTestId('alerts-now')).toHaveCount(0);
 });
+
+test('a season report waits behind Reports while something needs attention now', async ({ page }) => {
+  await openApp(page);
+  const r = await page.evaluate(() => {
+    const st = window.__homestead!.store.getState();
+    st.loadGame(st.init, st.actions, { ...st.game, stocks: { ...st.game.stocks, Food: 0 } });
+    // Run past the end of spring with the pantry empty.
+    for (let k = 0; k < 120 && window.__homestead!.store.getState().reports.length === 0; k++) window.__homestead!.store.getState().tick(1);
+    const s = window.__homestead!.store.getState();
+    return { reports: s.reports.length, panel: s.panel, unread: s.unreadReports };
+  });
+  expect(r.reports).toBeGreaterThan(0);
+  expect(r.panel).not.toBe('report');
+  expect(r.unread).toBeGreaterThan(0);
+  await expect(page.getByTestId('reports-new')).toBeVisible();
+  await page.getByTestId('open-reports').click();
+  await expect(page.getByTestId('reports-new')).toHaveCount(0);
+});

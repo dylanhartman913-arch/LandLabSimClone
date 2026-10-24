@@ -23,6 +23,7 @@ import {
   type GameState,
   type Instance,
   type Report,
+  survivalAlerts,
 } from '@homestead/engine';
 import { create } from 'zustand';
 import { describeCommand, redoActions, undoActions, type Command } from './commands.ts';
@@ -93,6 +94,8 @@ export interface GameStore {
   readOnly: boolean;
   events: GameEvent[];
   reports: Report[];
+  /** Reports made while an Act now alert was showing, not yet opened (LL-21). */
+  unreadReports: number;
   tool: Tool;
   selection: string[];
   camera: Camera;
@@ -297,6 +300,7 @@ export const useGame = create<GameStore>()((set, get) => {
     readOnly: false,
     events: [],
     reports: [],
+    unreadReports: 0,
     tool: { kind: 'select' },
     selection: [],
     camera: { cx: side / 2, cy: side / 2, zoom: 4 },
@@ -375,6 +379,7 @@ export const useGame = create<GameStore>()((set, get) => {
         readOnly: opts.readOnly ?? false,
         events: [],
         reports: [],
+        unreadReports: 0,
         selection: [],
         undoStack: [],
         redoStack: [],
@@ -454,7 +459,12 @@ export const useGame = create<GameStore>()((set, get) => {
         lastTickAt: performance.now(),
         daysSinceAutosave: st.daysSinceAutosave + days,
         ...(reports.length
-          ? { reports: [...st.reports, ...reports].slice(-12), panel: 'report' as Panel }
+          ? {
+              reports: [...st.reports, ...reports].slice(-12),
+              // LL-21: a report doesn't open over a survival problem; it waits behind Reports (new).
+              // (Read-only views show no alert list, so their reports open as before.)
+              ...(!st.readOnly && survivalAlerts(game, st.catalog).some((a) => a.group === 'now') ? { unreadReports: st.unreadReports + reports.length } : { panel: 'report' as Panel }),
+            }
           : {}),
         ...(pauseReason ? { speed: 0 as Speed } : {}),
       });
@@ -827,7 +837,7 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     setPanel(panel) {
-      set({ panel, why: null, ...(panel ? { checklistOpen: false } : {}) });
+      set({ panel, why: null, ...(panel ? { checklistOpen: false } : {}), ...(panel === 'report' ? { unreadReports: 0 } : {}) });
       const g = get().game;
       // A quest can ask the player to look at something ("read your weekly bills").
       if (panel && g.tutorial && !g.tutorial.ui.includes(panel) && !get().readOnly) {

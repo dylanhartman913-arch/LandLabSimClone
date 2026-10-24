@@ -104,7 +104,8 @@ export function Reports() {
               <h3>Money</h3>
               <p>
                 In {fmtMoney(r.cash.in)}, running costs {fmtMoney(r.cash.out)}, purchases{' '}
-                {fmtMoney(r.cash.purchases)}, refunds {fmtMoney(r.cash.refunds)}. Net{' '}
+                {fmtMoney(r.cash.purchases)}, refunds {fmtMoney(r.cash.refunds)}
+                {r.cash.assistance > 0 ? `, neighbor's assistance ${fmtMoney(r.cash.assistance)}` : ''}. Net{' '}
                 <strong>{fmtMoney(r.cash.net)}</strong>.
               </p>
               <h3>Losses</h3>

@@ -23,6 +23,7 @@ export function Hud() {
   const overlayOn = useGame((s) => s.overlay.on);
   const panel = useGame((s) => s.panel);
   const reportCount = useGame((s) => s.reports.length);
+  const unread = useGame((s) => s.unreadReports);
   const readOnly = useGame((s) => s.readOnly);
   const planOpen = usePlan((s) => s.open);
   const st = useGame.getState();
@@ -166,6 +167,7 @@ export function Hud() {
           data-testid="open-reports"
         >
           Reports{reportCount ? ` (${reportCount})` : ''}
+          {unread > 0 && <span className="chip small" data-testid="reports-new"> {unread} new</span>}
         </button>
         <button
           className="btn ghost"

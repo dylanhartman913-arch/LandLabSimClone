@@ -1,4 +1,4 @@
-import type { Catalog, NeedKey } from '@homestead/catalog';
+import { getQuestLine, type Catalog, type NeedKey } from '@homestead/catalog';
 import { getSystem } from '../catalog-index.ts';
 import { MONTH_NAMES, monthOfDay } from '../time/calendar.ts';
 import { climateTable } from '../time/climate.ts';
@@ -47,7 +47,8 @@ export interface Report {
   overallScore: number;
   monthly: { label: string; overall: number; rows: Record<NeedKey, number | null> }[];
   shortages: ShortageReport[];
-  cash: { in: number; out: number; purchases: number; refunds: number; net: number };
+  /** `refunds` excludes the neighbor's quest cash, which is `assistance` (LL-21); `net` counts both. */
+  cash: { in: number; out: number; purchases: number; refunds: number; assistance: number; net: number };
   laborBySystem: { systemId: string; name: string; hours: number }[];
   constructionHours: number;
   spoiled: Record<string, number>;
@@ -246,8 +247,15 @@ export function buildReport(
     bucket.push(l);
   }
   flush();
+  // LL-21: what threatens the household (food, safe water, shelter, heat, sanitation) is listed first.
+  const survival = new Set(
+    catalog.resources.filter((r) => ['Food', 'Drinking water', 'Shelter', 'Heated shelter', 'Sanitation'].includes(r.needsRow ?? '')).map((r) => r.name),
+  );
   const shortages: ShortageReport[] = sum.topShortages
     .filter((s) => s.resource !== 'Labor' || s.unmetShare > 0.05)
+    .map((s, k) => ({ s, k }))
+    .sort((a, b) => Number(survival.has(b.s.resource)) - Number(survival.has(a.s.resource)) || a.k - b.k)
+    .map(({ s }) => s)
     .slice(0, 3)
     .map((s) => {
       const c = rootCauseChain(state, catalog, ledgers, s.resource);
@@ -267,7 +275,20 @@ export function buildReport(
     overallScore: sum.overallScore,
     monthly,
     shortages,
-    cash: { ...sum.cash, net: sum.cash.in - sum.cash.out - sum.cash.purchases + sum.cash.refunds },
+    cash: (() => {
+      // Quest rewards land between days as refunds; separate them as the neighbor's assistance.
+      const line = state.tutorial ? getQuestLine(state.tutorial.line) : null;
+      let assistance = 0;
+      for (const [id, day] of Object.entries(state.tutorial?.done ?? {}))
+        if (day >= sum.fromAbsDay && day <= sum.toAbsDay) assistance += line?.quests.find((q) => q.id === id)?.reward.cash ?? 0;
+      assistance = Math.min(assistance, sum.cash.refunds);
+      return {
+        ...sum.cash,
+        refunds: sum.cash.refunds - assistance,
+        assistance,
+        net: sum.cash.in - sum.cash.out - sum.cash.purchases + sum.cash.refunds,
+      };
+    })(),
     laborBySystem: [...laborMap.entries()]
       .map(([systemId, hours]) => ({ systemId, name: getSystem(catalog, systemId).name, hours }))
       .sort((a, b) => b.hours - a.hours),

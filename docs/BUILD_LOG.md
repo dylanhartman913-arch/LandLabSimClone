@@ -1130,3 +1130,14 @@ Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-20). Continued after `c945d35`. Views and
 - **Alerts and orders:** low-reserve alerts already go quiet once a payable standing order exists (LL-15).
 
 **Validation:** 5 engine tests in `resource.test.ts` and a browser test in `preview.spec.ts` (set a feed order from its page; store shows weekly cash). 334/334 unit tests, typecheck, lint; browser 55/57 on a fresh build (same two baseline failures).
+
+## LL-21 — reports and alert copy (2026-10-24)
+
+Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-21). Continued after `c68c292`. Views and UI only; ledgers and digests unchanged.
+
+- **Reports don't steal focus:** a season or year report made while Needs and bottlenecks has an Act now item no longer opens over it. It waits behind the Reports button with a "new" badge (`unreadReports`, cleared when Reports opens). Read-only shared views have no alert list, so their reports open as before.
+- **Survival first:** "What ran short" lists shortages of food, safe water, shelter, heat and sanitation before comfort rows, still capped at three.
+- **Assistance labeled:** the money line separates the neighbor's quest cash (`cash.assistance`, from the tutorial's completion days within the report window) from refunds; net is unchanged. In the playtest, the season report showed "refunds $1,500" for Ruth's rewards.
+- **Departure causes:** survival needs only (done in LL-13).
+
+**Validation:** 2 engine tests (assistance vs refunds; survival before comfort) and a browser test (a spring report during an empty-pantry crisis waits behind Reports; opening Reports clears the badge). The read-only year-report test caught a regression during development, now fixed. 336/336 unit tests, typecheck, lint; browser 56/58 on a fresh build (same two baseline failures).
