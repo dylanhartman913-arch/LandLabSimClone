@@ -19,6 +19,8 @@ export interface WeeklyBills {
   /** Change from the first full week shown to this one (−0.2 = bills fell 20%). */
   trend: number | null;
   lines: BillLine[];
+  /** Delivery charges as a share of market spending over the last 4 weeks (LL-22); null without market spending. */
+  deliveryShare: Explained | null;
 }
 
 function weekBlocks(ledgers: readonly DayLedger[], n = 12): DayLedger[][] {
@@ -70,7 +72,19 @@ export function weeklyBills(state: GameState, catalog?: Catalog): WeeklyBills {
     first !== undefined && last !== undefined && last > first && weeks[first]! > 0
       ? (weeks[last]! - weeks[first]!) / weeks[first]!
       : null;
+  let market = 0;
+  let delivery = 0;
+  for (const d of state.ledgers.slice(-28)) {
+    if (!d.spend) continue;
+    for (const v of Object.values(d.spend.market)) market += v;
+    delivery += d.spend.delivery;
+  }
+  const deliveryShare =
+    market + delivery > 1e-9
+      ? explained(delivery / (market + delivery), 'delivery charges ÷ (market purchases + delivery), last 28 days', { refs: { market, delivery } })
+      : null;
   return {
+    deliveryShare,
     thisWeek: explained(weeks.at(-1) ?? 0, 'Σ backstop deliveries × price + market purchases + connection fees + delivery + running costs (house, cars), last 7 days', {
       refs: Object.fromEntries(out.map((l) => [l.item, l.thisWeek.value])),
     }),

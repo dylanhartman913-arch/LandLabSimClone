@@ -42,15 +42,21 @@ test('on a tablet the drawer is a bottom sheet and the game still plays', async 
   await expect(page.getByTestId('system-card')).toBeVisible();
   await shot(page, 'g10', '02-tablet-card');
   await page.getByTestId('add-buy').click();
-  const box = (await page.getByTestId('map').boundingBox())!;
-  await page.mouse.click(box.x + box.width * 0.25, box.y + box.height * 0.3);
+  // A quarter of the way into the parcel (zoom-to-fit leaves margins at the tablet's aspect, so a
+  // fixed fraction of the map can land at the parcel's edge, where the yurt rightly doesn't fit).
+  const at = await page.evaluate(() => {
+    const h = window.__homestead!;
+    const side = Math.sqrt(h.store.getState().game.settings.parcelAcres * 43560);
+    return h.worldToClient(side * 0.25, side * 0.3);
+  });
+  await page.mouse.click(at.x, at.y);
   await expect
     .poll(() => page.evaluate((id) => window.__homestead!.store.getState().game.instances.some((i) => i.systemId === id), yurt))
     .toBe(true);
   // Collapse the sheet: the map gets the room back.
   await page.getByTestId('drawer-toggle').click();
-  const closed = await page.getByTestId('drawer').boundingBox();
-  expect(closed!.height).toBeLessThan(40);
+  // The sheet animates its height (0.15 s): wait for it to settle before measuring.
+  await expect.poll(async () => (await page.getByTestId('drawer').boundingBox())!.height).toBeLessThan(40);
   await shot(page, 'g10', '03-tablet-sheet-closed');
 });
 

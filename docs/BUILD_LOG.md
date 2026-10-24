@@ -1141,3 +1141,17 @@ Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-21). Continued after `c68c292`. Views and
 - **Departure causes:** survival needs only (done in LL-13).
 
 **Validation:** 2 engine tests (assistance vs refunds; survival before comfort) and a browser test (a spring report during an empty-pantry crisis waits behind Reports; opening Reports clears the badge). The read-only year-report test caught a regression during development, now fixed. 336/336 unit tests, typecheck, lint; browser 56/58 on a fresh build (same two baseline failures).
+
+## LL-22 — interface polish (2026-10-24)
+
+Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-22). Continued after `844e928`. Views, UI and tests only.
+
+- **Numbers:** `fmtNum` no longer uses scientific notation ("1.9e-3 oz/week" is now "0.002"; anything smaller reads "< 0.001", and exact values stay in Why). The existing format test was updated to the new intended output and still guards against tiny real values showing as 0. `fmtDays` caps runways ("21.5k days" is now "over a year") in Market. Plan's summary layout score shows one decimal; the Sensitivity table keeps its deliberate four.
+- **Overlays:** the status bar and the toast stack let map clicks through; their buttons and toasts stay clickable. In the playtest, placement clicks under the status bar were silently swallowed. Invalid placements already explained themselves in a toast.
+- **Delivery fees:** `weeklyBills.deliveryShare` gives delivery charges as a share of market spending over 28 days. Market warns at 25% or more and suggests bigger, less frequent orders or transport.
+- **Old browser failures fixed:**
+  - *Outhouse map card (sources.spec):* the double-click on the outhouse at the map's bottom-left was swallowed by the toast stack. Fixed by the overlay change; the test is unchanged.
+  - *Tablet drawer (ship.spec):* app behavior was correct; the test clicked a fixed 25% of the map, which on the tablet's zoom-to-fit lands at the parcel edge where a yurt rightly doesn't fit, and it measured the sheet mid-animation. The click now targets a point inside the parcel and the height check waits for the 0.15 s transition. Same assertions.
+- **Not done:** redraw-after-resize and the measurement period in every table (from LL-12) remain open.
+
+**Validation:** 2 engine tests (delivery share), updated format tests. 339/339 unit tests, typecheck, lint. **Browser 58/58 on a fresh build**, the first fully green run since the imported baseline.

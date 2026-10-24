@@ -73,7 +73,7 @@ function PlanningBasis() {
   const game = useGame((s) => s.game);
   const catalog = useGame((s) => s.catalog);
   const v = useMemo(() => planningBaseline(game, catalog), [game, catalog]);
-  return <p className="muted small" data-testid="planning-basis">Annual baseline: all placed systems, completed and mature, including construction; same site, layout, links and spatial modifiers in Scenarios and Sensitivity. Current layout score <WhyNum value={v.summary.overall} title="Shared annual planning baseline" format={finePct} testId="planning-score" />. Unpurchased build-plan ghosts are excluded. Next 90 days uses current reserves, wellbeing, construction and policies.</p>;
+  return <p className="muted small" data-testid="planning-basis">Annual baseline: all placed systems, completed and mature, including construction; same site, layout, links and spatial modifiers in Scenarios and Sensitivity. Current layout score <WhyNum value={v.summary.overall} title="Shared annual planning baseline" format={(n) => `${(n * 100).toFixed(1)}%`} testId="planning-score" />. Unpurchased build-plan ghosts are excluded. Next 90 days uses current reserves, wellbeing, construction and policies.</p>;
 }
 
 function TransitionTab() {

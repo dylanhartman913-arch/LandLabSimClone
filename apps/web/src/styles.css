@@ -524,6 +524,18 @@ select {
   color: var(--ink-2);
 }
 
+/* LL-22: hints over the map never swallow a map click; their own buttons still work. */
+.status,
+.toasts {
+  pointer-events: none;
+}
+
+.status button,
+.status a,
+.toast {
+  pointer-events: auto;
+}
+
 .toasts {
   position: absolute;
   bottom: 64px;

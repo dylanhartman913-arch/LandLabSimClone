@@ -163,3 +163,18 @@ describe('backstops in balance mode', () => {
     expect(r.selfReliance.value).toBeLessThan(0.1);
   });
 });
+
+describe('LL-22: delivery charges are visible as a share of market spending', () => {
+  it('small orders without transport are mostly delivery fees', () => {
+    let s = newGame({ 'Human Being': 1 }, { settings: { startDay: 150, startingStocks: { Food: 100_000, 'Drinking water': 60 } } });
+    s = setStandingOrder(catalog, s, 'Carbon', 5, 8);
+    s = run(s, 28).state;
+    const share = weeklyBills(s, catalog).deliveryShare!;
+    expect(share.value).toBeGreaterThan(0.5);
+    expect(share.explain.refs!.delivery).toBeGreaterThan(0);
+  });
+
+  it('no market spending, no share', () => {
+    expect(weeklyBills(run(newGame({ 'Human Being': 1 }), 7).state, catalog).deliveryShare).toBeNull();
+  });
+});

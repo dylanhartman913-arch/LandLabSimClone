@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { marketView, weeklyBills, type MarketRow } from '@homestead/engine';
-import { fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
+import { fmtDays, fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { sparkPoints } from '../lib/sparkline.ts';
 import { useGame } from '../store/game.ts';
 import { WhyNum } from './Why.tsx';
@@ -38,6 +38,13 @@ export function Market() {
           <polyline points={sparkPoints(bills.weeks.map((w) => w / scale), 220, 40)} className="spark-line" />
         </svg>
       </div>
+      {bills.deliveryShare && bills.deliveryShare.value >= 0.25 && (
+        <p className="warn-text small" data-testid="delivery-share">
+          Delivery charges are <WhyNum value={bills.deliveryShare} title="Delivery share of market spending" format={fmtPct} /> of what
+          you spend at the market. Each trip without your own transport costs $25: order less often in bigger amounts
+          (raise standing orders' top-up levels), or add transport so trips cost miles instead.
+        </p>
+      )}
       {bills.lines.length === 0 ? (
         <p className="empty">Nothing bought yet. Backstops (grocery, grid, city water) and market orders show up here.</p>
       ) : (
@@ -109,7 +116,7 @@ function MarketLine({ row }: { row: MarketRow }) {
         <WhyNum value={row.stock} title={`${row.resource} in stock`} unit={row.unit} />
         {row.pending > 0 && <span className="muted"> (+{fmtNum(row.pending)} ordered)</span>}
       </td>
-      <td className="num">{row.daysLeft === null ? '—' : `${fmtNum(row.daysLeft)} days`}</td>
+      <td className="num">{row.daysLeft === null ? '—' : fmtDays(row.daysLeft)}</td>
       <td>
         <form
           className="inline-form"

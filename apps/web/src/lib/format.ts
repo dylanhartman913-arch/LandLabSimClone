@@ -8,8 +8,17 @@ export function fmtNum(n: number, digits = 1): string {
   if (abs >= 100) return Math.round(n).toLocaleString('en-US');
   if (abs >= 10) return n.toFixed(Math.min(digits, 1));
   if (abs < 1e-9) return '0';
-  if (abs < 0.01) return n.toExponential(1);
+  // LL-22: no scientific notation in player copy ("1.9e-3 oz/week"); exact values stay in Why.
+  if (abs < 0.001) return `${n < 0 ? '-' : ''}< 0.001`;
+  if (abs < 0.01) return n.toFixed(3);
   return n.toFixed(Math.max(digits, 2)).replace(/\.?0+$/, '');
+}
+
+/** How long something lasts, capped: "21.5k days" reads as "over a year" (LL-22). */
+export function fmtDays(n: number): string {
+  if (!Number.isFinite(n)) return '—';
+  if (n > 365) return 'over a year';
+  return `${fmtNum(n)} day${fmtNum(n) === '1' ? '' : 's'}`;
 }
 
 export function fmtMoney(n: number): string {
