@@ -46,7 +46,7 @@ export interface BuildOption {
   /** Dollars per unit of weekly output. */
   costPerUnit: number;
   /** Its recurring inputs, each with whether the design already has it. */
-  inputs: { resource: string; have: boolean; role: string }[];
+  inputs: { resource: string; have: boolean; role: string; label?: string }[];
   conventional: boolean;
 }
 
@@ -73,6 +73,10 @@ export interface ResourcePage {
   /** Weekly totals for up to the last 12 weeks, oldest first. */
   weeks: { produced: number[]; purchased: number[]; consumed: number[] };
   inDesign: DesignProducer[];
+  /** Producers of resources that substitute for this one (eggs and potatoes for Food), in this resource's units (LL-20). */
+  substitutes: (DesignProducer & { resource: string })[];
+  /** The standing order that keeps it topped up, if any (LL-20). */
+  standing: { keepAbove: number; orderUpTo: number } | null;
   onLand: NodeOption[];
   couldBuild: BuildOption[];
   buy: { price: number; unit: string } | null;
@@ -116,7 +120,12 @@ export function buildOptions(state: GameState, catalog: Catalog, resource: strin
       costPerUnit: cost / weekly,
       inputs: p.inputs
         .filter((i) => i.role !== 'boost')
-        .map((i) => ({ resource: i.resource, have: have.has(i.resource) || i.resource === 'Labor', role: i.role ?? 'required' })),
+        // Money is cash, not a Capital stock: a store "needs Capital" means a weekly cash budget (LL-20).
+        .map((i) =>
+          i.resource === 'Capital'
+            ? { resource: i.resource, have: state.cash > 0, role: i.role ?? 'required', label: 'weekly cash' }
+            : { resource: i.resource, have: have.has(i.resource) || i.resource === 'Labor', role: i.role ?? 'required' },
+        ),
       conventional: sys.categories.includes('Conventional') || sys.backstop,
     });
   }
@@ -134,6 +143,8 @@ export function resourcePage(
   catalog: Catalog,
   resource: string,
   nodes: readonly NodeOption[] = [],
+  /** Internal: a substitute's own page doesn't expand its substitutes (they lead back here). */
+  expand = true,
 ): ResourcePage {
   const idx = indexCatalog(catalog);
   const r = idx.resourceByName.get(resource);
@@ -225,6 +236,14 @@ export function resourcePage(
     storage = { pool: r.storedIn.capacityResource, room: (cap + r.storedIn.buffer) * r.storedIn.unitsPerCapacityUnit };
   }
 
+  const usedBy = [...useMap.values()].sort((a, b) => b.requestedWeek - a.requestedWeek);
+  // Systems already feeding the household through substitutes, converted into this resource's units.
+  const substitutes: ResourcePage['substitutes'] = [];
+  for (const sub of expand ? r.satisfiedBy : []) {
+    const f = (idx.resourceByName.get(sub)?.factorToNeed ?? 1) / (r.factorToNeed ?? 1);
+    for (const p of resourcePage(state, catalog, sub, [], false).inDesign)
+      substitutes.push({ ...p, resource: sub, actualWeek: p.actualWeek * f, potentialWeek: p.potentialWeek * f, headroomWeek: p.headroomWeek * f });
+  }
   const disposal =
     r.class !== 'Flow'
       ? r.class === 'Capacity'
@@ -236,7 +255,9 @@ export function resourcePage(
         ? 'It cannot be kept: whatever is not used the day after it is made is lost.'
         : r.storedIn
           ? `Kept in ${r.storedIn.capacityResource}; anything beyond the room there spills.`
-          : 'It piles up in stock until something uses it.';
+          : usedBy.length
+            ? 'Kept in stock until your systems use it; there is no storage limit.'
+            : 'It piles up in stock until something uses it.';
 
   return {
     resource,
@@ -244,15 +265,21 @@ export function resourcePage(
     cls: r.class,
     note: r.note,
     needsRow: r.needsRow ?? null,
-    stock: r.class === 'Flow' ? explained(state.stocks[resource] ?? 0, `${resource} in stock now`) : null,
+    // Services that can't be kept (heat, sanitation) have no stock to show (LL-20).
+    stock: r.class === 'Flow' && r.storable ? explained(state.stocks[resource] ?? 0, `${resource} in stock now`) : null,
     storage,
     spoilPerWeek: r.spoilPerWeek,
     weeks,
     inDesign: [...prodMap.values()].sort((a, b) => b.actualWeek - a.actualWeek),
+    substitutes: substitutes.sort((a, b) => b.actualWeek - a.actualWeek),
+    standing: (() => {
+      const o = state.market?.standing.find((x) => x.resource === resource && x.keepAbove > 0);
+      return o ? { keepAbove: o.keepAbove, orderUpTo: o.orderUpTo } : null;
+    })(),
     onLand: [...nodes].sort((a, b) => a.distanceFt - b.distanceFt),
     couldBuild: buildOptions(state, catalog, resource).slice(0, 8),
     buy: r.marketAvailable && r.marketPrice !== null ? { price: r.marketPrice, unit: r.unit } : null,
-    usedBy: [...useMap.values()].sort((a, b) => b.requestedWeek - a.requestedWeek),
+    usedBy,
     catalogUsers,
     disposal,
   };

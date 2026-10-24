@@ -33,6 +33,7 @@ export function ResourcePage() {
     [name, game, catalog],
   );
   const [amount, setAmount] = useState('');
+  const [keep, setKeep] = useState('');
   if (!name || !page) return null;
   const st = useGame.getState();
   const W = 220;
@@ -104,7 +105,9 @@ export function ResourcePage() {
       <h3>Where it comes from</h3>
       <h4>In your design</h4>
       {page.inDesign.length === 0 ? (
-        <p className="muted small">Nothing you have makes {name}.</p>
+        <p className="muted small">
+          {page.substitutes.length ? `Nothing you have makes prepared ${name}; these feed the household instead:` : `Nothing you have makes ${name}.`}
+        </p>
       ) : (
         <ul className="res-list" data-testid="res-in-design">
           {page.inDesign.map((p) => (
@@ -120,6 +123,18 @@ export function ResourcePage() {
                   {p.limitedBy ? <ResourceLink name={p.limitedBy} /> : 'an input'})
                 </span>
               )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {page.substitutes.length > 0 && (
+        <ul className="res-list" data-testid="res-substitutes">
+          {page.substitutes.map((p) => (
+            <li key={`${p.systemId}-${p.resource}`}>
+              <button className="link" onClick={() => st.openCard(p.systemId)}>
+                {p.name}
+              </button>
+              {p.count !== 1 ? ` ×${fmtNum(p.count)}` : ''}: <ResourceLink name={p.resource} />, about {fmtNum(p.actualWeek)} {page.unit}/wk
             </li>
           ))}
         </ul>
@@ -156,7 +171,7 @@ export function ResourcePage() {
                 needs{' '}
                 {o.inputs.map((i) => (
                   <span key={i.resource} className={`chip ${i.have ? 'have' : 'missing'}`}>
-                    <span aria-hidden="true">{i.have ? '✓' : '✗'}</span> <ResourceLink name={i.resource} />
+                    <span aria-hidden="true">{i.have ? '✓' : '✗'}</span> {i.label ?? <ResourceLink name={i.resource} />}
                     <span className="sr-only">{i.have ? ' (you have this)' : ' (you have none)'}</span>
                   </span>
                 ))}
@@ -192,7 +207,37 @@ export function ResourcePage() {
             Buy
           </button>
         </form>
-      ) : (
+      ) : null}
+      {page.buy && (
+        <form
+          className="inline-form"
+          data-testid="res-standing"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const n = Number(keep);
+            if (st.marketStanding(name, n > 0 ? n : 0)) setKeep('');
+          }}
+        >
+          <span>
+            {page.standing
+              ? `Standing order: keep above ${fmtNum(page.standing.keepAbove)}, topped up to ${fmtNum(page.standing.orderUpTo)} ${page.unit}.`
+              : 'No standing order. Keep it topped up automatically:'}
+          </span>
+          <input
+            type="number"
+            min={0}
+            step="any"
+            value={keep}
+            onChange={(e) => setKeep(e.target.value)}
+            placeholder={page.standing ? fmtNum(page.standing.keepAbove) : 'keep above'}
+            aria-label={`Keep ${name} above (${page.unit}); 0 turns it off`}
+          />
+          <button className="btn small" disabled={keep === ''} data-testid="res-standing-set">
+            Set
+          </button>
+        </form>
+      )}
+      {!page.buy && (
         <p className="muted small">
           The market doesn't sell {name}
           {name === 'Electricity' ? ': it comes only through a grid connection.' : '.'}

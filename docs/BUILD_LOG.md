@@ -1117,3 +1117,16 @@ Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-19). Continued after `cd856f0`. Read-only
 **Card:** Buy or DIY is remembered across cards for the session (it starts on Buy, so existing keyboard and card tests are unchanged).
 
 **Validation:** 5 engine tests on the playtest cases (compost stock, coop feed cost, potato water coverage, heater gap closure, soil value) and a browser test `preview.spec.ts` (coop supplies line and list; DIY remembered). 329/329 unit tests, typecheck, lint; browser 54/56 on a fresh build. The tablet drawer and outhouse map-card failures are the old baseline ones; the tablet one was re-checked with these changes stashed. Screenshot: `docs/screenshots/ll-19/coop-supplies.png`.
+
+## LL-20 — resource pages agree with the ledger (2026-10-24)
+
+Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-20). Continued after `c945d35`. Views and UI only.
+
+- **Cash, not "Capital":** a store's Capital input is checked against the household's cash and shown as "weekly cash". The playtest showed "Capital (you have none)" with $8,000 in cash.
+- **Food substitutes:** `resourcePage` lists the producers of substitutes (eggs, potatoes, greens) in Food's own units. The Food page said "Nothing you have makes Food" while those fed the household; it now says nothing makes *prepared* Food and lists what feeds the household instead.
+- **Stock line:** shown only for storable resources, so Heat no longer shows "In stock 15.1k BTU" above "It cannot be kept".
+- **Disposal copy:** "piles up in stock until something uses it" only appears when nothing does; otherwise "Kept in stock until your systems use it; there is no storage limit."
+- **Standing orders on the page:** the page shows the current standing order and sets or clears it next to Buy, where the low-reserve alert sends the player.
+- **Alerts and orders:** low-reserve alerts already go quiet once a payable standing order exists (LL-15).
+
+**Validation:** 5 engine tests in `resource.test.ts` and a browser test in `preview.spec.ts` (set a feed order from its page; store shows weekly cash). 334/334 unit tests, typecheck, lint; browser 55/57 on a fresh build (same two baseline failures).
