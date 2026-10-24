@@ -32,12 +32,20 @@ const ROLE_HELP = {
 const TIER_LABEL = ['people first', 'animals', 'everything else'];
 
 /** The System Card: what a system is, what it costs, what it takes and makes, and why. */
+/** Buy or DIY: remembered across cards for the session (LL-19). */
+let lastMode: 'buy' | 'diy' = 'buy';
+
 export function SystemCard() {
   const id = useGame((s) => s.cardSystemId);
   const instanceId = useGame((s) => s.cardInstanceId);
   const catalog = useGame((s) => s.catalog);
   const game = useGame((s) => s.game);
-  const [mode, setMode] = useState<'buy' | 'diy'>('buy');
+  const [mode, setModeState] = useState<'buy' | 'diy'>(lastMode);
+  // LL-19: the next card opens on the mode the player last chose.
+  const setMode = (m: 'buy' | 'diy') => {
+    lastMode = m;
+    setModeState(m);
+  };
   const [details, setDetails] = useState(false);
   const [chain, setChain] = useState(false);
   const canBack = useGame((s) => s.navBack.length > 0);
@@ -237,11 +245,25 @@ export function SystemCard() {
                   {ROLE_LABEL[i.role]}
                 </span>
               </span>
+              {i.stock ? (
+                <span className="res-num" data-testid={`card-stock-${i.view.resource}`}>
+                  <WhyNum value={i.stock.onHand} title={`${i.view.resource} on hand`} /> {i.view.unit} on hand ·{' '}
+                  {i.stock.days ? (
+                    <>
+                      lasts about <WhyNum value={i.stock.days} title={`${i.view.resource} lasts`} format={(n) => (n > 365 ? 'over a year' : `${Math.floor(n)} days`)} />
+                    </>
+                  ) : (
+                    'no use yet'
+                  )}{' '}
+                  · needs <WhyNum value={i.needed} title={`${i.view.resource} needed`} /> {i.view.unit} {i.view.periodLabel}
+                </span>
+              ) : (
               <span className="res-num">
                 <WhyNum value={i.supplied} title={`${i.view.resource} supplied`} /> /{' '}
                 <WhyNum value={i.needed} title={`${i.view.resource} needed`} /> {i.view.unit}{' '}
                 {i.view.flow.period === 'One-time' ? (game.instances.find((x) => x.id === inst?.id)?.materialsDrawn ? 'supplied during construction' : 'to build') : `needed ${i.view.periodLabel}`}
               </span>
+              )}
             </div>
             <div
               className="bar"

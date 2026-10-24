@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { getSite, getStart } from '@homestead/catalog';
 import { catalog, newGame, place, run, sysId } from './time-helpers.ts';
 import {
   computeSpatial,
+  gameFromStart,
+  systemCard,
   moveSystem,
   constructionView,
   designBalance,
@@ -219,5 +222,52 @@ describe('planning tools share geometry and identify their policies', () => {
         .bySystem.get(sysId('Yurt'))!
         .inputs.some((f) => f.resource === 'Heat'),
     ).toBe(true);
+  });
+});
+
+describe('LL-19: previews a novice can trust (Oct 22 playtest cases)', () => {
+  const greenfield = (stocks: Record<string, number> = {}) => {
+    const s = run(gameFromStart(catalog, getSite('front-range'), getStart('greenfield'), {}), 7).state;
+    return { ...s, stocks: { ...s.stocks, ...stocks } };
+  };
+
+  it('a potato patch preview shows the compost actually on hand, not a full bar', () => {
+    const s = greenfield({ Compost: 3.6 });
+    const compost = systemCard(s, catalog, sysId('Potato Patch (400 sq ft)')).inputs.find((i) => i.view.resource === 'Compost')!;
+    expect(compost.stock!.onHand.value).toBeCloseTo(3.6, 6);
+    // 3.6 lbs at the patch's 3.85 lbs/week lasts about 6.5 days: half a bar, where it showed 200 / 200.
+    expect(compost.share.value).toBeLessThan(0.5);
+    expect(compost.stock!.days!.value).toBeLessThan(14);
+  });
+
+  it('the coop’s feed shows up as a weekly cost, not “running cost $0”', () => {
+    const v = projectPreview(greenfield(), catalog, sysId('Chicken Coop (12 hens)'), 'diy');
+    const feed = v.supplies.find((x) => x.resource === 'Chicken feed')!;
+    expect(feed.covered.value).toBe(0);
+    expect(feed.costPerWeek!.value).toBeCloseTo(18 * 0.35, 6);
+    expect(v.suppliesCost.value).toBeGreaterThanOrEqual(18 * 0.35 - 1e-6);
+  });
+
+  it('the potato patch says how little of its water on-site systems cover', () => {
+    const water = projectPreview(greenfield(), catalog, sysId('Potato Patch (400 sq ft)'), 'diy').supplies.find((x) => x.resource === 'Water')!;
+    expect(water.perWeek.value).toBe(80);
+    expect(water.covered.value).toBeLessThan(1);
+  });
+
+  it('a heater preview says how much of the cold-day gap it closes', () => {
+    // The starter stove covers the tent's nominal cold day; the playtest's unheated second tent opens a gap.
+    expect(projectPreview(greenfield(), catalog, sysId('Rocket Mass Heater'), 'diy').winter!.gapBefore.value).toBe(0);
+    const s = greenfield();
+    const two = place(s, 'Bell Tent', 40, 40).state;
+    const w = projectPreview(two, catalog, sysId('Rocket Mass Heater'), 'diy').winter!;
+    expect(w.gapBefore.value).toBeGreaterThan(0);
+    expect(w.closes.value).toBeGreaterThan(0);
+    expect(w.closes.value).toBeLessThanOrEqual(w.gapBefore.value + 1e-9);
+  });
+
+  it('free construction materials are labeled with their market value', () => {
+    const soil = projectPreview(greenfield({ Soil: 0 }), catalog, sysId('Raised Beds (24 sq ft)'), 'diy').materials.find((m) => m.resource === 'Soil')!;
+    expect(soil.missing.value).toBe(24);
+    expect(soil.worth!.value).toBeCloseTo(24 * 1.5, 6);
   });
 });

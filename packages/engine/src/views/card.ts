@@ -8,6 +8,9 @@ import type { GameState, Instance } from '../time/types.ts';
 import { resourceWeek, type ResourceWeek } from './resources.ts';
 import { systemFlows, type FlowView } from './system.ts';
 
+/** A preview's stock bar is full at this many days of cover. */
+export const STOCK_FULL_DAYS = 14;
+
 export interface CardInput {
   view: FlowView;
   role: InputRole;
@@ -17,6 +20,8 @@ export interface CardInput {
   supplied: Explained;
   /** supplied ÷ needed (0-1). */
   share: Explained;
+  /** Catalog preview of a stored supply (LL-19): stock on hand and how long it lasts with this system added. */
+  stock?: { onHand: Explained; days: Explained | null };
 }
 
 export interface CardOutput {
@@ -78,6 +83,7 @@ export function systemCard(
   const plan = plansAll.bySystem.get(systemId)!;
   const idx = indexCatalog(catalog);
 
+  const stockView = new Map<string, NonNullable<CardInput['stock']>>();
   const inputs: CardInput[] = flows.inputs.map((v) => {
     const role = v.flow.inputRole ?? 'required';
     const needed = v.qty.value;
@@ -136,6 +142,22 @@ export function systemCard(
       share = ok ? 1 : 0;
       how = ok ? 'the site supplies it' : 'this site does not supply it (add the site system that does)';
       refs = {};
+    } else if (!inst && idx.resourceByName.get(v.resource)?.storable && idx.resourceByName.get(v.resource)?.class === 'Flow') {
+      // LL-19: a stored supply is judged by what is on hand, not by last week's design-wide share
+      // (compost read 200 / 200 with 3.6 lbs in stock when nothing else asked for it).
+      const w = week.get(v.resource);
+      const stock = state.stocks[v.resource] ?? 0;
+      const mine = (plan.inputs.find((f) => f.resource === v.resource)?.weekly ?? 0) / 7;
+      const others = Math.max(0, ((w?.needed.value ?? 0) - (w?.supplied.value ?? 0)) / 7);
+      const daily = mine + others;
+      const days = daily > 1e-9 ? stock / daily : Infinity;
+      share = Math.min(1, days / STOCK_FULL_DAYS);
+      how = `days this stock lasts with this system added (unmet design demand included) ÷ ${STOCK_FULL_DAYS}; future production, gathering and orders not counted`;
+      refs = { stock, thisSystemPerDay: mine, unmetDesignPerDay: others, days: Number.isFinite(days) ? days : -1 };
+      stockView.set(v.flow.id, {
+        onHand: explained(stock, 'stock on hand now'),
+        days: Number.isFinite(days) ? explained(days, 'stock ÷ (this system’s daily use + unmet design demand per day)', { refs: { stock, daily } }) : null,
+      });
     } else {
       const w = week.get(v.resource);
       share = w ? w.share.value : 0;
@@ -151,6 +173,7 @@ export function systemCard(
       needed: explained(needed, v.qty.explain.formula, { ...v.qty.explain }),
       supplied: explained(supplied, `needed × share (${how})`, { refs: { needed, share, ...refs } }),
       share: explained(share, how, { refs }),
+      ...(stockView.has(v.flow.id) ? { stock: stockView.get(v.flow.id)! } : {}),
     };
   });
 
@@ -256,7 +279,7 @@ export function systemCard(
     systemId, inputs, outputs, spatial, instance,
     hasMeasurement: !!group,
     basis: !inst
-      ? 'Catalog preview: output at full supply and maturity; input bars describe recent design availability, not a promise of output.'
+      ? `Catalog preview: output at full supply and maturity. Stored supplies show what is on hand and how long it lasts with this system (a full bar is ${STOCK_FULL_DAYS} days or more); other inputs show last week's design availability. Not a promise of output.`
       : inst.status === 'building'
         ? 'Under construction: no operating output. Recurring needs begin after completion.'
         : !group

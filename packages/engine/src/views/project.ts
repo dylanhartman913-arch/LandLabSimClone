@@ -17,9 +17,20 @@ import { constructionView } from './recovery.ts';
 import { designBalance } from './hud.ts';
 import { computeSpatial } from '../time/spatial.ts';
 import { systemFlows } from './system.ts';
+import { findSpot } from '../kits.ts';
+import { homeOf } from '../time/gather.ts';
 
 /** A sample legal site for a budget/schedule preview. Map reach is checked separately at the cursor. */
 export function projectSamplePosition(state: GameState, catalog: Catalog, systemId: string) {
+  // Heat and cooling only count within reach of a shelter: sample next to the home (LL-19).
+  const plans = getPlans(catalog, state.site);
+  const reaches = plans.bySystem.get(systemId)!.outputs.some((o) => catalog.resources.find((r) => r.name === o.resource)?.deliversTo === 'shelter');
+  if (reaches) {
+    const shelters = new Set(catalog.flows.filter((f) => f.direction === 'out' && f.resource === 'Shelter').map((f) => f.systemId));
+    const home = homeOf(state, shelters);
+    const near = findSpot(catalog, state, systemId, home.x, home.y);
+    if (near) return near;
+  }
   const side = parcelSideFt(state.settings);
   const half = footprintSideFt(getSystem(catalog, systemId).footprintSqft) / 2;
   const step = Math.max(4, half);
@@ -112,9 +123,10 @@ export function projectPreview(
       return r?.consumed.value ?? 0;
     };
     const added = heat(candidate.state) - heat(state);
+    const coldGap = (s: GameState) => {
     const future = {
-      ...candidate.state,
-      instances: candidate.state.instances.map((i) => ({ ...i, status: 'active' as const })),
+      ...s,
+      instances: s.instances.map((i) => ({ ...i, status: 'active' as const })),
     };
     const spatial = computeSpatial(catalog, future);
     let coldNeed = 0;
@@ -134,6 +146,11 @@ export function projectPreview(
             (i.scale ?? 1) *
             (spatial.get(i.id)?.outMult.Heat ?? 1);
     }
+    return { coldNeed, coldSupply };
+    };
+    const { coldNeed, coldSupply } = coldGap(candidate.state);
+    const was = coldGap(state);
+    const gapBefore = Math.max(0, was.coldNeed - was.coldSupply);
     // Annual model is separate from a cold-day peak based on this project's catalog climate shape.
     const peak = plan.inputs
       .filter((f) => f.resource === 'Heat')
@@ -149,8 +166,49 @@ export function projectPreview(
         'max(0, coldest-day planned heat demand − delivered nominal heat); full inputs and maturity',
         { refs: { coldNeed, coldSupply, dayOfYear: coldest + 1 } },
       ),
+      // LL-19: what a heater does for winter, at the sample position (placement checks reach).
+      closes: explained(
+        Math.max(0, gapBefore - Math.max(0, coldNeed - coldSupply)),
+        'cold-day gap before − cold-day gap after, at the sample position with full inputs',
+        { refs: { gapBefore, gapAfter: Math.max(0, coldNeed - coldSupply) } },
+      ),
+      gapBefore: explained(gapBefore, 'household cold-day heat gap before this project'),
     };
   })();
+  // LL-19: each recurring supply — what this system uses, how much on-site systems cover once it is
+  // built, what is on hand, and what buying the uncovered part costs.
+  const price = (r: string) => {
+    const m = catalog.resources.find((x) => x.name === r)!;
+    return m.marketAvailable && m.marketPrice !== null ? m.marketPrice : null;
+  };
+  const supplies = plan.inputs
+    .filter((f) => !f.isCapacity && !f.isOneTime && f.weekly > 0 && f.resource !== 'Labor' && f.resource !== 'Capital' && f.role !== 'ambient')
+    .map((f) => {
+      const meta = catalog.resources.find((x) => x.name === f.resource)!;
+      const r = (after ?? before).potential.resources[f.resource];
+      const need = r?.consumed.value ?? f.weekly;
+      const made = r?.produced.value ?? 0;
+      const covered = need > 1e-9 ? Math.min(1, made / need) : 1;
+      const uncovered = Math.max(0, need - made);
+      const stock = meta.storable ? (state.stocks[f.resource] ?? 0) : null;
+      const unit = price(f.resource);
+      // This system's share of what the design must bring in from outside.
+      const mineUncovered = need > 1e-9 ? (f.weekly / need) * uncovered : 0;
+      return {
+        resource: f.resource,
+        unit: meta.unit,
+        role: f.role,
+        perWeek: explained(f.weekly, 'catalog weekly use at full operation'),
+        covered: explained(covered, 'on-site production ÷ planned demand after this project (annual balance)', { refs: { produced: made, demand: need } }),
+        onHand: stock === null ? null : explained(stock, 'stock on hand now'),
+        days:
+          stock === null || uncovered <= 1e-9
+            ? null
+            : explained(stock / (uncovered / 7), 'stock ÷ daily demand on-site systems do not cover', { refs: { stock, uncoveredPerWeek: uncovered } }),
+        costPerWeek: unit === null ? null : explained(mineUncovered * unit, 'this system’s share of uncovered weekly demand × market price', { refs: { perWeek: mineUncovered, price: unit } }),
+      };
+    });
+  const suppliesCost = supplies.reduce((a, x) => a + (x.role === 'required' ? (x.costPerWeek?.value ?? 0) : 0), 0);
   const schedule = candidate
     ? constructionView(candidate.state, catalog).find((p) => p.id === candidate.instanceId)
     : null;
@@ -174,15 +232,22 @@ export function projectPreview(
     }),
     hours: explained(hours, 'catalog setup hours × selected mode factor'),
     eta: schedule?.eta ?? null,
-    materials: plan.materials.map((m) => ({
-      resource: m.resource,
-      unit: catalog.resources.find((r) => r.name === m.resource)!.unit,
-      needed: explained(m.qty, 'one-time catalog material quantity'),
-      missing: explained(
-        Math.max(0, m.qty - (state.stocks[m.resource] ?? 0)),
-        'max(0, required − stock on hand)',
-      ),
-    })),
+    materials: plan.materials.map((m) => {
+      const missing = Math.max(0, m.qty - (state.stocks[m.resource] ?? 0));
+      const p = price(m.resource);
+      return {
+        resource: m.resource,
+        unit: catalog.resources.find((r) => r.name === m.resource)!.unit,
+        needed: explained(m.qty, 'one-time catalog material quantity'),
+        missing: explained(missing, 'max(0, required − stock on hand)'),
+        // LL-19: brought in free by the current construction rule; this is what it would cost.
+        worth: p === null ? null : explained(missing * p, 'missing quantity × market price (not charged)', { refs: { missing, price: p } }),
+      };
+    }),
+    supplies,
+    suppliesCost: explained(suppliesCost, 'Σ required supplies’ uncovered weekly demand × market price, this system’s share', {
+      refs: Object.fromEntries(supplies.filter((x) => x.costPerWeek).map((x) => [x.resource, x.costPerWeek!.value])),
+    }),
     recurring: flows.inputs.filter((f) => f.flow.period !== 'One-time'),
     demand,
     food,

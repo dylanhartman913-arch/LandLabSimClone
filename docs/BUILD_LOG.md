@@ -1100,3 +1100,20 @@ LL-10 comparisons (regenerated; the harness drops gf-heater's steps in the winte
 - **Yurt:** days away 144 (was 182).
 
 **Validation:** 6 engine tests (line selection, named orders, Show me targets, unchanged totals, `staysWarm` vs `warm`, `standing`); 2 CLI tests (whole line in year 1 on all sites; quest text alone suffices on the seasonal line); the teeth test now pins the original line. 324/324 unit tests, typecheck, lint, catalog:check; browser 53/55 on a fresh build (same two baseline failures).
+
+## LL-19 — pre-purchase previews a novice can trust (2026-10-24)
+
+Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-19). Continued after `cd856f0`. Read-only views and UI; no simulation change.
+
+**Card input bars (`systemCard`, catalog preview):** stored supplies show stock on hand and how long it lasts with this system added (unmet design demand included); a full bar means 14 days or more. In the playtest, the potato patch read "Compost 200 / 200" with 3.6 lbs in stock; it now reads 3.6 lbs, about 6 days, half a bar. Other inputs keep last week's design availability, and the basis line says which is which.
+
+**Project preview (`projectPreview`):**
+
+- **Supplies:** a list per recurring input, with this system's weekly use, the share on-site systems cover after the build (annual balance), stock and days on hand, and the cost per week if bought.
+- **Running cost:** now adds the required supplies the design doesn't make. The coop showed "$0/week"; it now shows about $6.30 of feed.
+- **Heaters:** say how much of the household's cold-day heat gap they close. Producers of heat or cooling are now sampled next to the home shelter rather than at the parcel's first legal spot. With only the starter stove, a greenfield tent has no nominal cold-day gap; the unheated second tent from the playtest does.
+- **Free materials:** show their market value (bed soil: $36, brought in free).
+
+**Card:** Buy or DIY is remembered across cards for the session (it starts on Buy, so existing keyboard and card tests are unchanged).
+
+**Validation:** 5 engine tests on the playtest cases (compost stock, coop feed cost, potato water coverage, heater gap closure, soil value) and a browser test `preview.spec.ts` (coop supplies line and list; DIY remembered). 329/329 unit tests, typecheck, lint; browser 54/56 on a fresh build. The tablet drawer and outhouse map-card failures are the old baseline ones; the tablet one was re-checked with these changes stashed. Screenshot: `docs/screenshots/ll-19/coop-supplies.png`.

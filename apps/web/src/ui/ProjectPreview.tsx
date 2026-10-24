@@ -46,11 +46,48 @@ export function ProjectPreview({ systemId, mode }: { systemId: string; mode: Bui
         Schedule uses a sample legal position and current policies, supplies and wellbeing. Map placement
         checks the chosen connections. Work offers emergency priority and paid crews after placement.
       </p>
-      <p>
+      <p data-testid="project-running">
         Running cost <WhyNum value={v.running} title="Nominal ongoing money demand" format={fmtMoney} />
-        /week before usage-priced deliveries · maturity after completion{' '}
+        /week
+        {v.suppliesCost.value > 0.005 && (
+          <>
+            {' '}plus about <WhyNum value={v.suppliesCost} title="Supplies bought at market prices" format={fmtMoney} />/week of supplies at
+            market prices
+          </>
+        )}{' '}
+        before usage-priced deliveries and delivery fees · maturity after completion{' '}
         <WhyNum value={v.maturityDays} title="Days to full output" unit="days" />.
       </p>
+      {v.supplies.length > 0 && (
+        <>
+          <strong>Supplies</strong>
+          <ul data-testid="project-supplies">
+            {v.supplies.map((x) => (
+              <li key={x.resource}>
+                {x.resource}: <WhyNum value={x.perWeek} title={`${x.resource} use`} unit={`${x.unit}/week`} />
+                {x.role === 'boost' ? ' (boost)' : ''} · on-site systems cover{' '}
+                <WhyNum value={x.covered} title={`${x.resource} covered on site`} format={(n) => `${Math.round(n * 100)}%`} />
+                {x.onHand && (
+                  <>
+                    {' '}· <WhyNum value={x.onHand} title={`${x.resource} on hand`} unit={x.unit} /> on hand
+                    {x.days ? (
+                      <>
+                        , about <WhyNum value={x.days} title={`${x.resource} lasts`} format={(n) => (n > 365 ? 'over a year' : `${Math.floor(n)} days`)} />
+                      </>
+                    ) : null}
+                  </>
+                )}
+                {x.costPerWeek && x.costPerWeek.value > 0.005 && (
+                  <>
+                    {' '}· about <WhyNum value={x.costPerWeek} title={`${x.resource} bought`} format={fmtMoney} />/week if bought
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="muted small">Cover counts what your systems make, not gathering or orders. Standing orders in Market keep bought supplies coming.</p>
+        </>
+      )}
       {v.materials.length > 0 && (
         <>
           <strong>One-time materials</strong>
@@ -59,6 +96,11 @@ export function ProjectPreview({ systemId, mode }: { systemId: string; mode: Bui
               <li key={m.resource}>
                 {m.resource}: <WhyNum value={m.needed} title={`${m.resource} to build`} unit={m.unit} />;
                 missing from stock <WhyNum value={m.missing} title={`${m.resource} missing`} unit={m.unit} />
+                {m.worth && m.worth.value > 0.005 && (
+                  <>
+                    {' '}(worth <WhyNum value={m.worth} title={`${m.resource} at market prices`} format={fmtMoney} />, brought in free)
+                  </>
+                )}
               </li>
             ))}
           </ul>
@@ -90,6 +132,13 @@ export function ProjectPreview({ systemId, mode }: { systemId: string; mode: Bui
           </li>
         ))}
       </ul>
+      {v.winter && v.winter.closes.value > 0 && (
+        <p data-testid="project-heat-closes">
+          Closes <WhyNum value={v.winter.closes} title="Cold-day heat gap closed" unit="BTU/day" /> of the
+          household's <WhyNum value={v.winter.gapBefore} title="Cold-day heat gap now" unit="BTU/day" /> cold-day
+          heat gap at a spot within reach of the shelter; the map checks reach where you place it.
+        </p>
+      )}
       {v.winter && (v.winter.added.value > 0 || v.winter.gap.value > 0) && (
         <p data-testid="project-heat">
           Added heat demand{' '}
