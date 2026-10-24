@@ -208,6 +208,30 @@ export interface GameStore {
 }
 
 const MAX_EVENTS = 3000;
+
+/** The season and year reports that close on `game.ledgers[k]` (end of a display season; Dec 31). */
+function reportsClosingAt(game: GameState, catalog: Catalog, k: number): Report[] {
+  const l = game.ledgers[k]!;
+  const upTo = game.ledgers.slice(0, k + 1);
+  const d = displayDate(l.day, l.year);
+  const out: Report[] = [];
+  if (d.lastDayOfSeason) {
+    const from = upTo.findIndex((x) => displayDate(x.day, x.year).seasonStartDay === d.seasonStartDay && x.absDay > l.absDay - 100);
+    out.push(buildReport(game, catalog, 'season', upTo.slice(Math.max(0, from)), `${d.label.split(' ')[0]} report, year ${d.year}`));
+  }
+  if (l.day === 364) out.push(buildReport(game, catalog, 'year', upTo.filter((x) => x.year === l.year), `Year ${l.year + 1} report`));
+  return out;
+}
+
+/**
+ * LL-11: reports aren't stored in saves; rebuild the last 12 from the game's own ledgers (kept for
+ * 730 days) when a game loads. Root-cause chains use the loaded state, as a fresh report would.
+ */
+export function rebuildReports(game: GameState, catalog: Catalog): Report[] {
+  const out: Report[] = [];
+  for (let k = 0; k < game.ledgers.length; k++) out.push(...reportsClosingAt(game, catalog, k));
+  return out.slice(-12);
+}
 let toastId = 1;
 let planKey = 1;
 
@@ -378,7 +402,7 @@ export const useGame = create<GameStore>()((set, get) => {
         game,
         readOnly: opts.readOnly ?? false,
         events: [],
-        reports: [],
+        reports: rebuildReports(game, get().catalog),
         unreadReports: 0,
         selection: [],
         undoStack: [],
@@ -405,30 +429,9 @@ export const useGame = create<GameStore>()((set, get) => {
         const r = stepDay(game, st.catalog);
         game = r.state;
         newEvents.push(...r.events);
-        const d = displayDate(r.ledger.day, r.ledger.year);
         // Reports at the end of each display season and each year.
-        if (d.lastDayOfSeason) {
-          const from = game.ledgers.findIndex(
-            (l) =>
-              displayDate(l.day, l.year).seasonStartDay === d.seasonStartDay &&
-              l.absDay > r.ledger.absDay - 100,
-          );
-          const ledgers = game.ledgers.slice(Math.max(0, from));
-          reports.push(
-            buildReport(
-              game,
-              st.catalog,
-              'season',
-              ledgers,
-              `${d.label.split(' ')[0]} report, year ${d.year}`,
-            ),
-          );
-          if (ap.season) pauseReason ??= AUTO_PAUSE_TEXT.season;
-        }
-        if (r.ledger.day === 364) {
-          const year = game.ledgers.filter((l) => l.year === r.ledger.year);
-          reports.push(buildReport(game, st.catalog, 'year', year, `Year ${r.ledger.year + 1} report`));
-        }
+        reports.push(...reportsClosingAt(game, st.catalog, game.ledgers.length - 1));
+        if (displayDate(r.ledger.day, r.ledger.year).lastDayOfSeason && ap.season) pauseReason ??= AUTO_PAUSE_TEXT.season;
         for (const e of r.events) {
           if (
             ap.shortage &&

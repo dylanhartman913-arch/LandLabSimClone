@@ -1155,3 +1155,22 @@ Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-22). Continued after `844e928`. Views, UI
 - **Not done:** redraw-after-resize and the measurement period in every table (from LL-12) remain open.
 
 **Validation:** 2 engine tests (delivery share), updated format tests. 339/339 unit tests, typecheck, lint. **Browser 58/58 on a fresh build**, the first fully green run since the imported baseline.
+
+## LL-11 — the full player story survives a save; Phase 7 complete (2026-10-24)
+
+Roadmap: `../UPGRADE-ROADMAP-2.md` (LL-11, carried from the first roadmap). Continued after `cd5487b`.
+
+**Report history:** reports aren't stored in saves, so loading showed none (the Oct 16 playtest's June checkpoint lost "Reports (1)"). `reportsClosingAt` is now shared by the clock and `rebuildReports`, which rebuilds the last 12 reports from the game's own 730 days of ledgers whenever a game loads. Root-cause chains use the loaded state.
+
+**Round-trip tests (`replay.test.ts`):**
+
+- A greenfield game, driven only by logged actions under every new-game flag, with a DIY yurt mid-construction, a firewood cap, a Carbon standing order and an undelivered firewood purchase, replays to the same digest, keeps the seasonal line and flags, and over the next 20 days matches a never-saved copy: same digest, same market trips, the order delivered once, construction progress equal.
+- The winter game with residents in town round-trips and plays 30 days identically.
+
+**Browser (`saves.spec.ts`):** exporting a game with two reports and importing it into a fresh browser restores the same report titles and count; the June playtest checkpoint loads with its spring report.
+
+**Migration strategy:** `docs/SAVES.md` records what a save preserves and the rule used since Phase 2: a flag gates the new behavior, start-only flags are read at start, new games opt in, continued games get one settings action, `ENGINE_VERSION` is bumped, and tests prove legacy digests are unchanged.
+
+**Validation:** 342/342 unit tests, typecheck, lint; browser 60/60 on a fresh build.
+
+**Phase 7 complete:** LL-18 (`cd856f0`), LL-19 (`c945d35`), LL-20 (`c68c292`), LL-21 (`844e928`), LL-22 (`cd5487b`), LL-11 (this commit). Open from LL-22: redraw after resize and the measurement period in every table. Next: Phase 8 (LL-23 to LL-27).
