@@ -16,6 +16,7 @@ test('start from the ground up: the camp, the stockpile bar, and wellbeing with 
   await page.getByTestId('site-front-range').click();
   await page.getByTestId('difficulty-standard').click();
   await shot(page, 'g15', '01-start-screen');
+  await expect(page.getByTestId('starter-limits')).toContainText('below full coverage');
   await page.getByTestId('start-begin').click();
   await expect(page.getByTestId('new-game')).toHaveCount(0);
 
@@ -25,7 +26,7 @@ test('start from the ground up: the camp, the stockpile bar, and wellbeing with 
   });
   expect(g.start?.id).toBe('greenfield');
   expect(g.people).toBe(2);
-  expect(g.cash).toBe(8000);
+  expect(g.cash).toBe(16000); // LL-24: $8,000 per adult
   await expect(page.getByTestId('stockpile')).toBeVisible();
   for (const k of ['food', 'drinking-water', 'firewood', 'battery']) await expect(page.getByTestId(`stock-${k}`)).toBeVisible();
   await expect(page.getByTestId('people').locator('.person')).toHaveCount(2);

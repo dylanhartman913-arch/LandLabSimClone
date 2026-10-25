@@ -4,6 +4,7 @@ import { AUTO_PAUSE_LABELS, type AutoPauseKey } from '../store/prefs.ts';
 /** Settings: units, speed, auto-pause, snap, accessibility, and the one game setting (work split). */
 export function Settings() {
   const prefs = useGame((s) => s.prefs);
+  const settings = useGame((s) => s.game.settings);
   const share = useGame((s) => s.game.settings.constructionShare);
   const st = useGame.getState();
   return (
@@ -102,6 +103,37 @@ export function Settings() {
           </label>
         ))}
       </div>
+      <h3>Experimental mechanics</h3>
+      <p className="small muted">
+        Opt-in Phase 9 rules. Turning wear off pauses condition loss and its output penalty; saved condition
+        remains.
+      </p>
+      {(
+        [
+          'wearAndRepair',
+          'sellingAndTrade',
+          'foodPreservation',
+          'livestockLifecycle',
+          'shelterOccupancy',
+        ] as const
+      ).map((key) => (
+        <label key={key} className="check">
+          <input
+            type="checkbox"
+            checked={settings[key] === true}
+            onChange={(e) => st.setGameSettings({ [key]: e.target.checked })}
+          />
+          {
+            {
+              wearAndRepair: 'Wear, repair and replacement',
+              sellingAndTrade: 'Selling and trade',
+              foodPreservation: 'Food preservation chain',
+              livestockLifecycle: 'Livestock lifecycle',
+              shelterOccupancy: 'Shelter occupancy',
+            }[key]
+          }
+        </label>
+      ))}
       <h3>Household work split</h3>
       <label className="form">
         Share of each day's work that goes to building first: {Math.round(share * 100)}%
@@ -116,8 +148,8 @@ export function Settings() {
         />
       </label>
       <p className="muted small">
-        The work split is part of the game (undo with Ctrl-Z). Everything else here is a preference for this
-        browser.
+        The work split and experimental mechanics are saved with the game (undo settings with Ctrl-Z). The
+        other settings are preferences for this browser.
       </p>
     </section>
   );

@@ -10,21 +10,28 @@ export function laborWeek(state: GameState, catalog?: Catalog) {
   let available = 0;
   let worked = 0;
   let paid = 0;
+  let maintenance = 0;
   const incomeSystems = new Set(catalog?.flows.filter((f) => f.direction === 'out' && f.resource === 'Capital').map((f) => f.systemId) ?? []);
   for (const l of week) {
-    const byJob = l.labor.byJob ?? { construction: l.labor.construction, upkeep: l.labor.upkeepDelivered };
+    const raw = l.labor.byJob ?? { construction: l.labor.construction, upkeep: l.labor.upkeepDelivered };
+    const dayPaid = raw.employment ?? Object.entries(l.laborBySystem).reduce((a, [id, h]) => a + (incomeSystems.has(id) ? h : 0), 0);
+    maintenance += Math.max(0, (raw.upkeep ?? 0) - (raw.employment === undefined ? dayPaid : 0));
+    // A continued game's seven-day window may contain both ledger formats.
+    const byJob = state.settings.employmentPriority && raw.employment === undefined
+      ? { ...raw, upkeep: Math.max(0, (raw.upkeep ?? 0) - dayPaid), employment: dayPaid }
+      : raw;
     for (const [job, h] of Object.entries(byJob)) {
       jobs[job as JobId] = (jobs[job as JobId] ?? 0) + h;
       worked += h;
     }
     available += l.labor.pool;
-    for (const [id, h] of Object.entries(l.laborBySystem)) if (incomeSystems.has(id)) paid += h;
+    paid += dayPaid;
   }
   return {
     jobs,
     breakdown: {
       employment: explained(paid, 'labor consumed by systems producing income over the last 7 days'),
-      maintenance: explained(Math.max(0, (jobs.upkeep ?? 0) - paid), 'system work minus employment over the last 7 days'),
+      maintenance: explained(maintenance, 'daily system work excluding employment over the last 7 days; legacy and separate-employment ledgers reconciled'),
       construction: explained(jobs.construction ?? 0, 'construction work over the last 7 days'),
       gathering: explained(Object.entries(jobs).filter(([job]) => job.startsWith('gather-')).reduce((a, [, h]) => a + h!, 0), 'gathering work including walking and boiling over the last 7 days'),
     },

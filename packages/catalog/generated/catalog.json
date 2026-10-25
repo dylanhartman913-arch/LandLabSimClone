@@ -1,8 +1,273 @@
 {
+  "preservationRecipes": [
+    {
+      "systemId": "S118",
+      "inputs": [
+        "Vegetables fruit fiber herbs",
+        "Root crops",
+        "Meat",
+        "Fish"
+      ],
+      "kcalPerDay": 12000,
+      "laborPer1000Kcal": 0.5,
+      "energyResource": "Cooking fuel",
+      "energyPer1000Kcal": 0.2,
+      "yieldFraction": 0.9,
+      "note": "LL-30 experimental canning balance: shelf-stable kcal at 90% energy yield; batch labor/fuel additional to upkeep."
+    },
+    {
+      "systemId": "S117",
+      "inputs": [
+        "Vegetables fruit fiber herbs",
+        "Root crops",
+        "Meat",
+        "Fish",
+        "Mushrooms"
+      ],
+      "kcalPerDay": 6000,
+      "laborPer1000Kcal": 0.3,
+      "energyResource": "Sunlight",
+      "energyPer1000Kcal": 0.5,
+      "yieldFraction": 0.9,
+      "note": "LL-30 experimental solar drying balance; daily sunlight limits processing; no fuel required."
+    }
+  ],
+  "livestockRules": [
+    {
+      "systemId": "S015",
+      "matureDays": 55,
+      "primeDays": 55,
+      "maxAgeDays": 120,
+      "animalsPerUnit": 12,
+      "meatLbs": 48,
+      "cullHours": 6,
+      "maturesInto": {
+        "systemId": "S018",
+        "scaleMultiplier": 12
+      },
+      "seasonalEggs": false,
+      "predatorRisk": 0.3,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S018",
+      "matureDays": 140,
+      "primeDays": 730,
+      "maxAgeDays": 1825,
+      "animalsPerUnit": 1,
+      "meatLbs": 4,
+      "cullHours": 0.5,
+      "breeding": {
+        "offspringSystemId": "S015",
+        "offspringScale": 0.08333333333333333,
+        "gestationDays": 21,
+        "laborHours": 2,
+        "fee": 5
+      },
+      "seasonalEggs": true,
+      "predatorRisk": 0.25,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S050",
+      "matureDays": 150,
+      "primeDays": 730,
+      "maxAgeDays": 2920,
+      "animalsPerUnit": 1,
+      "meatLbs": 5,
+      "cullHours": 0.5,
+      "breeding": {
+        "offspringSystemId": "S050",
+        "offspringScale": 1,
+        "gestationDays": 28,
+        "laborHours": 2,
+        "fee": 5
+      },
+      "seasonalEggs": true,
+      "predatorRisk": 0.2,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S051",
+      "matureDays": 180,
+      "primeDays": 180,
+      "maxAgeDays": 365,
+      "animalsPerUnit": 1,
+      "meatLbs": 18,
+      "cullHours": 1,
+      "breeding": {
+        "offspringSystemId": "S051",
+        "offspringScale": 1,
+        "gestationDays": 28,
+        "laborHours": 2,
+        "fee": 5
+      },
+      "seasonalEggs": false,
+      "predatorRisk": 0.2,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S075",
+      "matureDays": 140,
+      "primeDays": 730,
+      "maxAgeDays": 1825,
+      "animalsPerUnit": 12,
+      "meatLbs": 48,
+      "cullHours": 6,
+      "breeding": {
+        "offspringSystemId": "S015",
+        "offspringScale": 1,
+        "gestationDays": 21,
+        "laborHours": 4,
+        "fee": 25
+      },
+      "seasonalEggs": true,
+      "predatorRisk": 0.25,
+      "secureHousing": true,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S139",
+      "matureDays": 365,
+      "primeDays": 1460,
+      "maxAgeDays": 3650,
+      "animalsPerUnit": 2,
+      "meatLbs": 80,
+      "cullHours": 6,
+      "breeding": {
+        "offspringSystemId": "S139",
+        "offspringScale": 0.5,
+        "gestationDays": 150,
+        "laborHours": 2,
+        "fee": 50
+      },
+      "seasonalEggs": false,
+      "predatorRisk": 0,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S140",
+      "matureDays": 150,
+      "primeDays": 730,
+      "maxAgeDays": 1825,
+      "animalsPerUnit": 3,
+      "meatLbs": 12,
+      "cullHours": 2,
+      "breeding": {
+        "offspringSystemId": "S140",
+        "offspringScale": 1,
+        "gestationDays": 31,
+        "laborHours": 2,
+        "fee": 15
+      },
+      "seasonalEggs": false,
+      "predatorRisk": 0.1,
+      "secureHousing": true,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S141",
+      "matureDays": 365,
+      "primeDays": 1460,
+      "maxAgeDays": 3650,
+      "animalsPerUnit": 3,
+      "meatLbs": 150,
+      "cullHours": 9,
+      "breeding": {
+        "offspringSystemId": "S141",
+        "offspringScale": 0.3333333333333333,
+        "gestationDays": 150,
+        "laborHours": 2,
+        "fee": 40
+      },
+      "seasonalEggs": false,
+      "predatorRisk": 0,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S142",
+      "matureDays": 56,
+      "primeDays": 365,
+      "maxAgeDays": 1095,
+      "animalsPerUnit": 10,
+      "meatLbs": 5,
+      "cullHours": 3,
+      "breeding": {
+        "offspringSystemId": "S142",
+        "offspringScale": 1,
+        "gestationDays": 18,
+        "laborHours": 2,
+        "fee": 15
+      },
+      "seasonalEggs": true,
+      "predatorRisk": 0.3,
+      "secureHousing": true,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S014",
+      "matureDays": 365,
+      "primeDays": 2190,
+      "maxAgeDays": 3650,
+      "animalsPerUnit": 1,
+      "meatLbs": 0,
+      "cullHours": 0,
+      "seasonalEggs": false,
+      "predatorRisk": 0,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S143",
+      "matureDays": 1095,
+      "primeDays": 5475,
+      "maxAgeDays": 9125,
+      "animalsPerUnit": 1,
+      "meatLbs": 0,
+      "cullHours": 0,
+      "seasonalEggs": false,
+      "predatorRisk": 0,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S016",
+      "matureDays": 90,
+      "primeDays": 1825,
+      "maxAgeDays": 3650,
+      "animalsPerUnit": 1,
+      "meatLbs": 0,
+      "cullHours": 0,
+      "breeding": {
+        "offspringSystemId": "S016",
+        "offspringScale": 1,
+        "gestationDays": 90,
+        "laborHours": 4,
+        "fee": 50
+      },
+      "seasonalEggs": false,
+      "predatorRisk": 0,
+      "secureHousing": false,
+      "note": "LL-31 experimental colony-scale aging and managed split; a colony is one cohort, not an individual bee. Rates are game balance assumptions."
+    }
+  ],
+  "predatorRule": {
+    "intervalDays": 28,
+    "warningDays": 3,
+    "guardianSystemId": "S014",
+    "guardianRadiusFt": 100,
+    "note": "LL-31 seeded warning/attack game balance; a fed, staffed guardian within 100 ft or operating secure housing prevents the loss."
+  },
   "schemaVersion": 1,
   "source": {
     "file": "LandLab_Sim_Systems_v2.xlsx",
-    "sha256": "b92b6bf36fe07032605c186d367e182cf4331a4df3e137d7286a19e82c609895"
+    "sha256": "120359ad73cadddf6e4ab759b3f8a06f154e0bdfeb932db9ad67375aab7db3b3"
   },
   "assumptions": {
     "hdd": 6000,
@@ -429,6 +694,7 @@
         "Grain",
         "Honey",
         "Nuts",
+        "Preserved food",
         "Food"
       ],
       "deliversTo": "any",
@@ -473,8 +739,8 @@
       "satisfiedBy": [],
       "deliversTo": "any",
       "deliveryRadiusFt": 0,
-      "marketPrice": null,
-      "marketUnit": null,
+      "marketPrice": 2,
+      "marketUnit": "$/lbs",
       "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
@@ -490,9 +756,9 @@
         "directUseShare": "default-rule",
         "deliversTo": "default-rule",
         "deliveryRadiusFt": "default-rule",
-        "marketPrice": "default-rule",
-        "marketUnit": "default-rule",
-        "marketAvailable": "default-rule"
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "override"
       }
     },
     {
@@ -513,8 +779,8 @@
       "satisfiedBy": [],
       "deliversTo": "any",
       "deliveryRadiusFt": 0,
-      "marketPrice": null,
-      "marketUnit": null,
+      "marketPrice": 1,
+      "marketUnit": "$/lbs",
       "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
@@ -530,9 +796,9 @@
         "directUseShare": "default-rule",
         "deliversTo": "default-rule",
         "deliveryRadiusFt": "default-rule",
-        "marketPrice": "default-rule",
-        "marketUnit": "default-rule",
-        "marketAvailable": "default-rule"
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "override"
       }
     },
     {
@@ -593,8 +859,8 @@
       "satisfiedBy": [],
       "deliversTo": "any",
       "deliveryRadiusFt": 0,
-      "marketPrice": null,
-      "marketUnit": null,
+      "marketPrice": 0.5,
+      "marketUnit": "$/eggs",
       "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
@@ -610,9 +876,9 @@
         "directUseShare": "default-rule",
         "deliversTo": "default-rule",
         "deliveryRadiusFt": "default-rule",
-        "marketPrice": "default-rule",
-        "marketUnit": "default-rule",
-        "marketAvailable": "default-rule"
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "override"
       }
     },
     {
@@ -633,8 +899,8 @@
       "satisfiedBy": [],
       "deliversTo": "any",
       "deliveryRadiusFt": 0,
-      "marketPrice": null,
-      "marketUnit": null,
+      "marketPrice": 8,
+      "marketUnit": "$/lbs",
       "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
@@ -650,9 +916,9 @@
         "directUseShare": "default-rule",
         "deliversTo": "default-rule",
         "deliveryRadiusFt": "default-rule",
-        "marketPrice": "default-rule",
-        "marketUnit": "default-rule",
-        "marketAvailable": "default-rule"
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "override"
       }
     },
     {
@@ -2247,8 +2513,8 @@
       "satisfiedBy": [],
       "deliversTo": "any",
       "deliveryRadiusFt": 0,
-      "marketPrice": null,
-      "marketUnit": null,
+      "marketPrice": 4,
+      "marketUnit": "$/lbs",
       "marketAvailable": false,
       "provenance": {
         "name": "xlsx",
@@ -2262,9 +2528,9 @@
         "directUseShare": "default-rule",
         "deliversTo": "default-rule",
         "deliveryRadiusFt": "default-rule",
-        "marketPrice": "default-rule",
-        "marketUnit": "default-rule",
-        "marketAvailable": "default-rule"
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "override"
       }
     },
     {
@@ -2385,6 +2651,46 @@
         "note": "xlsx",
         "spoilPerWeek": "default-rule",
         "storedIn": "default-rule",
+        "storable": "default-rule",
+        "satisfiedBy": "default-rule",
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
+      }
+    },
+    {
+      "name": "Preserved food",
+      "unit": "kcal",
+      "class": "Flow",
+      "needsRow": "Food",
+      "factorToNeed": 1,
+      "note": "Shelf-stable food energy after canning or drying. Processing consumes fresh food and loses some calories; not additional harvest.",
+      "spoilPerWeek": 0.001,
+      "storedIn": {
+        "capacityResource": "Food storage",
+        "buffer": 10,
+        "unitsPerCapacityUnit": 48000
+      },
+      "storable": true,
+      "directUseShare": 0,
+      "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
+      "provenance": {
+        "name": "xlsx",
+        "unit": "xlsx",
+        "class": "xlsx",
+        "note": "xlsx",
+        "needsRow": "xlsx",
+        "factorToNeed": "xlsx",
+        "spoilPerWeek": "override",
+        "storedIn": "override",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
         "directUseShare": "default-rule",
@@ -12378,6 +12684,60 @@
         "starterCount": "xlsx",
         "gameListedInputs": "xlsx",
         "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S178",
+      "name": "Farm Stand",
+      "categories": [
+        "Tools"
+      ],
+      "source": "New (LL-29 patch)",
+      "description": "A small stand for selling household surplus at a better price. Requires weekly staffing and transport.",
+      "costBuy": 200,
+      "costDiy": 100,
+      "setupLaborHrs": 4,
+      "weeklyUpkeepHrs": 2,
+      "footprintSqft": 16,
+      "lifespanYrs": 10,
+      "confidence": "low",
+      "notes": "LL-29 experimental game balance: 80% of reference retail rather than 50% when staffed and supplied. Two hours and 10 miles per week.",
+      "starterCount": 0,
+      "gameListedInputs": "Labor; Transportation",
+      "gameListedOutputs": "(improves surplus sale price)",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S178",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
         "priorityTier": "default-rule",
         "yearsToFullOutput": "default-rule",
         "spriteKey": "default-rule",
@@ -34218,6 +34578,60 @@
       },
       "period": "Weekly",
       "note": "Weekly upkeep hours (Systems column K): airing and washing.",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0820",
+      "systemId": "S178",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 2
+      },
+      "period": "Weekly",
+      "note": "Game balance: staffing two hours/week.",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0821",
+      "systemId": "S178",
+      "direction": "in",
+      "resource": "Transportation",
+      "qty": {
+        "kind": "const",
+        "value": 10
+      },
+      "period": "Weekly",
+      "note": "Game balance: weekly collection and supplies.",
       "inputRole": "required",
       "timing": {
         "kind": "steady"

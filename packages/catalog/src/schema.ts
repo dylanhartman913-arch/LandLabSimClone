@@ -282,7 +282,34 @@ export const CategorySchema = z.object({
 });
 export type Category = z.infer<typeof CategorySchema>;
 
+export const PreservationRecipeSchema = z.object({
+  systemId: z.string(), inputs: z.array(z.string()).min(1),
+  kcalPerDay: z.number().positive(), laborPer1000Kcal: z.number().positive(),
+  energyResource: z.enum(['Cooking fuel', 'Electricity', 'Sunlight']),
+  energyPer1000Kcal: z.number().positive(), yieldFraction: z.number().positive().max(1), note: z.string(),
+});
+export type PreservationRecipe = z.infer<typeof PreservationRecipeSchema>;
+
+export const LivestockRuleSchema = z.object({
+  systemId: z.string(), matureDays: z.number().nonnegative(), primeDays: z.number().nonnegative(),
+  maxAgeDays: z.number().positive(), animalsPerUnit: z.number().positive(),
+  meatLbs: z.number().nonnegative(), cullHours: z.number().nonnegative(),
+  maturesInto: z.object({ systemId: z.string(), scaleMultiplier: z.number().positive() }).optional(),
+  breeding: z.object({ offspringSystemId: z.string(), offspringScale: z.number().positive(),
+    gestationDays: z.number().positive(), laborHours: z.number().positive(), fee: z.number().nonnegative() }).optional(),
+  seasonalEggs: z.boolean(), predatorRisk: z.number().min(0).max(1), secureHousing: z.boolean(), note: z.string(),
+}).refine((r) => r.matureDays <= r.primeDays && r.primeDays < r.maxAgeDays, 'maturity ≤ prime age < maximum age');
+export type LivestockRule = z.infer<typeof LivestockRuleSchema>;
+
+export const PredatorRuleSchema = z.object({
+  intervalDays: z.number().int().positive(), warningDays: z.number().int().positive(),
+  guardianSystemId: z.string(), guardianRadiusFt: z.number().positive(), note: z.string(),
+});
+
 export const CatalogSchema = z.object({
+  preservationRecipes: z.array(PreservationRecipeSchema).optional(),
+  livestockRules: z.array(LivestockRuleSchema).optional(),
+  predatorRule: PredatorRuleSchema.optional(),
   schemaVersion: z.literal(1),
   source: z.object({ file: z.string(), sha256: z.string() }),
   assumptions: AssumptionsSchema,
@@ -303,6 +330,9 @@ export type Catalog = z.infer<typeof CatalogSchema>;
 export const OverridesSchema = z
   .object({
     version: z.literal(1),
+    preservationRecipes: z.array(PreservationRecipeSchema).optional(),
+    livestockRules: z.array(LivestockRuleSchema).optional(),
+    predatorRule: PredatorRuleSchema.optional(),
     systems: z.record(
       z.string(),
       z
@@ -462,6 +492,8 @@ export const SiteSchema = z.object({
   description: z.string(),
   latitude: z.number(),
   elevationFt: z.number(),
+  /** Game balance rate for outside construction; dollars per hour, not a quoted local wage. */
+  crewRate: z.number().positive().optional(),
   assumptions: AssumptionsSchema,
   monthly: z.object({ hdd: Monthly, cdd: Monthly, psh: Monthly, precipIn: Monthly, windCfMult: Monthly }),
   /** 1-based days of year of last spring frost and first fall frost. */

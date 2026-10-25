@@ -1,0 +1,16 @@
+{
+  "patch": "ll30-preserved-food",
+  "source": "New (LL-30)",
+  "note": "Preserved food is measured in kcal. Conversion yields and batch rates live in engine-only overrides, gated by foodPreservation. Existing resource/flow quantities unchanged.",
+  "resources": [
+    {
+      "name": "Preserved food",
+      "unit": "kcal",
+      "class": "Flow",
+      "needsRow": "Food",
+      "factorToNeed": 1,
+      "note": "Shelf-stable food energy after canning or drying. Processing consumes fresh food and loses some calories; not additional harvest."
+    }
+  ],
+  "systems": []
+}

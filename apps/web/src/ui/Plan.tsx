@@ -161,6 +161,7 @@ function Scenarios() {
       {scenarios.length > 0 && (
         <div className="compare-wrap">
           <table className="compare" data-testid="compare">
+          <caption>Planned design: average-year weekly flows and capacities; weather risk uses each run’s worst week.</caption>
             <thead>
               <tr>
                 <th scope="col">
@@ -425,6 +426,7 @@ function McResult({ result, spec }: { result: MonteCarloResult; spec: MonteCarlo
       <h3>Worst-week coverage per need, across runs</h3>
       <p className="muted small">Run snapshot: {spec.design.name} on {spec.siteId}. {weatherRiskPolicy(useGame.getState().catalog, spec.design, spec.siteId)}</p>
       <table className="mc-table" data-testid="mc-table">
+          <caption>{`Worst-week coverage across ${spec.years}-year runs.`}</caption>
         <thead>
           <tr>
             {t.headers.map((h) => (
@@ -508,6 +510,7 @@ function SensitivityTab() {
         {fmtPct(axis.to)}.
       </p>
       <table className="tornado" data-testid="tornado">
+          <caption>Planned design forecast over an average climate year.</caption>
         <tbody>
           {t.bars.map((b) => {
             const g = tornadoBar(b.low, b.high, b.base, W, axis);
@@ -535,6 +538,7 @@ function SensitivityTab() {
       </h3>
       {t.flows.length > 0 && (
         <table className="flows-table" data-testid="sensitive-flows">
+          <caption>Catalog rates as weekly equivalents; capacities as labeled.</caption>
           <thead>
             <tr>
               <th scope="col">System</th>

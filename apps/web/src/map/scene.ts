@@ -160,6 +160,13 @@ export class MapScene {
     this.bindInput();
   }
 
+  /** Resize must also redraw a paused scene and refresh placement feedback. */
+  redraw(): void {
+    this.updateGhost();
+    this.frame();
+    this.app.renderer.render(this.app.stage);
+  }
+
   destroy(): void {
     this.unsub();
     this.unbindInput();
@@ -350,6 +357,11 @@ export class MapScene {
       if (sys.layer === 'none') continue;
       seen.add(inst.id);
       let v = this.views.get(inst.id);
+      if (v && v.systemId !== inst.systemId) {
+        v.root.destroy({ children: true });
+        this.views.delete(inst.id);
+        v = undefined;
+      }
       if (!v) {
         v = this.createView(inst.id, sys);
         this.views.set(inst.id, v);

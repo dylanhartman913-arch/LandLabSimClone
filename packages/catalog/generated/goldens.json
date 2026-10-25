@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "source": {
     "file": "LandLab_Sim_Systems_v2.xlsx",
-    "sha256": "b92b6bf36fe07032605c186d367e182cf4331a4df3e137d7286a19e82c609895"
+    "sha256": "120359ad73cadddf6e4ab759b3f8a06f154e0bdfeb932db9ad67375aab7db3b3"
   },
   "counts": {
     "S002": 1,
@@ -507,6 +507,12 @@
       "consumed": 0,
       "net": 10,
       "status": "Surplus"
+    },
+    "Preserved food": {
+      "produced": 0,
+      "consumed": 0,
+      "net": 0,
+      "status": "Not in design"
     }
   },
   "flows": {
@@ -6239,6 +6245,20 @@
     "F0819": {
       "qty": 0.1,
       "weeklyPerUnit": 0.1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0820": {
+      "qty": 2,
+      "weeklyPerUnit": 2,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0821": {
+      "qty": 10,
+      "weeklyPerUnit": 10,
       "count": 0,
       "weeklyTotal": 0,
       "contribution": 0

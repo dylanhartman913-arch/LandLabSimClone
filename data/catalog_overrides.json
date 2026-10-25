@@ -164,6 +164,45 @@
       "marketPrice": 0.25,
       "marketUnit": "$/lbs",
       "note": "Market price (G12, low confidence): salvage yard."
+    },
+    "Honey": {
+      "marketPrice": 8,
+      "marketUnit": "$/lbs",
+      "marketAvailable": false,
+      "note": "LL-29 experimental trade reference price; game balance assumption per canonical unit, not a sourced local quote. Sales only; not available to buy."
+    },
+    "Wool": {
+      "marketPrice": 4,
+      "marketUnit": "$/lbs",
+      "marketAvailable": false,
+      "note": "LL-29 experimental trade reference price; game balance assumption per canonical unit, not a sourced local quote. Sales only; not available to buy."
+    },
+    "Eggs": {
+      "marketPrice": 0.5,
+      "marketUnit": "$/eggs",
+      "marketAvailable": false,
+      "note": "LL-29 experimental trade reference price; game balance assumption per canonical unit, not a sourced local quote. Sales only; not available to buy."
+    },
+    "Root crops": {
+      "marketPrice": 1,
+      "marketUnit": "$/lbs",
+      "marketAvailable": false,
+      "note": "LL-29 experimental trade reference price; game balance assumption per canonical unit, not a sourced local quote. Sales only; not available to buy."
+    },
+    "Vegetables fruit fiber herbs": {
+      "marketPrice": 2,
+      "marketUnit": "$/lbs",
+      "marketAvailable": false,
+      "note": "LL-29 sales reference price, experimental game balance assumption."
+    },
+    "Preserved food": {
+      "spoilPerWeek": 0.001,
+      "storedIn": {
+        "capacityResource": "Food storage",
+        "buffer": 10,
+        "unitsPerCapacityUnit": 48000
+      },
+      "note": "LL-30 low-spoilage shelf-stable kcal; experimental game balance, not food safety advice."
     }
   },
   "flows": {
@@ -579,5 +618,270 @@
       "max": 1,
       "note": "Ponds on steep ground hold less: −3% per percent of slope, to at most half."
     }
-  ]
+  ],
+  "preservationRecipes": [
+    {
+      "systemId": "S118",
+      "inputs": [
+        "Vegetables fruit fiber herbs",
+        "Root crops",
+        "Meat",
+        "Fish"
+      ],
+      "kcalPerDay": 12000,
+      "laborPer1000Kcal": 0.5,
+      "energyResource": "Cooking fuel",
+      "energyPer1000Kcal": 0.2,
+      "yieldFraction": 0.9,
+      "note": "LL-30 experimental canning balance: shelf-stable kcal at 90% energy yield; batch labor/fuel additional to upkeep."
+    },
+    {
+      "systemId": "S117",
+      "inputs": [
+        "Vegetables fruit fiber herbs",
+        "Root crops",
+        "Meat",
+        "Fish",
+        "Mushrooms"
+      ],
+      "kcalPerDay": 6000,
+      "laborPer1000Kcal": 0.3,
+      "energyResource": "Sunlight",
+      "energyPer1000Kcal": 0.5,
+      "yieldFraction": 0.9,
+      "note": "LL-30 experimental solar drying balance; daily sunlight limits processing; no fuel required."
+    }
+  ],
+  "livestockRules": [
+    {
+      "systemId": "S015",
+      "matureDays": 55,
+      "primeDays": 55,
+      "maxAgeDays": 120,
+      "animalsPerUnit": 12,
+      "meatLbs": 48,
+      "cullHours": 6,
+      "seasonalEggs": false,
+      "predatorRisk": 0.3,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled.",
+      "maturesInto": {
+        "systemId": "S018",
+        "scaleMultiplier": 12
+      }
+    },
+    {
+      "systemId": "S018",
+      "matureDays": 140,
+      "primeDays": 730,
+      "maxAgeDays": 1825,
+      "animalsPerUnit": 1,
+      "meatLbs": 4,
+      "cullHours": 0.5,
+      "seasonalEggs": true,
+      "predatorRisk": 0.25,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled.",
+      "breeding": {
+        "offspringSystemId": "S015",
+        "offspringScale": 0.08333333333333333,
+        "gestationDays": 21,
+        "laborHours": 2,
+        "fee": 5
+      }
+    },
+    {
+      "systemId": "S050",
+      "matureDays": 150,
+      "primeDays": 730,
+      "maxAgeDays": 2920,
+      "animalsPerUnit": 1,
+      "meatLbs": 5,
+      "cullHours": 0.5,
+      "seasonalEggs": true,
+      "predatorRisk": 0.2,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled.",
+      "breeding": {
+        "offspringSystemId": "S050",
+        "offspringScale": 1,
+        "gestationDays": 28,
+        "laborHours": 2,
+        "fee": 5
+      }
+    },
+    {
+      "systemId": "S051",
+      "matureDays": 180,
+      "primeDays": 180,
+      "maxAgeDays": 365,
+      "animalsPerUnit": 1,
+      "meatLbs": 18,
+      "cullHours": 1,
+      "seasonalEggs": false,
+      "predatorRisk": 0.2,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled.",
+      "breeding": {
+        "offspringSystemId": "S051",
+        "offspringScale": 1,
+        "gestationDays": 28,
+        "laborHours": 2,
+        "fee": 5
+      }
+    },
+    {
+      "systemId": "S075",
+      "matureDays": 140,
+      "primeDays": 730,
+      "maxAgeDays": 1825,
+      "animalsPerUnit": 12,
+      "meatLbs": 48,
+      "cullHours": 6,
+      "seasonalEggs": true,
+      "predatorRisk": 0.25,
+      "secureHousing": true,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled.",
+      "breeding": {
+        "offspringSystemId": "S015",
+        "offspringScale": 1,
+        "gestationDays": 21,
+        "laborHours": 4,
+        "fee": 25
+      }
+    },
+    {
+      "systemId": "S139",
+      "matureDays": 365,
+      "primeDays": 1460,
+      "maxAgeDays": 3650,
+      "animalsPerUnit": 2,
+      "meatLbs": 80,
+      "cullHours": 6,
+      "seasonalEggs": false,
+      "predatorRisk": 0,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled.",
+      "breeding": {
+        "offspringSystemId": "S139",
+        "offspringScale": 0.5,
+        "gestationDays": 150,
+        "laborHours": 2,
+        "fee": 50
+      }
+    },
+    {
+      "systemId": "S140",
+      "matureDays": 150,
+      "primeDays": 730,
+      "maxAgeDays": 1825,
+      "animalsPerUnit": 3,
+      "meatLbs": 12,
+      "cullHours": 2,
+      "seasonalEggs": false,
+      "predatorRisk": 0.1,
+      "secureHousing": true,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled.",
+      "breeding": {
+        "offspringSystemId": "S140",
+        "offspringScale": 1,
+        "gestationDays": 31,
+        "laborHours": 2,
+        "fee": 15
+      }
+    },
+    {
+      "systemId": "S141",
+      "matureDays": 365,
+      "primeDays": 1460,
+      "maxAgeDays": 3650,
+      "animalsPerUnit": 3,
+      "meatLbs": 150,
+      "cullHours": 9,
+      "seasonalEggs": false,
+      "predatorRisk": 0,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled.",
+      "breeding": {
+        "offspringSystemId": "S141",
+        "offspringScale": 0.3333333333333333,
+        "gestationDays": 150,
+        "laborHours": 2,
+        "fee": 40
+      }
+    },
+    {
+      "systemId": "S142",
+      "matureDays": 56,
+      "primeDays": 365,
+      "maxAgeDays": 1095,
+      "animalsPerUnit": 10,
+      "meatLbs": 5,
+      "cullHours": 3,
+      "seasonalEggs": true,
+      "predatorRisk": 0.3,
+      "secureHousing": true,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled.",
+      "breeding": {
+        "offspringSystemId": "S142",
+        "offspringScale": 1,
+        "gestationDays": 18,
+        "laborHours": 2,
+        "fee": 15
+      }
+    },
+    {
+      "systemId": "S014",
+      "matureDays": 365,
+      "primeDays": 2190,
+      "maxAgeDays": 3650,
+      "animalsPerUnit": 1,
+      "meatLbs": 0,
+      "cullHours": 0,
+      "seasonalEggs": false,
+      "predatorRisk": 0,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S143",
+      "matureDays": 1095,
+      "primeDays": 5475,
+      "maxAgeDays": 9125,
+      "animalsPerUnit": 1,
+      "meatLbs": 0,
+      "cullHours": 0,
+      "seasonalEggs": false,
+      "predatorRisk": 0,
+      "secureHousing": false,
+      "note": "LL-31 experimental cohort lifecycle and dressed-meat balance; not husbandry guidance. Catalog steady meat output is replaced by explicit culling only when enabled."
+    },
+    {
+      "systemId": "S016",
+      "matureDays": 90,
+      "primeDays": 1825,
+      "maxAgeDays": 3650,
+      "animalsPerUnit": 1,
+      "meatLbs": 0,
+      "cullHours": 0,
+      "breeding": {
+        "offspringSystemId": "S016",
+        "offspringScale": 1,
+        "gestationDays": 90,
+        "laborHours": 4,
+        "fee": 50
+      },
+      "seasonalEggs": false,
+      "predatorRisk": 0,
+      "secureHousing": false,
+      "note": "LL-31 experimental colony-scale aging and managed split; a colony is one cohort, not an individual bee. Rates are game balance assumptions."
+    }
+  ],
+  "predatorRule": {
+    "intervalDays": 28,
+    "warningDays": 3,
+    "guardianSystemId": "S014",
+    "guardianRadiusFt": 100,
+    "note": "LL-31 seeded warning/attack game balance; a fed, staffed guardian within 100 ft or operating secure housing prevents the loss."
+  }
 }

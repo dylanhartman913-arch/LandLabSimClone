@@ -503,7 +503,8 @@ export function balanceValues(r: BalanceResult) {
     })),
     summary: Object.fromEntries(Object.entries(r.summary).map(([k, v]) => [k, v.value])),
     resources: Object.fromEntries(
-      Object.entries(r.resources).map(([k, v]) => [
+      // Preserve legacy numeric digests when the opt-in processing resource has no flows.
+      Object.entries(r.resources).filter(([k, v]) => k !== 'Preserved food' || v.produced.value !== 0 || v.consumed.value !== 0).map(([k, v]) => [
         k,
         { produced: v.produced.value, consumed: v.consumed.value, status: v.status },
       ]),

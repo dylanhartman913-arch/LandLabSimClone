@@ -3,7 +3,14 @@ import type { GameState, Instance, PersonState } from './types.ts';
 import { getPlans, dailyAmount } from './plans.ts';
 import { climateTable } from './climate.ts';
 import { stepDay } from './step.ts';
-import { HEAT_HDD_MIN, SURVIVAL, WB_AWAY_MIN_DAYS, WB_RETURN_AT, laborShare, type SurvivalNeed } from './wellbeing.ts';
+import {
+  HEAT_HDD_MIN,
+  SURVIVAL,
+  WB_AWAY_MIN_DAYS,
+  WB_RETURN_AT,
+  laborShare,
+  type SurvivalNeed,
+} from './wellbeing.ts';
 
 /** The resource whose supply fixes each survival need (what a recovery proposal builds or finds). */
 export const SURVIVAL_RESOURCE: Record<SurvivalNeed, string> = {
@@ -19,10 +26,15 @@ export const CONTRACTOR_RATE = 35;
 export const CONTRACTOR_HOURS_PER_DAY = 8;
 export const RETURN_TRIAL_DAYS = 3;
 
+export function contractorRate(state: GameState): number {
+  return state.settings.siteCrewRates ? (state.site.crewRate ?? CONTRACTOR_RATE) : CONTRACTOR_RATE;
+}
+
 export function contractorQuote(state: GameState, instance: Instance) {
   const hours = Math.max(0, instance.setupHoursNeeded - instance.setupHoursDone);
-  const cost = hours * CONTRACTOR_RATE;
-  const days = Math.ceil(hours / CONTRACTOR_HOURS_PER_DAY);
+  const rate = contractorRate(state);
+  const cost = hours * rate;
+  const days = Math.max(instance.status === 'building' ? 1 : 0, Math.ceil(hours / CONTRACTOR_HOURS_PER_DAY));
   const blocked =
     instance.status !== 'building'
       ? 'Already completed.'
@@ -31,7 +43,7 @@ export function contractorQuote(state: GameState, instance: Instance) {
         : state.cash < cost
           ? `Need $${cost.toFixed(2)}; cash is $${state.cash.toFixed(2)} (missing $${(cost - state.cash).toFixed(2)}).`
           : null;
-  return { hours, cost, days, blocked, rate: CONTRACTOR_RATE, hoursPerDay: CONTRACTOR_HOURS_PER_DAY };
+  return { hours, cost, days, blocked, rate, hoursPerDay: CONTRACTOR_HOURS_PER_DAY };
 }
 
 export function hireConstruction(state: GameState, id: string): GameState {
@@ -44,7 +56,16 @@ export function hireConstruction(state: GameState, id: string): GameState {
     cash: state.cash - q.cost,
     pendingCash: { ...state.pendingCash, purchases: state.pendingCash.purchases + q.cost },
     instances: state.instances.map((i) =>
-      i.id === id ? { ...i, contractor: { hours: q.hours, worked: 0 } } : i,
+      i.id === id
+        ? {
+            ...i,
+            contractor: {
+              hours: q.hours,
+              worked: 0,
+              ...(state.settings.siteCrewRates ? { rate: q.rate } : {}),
+            },
+          }
+        : i,
     ),
   };
 }
@@ -91,7 +112,10 @@ export function returnCheckItems(state: GameState, catalog: Catalog): ReturnChec
     );
   const capacity = (resource: string) =>
     state.instances
-      .filter((i) => i.status === 'active' && !i.person?.away)
+      .filter(
+        (i) =>
+          i.status === 'active' && !i.person?.away && !(state.settings.shelterOccupancy && i.shelterClosed),
+      )
       .reduce(
         (a, i) =>
           a +
@@ -148,7 +172,11 @@ export function returnCheckItems(state: GameState, catalog: Catalog): ReturnChec
     ] as const) {
       if (key === 'heat' && result.ledger.weather.hdd <= HEAT_HDD_MIN) continue;
       const n = result.ledger.needs[row];
-      if (n.needed > 1e-9 && n.delivered / n.needed < SURVIVAL[key].short - 1e-9)
+      const local = key === 'heat' || key === 'shelter' ? result.ledger.residentShares?.[key] : undefined;
+      if (
+        (local !== undefined ? local : n.needed > 1e-9 ? n.delivered / n.needed : 1) <
+        SURVIVAL[key].short - 1e-9
+      )
         failed.add(key);
     }
   }
@@ -166,7 +194,7 @@ export function recoverResidents(
   state: GameState,
   catalog: Catalog,
 ): { state: GameState; returned: string[] } {
-  if (!state.settings.safeRecovery) return { state, returned: [] };
+  if (!state.settings.safeRecovery && !state.settings.shelterOccupancy) return { state, returned: [] };
   const eligible = state.instances.filter(
     (i) => i.person?.away && state.calendar.absDay - 1 - i.person.away.since >= WB_AWAY_MIN_DAYS,
   );

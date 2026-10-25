@@ -34,3 +34,29 @@ Any change that alters what an existing action log replays to must keep old save
 6. **Prove it.** Add a test showing the legacy behavior without the flag, the new behavior with it, and unchanged fixture digests (`accounting.test.ts` keeps the playtest saves' digests).
 
 Display-only changes (views, alerts, previews, reports) don't need a flag, because they never alter a replay. Catalog edits do change replays. They go through the xlsx and `catalog:export`, and a save made against an older catalog loads from its snapshot with a message.
+
+## Phase 8 (0.9.0)
+
+New games enable `employmentPriority` (employment below upkeep, 40 h/adult/week), `siteCrewRates` (new crew bookings at the site's rate), and `cashFloor` (no new overdraft). Continuation adds all missing runtime flags in the same single settings action as earlier upgrades; read-only loads keep their original settings. Existing booked contracts preserve their rate for refunds; a contract without a stored rate was booked at the legacy $35/h.
+
+`householdStart` is start-only: new greenfield games begin with $8,000 per adult. Loading an older game does not add it or grant starting cash again. The old action log and original starting cash still replay exactly. No save-schema or catalog change is needed.
+
+## Phase 9 (0.10.0): experimental opt-in
+
+`wearAndRepair` and `sellingAndTrade` are exceptions to the default-on rollout above: both remain absent/off for new and continued games until a player enables them in Settings. Enabling/disabling is a logged settings action. No automatic migration adds them. Optional instance condition/service work, market sales and daily trade receipts round-trip in the existing save schema; `service` and `sell` actions replay them. Turning wear off retains condition while pausing its penalty and degradation.
+
+The Farm Stand workbook row and sales reference prices change the catalog hash. Existing saves follow the existing catalog-mismatch snapshot path. The old playtest digest fixtures continue to pass without either mechanic enabled.
+
+## Phase 9 (0.11.0): preservation and livestock
+
+`foodPreservation` and `livestockLifecycle` follow the same explicit opt-in rule as LL-28/LL-29; neither startup nor continuation migration enables them. Policies use logged `preserve` and `livestock` actions. Optional instance processing rules, animal age/growth, partial breeding/culling work and predator countdowns round-trip in the existing schema. Offspring IDs use the game's existing monotonic instance counter.
+
+The independent optional `livestockRng` is saved and fingerprinted when present. It pauses when lifecycle is disabled and never advances the main climate RNG. Regression coverage crosses a year boundary with predators enabled and proves the weather log matches the same run without lifecycle.
+
+The appended Preserved food workbook row changes the catalog hash, so older-catalog saves follow the snapshot compatibility path. When preservation is absent/off and a game never had preserved stock, the engine does not add a zero stock/ledger key to that legacy state. The numeric balance projection likewise omits this unused experimental resource; the full catalog/parity result still contains it. Existing numeric balance, one-year and playtest save digest fixtures remain unchanged. Turning preservation off retains existing preserved stock and policies while stopping new conversion.
+
+## Phase 9 shelter occupancy (LL-32, engine 0.12.0)
+
+`shelterOccupancy` remains explicitly opt-in; startup and continuation migrations do not enable it. Logged `assignShelter` and `closeShelter` actions set optional instance `shelterId` and `shelterClosed` fields. An absent assignment keeps the household in the first completed open shelter; null explicitly means no assigned shelter. Invalid explicit assignments remain unassigned after removal. People in town keep their assignment.
+
+Optional `shelterThermal` maps preserve yesterday’s routed thermal output by home, and optional daily `shelters`/`residentShares` records preserve per-home receipts and least-served-resident eligibility. Replay digests include the receipt map only when present. Settings actions that toggle occupancy clear that map, giving the enabled routing one warm-up operating day. Disabling occupancy retains assignments and closure choices but restores legacy loads/allocation until re-enabled. Legacy digest fixtures pass without this setting; no catalog rows or hash change for LL-32.

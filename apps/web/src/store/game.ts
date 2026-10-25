@@ -195,6 +195,7 @@ export interface GameStore {
   setInstancePriority(instanceId: string, priority: number): void;
   setInstanceLink(instanceId: string, resource: string, providerId: string | null): void;
   /** Order from the market for the next trip (G12). Logged for replay; not undoable (it's a purchase). */
+  phase9Action(body: Extract<ActionBody, { kind: 'service' | 'sell' | 'preserve' | 'livestock' | 'assignShelter' | 'closeShelter' }>): void;
   marketBuy(resource: string, amount: number): boolean;
   /** Keep a stock above a level by standing order (keepAbove 0 removes it). */
   marketStanding(resource: string, keepAbove: number, orderUpTo?: number): boolean;
@@ -239,7 +240,7 @@ let planKey = 1;
 export const DEFAULT_INIT: GameInit = {
   siteId: DEFAULT_SITE_ID,
   seed: 2026,
-  settings: { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, startDay: 90, startingStocks: { Food: 240_000, 'Drinking water': 40 } },
+  settings: { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, employmentPriority: true, siteCrewRates: true, cashFloor: true, startDay: 90, startingStocks: { Food: 240_000, 'Drinking water': 40 } },
 };
 
 /** The default starting layout as actions (so it is part of the replayable log). */
@@ -389,6 +390,9 @@ export const useGame = create<GameStore>()((set, get) => {
       if (!game.settings.safeRecovery) upgrades.safeRecovery = true;
       if (!game.settings.reuseIdleLabor) upgrades.reuseIdleLabor = true;
       if (!game.settings.survivalShelterReturn) upgrades.survivalShelterReturn = true;
+      if (!game.settings.employmentPriority) upgrades.employmentPriority = true;
+      if (!game.settings.siteCrewRates) upgrades.siteCrewRates = true;
+      if (!game.settings.cashFloor) upgrades.cashFloor = true;
       if (!game.settings.safeWaterFirst) upgrades.safeWaterFirst = true;
       if (!opts.readOnly && Object.keys(upgrades).length) {
         const r = apply(game, { kind: 'settings', settings: upgrades });
@@ -441,6 +445,7 @@ export const useGame = create<GameStore>()((set, get) => {
           ) {
             pauseReason ??= `${AUTO_PAUSE_TEXT.shortage} (${e.resource})`;
           }
+          if (ap.hardship && e.kind === 'livestock' && e.event === 'predator-warning') pauseReason ??= 'Predator tracks near livestock: secure protection before the attack.';
           if (ap.hardship && e.kind === 'hardship') pauseReason ??= AUTO_PAUSE_TEXT.hardship;
           if (ap.built && e.kind === 'built') pauseReason ??= AUTO_PAUSE_TEXT.built;
           if (ap.harvest && e.kind === 'harvest') pauseReason ??= AUTO_PAUSE_TEXT.harvest;
@@ -861,6 +866,12 @@ export const useGame = create<GameStore>()((set, get) => {
       commit(r.game, [r.action], { kind: 'priority', id: instanceId, from: inst.priority, to: priority });
     },
 
+    phase9Action(body) {
+      if (!guard()) return;
+      const r = apply(get().game, body);
+      set((s) => ({ game: r.game, actions: [...s.actions, r.action], undoStack: [], redoStack: [] }));
+    },
+
     marketBuy(resource, amount) {
       if (!guard()) return false;
       try {
@@ -990,6 +1001,15 @@ function toastForEvent(e: GameEvent): void {
       if (inst) s.toast(`${name(inst.systemId)} is built.`, 'info', e.instanceId);
       break;
     }
+    case 'livestock':
+      s.toast(e.event === 'predator-warning' ? `Predator tracks near your animals. ${e.amount} days to secure protection.`
+        : e.event === 'predator-loss' ? `Predator loss: ${e.amount} animal(s).`
+        : e.event === 'culled' ? `Culling complete: ${e.amount.toFixed(1)} lbs meat.`
+        : e.event === 'born' ? `Birth / hatch: ${e.amount} animal(s).`
+        : e.event === 'matured' ? 'Animals reached maturity.'
+        : e.event === 'protected' ? 'Housing or guardian prevented a predator loss.' : 'Animals died of old age.',
+        e.event === 'predator-warning' || e.event === 'predator-loss' ? 'warn' : 'info', e.instanceId);
+      break;
     case 'harvest':
       s.toast(`Harvest: ${name(e.systemId)} → ${e.resource}.`, 'info', e.instanceIds[0]);
       break;

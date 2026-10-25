@@ -91,6 +91,26 @@ function routeBot(o: { decisions?: Decision[]; withoutQuestSteps?: string[] } = 
   };
 }
 
+/** A shelter replacement retires the empty starter tent once the new yurt can be occupied. */
+function replaceTentBot(): Bot {
+  const yurtRoute = routeBot({ decisions: [{ day: 30, label: 'DIY yurt', apply: steps([place('Yurt', 'diy')]) }] });
+  return {
+    name: 'replace-tent',
+    act(catalog, state, log) {
+      state = yurtRoute.act(catalog, state, log);
+      const yurt = catalog.systems.find((s) => s.name === 'Yurt')!.id;
+      const tent = catalog.systems.find((s) => s.name === 'Canvas Wall Tent + Stove Jack')!.id;
+      const old = state.instances.find((i) => i.systemId === tent);
+      if (old && state.instances.some((i) => i.systemId === yurt && i.status === 'active')) {
+        const a: Action = { at: state.calendar.absDay, kind: 'remove', id: old.id };
+        state = applyAction(catalog, state, a);
+        log.push(a);
+      }
+      return state;
+    },
+  };
+}
+
 /** Replays another run's player actions on the same days (re-numbering placements), for tutorial off. */
 function scheduleBot(actions: Action[], skipTutorial: boolean): Bot {
   const ids = new Map<string, string>();
@@ -299,6 +319,7 @@ export const COMPARISONS: Comparison[] = [
       { id: 'none', label: 'Starter tent only', bot: () => routeBot() },
       { id: 'bell', label: 'Second inexpensive shelter (Bell Tent, DIY) on day 30', bot: () => routeBot({ decisions: [{ day: 30, label: 'bell tent', apply: steps([place('Bell Tent')]) }] }) },
       { id: 'yurt', label: 'Yurt (DIY) on day 30', bot: () => routeBot({ decisions: [{ day: 30, label: 'yurt', apply: steps([place('Yurt')]) }] }) },
+      { id: 'yurt-replace', label: 'Yurt on day 30; retire starter tent after completion', bot: () => replaceTentBot() },
     ],
   },
   {

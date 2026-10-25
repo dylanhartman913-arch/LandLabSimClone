@@ -149,3 +149,19 @@ test('the drawer filters by category, remembers being collapsed, and shows My sy
   await expect(page.getByTestId('drawer-toggle')).toHaveAttribute('aria-expanded', 'false');
   await page.getByTestId('drawer-toggle').click();
 });
+
+test('resizing redraws the paused scene and preserves map hit coordinates (LL-22)', async ({ page }) => {
+  await openApp(page);
+  await page.evaluate(() => window.__homestead!.scene!.app.ticker.stop());
+  await page.setViewportSize({ width: 1100, height: 760 });
+  await expect.poll(() => page.evaluate(() => {
+    const h = window.__homestead!;
+    const s = h.store.getState();
+    const world = h.scene!.app.stage.children[0]!;
+    return Math.abs(world.x - (s.viewport.width / 2 - s.camera.cx * s.camera.zoom));
+  })).toBeLessThan(0.1);
+  await shot(page, 'phase-8', 'resize-redraw');
+  await choose(page, 'photovoltaic', PANEL, 'buy');
+  await clickWorld(page, 60, 60);
+  expect(await ofSystem(page, PANEL)).toHaveLength(1);
+});

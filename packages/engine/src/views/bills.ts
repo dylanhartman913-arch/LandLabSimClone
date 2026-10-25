@@ -1,4 +1,5 @@
 import type { Catalog } from '@homestead/catalog';
+import { maintenanceView } from '../time/maintenance.ts';
 import { explained, type Explained } from '../provenance.ts';
 import type { DayLedger, GameState } from '../time/types.ts';
 
@@ -21,6 +22,7 @@ export interface WeeklyBills {
   lines: BillLine[];
   /** Delivery charges as a share of market spending over the last 4 weeks (LL-22); null without market spending. */
   deliveryShare: Explained | null;
+  replacementPerYear: Explained;
 }
 
 function weekBlocks(ledgers: readonly DayLedger[], n = 12): DayLedger[][] {
@@ -84,6 +86,8 @@ export function weeklyBills(state: GameState, catalog?: Catalog): WeeklyBills {
       ? explained(delivery / (market + delivery), 'delivery charges ÷ (market purchases + delivery), last 28 days', { refs: { market, delivery } })
       : null;
   return {
+    replacementPerYear: explained(catalog ? state.instances.reduce((sum, i) => sum + (maintenanceView(state, catalog, i.id)?.replacementPerYear.value ?? 0), 0) : 0,
+      'sum of purchase price ÷ lifespan for repairable assets; annual planning allowance, not cash charged'),
     deliveryShare,
     thisWeek: explained(weeks.at(-1) ?? 0, 'Σ backstop deliveries × price + market purchases + connection fees + delivery + running costs (house, cars), last 7 days', {
       refs: Object.fromEntries(out.map((l) => [l.item, l.thisWeek.value])),

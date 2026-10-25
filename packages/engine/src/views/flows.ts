@@ -12,6 +12,7 @@ export const FLOW_GROUPS: Record<FlowGroup, { label: string; resources: string[]
     label: 'Food',
     resources: [
       'Food',
+      'Preserved food',
       'Vegetables fruit fiber herbs',
       'Root crops',
       'Grain',

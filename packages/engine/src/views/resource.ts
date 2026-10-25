@@ -105,8 +105,9 @@ export function buildOptions(state: GameState, catalog: Catalog, resource: strin
     if (sys.name === 'Human Being') continue;
     const p = plans.bySystem.get(sys.id)!;
     const o = p.outputs.find((x) => x.resource === resource);
-    if (!o) continue;
-    const weekly = o.isCapacity ? o.qty : o.weekly;
+    const recipe = state.settings.foodPreservation && resource === 'Preserved food' ? catalog.preservationRecipes?.find((r) => r.systemId === sys.id) : undefined;
+    if (!o && !recipe) continue;
+    const weekly = recipe ? recipe.kcalPerDay * recipe.yieldFraction * 7 : o!.isCapacity ? o!.qty : o!.weekly;
     if (weekly <= 0) continue;
     const mode: 'buy' | 'diy' = sys.costDiy !== undefined && sys.costDiy < sys.costBuy ? 'diy' : 'buy';
     const cost = costFor(catalog, sys.id, mode);
@@ -125,7 +126,7 @@ export function buildOptions(state: GameState, catalog: Catalog, resource: strin
           i.resource === 'Capital'
             ? { resource: i.resource, have: state.cash > 0, role: i.role ?? 'required', label: 'weekly cash' }
             : { resource: i.resource, have: have.has(i.resource) || i.resource === 'Labor', role: i.role ?? 'required' },
-        ),
+        ).concat(recipe ? [{ resource: recipe.inputs[0]!, have: recipe.inputs.some((name) => have.has(name)), role: 'required', label: 'fresh food (one eligible type)' }] : []),
       conventional: sys.categories.includes('Conventional') || sys.backstop,
     });
   }
@@ -165,7 +166,7 @@ export function resourcePage(
       if (!x) continue;
       p += x.produced;
       b += x.purchased ?? 0;
-      c += x.consumed;
+      c += x.consumed + (x.processed ?? 0);
     }
     weeks.produced.unshift(p);
     weeks.purchased.unshift(b);
@@ -192,7 +193,7 @@ export function resourcePage(
       const isCap = outs.some((o) => o.isCapacity);
       const actual = day
         ? (day.outputs[resource] ?? 0) * (isCap ? 1 : 7) * scale
-        : nominal * (bal!.systems[inst.systemId]?.satisfaction ?? 1);
+        : stepped ? 0 : nominal * (bal!.systems[inst.systemId]?.satisfaction ?? 1);
       const potential = day ? (day.potential[resource] ?? nominal / scale) * (isCap ? 1 : 7) * scale : nominal;
       const e = prodMap.get(sys.id) ?? {
         systemId: sys.id,
@@ -207,7 +208,7 @@ export function resourcePage(
       e.actualWeek += actual;
       e.potentialWeek += potential;
       e.headroomWeek = Math.max(0, e.potentialWeek - e.actualWeek);
-      e.limitedBy = day ? day.limitedBy : (bal!.systems[inst.systemId]?.limitedBy ?? null);
+      e.limitedBy = day ? day.limitedBy : (bal?.systems[inst.systemId]?.limitedBy ?? null);
       prodMap.set(sys.id, e);
     }
     if (ins.length) {
@@ -218,6 +219,32 @@ export function resourcePage(
       e.requestedWeek += rec ? rec.requested * 7 * scale : nominal;
       e.receivedWeek += rec ? rec.received * 7 * scale : nominal * (bal?.systems[inst.systemId]?.satisfaction ?? 1);
       useMap.set(sys.id, e);
+    }
+  }
+
+  // Recipe flows are events rather than nominal workbook flows; expose their realized provenance.
+  if (state.settings.foodPreservation) for (const inst of state.instances) {
+    if (inst.status !== 'active') continue;
+    const recipe = catalog.preservationRecipes?.find((r) => r.systemId === inst.systemId);
+    if (!recipe) continue;
+    const batch = state.ledgers.at(-1)?.preserved?.find((b) => b.instanceId === inst.id);
+    const sys = getSystem(catalog, inst.systemId);
+    const scale = inst.scale ?? 1;
+    if (resource === 'Preserved food') {
+      const entry = prodMap.get(sys.id) ?? { systemId: sys.id, name: sys.name, count: 0, actualWeek: 0, potentialWeek: 0, headroomWeek: 0, limitedBy: null };
+      entry.count += scale;
+      entry.actualWeek += (batch?.outputKcal ?? 0) * 7;
+      entry.potentialWeek += recipe.kcalPerDay * recipe.yieldFraction * 7 * scale;
+      entry.headroomWeek = Math.max(0, entry.potentialWeek - entry.actualWeek);
+      entry.limitedBy = state.lastDay[groupKeyOf(inst, spatial.get(inst.id)!)]?.limitedBy ?? null;
+      prodMap.set(sys.id, entry);
+    }
+    if (inst.preservation?.resource === resource) {
+      const entry = useMap.get(sys.id) ?? { systemId: sys.id, name: sys.name, count: 0, requestedWeek: 0, receivedWeek: 0 };
+      entry.count += scale;
+      entry.requestedWeek += recipe.kcalPerDay * 7 * scale / r.factorToNeed!;
+      entry.receivedWeek += (batch?.amount ?? 0) * 7;
+      useMap.set(sys.id, entry);
     }
   }
 
@@ -378,7 +405,7 @@ export interface WorkRow {
 export function workView(state: GameState, catalog?: Catalog): { rows: WorkRow[]; auto: { waterDays: number; woodWeeks: number; foodWeeks: number }; poolWeek: Explained; workedWeek: Explained; idleWeek: Explained; warnings: string[]; breakdown: ReturnType<typeof laborWeek>['breakdown'] } {
   const week = state.ledgers.slice(-7);
   const totals = laborWeek(state, catalog);
-  const rows = JOBS.map((j) => ({
+  const rows = JOBS.filter((j) => j.id !== 'employment' || state.settings.employmentPriority).map((j) => ({
     job: j.id,
     label: j.label,
     priority: jobPriority(state.settings, j.id),

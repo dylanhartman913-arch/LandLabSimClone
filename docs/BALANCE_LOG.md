@@ -189,3 +189,13 @@ New, opt-in replay policy `settings.safeRecovery` preserves historic logs while 
 Outside construction: $35/hour, eight hours/project/day, fully prepaid, unused crew hours refunded on removal. The 40-hour remote job nominally pays $25/hour, so outsourcing carries a 40% hourly premium. A DIY mass heater plus a full crew costs $2,700 (33.75% of the standard $8,000 starting cash) and takes eight days; the recorded partially finished heater costs $247.05 to finish in one day. Multiple prepaid crews can work concurrently. These are initial recovery tuning parameters; catalog quantities and startup supplies are untouched.
 
 The actual winter save recovers with both crews, existing employment retained, maintenance prioritized over gathering and recurring fuel/Carbon/grocery orders. Both residents remain home above 50 wellbeing at day 270. Legacy and safer-policy pacing gates pass across all three sites and three seeds. This validates feasibility and existing start pacing; it does not establish a final economy balance for every project or household.
+
+## Phase 8 (October 24, 2026; engine 0.9.0)
+
+- LL-23: separate paid employment (priority 2) from upkeep (priority 1); cap worked employment at 40 h per resident adult/week. No wages changed.
+- LL-24: new greenfield starting cash becomes $8,000 per adult instead of $8,000 per household, gated by the start-only `householdStart` flag. Kit and catalog quantities are unchanged; the start screen discloses shelter, sanitation and electricity gaps. This buys a first year without quest gifts and a viable yurt replacement route. It is not a permanent income source.
+- LL-25: gated outside crew rates are $18/h Front Range, $16/h Laramie, $15/h Asheville (game balance choices). Remaining hours still determine price; eight-hour days unchanged; old prepaid contracts preserve their original rate.
+- LL-26: gated no-overdraft rule; unaffordable fees/purchases stop, and operating cash is allocated after backstops spend it.
+- LL-27: source verification found heating-only rocket-heater timing already correct, and summer wood use by the mixed cooking/heating stove intentional under its catalog roles. No fuel or catalog values changed.
+
+Before/after suite, policy decisions, acceptance targets and limitations: [PHASE_8.md](PHASE_8.md). Full regenerated comparisons: [PHASE_4_COMPARISONS.md](PHASE_4_COMPARISONS.md). Standard remote work, no-gift actions and yurt replacement all survive at all three sites with minimum wellbeing about 75; all pacing gates pass.

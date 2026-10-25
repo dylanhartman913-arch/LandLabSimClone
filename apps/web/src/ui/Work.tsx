@@ -43,7 +43,7 @@ export function Work() {
         Maintenance <WhyNum value={v.breakdown.maintenance} title="Maintenance hours" unit="h" /> ·
         Gathering <WhyNum value={v.breakdown.gathering} title="Gathering hours" unit="h" /> ·
         Construction <WhyNum value={v.breakdown.construction} title="Construction hours" unit="h" />.
-        Paid jobs share the system-work priority below.
+        {game.settings.employmentPriority ? 'Paid employment has its own priority below upkeep by default, limited to 40 hours per adult per week.' : 'Paid jobs share the system-work priority below.'}
       </p>
       <h3>Recovery and construction</h3>
       {recovery.people.length > 0 && <div data-testid="town-recovery">
@@ -70,13 +70,15 @@ export function Work() {
       {!queue.length && <p>No projects under construction.</p>}
       <ul data-testid="construction-queue">{queue.map((q) => <li key={q.id} data-testid={`project-${q.id}`}>
         <button className="link" onClick={() => st.openCard(game.instances.find((i) => i.id === q.id)!.systemId, q.id)}>{q.name}</button>: {fmtNum(q.remaining)} h remaining · {q.eta === null ? 'No completion within 365 days; check labor, caps, priorities and town recovery.' : `forecast ${q.eta} days`}.
+        {q.coldIn !== null && <p>Heating is needed {q.coldIn === 0 ? 'now' : `in about ${q.coldIn} days`} in the average climate. Crew build: {q.quote.days} days; heat starts the following day. Fuel and actual weather still matter.</p>}
         {q.contractor ? <p>Prepaid crew booked: {q.quote.hoursPerDay} h/day; no resident labor required.</p> : <>
-          <p>Outside crew: {fmtMoney(q.quote.cost)} prepaid at {fmtMoney(q.quote.rate)}/h, {q.quote.hoursPerDay} h/day, {q.quote.days} days. Unworked crew hours refunded on removal; completed work is not refunded.</p>
+          <p>Outside crew: {fmtMoney(q.quote.cost)} prepaid at {fmtMoney(q.quote.rate)}/h, {q.quote.hoursPerDay} h/day, {q.quote.days} days. {q.daysGained === null ? 'Household completion is outside the forecast.' : `About ${q.daysGained} days faster than the household forecast.`} Unworked crew hours refunded on removal; completed work is not refunded.</p>
           <button className="btn small" disabled={!!q.quote.blocked} onClick={() => st.hireConstruction(q.id)} data-testid={`hire-${q.id}`}>Book crew · {fmtMoney(q.quote.cost)}</button>
           {q.quote.blocked && <p>{q.quote.blocked}</p>}
         </>}
       </li>)}</ul>
       <table className="flows-table work-table" data-testid="work-table">
+          <caption>Hours worked over the last 7 measured days; caps apply to a rolling week.</caption>
         <thead>
           <tr>
             <th scope="col">Job</th>

@@ -3,6 +3,7 @@ import { getSystem, indexCatalog } from '../catalog-index.ts';
 import { explained, type Explained } from '../provenance.ts';
 import { maturity } from '../time/step.ts';
 import { getPlans } from '../time/plans.ts';
+import { livestockRule } from '../time/livestock.ts';
 import { computeSpatial, instanceGroupKey, rangeDistanceText } from '../time/spatial.ts';
 import type { GameState, Instance } from '../time/types.ts';
 import { resourceWeek, type ResourceWeek } from './resources.ts';
@@ -86,7 +87,11 @@ export function systemCard(
   const stockView = new Map<string, NonNullable<CardInput['stock']>>();
   const inputs: CardInput[] = flows.inputs.map((v) => {
     const role = v.flow.inputRole ?? 'required';
-    const needed = v.qty.value;
+    const inputFactor =
+      inst && state.settings.shelterOccupancy && v.flow.period !== 'One-time'
+        ? (computeSpatial(catalog, state).get(inst.id)?.inMult[v.resource] ?? 1)
+        : 1;
+    const needed = v.qty.value * inputFactor;
     let share: number;
     let how: string;
     let refs: Record<string, number>;
@@ -153,10 +158,19 @@ export function systemCard(
       const days = daily > 1e-9 ? stock / daily : Infinity;
       share = Math.min(1, days / STOCK_FULL_DAYS);
       how = `days this stock lasts with this system added (unmet design demand included) ÷ ${STOCK_FULL_DAYS}; future production, gathering and orders not counted`;
-      refs = { stock, thisSystemPerDay: mine, unmetDesignPerDay: others, days: Number.isFinite(days) ? days : -1 };
+      refs = {
+        stock,
+        thisSystemPerDay: mine,
+        unmetDesignPerDay: others,
+        days: Number.isFinite(days) ? days : -1,
+      };
       stockView.set(v.flow.id, {
         onHand: explained(stock, 'stock on hand now'),
-        days: Number.isFinite(days) ? explained(days, 'stock ÷ (this system’s daily use + unmet design demand per day)', { refs: { stock, daily } }) : null,
+        days: Number.isFinite(days)
+          ? explained(days, 'stock ÷ (this system’s daily use + unmet design demand per day)', {
+              refs: { stock, daily },
+            })
+          : null,
       });
     } else {
       const w = week.get(v.resource);
@@ -170,7 +184,13 @@ export function systemCard(
     return {
       view: v,
       role,
-      needed: explained(needed, v.qty.explain.formula, { ...v.qty.explain }),
+      needed: explained(
+        needed,
+        inputFactor === 1
+          ? v.qty.explain.formula
+          : `${v.qty.explain.formula} × occupancy/spatial input factor`,
+        { ...v.qty.explain },
+      ),
       supplied: explained(supplied, `needed × share (${how})`, { refs: { needed, share, ...refs } }),
       share: explained(share, how, { refs }),
       ...(stockView.has(v.flow.id) ? { stock: stockView.get(v.flow.id)! } : {}),
@@ -201,6 +221,26 @@ export function systemCard(
       refs = human
         ? { nominal: v.qty.value, health }
         : { nominal: v.qty.value, satisfaction: group.sat, boosts: group.boostMult, maturity: mat };
+    }
+    if (inst && state.settings.shelterOccupancy && v.resource === 'Shelter') {
+      const factor = computeSpatial(catalog, state).get(inst.id)?.outMult.Shelter ?? 1;
+      produced *= factor;
+      formula += ' × occupancy/condition output factor';
+      refs.shelterOutput = factor;
+    }
+    if (inst && group && state.settings.foodPreservation && v.resource === 'Food storage') {
+      const factor = computeSpatial(catalog, state).get(inst.id)?.outMult[v.resource] ?? 1;
+      produced *= group.sat * group.boostMult * factor;
+      formula += ' × realized operation × storage output factor';
+      refs.operating = group.sat;
+      refs.storageOutput = factor;
+    }
+    if (inst && group && (state.settings.livestockLifecycle || inst.animal) && livestockRule(catalog, inst)) {
+      const factor = computeSpatial(catalog, state).get(inst.id)?.outMult[v.resource] ?? 1;
+      produced *= factor * (v.flow.period === 'Capacity' ? 1 : (inst.scale ?? 1));
+      formula += ' × lifecycle/spatial output factor × cohort scale';
+      refs.lifecycleOutput = factor;
+      refs.cohortScale = inst.scale ?? 1;
     }
     return {
       view: v,
@@ -259,7 +299,12 @@ export function systemCard(
           .map((p) => {
             const dx = Math.max(0, Math.abs(p.x - inst.x) - half(p.systemId) - half(inst.systemId));
             const dy = Math.max(0, Math.abs(p.y - inst.y) - half(p.systemId) - half(inst.systemId));
-            return { id: p.id, name: getSystem(catalog, p.systemId).name, distanceFt: Math.hypot(dx, dy), distanceText: rangeDistanceText(Math.hypot(dx, dy), a.maxDistanceFt) };
+            return {
+              id: p.id,
+              name: getSystem(catalog, p.systemId).name,
+              distanceFt: Math.hypot(dx, dy),
+              distanceText: rangeDistanceText(Math.hypot(dx, dy), a.maxDistanceFt),
+            };
           })
           .filter((c) => a.maxDistanceFt === null || c.distanceFt <= a.maxDistanceFt)
           .sort((x, y) => x.distanceFt - y.distanceFt);

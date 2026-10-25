@@ -47,6 +47,23 @@ describe('controlled first-year comparisons (LL-10)', () => {
     expect(idle!.homeAtEnd).toBe(false);
     expect(route!.homeDay).not.toBeNull();
     expect(route!.homeAtEnd).toBe(true);
-    expect(route!.prepaid).toBeCloseTo(2347.05, 2);
+    expect(route!.prepaid).toBeCloseTo(1207.06, 2); // LL-25: 18/h site crew rate, same supplies and hours;
+  });
+});
+
+describe('Phase 8 first-year acceptance', () => {
+  it('remote work, no-gift supplies and replacing the tent with a yurt survive Standard on every site', () => {
+    const results = runComparisons({ comparisons: COMPARISONS.filter((c) => ['job', 'tutorial', 'shelter', 'rescue'].includes(c.id)), seeds: [] });
+    for (const [id, v] of [['job', 'remote'], ['tutorial', 'off'], ['shelter', 'yurt-replace'], ['rescue', 'crew']]) {
+      const runs = results.find((c) => c.comparison.id === id)!.variants.find((x) => x.variant.id === v)!.runs;
+      expect(runs).toHaveLength(3);
+      for (const r of runs) {
+        expect(r.metrics.departures, `${id}/${v}/${r.site}`).toBe(0);
+        expect(r.metrics.cashMin).toBeGreaterThanOrEqual(0);
+        expect(r.metrics.skippedActions).toBe(0);
+        if (id !== 'rescue') expect(r.metrics.minWellbeing).toBeGreaterThanOrEqual(60);
+        if (id === 'tutorial') expect(r.metrics.subsidy).toBe(0);
+      }
+    }
   });
 });

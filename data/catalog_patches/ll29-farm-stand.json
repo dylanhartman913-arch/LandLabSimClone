@@ -1,0 +1,38 @@
+{
+  "patch": "ll29-farm-stand",
+  "source": "New (LL-29 patch)",
+  "note": "Experimental game balance assumptions, not sourced construction or market estimates. Premium is gated by sellingAndTrade.",
+  "systems": [
+    {
+      "name": "Farm Stand",
+      "categories": "Tools",
+      "description": "A small stand for selling household surplus at a better price. Requires weekly staffing and transport.",
+      "buy": 200,
+      "diy": 100,
+      "setup": 4,
+      "upkeep": 2,
+      "footprint": 16,
+      "lifespan": 10,
+      "inputs": "Labor; Transportation",
+      "outputs": "(improves surplus sale price)",
+      "confidence": "low",
+      "notes": "LL-29 experimental game balance: 80% of reference retail rather than 50% when staffed and supplied. Two hours and 10 miles per week.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 2,
+          "period": "Weekly",
+          "note": "Game balance: staffing two hours/week."
+        },
+        {
+          "dir": "Input",
+          "resource": "Transportation",
+          "qty": 10,
+          "period": "Weekly",
+          "note": "Game balance: weekly collection and supplies."
+        }
+      ]
+    }
+  ]
+}

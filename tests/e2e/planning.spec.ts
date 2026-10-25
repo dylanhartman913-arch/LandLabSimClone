@@ -123,9 +123,9 @@ test('a player can fund and schedule a connected heater using the displayed purc
   await loadSpring(page);
   await card(page, 'Rocket Mass Heater');
   await page.getByTestId('choose-diy').click();
-  await expect(page.getByTestId('project-crew')).toContainText('$2,100');
+  await expect(page.getByTestId('project-crew')).toContainText('$1,080');
   await expect(page.getByTestId('project-crew')).toContainText('8 days');
-  await expect(page.getByTestId('project-crew')).toContainText('$5,084');
+  await expect(page.getByTestId('project-crew')).toContainText('$6,104');
   await page.getByTestId('add-diy').click();
   const point = await client(page, 124, 104);
   await page.mouse.move(point.x, point.y);
@@ -134,10 +134,10 @@ test('a player can fund and schedule a connected heater using the displayed purc
   await clickWorld(page, 124, 104);
   const id = await page.evaluate(() => window.__homestead!.store.getState().game.instances.at(-1)!.id);
   await page.getByTestId('open-work').click();
-  await expect(page.getByTestId(`project-${id}`)).toContainText('$2,100');
+  await expect(page.getByTestId(`project-${id}`)).toContainText('$1,080');
   await page.getByTestId(`hire-${id}`).click();
   await expect(page.getByTestId(`project-${id}`)).toContainText('forecast 8 days');
-  expect(await page.evaluate(() => window.__homestead!.store.getState().game.cash)).toBe(5084);
+  expect(await page.evaluate(() => window.__homestead!.store.getState().game.cash)).toBe(6104);
   await shot(page, 'phase-3', 'funded-heater-schedule');
   await page.evaluate(() => window.__homestead!.store.getState().tick(8));
   expect(

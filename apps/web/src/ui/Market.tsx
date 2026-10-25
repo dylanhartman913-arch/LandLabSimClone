@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { marketView, weeklyBills, type MarketRow } from '@homestead/engine';
+import { marketView, weeklyBills, ruthTrades, type MarketRow } from '@homestead/engine';
 import { fmtDays, fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { sparkPoints } from '../lib/sparkline.ts';
 import { useGame } from '../store/game.ts';
@@ -49,6 +49,7 @@ export function Market() {
         <p className="empty">Nothing bought yet. Backstops (grocery, grid, city water) and market orders show up here.</p>
       ) : (
         <table className="flows-table" data-testid="bills-lines">
+          <caption>Bills over the last 7 measured days; trend by week.</caption>
           <thead>
             <tr>
               <th scope="col">What</th>
@@ -75,12 +76,16 @@ export function Market() {
           </tbody>
         </table>
       )}
+      {game.settings.wearAndRepair && <p>Expected replacement allowance: <WhyNum value={bills.replacementPerYear} title="Annual replacement allowance" format={fmtMoney} /> per year (planning only).</p>}
+      {game.settings.sellingAndTrade && <TradeControls />}
       <h3>Buy</h3>
+      {game.settings.cashFloor && <p className="small muted">Purchases and connection fees stop when cash cannot cover them. Unfunded hookups stop delivering; queued deliveries wait for funds.</p>}
       <p className="muted small">
         One trip a day covers every order. A trip uses 10 miles of your transport, or costs $25 for delivery if you
         have none. Orders arrive the next morning. Nothing is bought while cash is below zero.
       </p>
       <table className="flows-table market-table" data-testid="market-table">
+          <caption>Stock now; use and production over the last 7 measured days; prices per unit.</caption>
         <thead>
           <tr>
             <th scope="col">Item</th>
@@ -164,4 +169,38 @@ function MarketLine({ row }: { row: MarketRow }) {
       </td>
     </tr>
   );
+}
+
+function TradeControls() {
+  const game = useGame((s) => s.game);
+  const catalog = useGame((s) => s.catalog);
+  const goods = catalog.resources.filter((r) => r.class === 'Flow' && r.storable && (r.marketPrice ?? 0) > 0);
+  const [resource, setResource] = useState(goods[0]?.name ?? '');
+  const [amount, setAmount] = useState('1');
+  const [keep, setKeep] = useState('0');
+  const [receive, setReceive] = useState('');
+  const [error, setError] = useState('');
+  return <div data-testid="trade-controls">
+    <h3>Sell surplus or barter</h3>
+    <p className="small muted">Orders run after household use and before spoilage. The reserve stays home. Selling pays 50% of the reference retail price, or 80% with an operating Farm Stand. Each order needs half an hour of spare labor; selling uses a 10-mile trip or $25 collection. Ruth trades at 70% after the tutorial, without a trip.</p>
+    <form className="form" onSubmit={(e) => {
+      e.preventDefault();
+      try {
+        useGame.getState().phase9Action({ kind: 'sell', resource, amount: Number(amount), keep: Number(keep), ...(receive ? { receive } : {}) });
+        setError('');
+      } catch (error) {
+        if (!(error instanceof Error)) throw error;
+        setError(error.message);
+      }
+    }}>
+      <label>Give<select aria-label="Give" value={resource} onChange={(e) => setResource(e.target.value)}>{goods.map((r) => <option key={r.name} value={r.name}>{r.name} ({r.unit})</option>)}</select></label>
+      <label>Amount<input type="number" min="0.001" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
+      <label>Keep at least<input type="number" min="0" step="any" value={keep} onChange={(e) => setKeep(e.target.value)} /></label>
+      <label>Receive<select aria-label="Receive" value={receive} onChange={(e) => setReceive(e.target.value)}><option value="">Cash</option>{ruthTrades(game) && goods.filter((r) => r.marketAvailable && r.name !== resource).map((r) => <option key={r.name} value={r.name}>{r.name} ({r.unit})</option>)}</select></label>
+      <button className="btn" type="submit">Queue trade</button>
+      {error && <p role="alert">{error}</p>}
+    </form>
+    <ul>{game.market?.sales?.map((o, i) => <li key={i}>{fmtNum(o.amount)} {o.resource} for {o.receive ?? 'cash'}; keep {fmtNum(o.keep)}</li>)}</ul>
+    <ul>{game.ledgers.at(-1)?.trades?.map((t, i) => <li key={i}>Traded {fmtNum(t.amount)} {t.resource}: {t.received ? `${fmtNum(t.receivedAmount ?? 0)} ${t.received}` : fmtMoney(t.revenue)}</li>)}</ul>
+  </div>;
 }

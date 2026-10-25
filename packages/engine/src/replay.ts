@@ -1,3 +1,8 @@
+import { setShelter, closeShelter } from './time/occupancy.ts';
+import { manageLivestock } from './time/livestock.ts';
+import { setPreservation } from './time/preservation.ts';
+import { serviceSystem } from './time/maintenance.ts';
+import { queueTrade } from './time/trade.ts';
 import { getSite, getStart, type Catalog, type Difficulty } from '@homestead/catalog';
 import { gameFromStart } from './time/start.ts';
 import { hireConstruction } from './time/recovery.ts';
@@ -34,6 +39,12 @@ export interface GameInit {
  */
 export type Action = { at: number } & (
   | { kind: 'place'; systemId: string; x: number; y: number; mode: BuildMode; id: string; scale?: number }
+  | { kind: 'assignShelter'; id: string; shelterId: string | null }
+  | { kind: 'closeShelter'; id: string; closed: boolean }
+  | { kind: 'preserve'; id: string; resource: string | null; keep: number }
+  | { kind: 'livestock'; id: string; operation: 'breed' | 'cull' | 'cancel' }
+  | { kind: 'service'; id: string; replace: boolean }
+  | { kind: 'sell'; resource: string; amount: number; keep: number; receive?: string }
   | { kind: 'remove'; id: string }
   | { kind: 'hireConstruction'; id: string }
   | { kind: 'move'; id: string; x: number; y: number }
@@ -69,6 +80,18 @@ export function applyAction(catalog: Catalog, s: GameState, a: Action): GameStat
     }
     case 'hireConstruction':
       return hireConstruction(s, a.id);
+    case 'assignShelter':
+      return setShelter(catalog, s, a.id, a.shelterId);
+    case 'closeShelter':
+      return closeShelter(catalog, s, a.id, a.closed);
+    case 'preserve':
+      return setPreservation(catalog, s, a.id, a.resource, a.keep);
+    case 'livestock':
+      return manageLivestock(catalog, s, a.id, a.operation);
+    case 'service':
+      return serviceSystem(catalog, s, a.id, a.replace);
+    case 'sell':
+      return queueTrade(catalog, s, a.resource, a.amount, a.keep, a.receive);
     case 'remove':
       return removeSystem(s, a.id);
     case 'move':
@@ -83,8 +106,12 @@ export function applyAction(catalog: Catalog, s: GameState, a: Action): GameStat
       return insertInstance(s, a.instance, a.cashDelta, a.index);
     case 'delete':
       return deleteInstance(s, a.id, a.cashDelta);
-    case 'settings':
-      return { ...s, settings: { ...s.settings, ...a.settings } };
+    case 'settings': {
+      const next = { ...s, settings: { ...s.settings, ...a.settings } };
+      if ('shelterOccupancy' in a.settings && !!a.settings.shelterOccupancy !== !!s.settings.shelterOccupancy)
+        delete next.shelterThermal;
+      return next;
+    }
     case 'buy':
       return buyAtMarket(catalog, s, a.resource, a.amount);
     case 'standing':
@@ -104,6 +131,7 @@ export function startGame(catalog: Catalog, init: GameInit): GameState {
       seed: init.seed,
       warmUp: init.settings.serviceWarmUp === true,
       tutorialSeasons: init.settings.tutorialSeasons === true,
+      householdStart: init.settings.householdStart === true,
     });
     return Object.keys(init.settings).length ? { ...g, settings: { ...g.settings, ...init.settings } } : g;
   }
@@ -134,6 +162,8 @@ export function gameDigest(s: GameState): string {
     calendar: s.calendar,
     cash: s.cash,
     rng: s.rng,
+    ...(s.shelterThermal !== undefined ? { shelterThermal: s.shelterThermal } : {}),
+    ...(s.livestockRng !== undefined ? { livestockRng: s.livestockRng } : {}),
     stocks: s.stocks,
     direct: s.direct,
     instances: s.instances,

@@ -52,11 +52,15 @@ export function MapView() {
     const ro = new ResizeObserver(() => {
       const r = el.getBoundingClientRect();
       useGame.getState().setViewport(r.width, r.height);
-      if (app.renderer) app.renderer.resize(r.width, r.height);
+      if (app.renderer) {
+        app.renderer.resize(r.width, r.height);
+        scene?.redraw();
+      }
     });
     void app
       .init({
-        resizeTo: el,
+        width: el.clientWidth,
+        height: el.clientHeight,
         background: 0x2a3a20,
         antialias: false,
         autoDensity: true,

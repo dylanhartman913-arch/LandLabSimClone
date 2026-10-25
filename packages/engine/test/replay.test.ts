@@ -109,7 +109,7 @@ describe('saves replay exactly', () => {
 });
 
 describe('LL-11: the full player story survives a save', () => {
-  const NEW = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, serviceWarmUp: true, tutorialSeasons: true };
+  const NEW = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, serviceWarmUp: true, tutorialSeasons: true, employmentPriority: true, householdStart: true, siteCrewRates: true, cashFloor: true };
   const asFile = (init: GameInit, actions: Action[], state: GameState) =>
     JSON.parse(JSON.stringify({ schema: 'homestead.save.v1', engineVersion: '0', catalogSha256: catalog.source.sha256, name: 't', savedAt: '', init, actions, absDay: state.calendar.absDay, digest: gameDigest(state), state }));
 

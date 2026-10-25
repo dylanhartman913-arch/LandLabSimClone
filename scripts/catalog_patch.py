@@ -9,6 +9,7 @@ What it does, and nothing else:
   * appends its Flows rows (next F#### ids) with the sheet's own formulas in the
     Unit, Weekly, Count, Total, Checklist row, Contribution, and Key columns;
   * appends a Matrix row per system;
+  * optionally appends Resources rows and extends resource lookup ranges;
   * applies `edits`: text-only changes to a system's row (its categories, tags, description,
     or notes), for fixing a row a patch added. Number columns can't be edited this way;
   * extends every `Systems!$X$2:$X$<last>` range in every sheet to cover the new rows;
@@ -76,8 +77,8 @@ def copy_row(ws, src_row: int, dst_row: int, max_col: int) -> None:
             dst._style = src._style
 
 
-def extend_ranges(wb, old_last: int, new_last: int) -> int:
-    pat = re.compile(r"(Systems!\$[A-Z]+\$2:\$[A-Z]+\$)" + str(old_last) + r"\b")
+def extend_ranges(wb, old_last: int, new_last: int, sheet: str = "Systems") -> int:
+    pat = re.compile(rf"({re.escape(sheet)}!\$[A-Z]+\$2:\$[A-Z]+\$)" + str(old_last) + r"\b")
     n = 0
     for ws in wb.worksheets:
         for row in ws.iter_rows():
@@ -265,7 +266,7 @@ def diff_summary(old: Path, new: Path, patch: dict, added: dict, edits: list | N
     lines.append(f"- Typed values (numbers and text) changed: **{len(const_changed)}** (the text edits above, if any; never a number)")
     for c in const_changed[:50]:
         lines.append(f"  - {c}")
-    lines.append(f"- Formulas whose text changed (range ends extended to cover the new Systems rows): **{formula_changed}**")
+    lines.append(f"- Formulas whose text changed (system/resource lookup ranges extended for new rows): **{formula_changed}**")
     lines.append(f"- Computed values that changed after recalculation: **{len(value_changed)}**")
     for c in value_changed[:80]:
         lines.append(f"  - {c}")
@@ -289,9 +290,12 @@ def main() -> int:
     sysws, flws, mxws = wb["Systems"], wb["Flows"], wb["Matrix"]
     existing = {sysws.cell(r, 2).value for r in range(2, last_row(sysws) + 1)}
     todo = [s for s in patch.get("systems", []) if s["name"] not in existing]
+    resws = wb["Resources"]
+    existing_resources = {resws.cell(r, 1).value for r in range(2, last_row(resws) + 1)}
+    resources_due = [r for r in patch.get("resources", []) if r["name"] not in existing_resources]
     edits = pending_edits(sysws, patch)
     formats_due = extend_table_formats(openpyxl.load_workbook(XLSX))  # a dry look: anything stopping short?
-    if not todo and not edits and not formats_due:
+    if not todo and not resources_due and not edits and not formats_due:
         print("catalog_patch: the workbook already has everything in this patch; nothing to do.")
         return 0
     for r, c, name, old, new, _e in edits:
@@ -305,7 +309,18 @@ def main() -> int:
     fl_last = last_row(flws)
     next_fid = max(int(flws.cell(r, 1).value[1:]) for r in range(2, fl_last + 1)) + 1
     mx_last = last_row(mxws)
-    added = {"Systems": [], "Flows": [], "Matrix": []}
+    added = {"Systems": [], "Flows": [], "Matrix": [], "Resources": []}
+    old_res_last = last_row(resws)
+    if resources_due:
+        n_ext += extend_ranges(wb, old_res_last, old_res_last + len(resources_due), "Resources")
+    for k, resource in enumerate(resources_due):
+        row = old_res_last + 1 + k
+        copy_row(resws, old_res_last, row, resws.max_column)
+        for col, value in {1: resource["name"], 2: resource["unit"], 3: resource["class"],
+                           4: resource.get("needsRow"), 5: resource.get("factorToNeed"),
+                           13: resource.get("note", "")}.items():
+            resws.cell(row, col).value = value
+        added["Resources"].append(str(row))
 
     for k, s in enumerate(todo):
         r = old_sys_last + 1 + k
@@ -356,7 +371,7 @@ def main() -> int:
     formats = extend_table_formats(wb)
 
     if dry:
-        print(f"catalog_patch (dry run): would add {len(todo)} systems, {len(added['Flows'])} flows; extend {n_ext} ranges; {len(edits)} edit(s); {len(formats)} format range(s).")
+        print(f"catalog_patch (dry run): would add {len(todo)} systems, {len(added['Flows'])} flows, {len(resources_due)} resources; extend {n_ext} ranges; {len(edits)} edit(s); {len(formats)} format range(s).")
         return 0
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -370,7 +385,7 @@ def main() -> int:
     out = ROOT / "docs" / "catalog_patches" / f"{patch['patch']}-diff.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(summary)
-    print(f"catalog_patch: added {len(todo)} systems and {len(added['Flows'])} flows; extended {n_ext} ranges; {len(edits)} edit(s); {len(formats)} format range(s).")
+    print(f"catalog_patch: added {len(todo)} systems and {len(added['Flows'])} flows, {len(resources_due)} resources; extended {n_ext} ranges; {len(edits)} edit(s); {len(formats)} format range(s).")
     print(f"catalog_patch: diff summary in {out.relative_to(ROOT)}. Now run `npm run catalog:export`.")
     return 0
 

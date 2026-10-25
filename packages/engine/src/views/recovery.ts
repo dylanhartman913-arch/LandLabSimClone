@@ -1,6 +1,6 @@
 import type { Catalog } from '@homestead/catalog';
 import type { BuildMode, GameState } from '../time/types.ts';
-import { CONTRACTOR_RATE, contractorQuote, returnCheckItems, returnChecks, SURVIVAL_RESOURCE } from '../time/recovery.ts';
+import { contractorRate, contractorQuote, returnCheckItems, returnChecks, SURVIVAL_RESOURCE } from '../time/recovery.ts';
 import { costFor, setupHoursFor } from '../time/game.ts';
 import { findSpot } from '../kits.ts';
 import { homeOf } from '../time/gather.ts';
@@ -11,6 +11,7 @@ import { climateTable } from '../time/climate.ts';
 import {
   SURVIVAL,
   COOL_CDD_MIN,
+  HEAT_HDD_MIN,
   FOOD_SEVERE_GRACE,
   WB_AWAY_MIN_DAYS,
   SURVIVAL_NEEDS,
@@ -39,11 +40,15 @@ export function constructionView(state: GameState, catalog: Catalog) {
     )
       break;
   }
+  const climate = climateTable(state.site);
+  const coldIn = climate.days.findIndex((_, k) => climate.days[(state.calendar.day + k) % 365]!.hdd > HEAT_HDD_MIN);
   return building.map((i) => ({
     id: i.id,
     name: catalog.systems.find((s) => s.id === i.systemId)!.name,
     remaining: Math.max(0, i.setupHoursNeeded - i.setupHoursDone),
     eta: finish.get(i.id) ?? null,
+    coldIn: getPlans(catalog, state.site).bySystem.get(i.systemId)!.outputs.some((o) => o.resource === 'Heat') && coldIn >= 0 ? coldIn : null,
+    daysGained: finish.has(i.id) ? Math.max(0, finish.get(i.id)! - contractorQuote(state, i).days) : null,
     contractor: !!i.contractor,
     quote: contractorQuote(state, i),
   }));
@@ -446,7 +451,7 @@ function proposeFor(state: GameState, catalog: Catalog, resource: string) {
     const best = modes
       .map((mode) => {
         const cost = costFor(catalog, sys.id, mode);
-        return { id: sys.id, name: sys.name, mode, cost, total: cost + setupHoursFor(catalog, sys.id, mode) * CONTRACTOR_RATE };
+        return { id: sys.id, name: sys.name, mode, cost, total: cost + setupHoursFor(catalog, sys.id, mode) * contractorRate(state) };
       })
       .sort((a, b) => a.total - b.total)[0]!;
     if (best.total <= state.cash + 1e-9) options.push(best);

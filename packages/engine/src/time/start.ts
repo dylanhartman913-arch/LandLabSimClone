@@ -23,6 +23,7 @@ export interface StartOptions {
   warmUp?: boolean;
   /** v0.8 (`settings.tutorialSeasons`): the start's seasonal quest line, when it has one (LL-18). */
   tutorialSeasons?: boolean;
+  householdStart?: boolean;
 }
 
 /**
@@ -44,7 +45,7 @@ export function gameFromStart(catalog: Catalog, site: Site, start: Start, opts: 
     site,
     {
       parcelAcres: start.parcelAcres,
-      startingCash: start.cash,
+      startingCash: opts.householdStart && start.id === 'greenfield' ? start.cash * people : start.cash,
       startDay,
       startingStocks: stocks,
       weatherMode: d.weatherMode,

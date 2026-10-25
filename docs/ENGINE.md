@@ -161,6 +161,14 @@ Climate-linked quantity kinds (heat load, PV, rain…) take their shape from the
 
 Conservation holds for every storable resource, every day: `start + produced − consumed − spilled − spoiled = end` (tested to 1e-9).
 
+### Phase 9 opt-in food and animal work
+
+With `foodPreservation`/`livestockLifecycle`, the engine runs animal growth, queued breeding/culling and preservation after daily production/people and before market sales, storage and spoilage. Both work queues use only real labor left after the normal daily allocation. Culling can produce fresh meat which a configured processor converts the same day. Births and deaths are applied without invalidating the day's allocation indices; new offspring request inputs from the following day. Cohort scales multiply livestock requests and production.
+
+Preservation draws fresh food above the player/planting reserve, fuel or sunlight, and labor, then produces lower-yield `Preserved food` in kcal. `processed` is separate from meals, and output `converted` kcal are excluded from new-harvest exports. Food storage's effective capacity follows actual operation under this flag. The extended resource identity is `start + produced + purchased + supplied − consumed − processed − sold − spilled − spoiled = end` (with yesterday's direct-use amount included in start where applicable). Optional fields are zero when absent.
+
+Lifecycle output follows maturity, age and seasonal daylight; recurring Meat flows are replaced by explicit culling yields. Seeded predator warnings and attacks use saved `livestockRng`, independent of the climate RNG. These fields and work policies are absent in legacy saves and are never enabled by automatic continuation migration. See [PHASE_9B.md](PHASE_9B.md) for recipes, cohort rules, controls, comparisons and validation.
+
 ### Constants
 
 | Constant | Value | Where |

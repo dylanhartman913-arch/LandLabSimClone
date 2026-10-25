@@ -72,6 +72,7 @@ export function Reports() {
           <h3>Coverage by month</h3>
           <div className="table-scroll">
             <table className="mini">
+          <caption>{`Coverage by month within days ${r.fromAbsDay}–${r.toAbsDay}.`}</caption>
               <thead>
                 <tr>
                   <th>Month</th>

@@ -26,7 +26,7 @@ test('winter recovery is visible, priced, finite and works with employment retai
   await expect(page.getByTestId('hint')).toContainText('Heat');
   await page.getByRole('button', { name: 'Recovery and construction', exact: true }).click();
   await expect(page.getByTestId('town-recovery')).toContainText('Person 1 (i3), Person 2 (i4)');
-  await expect(page.getByTestId('project-i21')).toContainText('$2,100');
+  await expect(page.getByTestId('project-i21')).toContainText('$1,080');
   await expect(page.getByTestId('project-i21')).toContainText('8 days');
   await page.getByTestId('hire-i20').click();
   await page.getByTestId('hire-i21').click();
@@ -72,7 +72,7 @@ test('one priced recovery route books crews, upkeep and orders and brings the ho
   await expect(route).toContainText('Standing order: keep Woody biomass above');
   await expect(page.getByTestId('route-outcome')).toContainText('Forecast: home on day');
   await expect(page.getByTestId('route-outcome')).toContainText('still home 30 days later');
-  await expect(page.getByTestId('book-route')).toContainText('$2,347');
+  await expect(page.getByTestId('book-route')).toContainText('$1,207');
   await shot(page, 'phase-4', 'recovery-route');
   await page.getByTestId('book-route').click();
   await expect(page.getByTestId('project-i21')).toContainText('Prepaid crew booked');
@@ -98,8 +98,8 @@ test('insufficient cash explains the exact shortfall without booking a crew', as
   });
   await page.getByTestId('open-work').click();
   await expect(page.getByTestId('hire-i21')).toBeDisabled();
-  await expect(page.getByTestId('project-i21')).toContainText('missing $2000.00');
-  await expect(page.getByTestId('project-i20')).toContainText('missing $147.05');
+  await expect(page.getByTestId('project-i21')).toContainText('missing $980.00');
+  await expect(page.getByTestId('project-i20')).toContainText('missing $27.06');
 });
 
 test('Show me opens an owned operating system and states assistance explicitly', async ({ page }) => {

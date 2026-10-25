@@ -3,6 +3,7 @@
   "id": "asheville-nc",
   "name": "Blue Ridge valley, North Carolina",
   "description": "A humid mountain valley: mild winters, warm wet summers, less sun, and about 47 inches of rain. A creek runs along the parcel.",
+  "crewRate": 15,
   "latitude": 35.6,
   "elevationFt": 2100,
   "assumptions": {

@@ -128,6 +128,9 @@ export function loadSave(file: unknown, opts: { verify?: boolean } = {}): LoadRe
   if (!state.settings.safeRecovery) message += ' Town recovery upgraded: open Work for the safer household return checks.';
   if (!state.settings.reuseIdleLabor) message += ' Labor upgraded: hours a stalled system cannot use now go to construction and gathering.';
   if (!state.settings.survivalShelterReturn) message += ' Town return upgraded: shelter needs to meet the survival level, not full comfort.';
+  if (!state.settings.employmentPriority) message += ' Work upgraded: employment follows upkeep by default and is capped at one full-time job per adult.';
+  if (!state.settings.siteCrewRates) message += ' Crews now use site labor rates.';
+  if (!state.settings.cashFloor) message += ' Purchases now stop at zero cash.';
   if (!state.settings.safeWaterFirst) message += ' Water storage upgraded: untreated water overflows before safe water, and fetching stops when storage is full.';
   return { verified, message };
 }

@@ -24,7 +24,10 @@ export function ProjectPreview({ systemId, mode }: { systemId: string; mode: Bui
       </p>
       {v.cashAfter.value < 0 && (
         <p className="warn-text">
-          This purchase would put cash below zero. Income and operating supplies still need funding.
+          {game.settings.cashFloor
+            ? 'Not enough cash to purchase this system.'
+            : 'This purchase would put cash below zero.'}{' '}
+          Income and operating supplies still need funding.
         </p>
       )}
       <p>
@@ -51,8 +54,10 @@ export function ProjectPreview({ systemId, mode }: { systemId: string; mode: Bui
         /week
         {v.suppliesCost.value > 0.005 && (
           <>
-            {' '}plus about <WhyNum value={v.suppliesCost} title="Supplies bought at market prices" format={fmtMoney} />/week of supplies at
-            market prices
+            {' '}
+            plus about{' '}
+            <WhyNum value={v.suppliesCost} title="Supplies bought at market prices" format={fmtMoney} />
+            /week of supplies at market prices
           </>
         )}{' '}
         before usage-priced deliveries and delivery fees · maturity after completion{' '}
@@ -72,7 +77,12 @@ export function ProjectPreview({ systemId, mode }: { systemId: string; mode: Bui
                     {' '}· <WhyNum value={x.onHand} title={`${x.resource} on hand`} unit={x.unit} /> on hand
                     {x.days ? (
                       <>
-                        , about <WhyNum value={x.days} title={`${x.resource} lasts`} format={(n) => (n > 365 ? 'over a year' : `${Math.floor(n)} days`)} />
+                        , about{' '}
+                        <WhyNum
+                          value={x.days}
+                          title={`${x.resource} lasts`}
+                          format={(n) => (n > 365 ? 'over a year' : `${Math.floor(n)} days`)}
+                        />
                       </>
                     ) : null}
                   </>
@@ -98,7 +108,10 @@ export function ProjectPreview({ systemId, mode }: { systemId: string; mode: Bui
                 missing from stock <WhyNum value={m.missing} title={`${m.resource} missing`} unit={m.unit} />
                 {m.worth && m.worth.value > 0.005 && (
                   <>
-                    {' '}(worth <WhyNum value={m.worth} title={`${m.resource} at market prices`} format={fmtMoney} />, brought in free)
+                    {' '}
+                    (worth{' '}
+                    <WhyNum value={m.worth} title={`${m.resource} at market prices`} format={fmtMoney} />,
+                    brought in free)
                   </>
                 )}
               </li>
@@ -135,8 +148,8 @@ export function ProjectPreview({ systemId, mode }: { systemId: string; mode: Bui
       {v.winter && v.winter.closes.value > 0 && (
         <p data-testid="project-heat-closes">
           Closes <WhyNum value={v.winter.closes} title="Cold-day heat gap closed" unit="BTU/day" /> of the
-          household's <WhyNum value={v.winter.gapBefore} title="Cold-day heat gap now" unit="BTU/day" /> cold-day
-          heat gap at a spot within reach of the shelter; the map checks reach where you place it.
+          household's <WhyNum value={v.winter.gapBefore} title="Cold-day heat gap now" unit="BTU/day" />{' '}
+          cold-day heat gap at a spot within reach of the shelter; the map checks reach where you place it.
         </p>
       )}
       {v.winter && (v.winter.added.value > 0 || v.winter.gap.value > 0) && (
@@ -146,8 +159,10 @@ export function ProjectPreview({ systemId, mode }: { systemId: string; mode: Bui
           cold-day demand{' '}
           <WhyNum value={v.winter.peak} title="Project coldest-day heat demand" unit="BTU/day" />. Household
           cold-day gap even with full inputs:{' '}
-          <WhyNum value={v.winter.gap} title="Planned cold-day heat gap" unit="BTU/day" />. Every shelter
-          draws heat even when unused; adding shelter does not replace the old one.
+          <WhyNum value={v.winter.gap} title="Planned cold-day heat gap" unit="BTU/day" />.{' '}
+          {game.settings.shelterOccupancy
+            ? 'Only occupied shelters draw heat; assign residents in their person cards after construction.'
+            : 'Every shelter draws heat even when unused; adding shelter does not replace the old one.'}
         </p>
       )}
       {v.food && (

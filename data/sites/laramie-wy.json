@@ -3,6 +3,7 @@
   "id": "laramie-wy",
   "name": "Laramie basin, Wyoming",
   "description": "A windy 7,200 ft basin: long cold winters, a short growing season, strong sun, and about 11 inches of precipitation.",
+  "crewRate": 16,
   "latitude": 41.3,
   "elevationFt": 7200,
   "assumptions": {

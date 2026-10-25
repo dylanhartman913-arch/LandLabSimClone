@@ -3,19 +3,22 @@ import { dateLabel, getSystem, type GameEvent } from '@homestead/engine';
 import { fmtMoney, fmtNum } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
 
-type Filter = 'shortages' | 'harvests' | 'builds' | 'weather' | 'money' | 'people';
+type Filter = 'shortages' | 'harvests' | 'builds' | 'weather' | 'money' | 'people' | 'animals';
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'shortages', label: 'Shortages' },
   { id: 'harvests', label: 'Harvests' },
   { id: 'builds', label: 'Builds' },
   { id: 'people', label: 'People' },
+  { id: 'animals', label: 'Animals' },
   { id: 'weather', label: 'Weather' },
   { id: 'money', label: 'Money' },
 ];
 
 function filterOf(e: GameEvent): Filter {
   switch (e.kind) {
+    case 'livestock':
+      return 'animals';
     case 'shortage':
     case 'shortage-ended':
     case 'spill':
@@ -54,6 +57,13 @@ export function describeEvent(
   instSys: (id: string) => string | null,
 ): string {
   switch (e.kind) {
+    case 'livestock':
+      return e.event === 'predator-warning' ? `Predator tracks: ${e.amount} days to secure a working guardian or housing.`
+        : e.event === 'predator-loss' ? `Predators took ${fmtNum(e.amount)} animal(s).`
+        : e.event === 'culled' ? `Culling yielded ${fmtNum(e.amount)} lbs meat.`
+        : e.event === 'born' ? `Birth / hatch: ${fmtNum(e.amount)} animal(s).`
+        : e.event === 'matured' ? 'Animals reached maturity.'
+        : e.event === 'protected' ? 'Working housing or a guardian prevented a predator loss.' : 'Animals died of old age.';
     case 'shortage':
       return `Short on ${e.resource}: ${fmtNum(e.unmet)} of ${fmtNum(e.requested)} unmet${e.curtailed.length ? `, slowing ${e.curtailed.length} system${e.curtailed.length === 1 ? '' : 's'}` : ''}.`;
     case 'shortage-ended':
@@ -92,6 +102,7 @@ export function describeEvent(
 
 function instanceOf(e: GameEvent): string | undefined {
   switch (e.kind) {
+    case 'livestock':
     case 'built':
     case 'imported':
     case 'hardship':

@@ -1,5 +1,5 @@
 import { getQuestLine, type Catalog, type QuestDef, type QuestGoal, type QuestLine } from '@homestead/catalog';
-import { computeSpatial } from './time/spatial.ts';
+import { computeSpatial, instanceGroupKey } from './time/spatial.ts';
 import { SURVIVAL } from './time/wellbeing.ts';
 import type { DayLedger, GameState } from './time/types.ts';
 
@@ -38,6 +38,7 @@ const active = (state: GameState, id: string) => state.instances.filter((i) => i
 
 /** Share of the shelter's heat need met that day: the checklist's Heated shelter row (bedding included as a modifier). */
 export function heatShare(l: DayLedger): number {
+  if (l.residentShares) return l.residentShares.heat;
   const n = l.needs['Heated shelter'];
   return n.needed > 1e-9 ? Math.min(1, n.delivered / n.needed) : 1;
 }
@@ -68,7 +69,8 @@ export function goalStatus(state: GameState, catalog: Catalog, goal: QuestGoal, 
       };
     }
     case 'have': {
-      const n = active(state, byName(catalog, goal.system)).length;
+      const members = active(state, byName(catalog, goal.system));
+      const n = state.settings.livestockLifecycle ? members.reduce((sum, i) => sum + (i.scale ?? 1), 0) : members.length;
       return { done: n >= goal.count, progress: Math.min(1, n / goal.count), detail: `${Math.min(n, goal.count)} of ${goal.count} ${goal.system} built` };
     }
     case 'made': {
@@ -77,6 +79,9 @@ export function goalStatus(state: GameState, catalog: Catalog, goal: QuestGoal, 
       for (const [key, g] of Object.entries(state.lastDay)) {
         if (!key.startsWith(`${id}|`)) continue;
         made = Math.max(made, (g.outputs[goal.resource] ?? 0) * active(state, id).length);
+      }
+      if (state.settings.livestockLifecycle && catalog.livestockRules?.some((r) => r.systemId === id)) {
+        made = active(state, id).reduce((sum, i) => sum + (state.lastDay[instanceGroupKey(catalog, state, i)]?.outputs[goal.resource] ?? 0) * (i.scale ?? 1), 0);
       }
       return {
         done: made >= goal.atLeast,

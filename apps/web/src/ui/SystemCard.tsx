@@ -1,5 +1,7 @@
+import { ShelterOccupancy } from './ShelterOccupancy.tsx';
 import { useEffect, useRef, useState } from 'react';
 import {
+  maintenanceView,
   costFor,
   getSystem,
   instanceStatuses,
@@ -13,6 +15,7 @@ import { useGame } from '../store/game.ts';
 import { ResourceLink } from './ResourcePage.tsx';
 import { SystemIcon } from './SystemIcon.tsx';
 import { ProjectPreview } from './ProjectPreview.tsx';
+import { InstanceMechanics } from './InstanceMechanics.tsx';
 import { WhyNum } from './Why.tsx';
 
 const ROLE_LABEL = {
@@ -36,10 +39,11 @@ const TIER_LABEL = ['people first', 'animals', 'everything else'];
 let lastMode: 'buy' | 'diy' = 'buy';
 
 export function SystemCard() {
-  const id = useGame((s) => s.cardSystemId);
+  const cardId = useGame((s) => s.cardSystemId);
   const instanceId = useGame((s) => s.cardInstanceId);
   const catalog = useGame((s) => s.catalog);
   const game = useGame((s) => s.game);
+  const id = (instanceId ? game.instances.find((i) => i.id === instanceId)?.systemId : null) ?? cardId;
   const [mode, setModeState] = useState<'buy' | 'diy'>(lastMode);
   // LL-19: the next card opens on the mode the player last chose.
   const setMode = (m: 'buy' | 'diy') => {
@@ -63,6 +67,7 @@ export function SystemCard() {
   const sys = getSystem(catalog, id);
   const v = systemCard(game, catalog, id, instanceId ?? undefined);
   const inst = v.instance;
+  const maintenance = instanceId ? maintenanceView(game, catalog, instanceId) : null;
   const close = () => st.openCard(null);
   const hasDiy = sys.costDiy !== undefined;
   const chosen = hasDiy ? mode : 'buy';
@@ -90,11 +95,53 @@ export function SystemCard() {
         </button>
       </header>
       <p className="card-desc">{sys.description}</p>
+      {maintenance && instanceId && (
+        <div className="inst-box" data-testid="maintenance">
+          <p>
+            Condition: <WhyNum value={maintenance.condition} title="Condition" format={fmtPct} /> · Output:{' '}
+            <WhyNum value={maintenance.output} title="Condition output factor" format={fmtPct} />
+          </p>
+          <p>
+            Repair: <WhyNum value={maintenance.parts} title="Repair parts" format={fmtMoney} /> and{' '}
+            <WhyNum value={maintenance.hours} title="Repair labor" /> h. Operation stops until work finishes.
+          </p>
+          <button
+            className="btn small"
+            disabled={!maintenance.canRepair}
+            onClick={() =>
+              useGame.getState().phase9Action({ kind: 'service', id: instanceId, replace: false })
+            }
+          >
+            Repair
+          </button>
+          <button
+            className="btn small"
+            disabled={!maintenance.canReplace}
+            onClick={() =>
+              useGame.getState().phase9Action({ kind: 'service', id: instanceId, replace: true })
+            }
+          >
+            Replace for {fmtMoney(maintenance.replacement.value)}
+          </button>
+        </div>
+      )}
 
+      {instanceId && (
+        <>
+          <InstanceMechanics key={instanceId} id={instanceId} />
+          <ShelterOccupancy key={`home-${instanceId}`} id={instanceId} />
+        </>
+      )}
       {inst ? (
         <div className="inst-box" data-testid="instance-box">
           <div>
-            <span className="muted">{inst.status === 'building' ? 'Building' : 'Running at'} </span>
+            <span className="muted">
+              {inst.status === 'building'
+                ? maintenance?.servicing
+                  ? 'Servicing'
+                  : 'Building'
+                : 'Running at'}{' '}
+            </span>
             {inst.status === 'building' ? (
               <WhyNum
                 value={inst.setupProgress}
@@ -250,18 +297,28 @@ export function SystemCard() {
                   <WhyNum value={i.stock.onHand} title={`${i.view.resource} on hand`} /> {i.view.unit} on hand ·{' '}
                   {i.stock.days ? (
                     <>
-                      lasts about <WhyNum value={i.stock.days} title={`${i.view.resource} lasts`} format={(n) => (n > 365 ? 'over a year' : `${Math.floor(n)} days`)} />
+                      lasts about{' '}
+                      <WhyNum
+                        value={i.stock.days}
+                        title={`${i.view.resource} lasts`}
+                        format={(n) => (n > 365 ? 'over a year' : `${Math.floor(n)} days`)}
+                      />
                     </>
                   ) : (
                     'no use yet'
                   )}{' '}
-                  · needs <WhyNum value={i.needed} title={`${i.view.resource} needed`} /> {i.view.unit} {i.view.periodLabel}
+                  · needs <WhyNum value={i.needed} title={`${i.view.resource} needed`} /> {i.view.unit}{' '}
+                  {i.view.periodLabel}
                 </span>
               ) : (
               <span className="res-num">
                 <WhyNum value={i.supplied} title={`${i.view.resource} supplied`} /> /{' '}
                 <WhyNum value={i.needed} title={`${i.view.resource} needed`} /> {i.view.unit}{' '}
-                {i.view.flow.period === 'One-time' ? (game.instances.find((x) => x.id === inst?.id)?.materialsDrawn ? 'supplied during construction' : 'to build') : `needed ${i.view.periodLabel}`}
+                  {i.view.flow.period === 'One-time'
+                    ? game.instances.find((x) => x.id === inst?.id)?.materialsDrawn
+                      ? 'supplied during construction'
+                      : 'to build'
+                    : `needed ${i.view.periodLabel}`}
               </span>
               )}
             </div>
@@ -373,7 +430,8 @@ function StatusLine({ systemId, instanceId }: { systemId: string; instanceId: st
   if (!status) return null;
   return (
     <p className={`status-line ${status.level}`} data-testid="card-status">
-      <span className={`badge-dot ${status.level}`} aria-hidden="true" /> {status.text[0]!.toUpperCase() + status.text.slice(1)}
+      <span className={`badge-dot ${status.level}`} aria-hidden="true" />{' '}
+      {status.text[0]!.toUpperCase() + status.text.slice(1)}
       {status.limitedBy && status.limitedBy !== 'Shelter' && (
         <>
           {' '}
@@ -408,7 +466,10 @@ function SupplyChain({ systemId, near }: { systemId: string; near?: { x: number;
           onClick={() => {
             const ids = tree.flatMap(branchSystems);
             if (ids.length) st.planAdd(ids, near);
-            else st.toast('Nothing to plan: the missing inputs have no producer in the catalog. Try the market.');
+            else
+              st.toast(
+                'Nothing to plan: the missing inputs have no producer in the catalog. Try the market.',
+              );
           }}
           data-testid="plan-branch"
         >

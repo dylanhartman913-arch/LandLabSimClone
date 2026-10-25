@@ -24,6 +24,7 @@ export function resourceSources(catalog: Catalog, resource: string, nodeTypes: r
     const sys = sysById.get(f.systemId)!;
     (sys.categories.includes('Conventional') || sys.backstop ? conventional : producers).add(sys.id);
   }
+  if (resource === 'Preserved food') for (const recipe of catalog.preservationRecipes ?? []) producers.add(recipe.systemId);
   return {
     resource,
     producers: [...producers],

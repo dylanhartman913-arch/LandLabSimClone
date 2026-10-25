@@ -793,6 +793,31 @@ export function exportCatalog(input: ExportInput): ExportResult {
     problems,
   );
   checkLaborUpkeep(rawSystems, rawFlows, periods, assumptions, problems);
+  for (const [label, rules] of [['preservation', overridesParsed.data.preservationRecipes ?? []], ['livestock', overridesParsed.data.livestockRules ?? []]] as const) {
+    const ids = rules.map((r) => r.systemId);
+    if (new Set(ids).size !== ids.length) problems.push(`${label}: duplicate system rules`);
+  }
+  const preserved = rawResources.find((r) => r.name === 'Preserved food');
+  if (overridesParsed.data.preservationRecipes?.length && (!preserved || preserved.unit !== 'kcal' || preserved.class !== 'Flow' || preserved.needsRow !== 'Food' || preserved.factorToNeed !== 1))
+    problems.push('Preservation output must be Preserved food in kcal, feeding Food at factor 1');
+  for (const recipe of overridesParsed.data.preservationRecipes ?? []) {
+    if (!rawSystems.some((s) => s.id === recipe.systemId)) problems.push(`Preservation recipe: unknown system ${recipe.systemId}`);
+    for (const name of recipe.inputs) {
+      const resource = rawResources.find((r) => r.name === name);
+      if (resource && (resource.needsRow !== 'Food' || !(resource.factorToNeed! > 0))) problems.push(`Preservation recipe: ${name} must have a positive food conversion factor`);
+    }
+    for (const name of [...recipe.inputs, recipe.energyResource, 'Preserved food']) {
+      if (!rawResources.some((r) => r.name === name)) problems.push(`Preservation recipe: unknown resource ${name}`);
+    }
+  }
+  for (const rule of overridesParsed.data.livestockRules ?? []) {
+    for (const id of [rule.maturesInto?.systemId, rule.breeding?.offspringSystemId].filter(Boolean))
+      if (!overridesParsed.data.livestockRules?.some((r) => r.systemId === id)) problems.push(`Livestock rule: offspring ${id} has no lifecycle rule`);
+    for (const id of [rule.systemId, rule.maturesInto?.systemId, rule.breeding?.offspringSystemId].filter(Boolean))
+      if (!rawSystems.some((s) => s.id === id)) problems.push(`Livestock rule: unknown system ${id}`);
+  }
+  if (overridesParsed.data.predatorRule && !rawSystems.some((s) => s.id === overridesParsed.data.predatorRule!.guardianSystemId))
+    problems.push('Predator rule: unknown guardian system');
   const merged = applyEngineFields(rawSystems, rawResources, rawFlows, overridesParsed.data, problems);
   const g = readGoldens(wb, rawSystems, problems);
 
@@ -800,6 +825,9 @@ export function exportCatalog(input: ExportInput): ExportResult {
 
   const source = { file: input.xlsxName, sha256: sha256(input.xlsx) };
   const catalog = CatalogSchema.parse({
+    preservationRecipes: overridesParsed.data.preservationRecipes,
+    livestockRules: overridesParsed.data.livestockRules,
+    predatorRule: overridesParsed.data.predatorRule,
     schemaVersion: 1,
     source,
     assumptions,

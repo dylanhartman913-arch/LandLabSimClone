@@ -106,7 +106,7 @@ export function flowRecord(catalog: Catalog, state: GameState, ledgers: readonly
     for (const r of foodFamily) {
       const x = res(l, r.name);
       if (!x) continue;
-      const kcal = (x.produced - ((l.bought[r.name] ?? 0) - (x.purchased ?? 0))) * (r.factorToNeed ?? 1);
+      const kcal = (x.produced - (x.converted ?? 0) - ((l.bought[r.name] ?? 0) - (x.purchased ?? 0))) * (r.factorToNeed ?? 1);
       food.producedKcal += kcal;
       food.importedKcal += (l.bought[r.name] ?? 0) * (r.factorToNeed ?? 1);
     }

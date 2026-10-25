@@ -2,6 +2,7 @@ import type { Catalog, System } from '@homestead/catalog';
 import { getSystem } from '../catalog-index.ts';
 import { canPlace, footprintSideFt } from '../time/game.ts';
 import { computeSpatial, gapFt, rangeDistanceText } from '../time/spatial.ts';
+import { jobPriority } from '../time/gather.ts';
 import { getPlans } from '../time/plans.ts';
 import type { GameState, Instance } from '../time/types.ts';
 
@@ -132,6 +133,18 @@ export function placementPreview(
       );
     }
   }
+  const employment = state.settings.employmentPriority && plan.outputs.some((o) => o.cls === 'Money');
+  const adults = state.instances.filter((i) => i.person && !i.person.away && (i.scale ?? 1) >= 1).length;
+  const paidHours = state.instances.filter((i) => !ignored.includes(i.id)).reduce((sum, i) => {
+    const p = plans.bySystem.get(i.systemId)!;
+    return sum + (p.outputs.some((o) => o.cls === 'Money') ? p.inputs.filter((f) => f.resource === 'Labor').reduce((h, f) => h + f.weekly * (i.scale ?? 1), 0) : 0);
+  }, 0);
+  const addedHours = plan.inputs.filter((f) => f.resource === 'Labor').reduce((h, f) => h + f.weekly, 0);
+  const workWarning = employment ? [
+    'Employment shares the household labor pool. Upkeep runs first by default; building and gathering may slow.',
+    ...(paidHours + addedHours > adults * 40 ? [`Jobs exceed ${adults * 40} h/week for ${adults} adults; worked employment is capped and income is reduced.`] : []),
+    ...(jobPriority(state.settings, 'employment') <= jobPriority(state.settings, 'upkeep') ? ['Your employment priority can displace survival upkeep. Lower it in Work to protect the toilet and filter.'] : []),
+  ].join(' ') : null;
   const spatial = computeSpatial(catalog, future).get(candidate.id);
   return {
     x,
@@ -142,9 +155,9 @@ export function placementPreview(
     connections,
     radii: [...radii],
     notes: spatial?.notes ?? [],
-    warning: Object.keys(spatial?.undelivered ?? {}).length
+    warning: workWarning ?? (Object.keys(spatial?.undelivered ?? {}).length
       ? `No delivered ${Object.keys(spatial!.undelivered).join(' / ')} at this spot. Placement is allowed, but the output will not reach a shelter.`
-      : null,
+      : null),
     explanation:
       'Operating forecast after construction. Distances are shortest gaps between square footprint edges, not centers. Host modifiers must sit inside the host. Heat/cooling eligibility needs one shelter in range; eligible output joins the household pool. Range alone does not guarantee inputs, available capacity or output.',
   };

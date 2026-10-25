@@ -3,6 +3,7 @@
   "id": "front-range",
   "name": "Front Range foothills, Colorado",
   "description": "High plains at the foot of the Rockies: cold dry winters, sunny, about 15 inches of precipitation a year. Matches the spreadsheet's Assumptions sheet exactly.",
+  "crewRate": 18,
   "latitude": 39.7,
   "elevationFt": 5400,
   "assumptions": {

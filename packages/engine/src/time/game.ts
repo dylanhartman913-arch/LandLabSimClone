@@ -37,7 +37,7 @@ export function initGame(
 ): GameState {
   const s = defaultSettings(settings);
   const stocks: Record<string, number> = {};
-  for (const r of catalog.resources) if (r.class === 'Flow' && r.storable) stocks[r.name] = 0;
+  for (const r of catalog.resources) if (r.class === 'Flow' && r.storable && (r.name !== 'Preserved food' || s.foodPreservation || 'Preserved food' in s.startingStocks)) stocks[r.name] = 0;
   for (const [k, v] of Object.entries(s.startingStocks)) {
     if (!(k in stocks)) throw new Error(`startingStocks: "${k}" is not a storable Flow resource`);
     stocks[k] = v;
@@ -165,6 +165,7 @@ export function placeSystem(
   const sys = getSystem(catalog, systemId);
   const id = `i${state.nextInstanceId}`;
   const paid = costFor(catalog, systemId, buildMode);
+  if (state.settings.cashFloor && paid > state.cash) throw new Error(`Need $${paid.toFixed(2)}; cash is $${state.cash.toFixed(2)}.`);
   const hours = setupHoursFor(catalog, systemId, buildMode);
   const prebuilt = buildMode === 'prebuilt';
   const inst: Instance = {
@@ -211,7 +212,7 @@ export function moveSystem(
 
 /** Refund for removing an instance: 25% of what was paid if built, 100% if still building. */
 export function refundFor(inst: Instance): number {
-  return inst.paid * (inst.status === 'building' ? REFUND_BUILDING : REFUND_BUILT) + (inst.contractor ? Math.max(0, inst.contractor.hours - inst.contractor.worked) * CONTRACTOR_RATE : 0);
+  return inst.paid * (inst.status === 'building' && !inst.servicing ? REFUND_BUILDING : REFUND_BUILT) + (inst.contractor ? Math.max(0, inst.contractor.hours - inst.contractor.worked) * (inst.contractor.rate ?? CONTRACTOR_RATE) : 0);
 }
 
 export function removeSystem(state: GameState, instanceId: string): GameState {

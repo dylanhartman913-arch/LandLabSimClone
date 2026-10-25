@@ -15,7 +15,7 @@ import type { BuildMode, GameState } from '../time/types.ts';
 import { contractorQuote } from '../time/recovery.ts';
 import { constructionView } from './recovery.ts';
 import { designBalance } from './hud.ts';
-import { computeSpatial } from '../time/spatial.ts';
+import { computeSpatial, thermalDestinations } from '../time/spatial.ts';
 import { systemFlows } from './system.ts';
 import { findSpot } from '../kits.ts';
 import { homeOf } from '../time/gather.ts';
@@ -26,7 +26,9 @@ export function projectSamplePosition(state: GameState, catalog: Catalog, system
   const plans = getPlans(catalog, state.site);
   const reaches = plans.bySystem.get(systemId)!.outputs.some((o) => catalog.resources.find((r) => r.name === o.resource)?.deliversTo === 'shelter');
   if (reaches) {
-    const shelters = new Set(catalog.flows.filter((f) => f.direction === 'out' && f.resource === 'Shelter').map((f) => f.systemId));
+    const shelters = new Set(
+      catalog.flows.filter((f) => f.direction === 'out' && f.resource === 'Shelter').map((f) => f.systemId),
+    );
     const home = homeOf(state, shelters);
     const near = findSpot(catalog, state, systemId, home.x, home.y);
     if (near) return near;
@@ -55,6 +57,7 @@ export function projectPreview(
   const cost = costFor(catalog, systemId, mode);
   const hours = setupHoursFor(catalog, systemId, mode);
   const candidate =
+    (!state.settings.cashFloor || state.cash >= cost) &&
     position && canPlace(catalog, state, systemId, position.x, position.y).ok
       ? placeSystem(catalog, state, systemId, position.x, position.y, mode)
       : null;
@@ -116,7 +119,7 @@ export function projectPreview(
     const climate = climateTable(state.site);
     const coldest = climate.days.reduce((best, w, k) => (w.hdd > climate.days[best]!.hdd ? k : best), 0);
     const heat = (s: GameState) => {
-      // Shelter requests are charged for every completed shelter, including empty ones.
+      // The game’s spatial input factors include occupancy when enabled.
       // Reflect planned completion and actual host heat-loss modifiers without changing the live model.
       const b = designBalance(s, catalog);
       const r = b.potential.resources.Heat;
@@ -131,20 +134,44 @@ export function projectPreview(
     const spatial = computeSpatial(catalog, future);
     let coldNeed = 0;
     let coldSupply = 0;
+      const localNeed = new Map<string, number>();
+      const localSupply = new Map<string, number>();
     for (const i of future.instances) {
       const p = getPlans(catalog, state.site).bySystem.get(i.systemId)!;
       for (const f of p.inputs)
-        if (f.resource === 'Heat')
-          coldNeed +=
+          if (f.resource === 'Heat') {
+            const request =
             dailyAmount(f, coldest, climate.days[coldest]!, climate) *
             (i.scale ?? 1) *
             (spatial.get(i.id)?.inMult.Heat ?? 1);
+            coldNeed += request;
+            localNeed.set(i.id, (localNeed.get(i.id) ?? 0) + request);
+          }
       for (const f of p.outputs)
         if (f.resource === 'Heat' && !spatial.get(i.id)?.undelivered.Heat)
           coldSupply +=
             dailyAmount(f, coldest, climate.days[coldest]!, climate) *
             (i.scale ?? 1) *
-            (spatial.get(i.id)?.outMult.Heat ?? 1);
+              (spatial.get(i.id)?.outMult.Heat ?? 1);
+      }
+      if (state.settings.shelterOccupancy) {
+        for (const i of future.instances)
+          for (const f of getPlans(catalog, state.site).bySystem.get(i.systemId)!.outputs) {
+            if (f.resource !== 'Heat') continue;
+            const targets = thermalDestinations(catalog, future, i, 'Heat');
+            const need = targets.reduce((sum, id) => sum + (localNeed.get(id) ?? 0), 0);
+            const amount =
+              dailyAmount(f, coldest, climate.days[coldest]!, climate) *
+              (i.scale ?? 1) *
+              (spatial.get(i.id)?.outMult.Heat ?? 1);
+            if (need > 0)
+              for (const id of targets)
+                localSupply.set(id, (localSupply.get(id) ?? 0) + (amount * (localNeed.get(id) ?? 0)) / need);
+          }
+        coldSupply = [...localNeed].reduce(
+          (sum, [id, need]) => sum + Math.min(need, localSupply.get(id) ?? 0),
+          0,
+        );
     }
     return { coldNeed, coldSupply };
     };
@@ -182,7 +209,15 @@ export function projectPreview(
     return m.marketAvailable && m.marketPrice !== null ? m.marketPrice : null;
   };
   const supplies = plan.inputs
-    .filter((f) => !f.isCapacity && !f.isOneTime && f.weekly > 0 && f.resource !== 'Labor' && f.resource !== 'Capital' && f.role !== 'ambient')
+    .filter(
+      (f) =>
+        !f.isCapacity &&
+        !f.isOneTime &&
+        f.weekly > 0 &&
+        f.resource !== 'Labor' &&
+        f.resource !== 'Capital' &&
+        f.role !== 'ambient',
+    )
     .map((f) => {
       const meta = catalog.resources.find((x) => x.name === f.resource)!;
       const r = (after ?? before).potential.resources[f.resource];
@@ -199,16 +234,32 @@ export function projectPreview(
         unit: meta.unit,
         role: f.role,
         perWeek: explained(f.weekly, 'catalog weekly use at full operation'),
-        covered: explained(covered, 'on-site production ÷ planned demand after this project (annual balance)', { refs: { produced: made, demand: need } }),
+        covered: explained(
+          covered,
+          'on-site production ÷ planned demand after this project (annual balance)',
+          { refs: { produced: made, demand: need } },
+        ),
         onHand: stock === null ? null : explained(stock, 'stock on hand now'),
         days:
           stock === null || uncovered <= 1e-9
             ? null
-            : explained(stock / (uncovered / 7), 'stock ÷ daily demand on-site systems do not cover', { refs: { stock, uncoveredPerWeek: uncovered } }),
-        costPerWeek: unit === null ? null : explained(mineUncovered * unit, 'this system’s share of uncovered weekly demand × market price', { refs: { perWeek: mineUncovered, price: unit } }),
+            : explained(stock / (uncovered / 7), 'stock ÷ daily demand on-site systems do not cover', {
+                refs: { stock, uncoveredPerWeek: uncovered },
+              }),
+        costPerWeek:
+          unit === null
+            ? null
+            : explained(
+                mineUncovered * unit,
+                'this system’s share of uncovered weekly demand × market price',
+                { refs: { perWeek: mineUncovered, price: unit } },
+              ),
       };
     });
-  const suppliesCost = supplies.reduce((a, x) => a + (x.role === 'required' ? (x.costPerWeek?.value ?? 0) : 0), 0);
+  const suppliesCost = supplies.reduce(
+    (a, x) => a + (x.role === 'required' ? (x.costPerWeek?.value ?? 0) : 0),
+    0,
+  );
   const schedule = candidate
     ? constructionView(candidate.state, catalog).find((p) => p.id === candidate.instanceId)
     : null;
@@ -241,13 +292,21 @@ export function projectPreview(
         needed: explained(m.qty, 'one-time catalog material quantity'),
         missing: explained(missing, 'max(0, required − stock on hand)'),
         // LL-19: brought in free by the current construction rule; this is what it would cost.
-        worth: p === null ? null : explained(missing * p, 'missing quantity × market price (not charged)', { refs: { missing, price: p } }),
+        worth:
+          p === null
+            ? null
+            : explained(missing * p, 'missing quantity × market price (not charged)', {
+                refs: { missing, price: p },
+              }),
       };
     }),
     supplies,
     suppliesCost: explained(suppliesCost, 'Σ required supplies’ uncovered weekly demand × market price, this system’s share', {
-      refs: Object.fromEntries(supplies.filter((x) => x.costPerWeek).map((x) => [x.resource, x.costPerWeek!.value])),
-    }),
+        refs: Object.fromEntries(
+          supplies.filter((x) => x.costPerWeek).map((x) => [x.resource, x.costPerWeek!.value]),
+        ),
+      },
+    ),
     recurring: flows.inputs.filter((f) => f.flow.period !== 'One-time'),
     demand,
     food,

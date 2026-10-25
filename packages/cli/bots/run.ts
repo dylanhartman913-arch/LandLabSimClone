@@ -3,7 +3,7 @@ import { gameFromStart, stepDay, type Action, type DayLedger, type GameEvent, ty
 import type { Bot } from './types.ts';
 
 /** What a new game started in the app sets (NewGame.tsx): the same rules a player gets today. */
-export const NEW_GAME_SETTINGS = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, serviceWarmUp: true, tutorialSeasons: true };
+export const NEW_GAME_SETTINGS = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, employmentPriority: true, siteCrewRates: true, cashFloor: true, serviceWarmUp: true, tutorialSeasons: true, householdStart: true };
 
 export interface PlayOptions {
   start: string;
@@ -26,7 +26,7 @@ export interface PlayResult {
 /** Play a start with a bot for `days` days: each morning the bot acts, then the day runs. */
 export function playBot(bot: Bot, o: PlayOptions): PlayResult {
   const catalog = o.catalog ?? defaultCatalog;
-  let state = gameFromStart(catalog, getSite(o.site), getStart(o.start), { difficulty: o.difficulty ?? 'standard', seed: o.seed ?? 1, warmUp: o.settings?.serviceWarmUp === true, tutorialSeasons: o.settings?.tutorialSeasons === true });
+  let state = gameFromStart(catalog, getSite(o.site), getStart(o.start), { difficulty: o.difficulty ?? 'standard', seed: o.seed ?? 1, warmUp: o.settings?.serviceWarmUp === true, tutorialSeasons: o.settings?.tutorialSeasons === true, householdStart: o.settings?.householdStart === true });
   if (o.settings) state = { ...state, settings: { ...state.settings, ...o.settings } };
   const ledgers: DayLedger[] = [];
   const events: GameEvent[] = [];

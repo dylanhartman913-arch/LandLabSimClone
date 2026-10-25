@@ -4,7 +4,7 @@ export type AutoPauseKey = 'shortage' | 'hardship' | 'built' | 'harvest' | 'fros
 
 export const AUTO_PAUSE_LABELS: Record<AutoPauseKey, string> = {
   shortage: 'First shortage of a household need',
-  hardship: 'A hardship event',
+  hardship: 'A hardship event or predator warning',
   built: 'Construction complete',
   harvest: 'A harvest',
   frost: 'First frost',

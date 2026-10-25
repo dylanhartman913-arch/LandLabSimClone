@@ -110,6 +110,7 @@ export function Checklist() {
         </p>
       </div>
       <table className="checklist" data-testid="checklist-table">
+          <caption>{forecast ? 'Average-year forecast; flows as weekly equivalents, capacities as labeled.' : v.range ? `Measured days ${v.range.from}–${v.range.to}; ${mode === 'worst' ? 'each need’s worst week in this history' : 'flows as weekly equivalents'}, capacities as labeled.` : 'No measured days yet.'}</caption>
         <thead>
           <tr>
             <th>Human need</th>

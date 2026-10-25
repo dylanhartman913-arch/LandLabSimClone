@@ -9,6 +9,12 @@ export type BuildMode = 'buy' | 'diy' | 'prebuilt';
 export type WeatherMode = 'average' | 'real';
 
 export interface GameSettings {
+  /** Experimental Phase 9 mechanics; explicit opt-in, never migrated automatically. */
+  wearAndRepair?: boolean;
+  sellingAndTrade?: boolean;
+  foodPreservation?: boolean;
+  livestockLifecycle?: boolean;
+  shelterOccupancy?: boolean;
   parcelAcres: number;
   startingCash: number;
   weatherMode: WeatherMode;
@@ -28,6 +34,14 @@ export interface GameSettings {
   serviceWarmUp?: boolean;
   /** v0.8 start: the seasonal tutorial line (summer goals, named supply orders, warmth by residents). Only read when a game starts. */
   tutorialSeasons?: boolean;
+  /** v0.9: employment has its own labor priority below upkeep, capped at 40 h per adult/week. */
+  employmentPriority?: boolean;
+  /** v0.9 start: first-year greenfield cash support scales with the household. */
+  householdStart?: boolean;
+  /** v0.9: outside crew rates use the site's game balance rate. */
+  siteCrewRates?: boolean;
+  /** v0.9: purchases and fees cannot overdraw cash. */
+  cashFloor?: boolean;
   /** Day of year the game starts on (0 = Jan 1). */
   startDay?: number;
   /** Stocks on day one (arrival supplies). */
@@ -78,6 +92,15 @@ export interface InstanceInputRecord {
   received: number;
 }
 
+export interface AnimalState {
+  ageDays: number;
+  /** Fed days toward maturity; chronological age continues during shortages. */
+  growthDays: number;
+  breeding?: { progressDays: number; laborDone: number };
+  culling?: { laborDone: number };
+  predatorWarning?: { daysLeft: number };
+}
+
 export interface Instance {
   id: string;
   systemId: string;
@@ -88,12 +111,20 @@ export interface Instance {
   buildMode: BuildMode;
   /** Dollars paid at placement (for refunds). */
   paid: number;
+  /** Remaining service life, 0–1; absent means new when wear is first enabled. */
+  condition?: number;
+  servicing?: { activeSince: number | null };
+  preservation?: { resource: string; keep: number };
+  animal?: AnimalState;
+  /** Undefined: deterministic automatic assignment; null: explicitly unsheltered. */
+  shelterId?: string | null;
+  shelterClosed?: boolean;
   setupHoursNeeded: number;
   setupHoursDone: number;
   /** Materials drawn (construction has started). */
   materialsDrawn: boolean;
   /** Prepaid outside construction. Hours already worked remain sunk on removal. */
-  contractor?: { hours: number; worked: number };
+  contractor?: { hours: number; worked: number; rate?: number };
   /** Absolute day the instance became active (prebuilt plants are backdated to maturity). */
   activeSince: number | null;
   /** Allocation tier; lower is served first. Defaults to the system's priority tier. */
@@ -124,6 +155,12 @@ export interface GroupDay {
 }
 
 export interface ResourceDay {
+  /** Sold or bartered away; never counted as household consumption. */
+  sold?: number;
+  /** Food transformed by processing, separate from meals. */
+  processed?: number;
+  /** Of production, kcal converted from another food (not new harvest). */
+  converted?: number;
   start: number;
   produced: number;
   consumed: number;
@@ -172,6 +209,38 @@ export interface DayLedger {
     /** Hours worked per job today (G14): gathering, construction, upkeep. */
     byJob?: Partial<Record<JobId, number>>;
   };
+  /** Per-shelter actual receipts, and the least-served resident, under occupancy. */
+  shelters?: {
+    id: string;
+    residents: string[];
+    heatNeeded: number;
+    heatReceived: number;
+    coolingNeeded: number;
+    coolingReceived: number;
+  }[];
+  residentShares?: { shelter: number; heat: number; cooling: number };
+  preserved?: {
+    instanceId: string;
+    resource: string;
+    amount: number;
+    inputKcal: number;
+    outputKcal: number;
+    labor: number;
+    energyResource: string;
+    energy: number;
+  }[];
+  livestock?: {
+    instanceId: string;
+    kind: 'matured' | 'born' | 'culled' | 'died' | 'predator-warning' | 'predator-loss' | 'protected';
+    amount: number;
+  }[];
+  trades?: {
+    resource: string;
+    amount: number;
+    revenue: number;
+    received?: string;
+    receivedAmount?: number;
+  }[];
   /** What people gathered from the land today (G14). */
   gathered?: GatherRecord[];
   /** Untreated water boiled into drinking water today (G14). */
@@ -240,6 +309,8 @@ export interface GameState {
   schema: 'homestead.game.v1';
   seed: number;
   rng: number;
+  /** Independent opt-in risk stream keeps predator draws from changing weather. */
+  livestockRng?: number;
   site: Site;
   settings: GameSettings;
   calendar: { day: number; year: number; absDay: number };
@@ -249,6 +320,8 @@ export interface GameState {
   direct: Record<string, number>;
   /** Yesterday's total output of each Service resource (pollination, pest control…). */
   services: Record<string, number>;
+  /** Yesterday’s delivered thermal output, routed once to each occupied shelter. */
+  shelterThermal?: Record<string, Record<string, number>>;
   /** Yesterday's results per group, keyed `systemId|priority`. */
   lastDay: Record<string, GroupDay>;
   instances: Instance[];
@@ -265,17 +338,34 @@ export interface GameState {
   /** Natural node stocks (G14), once someone has worked a node; untouched nodes are full. */
   nodeStock?: Record<string, number>;
   /** The market (G12): one-off orders for the next trip, and standing orders. Absent until used. */
-  market?: { orders: MarketOrder[]; standing: StandingOrder[] };
+  market?: {
+    orders: MarketOrder[];
+    standing: StandingOrder[];
+    sales?: { resource: string; amount: number; keep: number; receive?: string }[];
+  };
   /** The tutorial quest line and where it stands (G16). */
   tutorial?: TutorialState;
   /** The start this game began from (G15), if any. */
-  start?: { id: string; difficulty: string; household: number; headline: 'self-reliance' | 'off-grid'; tutorial: string | null };
+  start?: {
+    id: string;
+    difficulty: string;
+    household: number;
+    headline: 'self-reliance' | 'off-grid';
+    tutorial: string | null;
+  };
   /** Real weather only: this year's draws, and every year's draws so far (kept in saves). */
   yearWeather?: YearWeather;
   weatherLog?: YearWeather[];
 }
 
 export type GameEvent =
+  | {
+      kind: 'livestock';
+      absDay: number;
+      instanceId: string;
+      event: NonNullable<DayLedger['livestock']>[number]['kind'];
+      amount: number;
+    }
   | {
       kind: 'shortage';
       absDay: number;
@@ -296,4 +386,10 @@ export type GameEvent =
   | { kind: 'came-home'; absDay: number; instanceId: string }
   | { kind: 'quest'; absDay: number; questId: string; title: string; reward: string }
   | { kind: 'purchases-stopped'; absDay: number; cash: number }
-  | { kind: 'market'; absDay: number; bought: Record<string, number>; cost: number; trip: 'own transport' | 'delivery' };
+  | {
+      kind: 'market';
+      absDay: number;
+      bought: Record<string, number>;
+      cost: number;
+      trip: 'own transport' | 'delivery';
+    };

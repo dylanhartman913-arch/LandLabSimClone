@@ -109,6 +109,7 @@ export function WhyPopover() {
       </div>
       {e.terms.length > 0 && (
         <table className="why-terms">
+          <caption>Flow periods as labeled below; factors convert them to the formula’s measurement window.</caption>
           <thead>
             <tr>
               <th>System</th>

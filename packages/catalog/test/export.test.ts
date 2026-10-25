@@ -7,10 +7,10 @@ import { GENERATED_DIR, exportFromFiles, renderGenerated } from '../src/exporter
 const { catalog, goldens } = exportFromFiles();
 
 describe('exporting the delivered spreadsheet', () => {
-  it('finds 177 systems, 819 flows, and 62 resources (168 delivered + 8 from the G15 patch + 1 from G16)', () => {
-    expect(catalog.systems).toHaveLength(177);
-    expect(catalog.flows).toHaveLength(819);
-    expect(catalog.resources).toHaveLength(62);
+  it('finds 178 systems, 821 flows, and 63 resources (168 delivered + 8 from the G15 patch + 1 from G16 + 1 from LL-29)', () => {
+    expect(catalog.systems).toHaveLength(178);
+    expect(catalog.flows).toHaveLength(821);
+    expect(catalog.resources).toHaveLength(63);
   });
 
   it('keeps the 24 dropdown categories plus the hidden Household category', () => {
@@ -24,7 +24,7 @@ describe('exporting the delivered spreadsheet', () => {
     // 72 formula cells in Flows!E: 16 sun, 3 pv, 20 heat, 20 cool, 1 catch area, 6 rain, 4 rain capture, 1 wind, 1 hydro
     // (the G15 rain barrel adds a rain and a rain-capture formula)
     expect(Object.fromEntries(kinds)).toEqual({
-      const: 747,
+      const: 749,
       sun: 16,
       pv: 3,
       heatLoad: 20,

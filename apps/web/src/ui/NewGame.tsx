@@ -30,7 +30,7 @@ export function NewGame() {
     const init: GameInit = {
       siteId,
       seed: Math.floor(Math.random() * 2 ** 31), // UI-side: the seed is then saved with the game
-      settings: { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, serviceWarmUp: true, tutorialSeasons: true },
+      settings: { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, employmentPriority: true, siteCrewRates: true, cashFloor: true, serviceWarmUp: true, tutorialSeasons: true, householdStart: true },
       start: { id: startId, difficulty, household },
     };
     try {
@@ -71,7 +71,7 @@ export function NewGame() {
                 <span className="muted">{x.pitch}</span>
                 <span className="facts small">
                   <span>{ACRE_LABEL(x.parcelAcres)}</span>
-                  <span>{fmtMoney(x.cash)}</span>
+                  <span>{x.id === 'greenfield' ? `${fmtMoney(x.cash)} per adult` : fmtMoney(x.cash)}</span>
                 </span>
                 <strong className="small">Starting kit</strong>
                 <ul className="small">
@@ -82,7 +82,7 @@ export function NewGame() {
                 <strong className="small">Stockpile</strong>
                 <ul className="small">
                   {x.preview.stockpile.map((k) => (
-                    <li key={k}>{k}</li>
+                    <li key={k}>{x.id === 'greenfield' && k === fmtMoney(x.cash) ? `${fmtMoney(x.cash)} per adult` : k}</li>
                   ))}
                 </ul>
               </button>
@@ -119,6 +119,7 @@ export function NewGame() {
             />
           </label>
         </div>
+        {startId === 'greenfield' && <p className="small" data-testid="starter-limits">Starter camp: one tent covers about one adult’s nominal shelter need, and the bucket toilet serves one adult. Larger households start below full coverage. Starting cash is {fmtMoney(chosen.cash)} per adult to fund supplies and upgrades; tutorial assistance is extra. Electricity also starts below full coverage.</p>}
         <h3>Difficulty</h3>
         <div className="choice-grid three" role="radiogroup" aria-label="Difficulty">
           {DIFFICULTIES.map((d) => (

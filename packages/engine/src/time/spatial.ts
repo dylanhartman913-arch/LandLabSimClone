@@ -1,4 +1,7 @@
+import { shelterAssignments, CLOSED_SHELTER_UPKEEP } from './occupancy.ts';
 import type { AdjacencyRule, Catalog, System } from '@homestead/catalog';
+import { animalOutput } from './livestock.ts';
+import { conditionOutput } from './maintenance.ts';
 import { getSystem } from '../catalog-index.ts';
 import { parcelSideFt } from './game.ts';
 import { getPlans } from './plans.ts';
@@ -22,6 +25,7 @@ export interface InstanceSpatial {
   /** Plain language for "why" popovers. */
   notes: string[];
   /** Instances with the same signature behave identically (the engine groups them). */
+  occupancyKey?: string;
   sig: string;
 }
 
@@ -137,7 +141,14 @@ function layoutOf(state: GameState): LayoutSig {
  */
 export function computeSpatial(catalog: Catalog, state: GameState): Map<string, InstanceSpatial> {
   const hit = cache.get(catalog);
-  if (hit && sameLayout(hit.sig, state)) return hit.map;
+  if (
+    !state.settings.shelterOccupancy &&
+    !state.settings.wearAndRepair &&
+    !state.settings.livestockLifecycle &&
+    hit &&
+    sameLayout(hit.sig, state)
+  )
+    return hit.map;
   const plans = getPlans(catalog, state.site);
   const side = parcelSideFt(state.settings);
   const active = state.instances.filter((i) => i.status === 'active');
@@ -146,7 +157,10 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
   const get = (id: string): InstanceSpatial => {
     let s = work.get(id);
     if (!s)
-      work.set(id, (s = { inMult: {}, outMult: {}, gated: {}, assigned: {}, undelivered: {}, notes: [], sig: '' }));
+      work.set(
+        id,
+        (s = { inMult: {}, outMult: {}, gated: {}, assigned: {}, undelivered: {}, notes: [], sig: '' }),
+      );
     return s;
   };
 
@@ -251,6 +265,31 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     }
   }
 
+  if (state.settings.wearAndRepair)
+    for (const inst of active) {
+      const factor = conditionOutput(inst, sysOf(inst));
+      if (factor === 1) continue;
+      const s = get(inst.id);
+      for (const out of plans.bySystem.get(inst.systemId)!.outputs)
+        s.outMult[out.resource] = (s.outMult[out.resource] ?? 1) * factor;
+      s.notes.push(
+        `Condition ${((inst.condition ?? 1) * 100).toFixed(1)}%: output × ${factor.toFixed(3)}; repair or replace in the system card.`,
+      );
+    }
+
+  if (state.settings.livestockLifecycle)
+    for (const inst of active) {
+      for (const out of plans.bySystem.get(inst.systemId)!.outputs) {
+        const factor = animalOutput(state, catalog, inst, out.resource);
+        if (factor === 1) continue;
+        const s = get(inst.id);
+        s.outMult[out.resource] = (s.outMult[out.resource] ?? 1) * factor;
+        s.notes.push(
+          `${out.resource}: lifecycle output × ${factor.toFixed(3)} (maturity, age and daylight; meat requires culling).`,
+        );
+      }
+    }
+
   // Assigned capacities (roofs for rain catchment, paddocks for grazing animals).
   for (const a of catalog.assignedCapacities) {
     const providers = active
@@ -301,6 +340,58 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     }
   }
 
+  if (state.settings.shelterOccupancy) {
+    const assignments = shelterAssignments(catalog, state);
+    for (const inst of active) {
+      const s = get(inst.id);
+      s.occupancyKey = inst.id; // stable identity across assignments, closures and daily changes
+      if (inst.person) {
+        const home = assignments.get(inst.id);
+        const residents = active.filter((i) => !i.person?.away && assignments.get(i.id) === home && i.person);
+        const need = residents.reduce(
+          (sum, i) =>
+            sum +
+            (plans.bySystem.get(i.systemId)!.inputs.find((f) => f.resource === 'Shelter')?.qty ?? 0) *
+              (i.scale ?? 1),
+          0,
+        );
+        const sh = active.find((i) => i.id === home);
+        const capacity = sh
+          ? (plans.bySystem.get(sh.systemId)!.outputs.find((o) => o.resource === 'Shelter')?.qty ?? 0) *
+            (sh.scale ?? 1) *
+            (work.get(sh.id)?.outMult.Shelter ?? 1)
+          : 0;
+        s.assigned.Shelter = {
+          providerId: home ?? null,
+          share: need > 0 ? Math.min(1, capacity / need) : 0,
+          distanceFt: null,
+        };
+        s.notes.push(
+          home
+            ? `Lives in ${home}; shelter space is shared only with its residents.`
+            : 'No completed open shelter assigned.',
+        );
+      }
+      const plan = plans.bySystem.get(inst.systemId)!;
+      if (!plan.outputs.some((o) => o.resource === 'Shelter' && o.isCapacity)) continue;
+      const occupied = active.some((i) => i.person && !i.person.away && assignments.get(i.id) === inst.id);
+      if (!occupied) {
+        s.inMult.Heat = 0;
+        s.inMult.Cooling = 0;
+      }
+      if (inst.shelterClosed) {
+        for (const f of plan.inputs)
+          s.inMult[f.resource] =
+            f.resource === 'Labor' || f.resource === 'Capital' ? CLOSED_SHELTER_UPKEEP : 0;
+        s.outMult.Shelter = 0;
+        s.notes.push(
+          'Closed: no thermal load or living space; 10% recurring labor and capital upkeep. Physical roof and storage remain.',
+        );
+      } else if (!occupied)
+        s.notes.push('No residents at home: no heat or cooling load. Close to reduce upkeep.');
+    }
+  }
+
   // Delivery (G11): heat and cooling only count when they reach a shelter.
   const resByName = new Map(catalog.resources.map((r) => [r.name, r]));
   const shelters = active.filter((i) =>
@@ -317,6 +408,13 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
         const s = get(inst.id);
         s.undelivered[o.resource] = true;
         s.notes.push(`Its ${o.resource.toLowerCase()} stays outdoors, so it doesn't warm or cool a shelter.`);
+        continue;
+      }
+      if (state.settings.shelterOccupancy) {
+        if (!thermalDestinations(catalog, state, inst, o.resource).length) {
+          get(inst.id).undelivered[o.resource] = true;
+          get(inst.id).notes.push(`Its ${o.resource} reaches no occupied open shelter.`);
+        }
         continue;
       }
       if (isShelter || sys.layer === 'none') continue; // part of a shelter, or carried inside one
@@ -351,16 +449,54 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     ]);
     map.set(inst.id, s);
   }
-  cache.set(catalog, { sig: layoutOf(state), map });
+  if (!state.settings.shelterOccupancy && !state.settings.wearAndRepair && !state.settings.livestockLifecycle)
+    cache.set(catalog, { sig: layoutOf(state), map });
   return map;
 }
 
 /** The engine's group key for an instance (system, priority, spatial signature, household scale). */
 export function groupKeyOf(inst: Instance, spatial: InstanceSpatial): string {
+  if (spatial.occupancyKey) return `${inst.systemId}|${inst.priority}|occupancy:${inst.id}`;
+  if (inst.animal) return `${inst.systemId}|${inst.priority}|animal:${inst.id}`;
   const scale = inst.scale ?? 1;
   return `${inst.systemId}|${inst.priority}${spatial.sig ? `|${spatial.sig}` : ''}${scale !== 1 ? `|s${scale}` : ''}`;
 }
 
 export function instanceGroupKey(catalog: Catalog, state: GameState, inst: Instance): string {
   return groupKeyOf(inst, computeSpatial(catalog, state).get(inst.id) ?? NONE);
+}
+
+/** Each thermal source serves only occupied shelters it can physically reach. */
+export function thermalDestinations(
+  catalog: Catalog,
+  state: GameState,
+  source: Instance,
+  resource: string,
+): string[] {
+  const plans = getPlans(catalog, state.site);
+  const assigned = shelterAssignments(catalog, state);
+  const occupied = new Set(
+    state.instances
+      .filter((i) => i.person && !i.person.away && i.status === 'active')
+      .map((i) => assigned.get(i.id)),
+  );
+  const sys = getSystem(catalog, source.systemId);
+  const meta = catalog.resources.find((r) => r.name === resource)!;
+  const self = plans.bySystem
+    .get(source.systemId)!
+    .outputs.some((o) => o.resource === 'Shelter' && o.isCapacity);
+  if (sys.outdoor) return [];
+  return state.instances
+    .filter(
+      (sh) =>
+        sh.status === 'active' &&
+        !sh.shelterClosed &&
+        occupied.has(sh.id) &&
+        (self
+          ? sh.id === source.id
+          : sys.layer === 'none' ||
+            gapFt(source.x, source.y, halfOf(sys), sh.x, sh.y, halfOf(getSystem(catalog, sh.systemId))) <=
+              meta.deliveryRadiusFt),
+    )
+    .map((sh) => sh.id);
 }
