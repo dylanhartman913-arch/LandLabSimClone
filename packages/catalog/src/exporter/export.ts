@@ -818,13 +818,28 @@ export function exportCatalog(input: ExportInput): ExportResult {
   }
   if (overridesParsed.data.predatorRule && !rawSystems.some((s) => s.id === overridesParsed.data.predatorRule!.guardianSystemId))
     problems.push('Predator rule: unknown guardian system');
+  const storage = overridesParsed.data.winterStorage;
+  if (storage) {
+    if (!rawResources.some((r) => r.name === storage.feed.capacityResource && r.class === 'Capacity'))
+      problems.push(`Storage rule: ${storage.feed.capacityResource} must be a capacity resource`);
+    const tankIds = storage.tanks.map((t) => t.systemId);
+    if (new Set(tankIds).size !== tankIds.length) problems.push('Storage rule: duplicate tank rules');
+    for (const t of storage.tanks)
+      if (!rawFlows.some((f) => f.systemId === t.systemId && f.direction === 'out' && f.resource === 'Water storage'))
+        problems.push(`Storage rule: tank ${t.systemId} provides no Water storage`);
+  }
   const merged = applyEngineFields(rawSystems, rawResources, rawFlows, overridesParsed.data, problems);
+  for (const m of storage?.feed.members ?? []) {
+    const r = merged.resources.find((x) => x.name === m.resource);
+    if (!r || !r.storable || r.storedIn) problems.push(`Storage rule: feed ${m.resource} must be a storable resource with no existing pool`);
+  }
   const g = readGoldens(wb, rawSystems, problems);
 
   if (problems.length) throw new CatalogExportError(problems);
 
   const source = { file: input.xlsxName, sha256: sha256(input.xlsx) };
   const catalog = CatalogSchema.parse({
+    winterStorage: overridesParsed.data.winterStorage,
     preservationRecipes: overridesParsed.data.preservationRecipes,
     livestockRules: overridesParsed.data.livestockRules,
     predatorRule: overridesParsed.data.predatorRule,

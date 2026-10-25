@@ -195,7 +195,7 @@ export interface GameStore {
   setInstancePriority(instanceId: string, priority: number): void;
   setInstanceLink(instanceId: string, resource: string, providerId: string | null): void;
   /** Order from the market for the next trip (G12). Logged for replay; not undoable (it's a purchase). */
-  phase9Action(body: Extract<ActionBody, { kind: 'service' | 'sell' | 'preserve' | 'livestock' | 'assignShelter' | 'closeShelter' }>): void;
+  phase9Action(body: Extract<ActionBody, { kind: 'service' | 'sell' | 'preserve' | 'livestock' | 'assignShelter' | 'closeShelter' | 'winterize' }>): void;
   marketBuy(resource: string, amount: number): boolean;
   /** Keep a stock above a level by standing order (keepAbove 0 removes it). */
   marketStanding(resource: string, keepAbove: number, orderUpTo?: number): boolean;
@@ -1010,6 +1010,12 @@ function toastForEvent(e: GameEvent): void {
         : e.event === 'protected' ? 'Housing or guardian prevented a predator loss.' : 'Animals died of old age.',
         e.event === 'predator-warning' || e.event === 'predator-loss' ? 'warn' : 'info', e.instanceId);
       break;
+    case 'winter-water': {
+      const inst = s.game.instances.find((i) => i.id === e.instanceId);
+      const tank = inst ? name(inst.systemId) : 'A water tank';
+      s.toast(e.event === 'froze' ? `${tank} froze: ${fmtNumber(e.gal)} gal of raw water is locked in ice.` : `${tank} thawed: ${fmtNumber(e.gal)} gal released.`, e.event === 'froze' ? 'warn' : 'info', e.instanceId);
+      break;
+    }
     case 'harvest':
       s.toast(`Harvest: ${name(e.systemId)} → ${e.resource}.`, 'info', e.instanceIds[0]);
       break;

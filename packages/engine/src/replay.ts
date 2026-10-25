@@ -1,6 +1,7 @@
 import { setShelter, closeShelter } from './time/occupancy.ts';
 import { manageLivestock } from './time/livestock.ts';
 import { setPreservation } from './time/preservation.ts';
+import { releaseFrozen, setWinterProtection } from './time/storage.ts';
 import { serviceSystem } from './time/maintenance.ts';
 import { queueTrade } from './time/trade.ts';
 import { getSite, getStart, type Catalog, type Difficulty } from '@homestead/catalog';
@@ -43,6 +44,7 @@ export type Action = { at: number } & (
   | { kind: 'closeShelter'; id: string; closed: boolean }
   | { kind: 'preserve'; id: string; resource: string | null; keep: number }
   | { kind: 'livestock'; id: string; operation: 'breed' | 'cull' | 'cancel' }
+  | { kind: 'winterize'; id: string; protection: 'insulated' | 'heated' | null }
   | { kind: 'service'; id: string; replace: boolean }
   | { kind: 'sell'; resource: string; amount: number; keep: number; receive?: string }
   | { kind: 'remove'; id: string }
@@ -88,6 +90,8 @@ export function applyAction(catalog: Catalog, s: GameState, a: Action): GameStat
       return setPreservation(catalog, s, a.id, a.resource, a.keep);
     case 'livestock':
       return manageLivestock(catalog, s, a.id, a.operation);
+    case 'winterize':
+      return setWinterProtection(catalog, s, a.id, a.protection);
     case 'service':
       return serviceSystem(catalog, s, a.id, a.replace);
     case 'sell':
@@ -110,6 +114,7 @@ export function applyAction(catalog: Catalog, s: GameState, a: Action): GameStat
       const next = { ...s, settings: { ...s.settings, ...a.settings } };
       if ('shelterOccupancy' in a.settings && !!a.settings.shelterOccupancy !== !!s.settings.shelterOccupancy)
         delete next.shelterThermal;
+      if (s.settings.storagePools && 'storagePools' in a.settings && !a.settings.storagePools) return releaseFrozen(next);
       return next;
     }
     case 'buy':

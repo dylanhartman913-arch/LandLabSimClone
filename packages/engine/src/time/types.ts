@@ -15,6 +15,8 @@ export interface GameSettings {
   foodPreservation?: boolean;
   livestockLifecycle?: boolean;
   shelterOccupancy?: boolean;
+  /** LL-33: separate raw/drinking water pools, feed storage, and outdoor tanks that freeze. */
+  storagePools?: boolean;
   parcelAcres: number;
   startingCash: number;
   weatherMode: WeatherMode;
@@ -119,6 +121,8 @@ export interface Instance {
   /** Undefined: deterministic automatic assignment; null: explicitly unsheltered. */
   shelterId?: string | null;
   shelterClosed?: boolean;
+  /** LL-33 outdoor tank: protection bought, its install hours, frost (°F-days) and locked ice (gal). */
+  winter?: { protection?: 'insulated' | 'heated'; setupHours?: number; frost: number; frozen?: number };
   setupHoursNeeded: number;
   setupHoursDone: number;
   /** Materials drawn (construction has started). */
@@ -161,6 +165,8 @@ export interface ResourceDay {
   processed?: number;
   /** Of production, kcal converted from another food (not new harvest). */
   converted?: number;
+  /** Net raw water locked in (positive) or released from (negative) frozen tanks. */
+  frozen?: number;
   start: number;
   produced: number;
   consumed: number;
@@ -217,6 +223,16 @@ export interface DayLedger {
     heatReceived: number;
     coolingNeeded: number;
     coolingReceived: number;
+  }[];
+  /** Outdoor tanks under LL-33 with frost, ice or a running heater. */
+  winter?: {
+    instanceId: string;
+    meanF: number;
+    frost: number;
+    threshold: number;
+    frozen: number | null;
+    heaterKWh: number;
+    heaterNeedKWh: number;
   }[];
   residentShares?: { shelter: number; heat: number; cooling: number };
   preserved?: {
@@ -359,6 +375,7 @@ export interface GameState {
 }
 
 export type GameEvent =
+  | { kind: 'winter-water'; absDay: number; instanceId: string; event: 'froze' | 'thawed'; gal: number }
   | {
       kind: 'livestock';
       absDay: number;

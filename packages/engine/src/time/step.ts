@@ -4,6 +4,7 @@ import { seedState } from './rng.ts';
 import { preserveFood } from './preservation.ts';
 import { wearInstance } from './maintenance.ts';
 import { settleTrades } from './trade.ts';
+import { advanceWinter, frozenCapacity, roomFor, statePools, storagePools, type StoragePool } from './storage.ts';
 import { CONTRACTOR_HOURS_PER_DAY, recoverResidents } from './recovery.ts';
 import { NEED_KEYS, type Catalog, type NeedKey, type Resource } from '@homestead/catalog';
 import { plantingReserve } from './food.ts';
@@ -112,6 +113,7 @@ interface Day {
   rng: number;
   nextInstanceId: number;
   prev: GameState;
+  catalog: Catalog;
   meta: Map<string, Resource>;
   plans: Plans;
   table: ClimateTable;
@@ -346,6 +348,19 @@ function hoursFor(d: Day, job: JobId, resource: string, amount: number): number 
 /** Pool members that overflow before the rest (v0.6, `safeWaterFirst`): untreated water before safe water. */
 const SPILL_FIRST: Record<string, string[]> = { 'Water storage': ['Water'] };
 
+/** Today's storage pools (LL-33 splits water and adds feed storage under `storagePools`). */
+function dayPools(d: Day): StoragePool[] {
+  const space = d.catalog.winterStorage?.feed.capacityResource ?? '';
+  return storagePools(
+    d.catalog,
+    d.plans,
+    !!d.prev.settings.storagePools,
+    (r) => d.capAvail.get(r) ?? 0,
+    (d.capAvail.get(space) ?? 0) - (d.capReq.get(space) ?? 0),
+    frozenCapacity(d.plans, d.instances),
+  );
+}
+
 /** Free room in a storage pool now, in the units of its members (unitsPer 1 for water). */
 function poolRoom(d: Day, capRes: string): number {
   const members = d.plans.pools.get(capRes) ?? [];
@@ -381,7 +396,10 @@ function planGathering(d: Day): Map<JobId, GatherPlan> {
     const filter = d.groups.some(
       (g) => g.plan.inputs.some((i) => i.resource === 'Water') && g.plan.outputs.some((o) => o.resource === 'Drinking water'),
     );
-    const boil = filter ? 0 : Math.min(drinkGap, stock('Cooking fuel') * BOIL_GAL_PER_FUEL_HOUR);
+    let boil = filter ? 0 : Math.min(drinkGap, stock('Cooking fuel') * BOIL_GAL_PER_FUEL_HOUR);
+    const pools = d.prev.settings.storagePools ? dayPools(d) : null;
+    // LL-33: boil only what the drinking water containers can hold tonight.
+    if (pools) boil = Math.min(boil, roomFor(pools, d.stocks, 'Drinking water') + req('Drinking water'));
     // v0.6: fetch only what storage can hold by tonight: free room, plus today's use, minus what
     // rain and treatment added to the pool yesterday (fetching and boiling excluded).
     let inflow = 0;
@@ -390,7 +408,11 @@ function planGathering(d: Day): Map<JobId, GatherPlan> {
       const fetched = (last.gathered ?? []).filter((g) => g.resource === 'Water').reduce((a, g) => a + g.amount, 0);
       inflow = Math.max(0, (last.resources['Water']?.produced ?? 0) - fetched) + Math.max(0, (last.resources['Drinking water']?.produced ?? 0) - (last.boiled?.gal ?? 0));
     }
-    const room = d.prev.settings.safeWaterFirst ? Math.max(0, poolRoom(d, 'Water storage') + daily - inflow) : Infinity;
+    const room = pools
+      ? Math.max(0, roomFor(pools, d.stocks, 'Water') + req('Water') - inflow)
+      : d.prev.settings.safeWaterFirst
+        ? Math.max(0, poolRoom(d, 'Water storage') + daily - inflow)
+        : Infinity;
     const want = Math.min(gap, room) + boil;
     const h = want > EPS ? hoursFor(d, 'gather-water', 'Water', want) : 0;
     if (h > EPS || boil > EPS) out.set('gather-water', { want: { Water: want }, boil, hours: h + boil * BOIL_LABOR_PER_GAL });
@@ -790,11 +812,15 @@ function marketTrip(d: Day): void {
   }
   const bought: Record<string, number> = {};
   let cost = 0;
+  // LL-33: a trip brings home only what fits in storage.
+  const pools = d.prev.settings.storagePools ? statePools(d.prev, d.catalog) : null;
   for (const o of wanted) {
     const r = d.meta.get(o.resource)!;
     const price = r.marketPrice!;
     const affordable = price > 0 ? Math.max(0, d.cash) / price : o.amount;
-    const amount = Math.min(o.amount, affordable);
+    const room = pools ? roomFor(pools, d.stocks, o.resource) : Infinity;
+    if (room <= EPS) continue;
+    const amount = Math.min(o.amount, affordable, room);
     if (amount <= EPS) {
       d.broke = true;
       continue;
@@ -1307,8 +1333,7 @@ function storeAndSpoil(d: Day): void {
     } else stocks[r] = left + p;
   }
   if (!d.unlimited) {
-    for (const [capRes, members] of plans.pools) {
-      const cap = (d.capAvail.get(capRes) ?? 0) + (plans.poolBuffer.get(capRes) ?? 0);
+    for (const { name: capRes, members, cap } of dayPools(d)) {
       let volume = 0;
       for (const m of members) volume += (stocks[m.resource] ?? 0) / m.unitsPer;
       if (volume > cap + EPS) {
@@ -1520,6 +1545,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     rng,
     nextInstanceId: prev.nextInstanceId,
     prev,
+    catalog,
     meta: indexCatalog(catalog).resourceByName,
     plans,
     table,
@@ -1623,6 +1649,8 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   const animals = advanceLivestock(d, catalog, satisfaction);
   const preserved = preserveFood(d, catalog, satisfaction);
   const trades = settleTrades(d, catalog);
+  const winter = advanceWinter(d, catalog); // 7b: LL-33 tanks freeze and thaw
+  d.events.push(...winter.events);
   storeAndSpoil(d); // 8
   if (!prev.settings.foodPreservation && !('Preserved food' in prev.stocks)) {
     delete d.stocks['Preserved food'];
@@ -1660,6 +1688,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   if (trades.length) ledger.trades = trades;
   if (preserved.length) ledger.preserved = preserved;
   if (animals.records.length) ledger.livestock = animals.records;
+  if (winter.records.length) ledger.winter = winter.records;
 
   const ledgers = prev.ledgers.length >= LEDGER_DAYS_KEPT ? prev.ledgers.slice(1) : prev.ledgers.slice();
   ledgers.push(ledger);

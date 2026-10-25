@@ -306,7 +306,21 @@ export const PredatorRuleSchema = z.object({
   guardianSystemId: z.string(), guardianRadiusFt: z.number().positive(), note: z.string(),
 });
 
+export const WinterStorageRuleSchema = z.object({
+  feed: z.object({
+    capacityResource: z.string(), bufferCuFt: z.number().nonnegative(),
+    members: z.array(z.object({ resource: z.string(), lbsPerCuFt: z.number().positive() })).min(1),
+  }),
+  freezeAtF: z.number(),
+  tanks: z.array(z.object({ systemId: z.string(), freezeDegreeDays: z.number().positive() })).min(1),
+  insulation: z.object({ freezeMultiplier: z.number().min(1), cost: z.number().nonnegative(), costPerGal: z.number().nonnegative(), hours: z.number().positive() }),
+  heating: z.object({ kWhPerGalDegreeDay: z.number().positive(), cost: z.number().nonnegative(), hours: z.number().positive() }),
+  note: z.string(),
+});
+export type WinterStorageRule = z.infer<typeof WinterStorageRuleSchema>;
+
 export const CatalogSchema = z.object({
+  winterStorage: WinterStorageRuleSchema.optional(),
   preservationRecipes: z.array(PreservationRecipeSchema).optional(),
   livestockRules: z.array(LivestockRuleSchema).optional(),
   predatorRule: PredatorRuleSchema.optional(),
@@ -330,6 +344,7 @@ export type Catalog = z.infer<typeof CatalogSchema>;
 export const OverridesSchema = z
   .object({
     version: z.literal(1),
+    winterStorage: WinterStorageRuleSchema.optional(),
     preservationRecipes: z.array(PreservationRecipeSchema).optional(),
     livestockRules: z.array(LivestockRuleSchema).optional(),
     predatorRule: PredatorRuleSchema.optional(),

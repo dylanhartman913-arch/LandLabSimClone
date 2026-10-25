@@ -883,5 +883,52 @@
     "guardianSystemId": "S014",
     "guardianRadiusFt": 100,
     "note": "LL-31 seeded warning/attack game balance; a fed, staffed guardian within 100 ft or operating secure housing prevents the loss."
+  },
+  "winterStorage": {
+    "feed": {
+      "capacityResource": "Storage space",
+      "bufferCuFt": 10,
+      "members": [
+        {
+          "resource": "Hay",
+          "lbsPerCuFt": 9.5
+        },
+        {
+          "resource": "Chicken feed",
+          "lbsPerCuFt": 40
+        }
+      ]
+    },
+    "freezeAtF": 32,
+    "tanks": [
+      {
+        "systemId": "S169",
+        "freezeDegreeDays": 10
+      },
+      {
+        "systemId": "S032",
+        "freezeDegreeDays": 20
+      },
+      {
+        "systemId": "S024",
+        "freezeDegreeDays": 30
+      },
+      {
+        "systemId": "S106",
+        "freezeDegreeDays": 80
+      }
+    ],
+    "insulation": {
+      "freezeMultiplier": 4,
+      "cost": 40,
+      "costPerGal": 0.25,
+      "hours": 2
+    },
+    "heating": {
+      "kWhPerGalDegreeDay": 0.0008,
+      "cost": 60,
+      "hours": 1
+    },
+    "note": "LL-33 experimental game balance. Feed: about 9.5 lb/cu ft for small square hay bales (~50 lb in 5.25 cu ft) and 40 lb/cu ft for bagged poultry feed; 10 cu ft of household bins without a shed. Above-ground tanks freeze after their freezing degree-days (°F below 32, accumulated; thaw days melt) — bigger tanks hold out longer; the pond and Earthship cisterns are treated as frost-protected. Insulation multiplies the tolerance by 4; a thermostatic heater draws kWh per gallon per freezing degree-day."
   }
 }

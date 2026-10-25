@@ -1,3 +1,4 @@
+import { statePools } from '../time/storage.ts';
 import type { Catalog } from '@homestead/catalog';
 import { getSystem, indexCatalog } from '../catalog-index.ts';
 import { explained, type Explained } from '../provenance.ts';
@@ -253,7 +254,11 @@ export function resourcePage(
   ].map((id) => ({ systemId: id, name: getSystem(catalog, id).name }));
 
   let storage: ResourcePage['storage'] = null;
-  if (r.storedIn) {
+  const pool = state.settings.storagePools ? statePools(state, catalog).find((p) => p.members.some((m) => m.resource === resource)) : null;
+  if (pool) {
+    // LL-33: raw and drinking water have their own pools; hay and feed share free storage space.
+    storage = { pool: pool.name, room: pool.cap * pool.members.find((m) => m.resource === resource)!.unitsPer };
+  } else if (r.storedIn) {
     let cap = 0;
     for (const inst of state.instances) {
       if (inst.status !== 'active') continue;
@@ -280,7 +285,9 @@ export function resourcePage(
           : 'Money.'
       : !r.storable
         ? 'It cannot be kept: whatever is not used the day after it is made is lost.'
-        : r.storedIn
+        : pool
+          ? `Kept in ${pool.name}; anything beyond the room there spills.`
+          : r.storedIn
           ? `Kept in ${r.storedIn.capacityResource}; anything beyond the room there spills.`
           : usedBy.length
             ? 'Kept in stock until your systems use it; there is no storage limit.'

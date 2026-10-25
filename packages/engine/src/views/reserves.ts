@@ -3,6 +3,7 @@ import { getPlans, dailyAmount } from '../time/plans.ts';
 import { climateTable } from '../time/climate.ts';
 import { computeSpatial } from '../time/spatial.ts';
 import type { GameState } from '../time/types.ts';
+import { statePools } from '../time/storage.ts';
 
 /** Warn about physically impossible gathering targets, not a promise of successful replenishment. */
 export function waterReserveWarning(state: GameState, catalog: Catalog): string[] {
@@ -24,6 +25,17 @@ export function waterReserveWarning(state: GameState, catalog: Catalog): string[
     for (const f of p.outputs) if (f.resource === 'Water storage') capacity += f.qty * (inst.scale ?? 1);
   }
   const target = daily * targetDays;
+  if (state.settings.storagePools) {
+    // LL-33: raw water fills tanks; drinking water has its own containers, so the target never spills it.
+    const pools = statePools(state, catalog);
+    const raw = pools.find((p) => p.name === 'Raw water storage')!.cap;
+    const safe = pools.find((p) => p.name === 'Drinking water storage')!.cap;
+    return target > raw + safe + 1e-9
+      ? [
+          `The ${targetDays}-day water target needs about ${Math.ceil(target)} gal, but raw water storage holds ${Math.floor(raw)} gal (less any frozen tanks) and drinking water containers ${Math.floor(safe)} gal. Fetching stops when raw storage is full; drinking water is stored separately and never spills to make room.`,
+        ]
+      : [];
+  }
   return target > capacity + 1e-9
     ? [
         `The ${targetDays}-day water target needs about ${Math.ceil(target)} gal, but completed shared water storage holds ${Math.floor(capacity)} gal (raw and drinking water together), about ${(capacity / daily).toFixed(1)} days at current use. Add storage or lower the target; filtering and gathering labor can still limit safe water.` +
