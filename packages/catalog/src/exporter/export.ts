@@ -832,6 +832,13 @@ export function exportCatalog(input: ExportInput): ExportResult {
         if (!rawFlows.some((f) => f.systemId === id && f.resource === resource && f.direction === 'out'))
           problems.push(`Livestock infrastructure: pasture ${id} must have out ${resource}`);
   }
+  const audit = overridesParsed.data.auditExceptions;
+  if (audit) {
+    for (const e of [...audit.deadEnds, ...audit.fragileSurvivalInputs])
+      if (!rawResources.some((r) => r.name === e.name)) problems.push(`Audit exception: unknown resource ${e.name}`);
+    for (const e of audit.unsuppliableSystems)
+      if (!rawSystems.some((s) => s.name === e.name)) problems.push(`Audit exception: unknown system ${e.name}`);
+  }
   const income = overridesParsed.data.incomeTrade;
   if (income) {
     for (const id of [income.csaId, income.spinningId])
@@ -933,6 +940,7 @@ export function exportCatalog(input: ExportInput): ExportResult {
     toolRules: overridesParsed.data.toolRules,
     fodder: overridesParsed.data.fodder,
     incomeTrade: overridesParsed.data.incomeTrade,
+    auditExceptions: overridesParsed.data.auditExceptions,
     livestockInfrastructure: overridesParsed.data.livestockInfrastructure,
     waterInfrastructure: overridesParsed.data.waterInfrastructure,
     winterStorage: overridesParsed.data.winterStorage,

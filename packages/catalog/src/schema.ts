@@ -403,6 +403,15 @@ export const RiskRuleSchema = z.object({
 }).refine((r) => r.protectedHarvestFactor >= r.harvestFactor, 'mitigation cannot worsen harvests');
 export type RiskRule = z.infer<typeof RiskRuleSchema>;
 
+/** LL-47: reviewed, documented exceptions to the catalog audit gates. Each entry must still be needed. */
+const AuditExceptionSchema = z.object({ name: z.string(), reason: z.string().min(20), followUp: z.string().optional() });
+export const AuditExceptionsSchema = z.object({
+  deadEnds: z.array(AuditExceptionSchema),
+  fragileSurvivalInputs: z.array(AuditExceptionSchema),
+  unsuppliableSystems: z.array(AuditExceptionSchema),
+});
+export type AuditExceptions = z.infer<typeof AuditExceptionsSchema>;
+
 export const IncomeTradeRuleSchema = z.object({
   csaId: z.string(), makeGoodFactor: z.number().min(0).max(2), spinningId: z.string(),
   laborBarterValuePerHour: z.number().positive(), note: z.string(),
@@ -417,6 +426,7 @@ export const TransportAccessRuleSchema = z.object({
 export type TransportAccessRule = z.infer<typeof TransportAccessRuleSchema>;
 
 export const CatalogSchema = z.object({
+  auditExceptions: AuditExceptionsSchema.optional(),
   incomeTrade: IncomeTradeRuleSchema.optional(),
   transportAccess: TransportAccessRuleSchema.optional(),
   riskEvents: RiskRuleSchema.optional(),
@@ -451,6 +461,7 @@ export type Catalog = z.infer<typeof CatalogSchema>;
 export const OverridesSchema = z
   .object({
     version: z.literal(1),
+    auditExceptions: AuditExceptionsSchema.optional(),
     incomeTrade: IncomeTradeRuleSchema.optional(),
     transportAccess: TransportAccessRuleSchema.optional(),
     riskEvents: RiskRuleSchema.optional(),

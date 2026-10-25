@@ -1352,3 +1352,13 @@ Empty shelters request no heat/cooling. Closing an unassigned shelter supplies n
 **Validation:** **569/569** unit tests (11 new: 9 engine, 2 catalog), including pacing gates, parity and unchanged legacy digests; **84/84** complete browser tests (1 new). Typecheck, lint, production build and `catalog:check` pass. An LL-29 test's expectation that labor cannot be sold for cash still holds unchanged. Catalog fixtures now use 206 systems, 891 flows, 68 resources and next IDs S207/F0892. Visually inspected `docs/screenshots/ll-46/csa-make-good.png`; existing screenshots backed up and restored byte-for-byte.
 
 **Limits:** no CSA cancellations, box mix or produce reserve; spinning is one abstract rate; Ruth's goods and work are unlimited. Prices, rates and the make-good are labeled game balance. LL-47 (catalog audit gates) is next.
+
+## October 25, 2026 — Phase 10, LL-47 catalog audit gates
+
+**Shipped:** no simulation change (engine stays **0.25.0**, no workbook rows). `catalogAudit` (`packages/engine/src/views/audit.ts`) checks the exported catalog against the three sites for dead-end Flow resources, survival inputs with fewer than two non-market sources, and systems with no site that can supply every input. `auditGates` turns findings into failures unless a reviewed exception covers them, and flags stale exceptions. Exceptions live in `data/catalog_overrides.json` (`auditExceptions`, each with a reason and optional follow-up; schema plus exporter name checks). `npm run catalog:audit` regenerates the marked audit section of `docs/CATALOG.md` and exits 1 on a failure or stale exception; `CLAUDE.md` lists the command. Details: `docs/LL_47.md`. Phase 10 is complete; LL-49 is next (LL-48 shipped October 23).
+
+**Findings:** no dead ends (wool now has a sale price and the LL-46 spinning wheel); 204 of 205 systems can be supplied at all three sites (micro-hydro needs Asheville's stream). Nine survival inputs have fewer than two non-market sources and pass as reviewed exceptions: Chicken feed, Gasoline, Grain, Milk, Root crops, Seedlings, Waste lumber, Wood chips, Wood pellets. Real gaps worth follow-up: no market sells seed grain or seed potatoes, so a first grain plot or potato patch needs seed in stock.
+
+**Validation:** **575/575** unit tests (6 new, including fixtures that prove each gate fires and that a stale exception fails, plus a check that the published section is current); **84/84** complete browser tests. Typecheck, lint, production build, `catalog:check` and `catalog:audit` pass. Existing screenshots backed up and restored byte-for-byte.
+
+**Limits:** supply is checked one level deep; source counts treat each producer and each node kind as one source, regardless of size or season.

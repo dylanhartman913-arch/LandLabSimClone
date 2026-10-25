@@ -1471,5 +1471,53 @@
     "spinningId": "S206",
     "laborBarterValuePerHour": 12,
     "note": "LL-46 experimental balance. A CSA week short of produce or packing refunds the missing share and pays half of it again as a make-good. Ruth takes spare household labor in barter at $12/hour of goods value (70% trade terms already included), after the tutorial."
+  },
+  "auditExceptions": {
+    "deadEnds": [],
+    "unsuppliableSystems": [],
+    "fragileSurvivalInputs": [
+      {
+        "name": "Chicken feed",
+        "reason": "One home source (LL-42 Poultry Feed Mix) plus the feed store. Birds also draw greens, grubs and food waste directly, so a feed shortage cuts production rather than leaving no food path.",
+        "followUp": "A pasture-forage or kitchen-scrap feed ration as a second home source."
+      },
+      {
+        "name": "Gasoline",
+        "reason": "A fossil fuel: no homestead can make it. It reaches survival only through the Camper Van shelter; every other shelter needs none."
+      },
+      {
+        "name": "Grain",
+        "reason": "One home source (Grain Plot), which keeps its own seed grain each season; there is no market for seed grain, so a first plot needs grain in stock.",
+        "followUp": "A seed-grain market listing, or a second grain crop."
+      },
+      {
+        "name": "Milk",
+        "reason": "Only Dairy Goats make it, and only the optional Cheese Press uses it; no shelter, water or meal depends on milk as an input."
+      },
+      {
+        "name": "Root crops",
+        "reason": "The Potato Patch is its only producer and keeps its own seed potatoes each season; there is no seed-potato market.",
+        "followUp": "A seed-potato market listing."
+      },
+      {
+        "name": "Seedlings",
+        "reason": "One home source (Seed Starting Station) plus the feed store, which is enough to start every planting that needs them.",
+        "followUp": "Cuttings or divisions from established plants."
+      },
+      {
+        "name": "Waste lumber",
+        "reason": "Market only. It feeds heat only through the Biochar Double Barrel Retort; every stove that heats a shelter burns woody biomass instead, which has six home sources and deadfall.",
+        "followUp": "Salvage or a sawmill-offcut source."
+      },
+      {
+        "name": "Wood chips",
+        "reason": "One home source (Wood Chipper). Only the biochar retort and pellet mill need chips, and neither is the only way to make heat.",
+        "followUp": "A tree-service chip-drop source."
+      },
+      {
+        "name": "Wood pellets",
+        "reason": "One home source (Pellet Mill) plus the feed store. Only the pellet stove and CHP burn pellets; firewood heats every shelter."
+      }
+    ]
   }
 }
