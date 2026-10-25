@@ -4,6 +4,7 @@ import { seedState } from './rng.ts';
 import { preserveFood } from './preservation.ts';
 import { wearInstance } from './maintenance.ts';
 import { settleTrades } from './trade.ts';
+import { advanceGarden, coverShares, gardenRule } from './fertility.ts';
 import { toolCapacity, toolMultiplier, toolShare } from './tools.ts';
 import { advanceWinter, frozenCapacity, roomFor, statePools, storagePools, type StoragePool } from './storage.ts';
 import { CONTRACTOR_HOURS_PER_DAY, recoverResidents } from './recovery.ts';
@@ -1008,6 +1009,8 @@ function satisfy(d: Day): void {
   for (const reqs of d.byResource.values()) {
     for (const q of reqs) {
       if (q.plan.role !== 'required') continue;
+      // LL-35: compost feeds a garden's fertility instead of switching the garden off.
+      if (q.plan.resource === 'Compost' && d.prev.settings.soilFertility && gardenRule(d.catalog, q.group.plan.system.id)) continue;
       const r = q.grant / q.amount;
       if (r < q.group.sat) {
         q.group.sat = r;
@@ -1428,6 +1431,32 @@ function storeAndSpoil(d: Day): void {
   }
 }
 
+/** Step 7a (LL-35): each garden's fertility after today's harvest, compost, manure and cover crop. */
+function advanceFertility(d: Day, catalog: Catalog) {
+  if (!d.prev.settings.soilFertility || !catalog.soilFertility) return [];
+  const satOf = new Map<string, number>();
+  for (const g of d.groups) for (const i of g.members) satOf.set(d.instances[i]!.id, g.sat);
+  const cover = coverShares(catalog, d.instances, (id) => (satOf.get(id) ?? 0) > 0);
+  const records = [];
+  for (const g of d.groups) {
+    if (!gardenRule(catalog, g.plan.system.id)) continue;
+    for (const i of g.members) {
+      const c = g.inputs.Compost;
+      const r = advanceGarden(d, catalog, d.instances[i]!, {
+        growing: d.weather.growing,
+        seasonDays: d.table.seasonDays,
+        sat: g.sat,
+        compostRequested: c?.requested ?? 0,
+        compostReceived: c?.received ?? 0,
+        cover: cover.get(d.instances[i]!.id) ?? 0,
+      });
+      d.instances[i] = r.inst;
+      records.push(r.record);
+    }
+  }
+  return records;
+}
+
 /** Construction that finished today is active from tomorrow. */
 function finishConstruction(d: Day): void {
   for (const i of d.completed) {
@@ -1701,6 +1730,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   const animals = advanceLivestock(d, catalog, satisfaction);
   const preserved = preserveFood(d, catalog, satisfaction);
   const trades = settleTrades(d, catalog);
+  const fertility = advanceFertility(d, catalog); // 7a: LL-35 gardens
   const winter = advanceWinter(d, catalog); // 7b: LL-33 tanks freeze and thaw
   d.events.push(...winter.events);
   storeAndSpoil(d); // 8
@@ -1741,6 +1771,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   if (preserved.length) ledger.preserved = preserved;
   if (animals.records.length) ledger.livestock = animals.records;
   if (winter.records.length) ledger.winter = winter.records;
+  if (fertility.length) ledger.fertility = fertility;
 
   const ledgers = prev.ledgers.length >= LEDGER_DAYS_KEPT ? prev.ledgers.slice(1) : prev.ledgers.slice();
   ledgers.push(ledger);

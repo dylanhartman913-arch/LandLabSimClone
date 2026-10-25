@@ -19,6 +19,8 @@ export interface GameSettings {
   storagePools?: boolean;
   /** LL-34: tools multiply gathering at the land's nodes instead of producing on their own. */
   toolGathering?: boolean;
+  /** LL-35: gardens keep a fertility level that cropping lowers and compost, manure and cover crops raise. */
+  soilFertility?: boolean;
   parcelAcres: number;
   startingCash: number;
   weatherMode: WeatherMode;
@@ -123,6 +125,8 @@ export interface Instance {
   /** Undefined: deterministic automatic assignment; null: explicitly unsheltered. */
   shelterId?: string | null;
   shelterClosed?: boolean;
+  /** LL-35 garden fertility (1 = the catalog's full yield); absent means the rule's starting level. */
+  fertility?: number;
   /** LL-33 outdoor tank: protection bought, its install hours, frost (°F-days) and locked ice (gal). */
   winter?: { protection?: 'insulated' | 'heated'; setupHours?: number; frost: number; frozen?: number };
   setupHoursNeeded: number;
@@ -225,6 +229,16 @@ export interface DayLedger {
     heatReceived: number;
     coolingNeeded: number;
     coolingReceived: number;
+  }[];
+  /** LL-35 gardens: fertility after today, and what fed and drew it. */
+  fertility?: {
+    instanceId: string;
+    fertility: number;
+    compost: number;
+    manure: number;
+    cover: number;
+    fed: number;
+    draw: number;
   }[];
   /** Outdoor tanks under LL-33 with frost, ice or a running heater. */
   winter?: {

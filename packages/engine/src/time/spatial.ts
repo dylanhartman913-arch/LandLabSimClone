@@ -6,6 +6,7 @@ import { getSystem } from '../catalog-index.ts';
 import { parcelSideFt } from './game.ts';
 import { getPlans } from './plans.ts';
 import { toolRule } from './tools.ts';
+import { fertilityOf, followsFertility, gardenRule, yieldFactor } from './fertility.ts';
 import type { GameState, Instance } from './types.ts';
 
 /** How an instance's position changes its flows. */
@@ -27,6 +28,8 @@ export interface InstanceSpatial {
   notes: string[];
   /** Instances with the same signature behave identically (the engine groups them). */
   occupancyKey?: string;
+  /** LL-35: a garden with its own fertility runs as its own group. */
+  soloKey?: string;
   sig: string;
 }
 
@@ -147,6 +150,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     !state.settings.wearAndRepair &&
     !state.settings.livestockLifecycle &&
     !state.settings.toolGathering &&
+    !state.settings.soilFertility &&
     hit &&
     sameLayout(hit.sig, state)
   )
@@ -410,6 +414,20 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     }
   }
 
+  // LL-35: a garden's harvest follows its own fertility.
+  if (state.settings.soilFertility && catalog.soilFertility) {
+    for (const inst of active) {
+      if (!gardenRule(catalog, inst.systemId)) continue;
+      const s = get(inst.id);
+      const f = fertilityOf(catalog, inst);
+      const factor = yieldFactor(catalog.soilFertility, f);
+      s.soloKey = inst.id;
+      for (const out of plans.bySystem.get(inst.systemId)!.outputs)
+        if (followsFertility(out.resource, out.isCapacity)) s.outMult[out.resource] = (s.outMult[out.resource] ?? 1) * factor;
+      s.notes.push(`Soil fertility ${f.toFixed(2)}: harvest × ${factor.toFixed(3)}. Compost, manure and a nearby cover crop raise it; cropping lowers it.`);
+    }
+  }
+
   // Delivery (G11): heat and cooling only count when they reach a shelter.
   const resByName = new Map(catalog.resources.map((r) => [r.name, r]));
   const shelters = active.filter((i) =>
@@ -471,7 +489,8 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     !state.settings.shelterOccupancy &&
     !state.settings.wearAndRepair &&
     !state.settings.livestockLifecycle &&
-    !state.settings.toolGathering
+    !state.settings.toolGathering &&
+    !state.settings.soilFertility
   )
     cache.set(catalog, { sig: layoutOf(state), map });
   return map;
@@ -479,6 +498,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
 
 /** The engine's group key for an instance (system, priority, spatial signature, household scale). */
 export function groupKeyOf(inst: Instance, spatial: InstanceSpatial): string {
+  if (spatial.soloKey) return `${inst.systemId}|${inst.priority}|solo:${inst.id}`;
   if (spatial.occupancyKey) return `${inst.systemId}|${inst.priority}|occupancy:${inst.id}`;
   if (inst.animal) return `${inst.systemId}|${inst.priority}|animal:${inst.id}`;
   const scale = inst.scale ?? 1;

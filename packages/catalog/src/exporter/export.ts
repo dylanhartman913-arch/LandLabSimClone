@@ -828,6 +828,17 @@ export function exportCatalog(input: ExportInput): ExportResult {
       if (!rawFlows.some((f) => f.systemId === t.systemId && f.direction === 'out' && f.resource === 'Water storage'))
         problems.push(`Storage rule: tank ${t.systemId} provides no Water storage`);
   }
+  const fert = overridesParsed.data.soilFertility;
+  if (fert) {
+    const ids = fert.gardens.map((g) => g.systemId);
+    if (new Set(ids).size !== ids.length) problems.push('Fertility rule: duplicate garden rules');
+    for (const g of fert.gardens) {
+      if (!rawFlows.some((f) => f.systemId === g.systemId && f.direction === 'in' && f.resource === 'Compost' && (f.period === 'Per season' || f.period === 'Yearly')))
+        problems.push(`Fertility rule: garden ${g.systemId} has no seasonal or yearly Compost input`);
+      if (g.initial > fert.maxFertility) problems.push(`Fertility rule: garden ${g.systemId} starts above the maximum`);
+    }
+    if (!rawSystems.some((s) => s.id === fert.cover.systemId)) problems.push(`Fertility rule: unknown cover crop ${fert.cover.systemId}`);
+  }
   const tools = overridesParsed.data.toolRules ?? [];
   if (new Set(tools.map((t) => t.systemId)).size !== tools.length) problems.push('Tool rule: duplicate system rules');
   for (const t of tools) {
@@ -848,6 +859,7 @@ export function exportCatalog(input: ExportInput): ExportResult {
 
   const source = { file: input.xlsxName, sha256: sha256(input.xlsx) };
   const catalog = CatalogSchema.parse({
+    soilFertility: overridesParsed.data.soilFertility,
     toolRules: overridesParsed.data.toolRules,
     winterStorage: overridesParsed.data.winterStorage,
     preservationRecipes: overridesParsed.data.preservationRecipes,

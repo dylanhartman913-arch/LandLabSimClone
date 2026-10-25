@@ -328,7 +328,17 @@ export const ToolRuleSchema = z.object({
 });
 export type ToolRule = z.infer<typeof ToolRuleSchema>;
 
+export const FertilityRuleSchema = z.object({
+  gardens: z.array(z.object({ systemId: z.string(), initial: z.number().min(0), drawPerYear: z.number().positive() })).min(1),
+  floorYield: z.number().min(0).max(1), maxFertility: z.number().min(1),
+  manureCompostEquivalent: z.number().nonnegative(),
+  cover: z.object({ systemId: z.string(), rangeFt: z.number().positive(), gainPerYear: z.number().positive() }),
+  note: z.string(),
+});
+export type FertilityRule = z.infer<typeof FertilityRuleSchema>;
+
 export const CatalogSchema = z.object({
+  soilFertility: FertilityRuleSchema.optional(),
   toolRules: z.array(ToolRuleSchema).optional(),
   winterStorage: WinterStorageRuleSchema.optional(),
   preservationRecipes: z.array(PreservationRecipeSchema).optional(),
@@ -354,6 +364,7 @@ export type Catalog = z.infer<typeof CatalogSchema>;
 export const OverridesSchema = z
   .object({
     version: z.literal(1),
+    soilFertility: FertilityRuleSchema.optional(),
     toolRules: z.array(ToolRuleSchema).optional(),
     winterStorage: WinterStorageRuleSchema.optional(),
     preservationRecipes: z.array(PreservationRecipeSchema).optional(),

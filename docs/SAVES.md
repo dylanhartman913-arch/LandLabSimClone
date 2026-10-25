@@ -69,3 +69,7 @@ Optional `shelterThermal` maps preserve yesterday’s routed thermal output by h
 
 `toolGathering` remains explicitly opt-in; startup and continuation migrations do not enable it, and it is toggled only by a logged settings action. No new instance or state fields: tool use is recorded on the existing daily `gathered` records as optional `toolIds`, `toolHours`, `toolExtra` and `fuel`, and gasoline burned is in the Gasoline ledger's `consumed`. The `toolRules` come from `data/catalog_overrides.json`; the workbook and its hash are unchanged. Legacy digest fixtures pass without this setting.
 
+## Phase 9 soil fertility (LL-35, engine 0.15.0)
+
+`soilFertility` remains explicitly opt-in; startup and continuation migrations do not enable it, and it is toggled only by a logged settings action. Gardens gain an optional instance `fertility` field, absent until the first gated day (absent means the rule's starting level). Daily ledgers gain optional `fertility` records per garden. Manure drawn for gardens is in the Manure ledger's `consumed`. The `soilFertility` rule comes from `data/catalog_overrides.json`; the workbook and its hash are unchanged. Turning the gate off keeps saved fertility but restores the legacy compost switch. Legacy digest fixtures pass without this setting.
+

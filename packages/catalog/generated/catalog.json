@@ -1,4 +1,52 @@
 {
+  "soilFertility": {
+    "gardens": [
+      {
+        "systemId": "S078",
+        "initial": 1,
+        "drawPerYear": 0.35
+      },
+      {
+        "systemId": "S122",
+        "initial": 1,
+        "drawPerYear": 0.35
+      },
+      {
+        "systemId": "S124",
+        "initial": 0.7,
+        "drawPerYear": 0.35
+      },
+      {
+        "systemId": "S123",
+        "initial": 0.7,
+        "drawPerYear": 0.35
+      },
+      {
+        "systemId": "S033",
+        "initial": 0.8,
+        "drawPerYear": 0.15
+      },
+      {
+        "systemId": "S130",
+        "initial": 0.8,
+        "drawPerYear": 0.15
+      },
+      {
+        "systemId": "S132",
+        "initial": 0.8,
+        "drawPerYear": 0.15
+      }
+    ],
+    "floorYield": 0.3,
+    "maxFertility": 1.25,
+    "manureCompostEquivalent": 0.5,
+    "cover": {
+      "systemId": "S133",
+      "rangeFt": 100,
+      "gainPerYear": 0.2
+    },
+    "note": "LL-35 experimental game balance. Fertility 1 is the catalog's full yield; yield = 30% + 70% × fertility, capped at 110%. A full year of cropping draws 0.35 (annual beds) or 0.15 (perennials), scaled by realized yield; the catalog's own compost rate replaces exactly that draw. Bought-soil beds start at 1, dug-in plots at 0.7, perennial plantings at 0.8. A pound of manure counts as half a pound of compost. A clover cover crop adds 0.2 a year to gardens within 100 ft, shared by their area."
+  },
   "toolRules": [
     {
       "systemId": "S151",

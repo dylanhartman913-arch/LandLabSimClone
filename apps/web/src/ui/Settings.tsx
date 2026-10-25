@@ -117,6 +117,7 @@ export function Settings() {
           'shelterOccupancy',
           'storagePools',
           'toolGathering',
+          'soilFertility',
         ] as const
       ).map((key) => (
         <label key={key} className="check">
@@ -134,6 +135,7 @@ export function Settings() {
               shelterOccupancy: 'Shelter occupancy',
               storagePools: 'Separate storage and winter water',
               toolGathering: 'Tools multiply gathering',
+              soilFertility: 'Soil fertility',
             }[key]
           }
         </label>
