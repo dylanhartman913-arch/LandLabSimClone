@@ -1362,3 +1362,13 @@ Empty shelters request no heat/cooling. Closing an unassigned shelter supplies n
 **Validation:** **575/575** unit tests (6 new, including fixtures that prove each gate fires and that a stale exception fails, plus a check that the published section is current); **84/84** complete browser tests. Typecheck, lint, production build, `catalog:check` and `catalog:audit` pass. Existing screenshots backed up and restored byte-for-byte.
 
 **Limits:** supply is checked one level deep; source counts treat each producer and each node kind as one source, regardless of size or season.
+
+## October 25, 2026 — Phase 11, LL-49 alert-coverage tests
+
+**Shipped:** no simulation change (engine stays **0.25.0**). `packages/cli/bots/coverage.ts` defines six survival cliffs (food, safe water, Carbon, fuel, chicken feed, cash), each with its cliff day (first wellbeing penalty, or for feed and cash the first shortfall) and the alert ids that warn of it. A cliff passes when one of its alerts was listed in an allowed section every morning for 7+ days before it (feed 6: the consumable alert lists once fewer than seven whole days remain). The forecast is reported but never counts. `noviceBot` now records the full ranked list it sees (`shown`), and `playBot` accepts a start definition for stress starts. `npm run sim -- coverage` writes `docs/LL_49_COVERAGE.md` and exits 1 on a miss. Details: `docs/LL_49.md`.
+
+**Measurement:** novice gate runs (3 sites × 3 seeds) reach no cliff. October 22 playtest (original line, alerts ignored): Carbon on every site, warned 10–11 days ahead at rank 1; Laramie firewood, 17–19 days. No water gathering: safe water warned exactly 7 days ahead. $600 cash: cash 19–29 days, feed 6, food 7–9, Laramie fuel 8. Every cliff is reached on every site except fuel (Laramie only), which the test encodes.
+
+**Validation:** **578/578** unit tests (3 new: the sweep, a hidden-runway fixture that fails, and Comfort-only warnings that don't count). Typecheck and lint pass. No UI change, so no browser run.
+
+**Limits:** greenfield only; stress starts are edited greenfield kits; water and food leads sit right at the 7-day threshold.

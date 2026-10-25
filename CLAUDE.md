@@ -36,6 +36,7 @@ A top-down homestead planning simulator. Players place systems (shelters, panels
 - `npm run catalog:audit` — rerun the LL-47 catalog audit gates and refresh the audit section of `docs/CATALOG.md`
 - `npm run sim -- <balance|run|montecarlo> <design.json> [--site <id>] [--years N] [--seed N]`
 - `npm run test:pacing` — the playtest bots' pacing gates (3 seeds × 3 sites)
+- `npm run sim -- coverage [--md docs/LL_49_COVERAGE.md]` — LL-49 alert coverage: every survival cliff warned a week ahead
 - `python3 scripts/catalog_patch.py data/catalog_patches/<patch>.json` — add catalog systems as xlsx rows
 
 ## Layout

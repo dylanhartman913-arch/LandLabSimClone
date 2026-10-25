@@ -3,6 +3,7 @@ import { DEFAULT_SITE_ID, getSite } from '@homestead/catalog';
 import { numFlag, parseArgs } from './args.ts';
 import { runBalance } from './commands/balance.ts';
 import { runCompare } from './commands/compare.ts';
+import { runCoverageCommand } from './commands/coverage.ts';
 import { runMonteCarlo } from './commands/montecarlo.ts';
 import { runPacing } from './commands/pacing.ts';
 import { runTime } from './commands/run.ts';
@@ -17,6 +18,8 @@ Usage:
   npm run sim -- montecarlo <design.json> [--site <id>] [--years N] [--seeds N] [--seed N]
                  [--weather real|average] [--json out.json]
   npm run sim -- pacing      (the playtest bots' pacing gates; exits 1 if any misses)
+  npm run sim -- coverage [--md report.md]
+                 (LL-49 alert coverage: exits 1 if a cliff is under-warned or never reached)
   npm run sim -- compare [--md report.md] [--json runs.json] [--days N]
                  (LL-10 controlled first-year strategy comparisons)
 
@@ -30,6 +33,11 @@ function main(argv: string[]): number {
   switch (args.command) {
     case 'pacing': {
       const r = runPacing();
+      console.log(r.text);
+      return r.pass ? 0 : 1;
+    }
+    case 'coverage': {
+      const r = runCoverageCommand({ md: typeof args.flags.md === 'string' ? args.flags.md : undefined });
       console.log(r.text);
       return r.pass ? 0 : 1;
     }

@@ -15,6 +15,7 @@ const ORDER_DAYS = 7;
 export function noviceBot(o: { react?: boolean } = {}): Bot {
   const react = o.react ?? true;
   const seen: { day: number; id: string }[] = [];
+  const shown: NonNullable<Bot['shown']> = [];
   const quests = new Set<string>();
   const ordered = new Set<string>();
   let forecast: ReturnType<typeof transitionForecast> | undefined;
@@ -23,6 +24,7 @@ export function noviceBot(o: { react?: boolean } = {}): Bot {
   return {
     name: react ? 'novice' : 'novice (ignores alerts)',
     seen,
+    shown,
     act(catalog, state, log) {
       const apply = (body: ActionBody): boolean => {
         try {
@@ -47,6 +49,7 @@ export function noviceBot(o: { react?: boolean } = {}): Bot {
       const alerts = survivalAlerts(state, catalog, forecast);
       const day = state.calendar.absDay - start;
       for (const a of alerts) if (a.group === 'now' || a.id === 'forecast') seen.push({ day, id: a.id });
+      alerts.forEach((a, rank) => shown.push({ day, id: a.id, group: a.group ?? 'now', rank, resource: a.resource }));
       if (!react) return state;
       for (const alert of alerts.filter((a) => a.group === 'now')) {
         if (alert.id === 'town-recovery') {
