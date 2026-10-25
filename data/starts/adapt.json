@@ -4,7 +4,16 @@
   "pitch": "You live in a house, work a job and shop at the store. Turn your yard and roof into a homestead, one project at a time.",
   "parcelAcres": 0.25,
   "startDay": "spring",
-  "household": { "default": 2, "min": 1, "max": 4 },
+  "household": {
+    "default": 2, "min": 1, "max": 4,
+    "extra": [
+      { "per": 2, "by": "needs", "offset": { "x": 0.08, "y": 0 }, "instances": [
+        { "system": "Average American Vehicle", "x": 0.52, "y": 0.86 },
+        { "system": "Compost Toilet", "x": 0.7, "y": 0.6, "count": 2 }
+      ], "stockpile": { "Carbon": 208 } },
+      { "per": 2, "by": "adults", "offset": { "x": 0, "y": 0 }, "instances": [{ "system": "Average Job", "x": 0.5, "y": 0.5 }] }
+    ]
+  },
   "instances": [
     { "system": "Suburban Lot (1/4 acre)", "x": 0.5, "y": 0.5 },
     { "system": "Average Suburban Home", "x": 0.5, "y": 0.36 },

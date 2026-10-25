@@ -5,6 +5,7 @@ import { getPlans } from './plans.ts';
 import { newTutorial } from '../tutorial.ts';
 import { QUEST_LINES } from '@homestead/catalog';
 import { newMortgage } from './finance.ts';
+import { findSpot } from '../kits.ts';
 import type { GameState } from './types.ts';
 
 /** Days before the last spring frost that a `spring` start begins. */
@@ -29,6 +30,28 @@ export interface StartOptions {
   householdStart?: boolean;
 }
 
+/** Kit blocks for people beyond the default household, and how many copies of each (none for the default). */
+function kitBlocks(start: Start, adults: number, children: number, childNeeds: number) {
+  return start.household.extra.map((b) => {
+    const n = b.by === 'adults' ? adults : adults + children * childNeeds;
+    return { block: b, copies: Math.max(0, Math.ceil((n - (b.after ?? start.household.default)) / b.per - 1e-9)) };
+  });
+}
+
+/** What a household adds to a start's kit (the start screen lists it): systems and stock, by name. */
+export function householdKit(catalog: Catalog, start: Start, adults: number, children = 0) {
+  const systems = new Map<string, number>();
+  const stock = new Map<string, number>();
+  for (const { block, copies } of kitBlocks(start, adults, children, catalog.householdRoles?.roles.child.needs ?? 1)) {
+    for (const it of block.instances) systems.set(it.system, (systems.get(it.system) ?? 0) + it.count * copies);
+    for (const [r, v] of Object.entries(block.stockpile)) stock.set(r, (stock.get(r) ?? 0) + v * copies);
+  }
+  return {
+    systems: [...systems].filter(([, n]) => n > 0).map(([system, count]) => ({ system, count })),
+    stock: [...stock].filter(([, n]) => n > 0).map(([resource, amount]) => ({ resource, amount, unit: catalog.resources.find((x) => x.name === resource)?.unit ?? '' })),
+  };
+}
+
 /**
  * A new game from a start config (G15): the land, systems already running (no construction),
  * the stockpile scaled to the household and difficulty, cash, auto-gather rules, and the
@@ -44,10 +67,13 @@ export function gameFromStart(catalog: Catalog, site: Site, start: Start, opts: 
   // Stocks scale with what the household eats: a child needs a share of an adult's supplies (LL-36).
   const childNeeds = children ? catalog.householdRoles!.roles.child.needs : 0;
   const scale = ((people + children * childNeeds) / start.household.default) * d.stockMult;
+  const blocks = kitBlocks(start, people, children, childNeeds);
   if (start.mortgage && !start.settings?.finance) throw new Error(`Start "${start.id}": a mortgage needs settings.finance`);
   const startDay = start.startDay === 'spring' ? springStartDay(site) : start.startDay;
   const stocks: Record<string, number> = {};
   for (const [r, v] of Object.entries(start.stockpile)) stocks[r] = v * scale;
+  for (const { block, copies } of blocks)
+    if (copies) for (const [r, v] of Object.entries(block.stockpile)) stocks[r] = (stocks[r] ?? 0) + v * copies * d.stockMult;
   let s = initGame(
     catalog,
     site,
@@ -84,6 +110,19 @@ export function gameFromStart(catalog: Catalog, site: Site, start: Start, opts: 
         if (child.person) s = { ...s, instances: s.instances.map((i) => (i.id === child.id ? { ...i, person: { ...i.person!, role: 'child' as const } } : i)) };
       }
   }
+  for (const { block, copies } of blocks)
+    for (let k = 1; k <= copies; k++)
+      for (const it of block.instances) {
+        const id = byName.get(it.system);
+        if (!id) throw new Error(`Start "${start.id}": no catalog system named "${it.system}"`);
+        for (let c = 0; c < it.count; c++) {
+          const x = Math.min(1, Math.max(0, it.x + k * block.offset.x)) * side;
+          const y = Math.min(1, Math.max(0, it.y + k * block.offset.y)) * side;
+          const at = findSpot(catalog, s, id, x, y);
+          if (!at) throw new Error(`Start "${start.id}": no room for another ${it.system}`);
+          s = placeSystem(catalog, s, id, at.x, at.y, 'prebuilt').state;
+        }
+      }
   // The kit was already running yesterday: carry over one silent day's direct-use output and
   // group results (so the house's sanitation and the cars' miles count on day 1), nothing else.
   const eveCal = { ...s.calendar, day: (startDay + 364) % 365 };

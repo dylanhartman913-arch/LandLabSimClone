@@ -17,6 +17,8 @@ test('LL-51: a farm family on Lake Superior: two children, a mortgage paid daily
   await page.getByTestId('site-marquette-mi').click();
   await page.getByTestId('start-children').fill('2');
   await expect(page.getByTestId('children-note')).toContainText('70% of an adult');
+  // Two adults and two children count as 3.4 people: one more septic field and water filter.
+  await expect(page.getByTestId('household-kit')).toContainText('1 × Septic Tank & Drain Field, 1 × Drinking Water Filter');
   await shot(page, 'll-51', 'farm-start');
   await page.getByTestId('start-begin').click();
   await expect(page.getByTestId('new-game')).toHaveCount(0);
@@ -54,4 +56,23 @@ test('LL-51: the off-grid cabin in the Sonoran desert starts paid off, with the 
   expect(g).toMatchObject({ start: 'cabin', site: 'tucson-az', cash: 6000 });
   expect(g.debt).toBeUndefined();
   expect(g.water).toEqual(['seep-1', 'pools-1', 'pools-2']);
+});
+
+test('household scaling: four adults on greenfield get a second camp, listed on the start screen', async ({ page }) => {
+  await openStartScreen(page);
+  await page.getByTestId('start-greenfield').click();
+  await expect(page.getByTestId('household-kit')).toHaveCount(0);
+  await page.getByTestId('start-household').fill('4');
+  const kit = page.getByTestId('household-kit');
+  await expect(kit).toContainText('1 × Canvas Wall Tent + Stove Jack');
+  await expect(kit).toContainText('100 lbs of carbon');
+  await kit.scrollIntoViewIfNeeded();
+  await shot(page, 'household-scaling', 'greenfield-four-adults');
+  await page.getByTestId('start-begin').click();
+  const tents = await page.evaluate(() => {
+    const s = window.__homestead!.store.getState();
+    const tent = s.catalog.systems.find((x) => x.name === 'Canvas Wall Tent + Stove Jack')!.id;
+    return s.game.instances.filter((i) => i.systemId === tent).length;
+  });
+  expect(tents).toBe(2);
 });

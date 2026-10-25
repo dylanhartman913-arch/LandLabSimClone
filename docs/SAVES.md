@@ -143,3 +143,7 @@ Three new site presets and two new starts are data; a game records its site and 
 - `FinanceState.mortgage` `{ balance, annualRate, payment, arrears }` and `FinanceDay.mortgage` `{ interest, paid, balance, arrears }`. Mortgage payments are part of `cash.out`. The farm start's own `settings` (`finance`, `sellingAndTrade`, `transportAccess`) are part of its initial settings, so a replay of `GameInit` reproduces them.
 
 No new action kind. A start's `settings` and `mortgage` are read only when a game is created from it.
+
+### Household kit scaling (0.26.0, follow-up)
+
+`Start.household.extra` blocks are read only when a game is created: a game with more people than its start's default gets the extra systems and stock then, and replaying its `GameInit` (household and children) rebuilds them. The default household gets none, so existing games and saves are unchanged.

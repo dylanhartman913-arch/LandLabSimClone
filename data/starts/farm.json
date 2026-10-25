@@ -8,7 +8,60 @@
     "default": 2,
     "min": 1,
     "max": 4,
-    "maxChildren": 3
+    "maxChildren": 3,
+    "extra": [
+      {
+        "per": 2,
+        "by": "needs",
+        "offset": {
+          "x": -0.1,
+          "y": 0
+        },
+        "instances": [
+          {
+            "system": "Septic Tank & Drain Field",
+            "x": 0.4,
+            "y": 0.42
+          },
+          {
+            "system": "Drinking Water Filter",
+            "x": 0.56,
+            "y": 0.37
+          }
+        ]
+      },
+      {
+        "per": 2,
+        "by": "adults",
+        "offset": {
+          "x": 0,
+          "y": 0
+        },
+        "instances": [
+          {
+            "system": "Average Job",
+            "x": 0.5,
+            "y": 0.5
+          }
+        ]
+      },
+      {
+        "per": 2,
+        "by": "needs",
+        "after": 4,
+        "offset": {
+          "x": -0.08,
+          "y": 0
+        },
+        "instances": [
+          {
+            "system": "Tiny House on Wheels",
+            "x": 0.38,
+            "y": 0.3
+          }
+        ]
+      }
+    ]
   },
   "instances": [
     {

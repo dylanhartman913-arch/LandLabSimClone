@@ -37,6 +37,7 @@ A top-down homestead planning simulator. Players place systems (shelters, panels
 - `npm run sim -- <balance|run|montecarlo> <design.json> [--site <id>] [--years N] [--seed N]`
 - `npm run test:pacing` — the playtest bots' pacing gates (3 seeds × 6 sites)
 - `npm run test:comparisons [-- --update]` — LL-50: the LL-10 comparisons (new-game and all-experimental) against the committed reports; a moved headline needs a note in `docs/COMPARISON_NOTES.md`
+- `npm run sim -- households [--md docs/HOUSEHOLDS.md]` — start kits grow with the household: every start, site and household starts no worse off than the default one
 - `npm run sim -- coverage [--md docs/LL_49_COVERAGE.md]` — LL-49 alert coverage: every survival cliff warned a week ahead
 - `python3 scripts/catalog_patch.py data/catalog_patches/<patch>.json` — add catalog systems as xlsx rows
 

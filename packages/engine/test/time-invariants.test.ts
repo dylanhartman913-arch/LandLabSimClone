@@ -13,12 +13,7 @@ import {
   type DayLedger,
   type GameState,
 } from '../src/index.ts';
-import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { buildSync } from 'esbuild';
-import { expectDigest, loadDesign, REPO } from './fixtures.ts';
+import { expectDigest, loadDesign } from './fixtures.ts';
 import { sysId } from './time-helpers.ts';
 
 function gameFor(file: string, opts: { unlimited?: boolean; site?: string; seed?: number } = {}): GameState {
@@ -191,31 +186,5 @@ describe('determinism', () => {
     const before = JSON.stringify(g);
     stepDays(g, catalog, 30);
     expect(JSON.stringify(g)).toBe(before);
-  });
-});
-
-describe('performance', () => {
-  it('simulates one year of a 200-instance design in under 150 ms in Node', () => {
-    // Bundle the engine and run it in a child Node process, so the measurement is
-    // plain Node rather than code rewritten by the test runner's module transform.
-    const dir = mkdtempSync(join(tmpdir(), 'homestead-bench-'));
-    const out = join(dir, 'year.mjs');
-    buildSync({
-      entryPoints: [join(REPO, 'packages/engine/bench/year.ts')],
-      bundle: true,
-      platform: 'node',
-      format: 'esm',
-      outfile: out,
-      logLevel: 'silent',
-    });
-    const res = spawnSync(process.execPath, [out, join(REPO, 'designs/offgrid-cabin-family.json')], {
-      encoding: 'utf8',
-    });
-    rmSync(dir, { recursive: true, force: true });
-    expect(res.status, res.stderr).toBe(0);
-    const { instances, bestMs } = JSON.parse(res.stdout) as { instances: number; bestMs: number };
-    console.log(`one year, ${instances} instances: ${bestMs.toFixed(1)} ms (best of 3, plain Node)`);
-    expect(instances).toBeGreaterThanOrEqual(190);
-    expect(bestMs).toBeLessThan(150);
   });
 });

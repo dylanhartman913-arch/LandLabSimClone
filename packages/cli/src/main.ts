@@ -4,6 +4,8 @@ import { numFlag, parseArgs } from './args.ts';
 import { runBalance } from './commands/balance.ts';
 import { compareCi, PROFILES, runCompare } from './commands/compare.ts';
 import { runCoverageCommand } from './commands/coverage.ts';
+import { householdReport } from '../bots/households.ts';
+import { writeFileSync } from 'node:fs';
 import { runMonteCarlo } from './commands/montecarlo.ts';
 import { runPacing } from './commands/pacing.ts';
 import { runTime } from './commands/run.ts';
@@ -22,6 +24,8 @@ Usage:
                  (LL-49 alert coverage: exits 1 if a cliff is under-warned or never reached)
   npm run sim -- compare [--md report.md] [--json runs.json] [--days N] [--profile new-game|experimental]
                  (LL-10 controlled first-year strategy comparisons)
+  npm run sim -- households [--md report.md]
+                 (start kits scale with the household: exits 1 if a household starts worse off)
   npm run sim -- compare --ci [--update]
                  (LL-50: both profiles against the committed reports, headlines and notes)
 
@@ -40,6 +44,12 @@ function main(argv: string[]): number {
     }
     case 'coverage': {
       const r = runCoverageCommand({ md: typeof args.flags.md === 'string' ? args.flags.md : undefined });
+      console.log(r.text);
+      return r.pass ? 0 : 1;
+    }
+    case 'households': {
+      const r = householdReport();
+      if (typeof args.flags.md === 'string') writeFileSync(args.flags.md, r.text + '\n');
       console.log(r.text);
       return r.pass ? 0 : 1;
     }

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { GATES, runGates } from '../bots/index.ts';
+import { GATES, GATE_SITES, runGates } from '../bots/index.ts';
 
 describe('Phase 2 return policy preserves pacing', () => {
   for (const gate of GATES)
-    it(gate.id, () => {
+    for (const site of GATE_SITES)
+    it(`${gate.id} on ${site}`, () => {
       const safeGate = {
         ...gate,
         makeBot: () => {
@@ -24,7 +25,7 @@ describe('Phase 2 return policy preserves pacing', () => {
           };
         },
       };
-      for (const result of runGates({ gates: [safeGate] })) {
+      for (const result of runGates({ gates: [safeGate], sites: [site] })) {
         expect(
           result.pass,
           `${gate.id} on ${result.site}: ${result.runs.map((r) => r.detail).join('; ')}`,
@@ -36,7 +37,8 @@ describe('Phase 2 return policy preserves pacing', () => {
 describe('new-game rules (safer return, idle labor reuse, survival-level shelter return, safe water first, service warm-up) preserve pacing', () => {
   const rules = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, serviceWarmUp: true };
   for (const gate of GATES)
-    it(gate.id, () => {
+    for (const site of GATE_SITES)
+    it(`${gate.id} on ${site}`, () => {
       const g = {
         ...gate,
         makeBot: () => {
@@ -53,7 +55,7 @@ describe('new-game rules (safer return, idle labor reuse, survival-level shelter
           };
         },
       };
-      for (const result of runGates({ gates: [g], settings: rules }))
+      for (const result of runGates({ gates: [g], settings: rules, sites: [site] }))
         expect(result.pass, `${gate.id} on ${result.site}: ${result.runs.map((r) => r.detail).join('; ')}`).toBe(true);
     });
 });

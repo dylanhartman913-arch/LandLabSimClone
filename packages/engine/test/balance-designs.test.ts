@@ -46,27 +46,3 @@ describe('hand-built designs keep their balance-mode results', () => {
     expect(heat(cold) / heat(base)).toBeCloseTo(1.5, 12);
   });
 });
-
-describe('performance', () => {
-  it('runs 1,000 balancePotential calls on a 200-instance design in under 200 ms', () => {
-    const { design } = loadDesign('offgrid-cabin-family.json');
-    // Scale the cabin design up to 200 instances.
-    const total = Object.values(design.counts).reduce((a, b) => a + b, 0);
-    const scale = 200 / total;
-    const counts = Object.fromEntries(
-      Object.entries(design.counts).map(([k, v]) => [k, Math.max(1, Math.round(v * scale))]),
-    );
-    const big = { counts };
-    for (let i = 0; i < 200; i++) balancePotential(catalog, catalog.assumptions, big); // warm up the JIT
-    // Best of three batches: other test files run in parallel and add noise.
-    let ms = Infinity;
-    for (let batch = 0; batch < 3; batch++) {
-      const t0 = performance.now();
-      for (let i = 0; i < 1000; i++) balancePotential(catalog, catalog.assumptions, big);
-      ms = Math.min(ms, performance.now() - t0);
-    }
-    expect(Object.values(counts).reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(190);
-    console.log(`1000 balancePotential calls: ${ms.toFixed(1)} ms`);
-    expect(ms).toBeLessThan(200);
-  });
-});

@@ -697,6 +697,28 @@ export const StartSchema = z
       max: z.number().int().min(1),
       /** LL-51: children the start screen offers on top of the adults (LL-36 child role). */
       maxChildren: z.number().int().min(0).default(3),
+      /**
+       * Kit that grows with the household: each block is added once for every `per` people beyond
+       * `after` (default: the default household), counted by need (a child as the LL-36 child share)
+       * or by adults. Copy k sits `offset` × k from the listed spot, or the nearest free spot.
+       * The default household gets no blocks, so its game is unchanged.
+       */
+      extra: z
+        .array(
+          z
+            .object({
+              per: z.number().positive(),
+              by: z.enum(['needs', 'adults']).default('needs'),
+              after: z.number().min(0).optional(),
+              offset: z.object({ x: z.number(), y: z.number() }).strict(),
+              instances: z.array(
+                z.object({ system: z.string(), x: z.number().min(0).max(1), y: z.number().min(0).max(1), count: z.number().int().min(1).default(1) }).strict(),
+              ),
+              stockpile: z.record(z.string(), z.number().nonnegative()).default({}),
+            })
+            .strict(),
+        )
+        .default([]),
     }),
     /** Systems already built and running; x, y as fractions of the parcel side. `perPerson` scales with the household. */
     instances: z.array(

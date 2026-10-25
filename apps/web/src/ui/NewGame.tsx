@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SITES, STARTS, type Difficulty } from '@homestead/catalog';
-import { KIT_LABELS, newGameFromOptions, startGame, type GameInit, type StartingKit } from '@homestead/engine';
+import { householdKit, KIT_LABELS, newGameFromOptions, startGame, type GameInit, type StartingKit } from '@homestead/engine';
 import { fmtMoney } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
 import { savePref } from '../store/persist.ts';
@@ -44,6 +44,7 @@ export function NewGame() {
     }
   };
   const chosen = STARTS[startId]!;
+  const extra = householdKit(st.catalog, chosen, household, children);
   return (
     <div className="modal-back">
       <section className="modal" role="dialog" aria-label="New game" data-testid="new-game">
@@ -134,9 +135,15 @@ export function NewGame() {
             </label>
           )}
         </div>
+        {extra.systems.length > 0 && (
+          <p className="small" data-testid="household-kit">
+            For this household the kit also includes {extra.systems.map((x) => `${x.count} × ${x.system}`).join(', ')}
+            {extra.stock.length ? `, plus ${extra.stock.map((x) => `${x.amount} ${x.unit} of ${x.resource.toLowerCase()}`).join(', ')}` : ''}.
+          </p>
+        )}
         {children > 0 && <p className="small" data-testid="children-note">Children need 70% of an adult’s food, water and space and do a quarter of an adult’s work. Choosing children turns on Household roles, skills and health.</p>}
         {chosen.mortgage && <p className="small" data-testid="mortgage-note">This start includes a {fmtMoney(chosen.mortgage.principal)} mortgage, paid daily from cash, and turns on Credit, tax and insurance{chosen.settings?.sellingAndTrade ? ' and Selling and trade' : ''}.</p>}
-        {startId === 'greenfield' && <p className="small" data-testid="starter-limits">Starter camp: one tent covers about one adult’s nominal shelter need, and the bucket toilet serves one adult. Larger households start below full coverage. Starting cash is {fmtMoney(chosen.cash)} per adult to fund supplies and upgrades; tutorial assistance is extra. Electricity also starts below full coverage.</p>}
+        {startId === 'greenfield' && <p className="small" data-testid="starter-limits">Starter camp: one tent covers about one adult’s nominal shelter need, and the bucket toilet serves one adult, so two adults start below full coverage. Each two more people bring another camp, so a larger household starts no worse off. Starting cash is {fmtMoney(chosen.cash)} per adult to fund supplies and upgrades; tutorial assistance is extra. Electricity also starts below full coverage.</p>}
         <h3>Difficulty</h3>
         <div className="choice-grid three" role="radiogroup" aria-label="Difficulty">
           {DIFFICULTIES.map((d) => (

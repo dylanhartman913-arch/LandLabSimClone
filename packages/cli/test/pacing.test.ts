@@ -1,18 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { getStart } from '@homestead/catalog';
-import { GATES, playBot, greedyBot, runGates } from '../bots/index.ts';
+import { GATES, GATE_SITES, playBot, greedyBot, runGates } from '../bots/index.ts';
 import { idleBot } from '../bots/idle.ts';
 import { NEW_GAME_SETTINGS } from '../bots/run.ts';
 
 describe('pacing gates (G16): the playtest bots on 6 sites × 3 seeds', () => {
-  for (const gate of GATES) {
-    it(`${gate.id}: ${gate.bot} — ${gate.rule}`, () => {
-      for (const r of runGates({ gates: [gate] })) {
-        const misses = r.runs.filter((x) => !x.pass).map((x) => `seed ${x.seed}: ${x.detail}`);
-        expect(r.pass, `${gate.id} on ${r.site}: ${misses.join('; ')}`).toBe(true);
-      }
-    }, 180_000);
-  }
+  // One test per gate and site: a long synchronous test starves the worker's progress reports.
+  for (const gate of GATES)
+    for (const site of GATE_SITES)
+      it(`${gate.id} on ${site}: ${gate.bot} — ${gate.rule}`, () => {
+        for (const r of runGates({ gates: [gate], sites: [site] })) {
+          const misses = r.runs.filter((x) => !x.pass).map((x) => `seed ${x.seed}: ${x.detail}`);
+          expect(r.pass, `${gate.id} on ${r.site}: ${misses.join('; ')}`).toBe(true);
+        }
+      }, 60_000);
 
   it('the bots are deterministic: the same seed plays the same game', () => {
     const a = playBot(greedyBot(), { start: 'greenfield', site: 'front-range', seed: 7, days: 60 });
