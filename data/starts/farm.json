@@ -1,0 +1,202 @@
+{
+  "id": "farm",
+  "title": "Take on a small farm",
+  "pitch": "Five acres with a farmhouse, a well, hens, dairy goats and a pasture, bought with a mortgage. One adult works a full-time job in town; the payments come first.",
+  "parcelAcres": 5,
+  "startDay": "spring",
+  "household": {
+    "default": 2,
+    "min": 1,
+    "max": 4,
+    "maxChildren": 3
+  },
+  "instances": [
+    {
+      "system": "A-Frame House",
+      "x": 0.5,
+      "y": 0.35
+    },
+    {
+      "system": "Human Being",
+      "x": 0.5,
+      "y": 0.35,
+      "perPerson": true
+    },
+    {
+      "system": "Heat Pump (Mini-Split)",
+      "x": 0.545,
+      "y": 0.35
+    },
+    {
+      "system": "Central Power Plant (Coal / NatGas / Nuclear)",
+      "x": 0.5,
+      "y": 0.5
+    },
+    {
+      "system": "Well",
+      "x": 0.6,
+      "y": 0.4
+    },
+    {
+      "system": "Rainwater Collection System + Cistern (550 Gallons)",
+      "x": 0.6,
+      "y": 0.33
+    },
+    {
+      "system": "Drinking Water Filter",
+      "x": 0.56,
+      "y": 0.37
+    },
+    {
+      "system": "Septic Tank & Drain Field",
+      "x": 0.4,
+      "y": 0.42
+    },
+    {
+      "system": "Propane Range",
+      "x": 0.455,
+      "y": 0.33
+    },
+    {
+      "system": "Propane Tankless Water Heater",
+      "x": 0.455,
+      "y": 0.37
+    },
+    {
+      "system": "Propane Tank & Delivery (500 gal)",
+      "x": 0.45,
+      "y": 0.3
+    },
+    {
+      "system": "Average American Vehicle",
+      "x": 0.3,
+      "y": 0.2
+    },
+    {
+      "system": "Used EV (Nissan Leaf)",
+      "x": 0.34,
+      "y": 0.2
+    },
+    {
+      "system": "Gas Station",
+      "x": 0.5,
+      "y": 0.5
+    },
+    {
+      "system": "Average Job",
+      "x": 0.5,
+      "y": 0.5
+    },
+    {
+      "system": "Chicken Coop (12 hens)",
+      "x": 0.65,
+      "y": 0.55
+    },
+    {
+      "system": "Dairy Goats (pair)",
+      "x": 0.7,
+      "y": 0.65
+    },
+    {
+      "system": "Pasture (1 acre)",
+      "x": 0.75,
+      "y": 0.75
+    },
+    {
+      "system": "Hay Barn",
+      "x": 0.68,
+      "y": 0.62
+    },
+    {
+      "system": "Raised Beds (24 sq ft)",
+      "x": 0.45,
+      "y": 0.55
+    },
+    {
+      "system": "Raised Beds (24 sq ft)",
+      "x": 0.48,
+      "y": 0.55
+    },
+    {
+      "system": "Raised Beds (24 sq ft)",
+      "x": 0.51,
+      "y": 0.55
+    },
+    {
+      "system": "Farm Stand",
+      "x": 0.2,
+      "y": 0.1
+    },
+    {
+      "system": "Farm & Feed Store",
+      "x": 0.5,
+      "y": 0.5
+    },
+    {
+      "system": "Big Box Grocery Store",
+      "x": 0.5,
+      "y": 0.5
+    }
+  ],
+  "stockpile": {
+    "Food": 56000,
+    "Chicken feed": 72,
+    "Hay": 300,
+    "Seeds": 8,
+    "Compost": 75,
+    "Soil": 72,
+    "Propane": 20,
+    "Gasoline": 10,
+    "Drinking water": 20
+  },
+  "cash": 12000,
+  "backstopCapMult": 8,
+  "settings": {
+    "finance": true,
+    "sellingAndTrade": true,
+    "transportAccess": true
+  },
+  "mortgage": {
+    "principal": 280000,
+    "annualRate": 0.065,
+    "years": 30
+  },
+  "tutorial": null,
+  "headline": "self-reliance",
+  "difficulty": {
+    "gentle": {
+      "label": "Gentle",
+      "blurb": "Slow wellbeing loss, a fuller pantry.",
+      "wellbeingMult": 0.5,
+      "stockMult": 1.5,
+      "weatherMode": "average"
+    },
+    "standard": {
+      "label": "Standard",
+      "blurb": "An average year, every year.",
+      "wellbeingMult": 1,
+      "stockMult": 1,
+      "weatherMode": "average"
+    },
+    "real": {
+      "label": "Real weather",
+      "blurb": "Droughts, cold snaps, and good years, drawn from the site's history.",
+      "wellbeingMult": 1,
+      "stockMult": 1,
+      "weatherMode": "real"
+    }
+  },
+  "preview": {
+    "kit": [
+      "An 800 sq ft farmhouse on the grid, with a heat pump, a well, a 550-gallon cistern, septic and propane",
+      "A full-time job in town, a car and a used electric car",
+      "12 hens, a pair of dairy goats, a 1-acre pasture and a hay barn",
+      "Three raised beds and a farm stand"
+    ],
+    "stockpile": [
+      "Two weeks of food, feed and hay",
+      "$12,000 in savings",
+      "A $280,000 mortgage at 6.5% over 30 years (about $1,770 a month)"
+    ]
+  }
+}

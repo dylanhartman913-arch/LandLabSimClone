@@ -26,9 +26,9 @@ export function fmtMoney(n: number): string {
   return `${sign}$${Math.round(Math.abs(n)).toLocaleString('en-US')}`;
 }
 
-export function fmtPct(share: number): string {
+export function fmtPct(share: number, decimals = 0): string {
   if (!Number.isFinite(share)) return '—';
-  return `${Math.round(share * 100)}%`;
+  return decimals ? `${(share * 100).toFixed(decimals).replace(/\.?0+$/, '')}%` : `${Math.round(share * 100)}%`;
 }
 
 export type UnitSystem = 'imperial' | 'metric';

@@ -133,3 +133,13 @@ Workbook system IDs S202–S204 use existing placement, movement and removal act
 Workbook system IDs S205–S206 and the `Woolen goods` resource (canonical lbs, sale reference price in overrides) use existing placement and trade actions. No new action kind: labor barter is an ordinary `sell` action with `resource: 'Labor'` and a required `receive`, stored in the existing `market.sales` queue (amount in hours). The CSA's three flows (F0885–F0887) are growing-season by flow-timing override; annual quantities keep workbook parity. The CSA runs only under the existing `sellingAndTrade` gate.
 
 Optional `DayLedger.csa` entries hold `{ instanceIds, share, revenue, makeGood }` for growing-season days; optional `DaySpend.makeGood` is included in `spendTotal` and shown as a "CSA make-good" bill. Labor barter receipts are ordinary `trades` entries with `resource: 'Labor'` and `revenue: 0`; its hours appear under `laborBySystem['Neighbor work']`. Older states omit every new field and replay unchanged; legacy digests are unchanged.
+
+## LL-51 sites, starts and households (0.26.0)
+
+Three new site presets and two new starts are data; a game records its site and start as before. New optional fields, all absent from older states, which replay unchanged (legacy digests and the LL-50 headlines are unchanged):
+
+- `Site.hazards` `{ riskChanceMult, text }`: scales LL-38 risk chances under `riskEvents`. The draw count is unchanged, so the risk stream stays aligned.
+- `GameInit.start.children` and `GameState.start.children`: children placed as Human Beings with `person.role = 'child'`; a start with children sets `householdRoles: true` in its initial settings.
+- `FinanceState.mortgage` `{ balance, annualRate, payment, arrears }` and `FinanceDay.mortgage` `{ interest, paid, balance, arrears }`. Mortgage payments are part of `cash.out`. The farm start's own `settings` (`finance`, `sellingAndTrade`, `transportAccess`) are part of its initial settings, so a replay of `GameInit` reproduces them.
+
+No new action kind. A start's `settings` and `mortgage` are read only when a game is created from it.

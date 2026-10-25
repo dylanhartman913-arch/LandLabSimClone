@@ -35,7 +35,7 @@ A top-down homestead planning simulator. Players place systems (shelters, panels
 - `npm run catalog:export` / `npm run catalog:check`
 - `npm run catalog:audit` — rerun the LL-47 catalog audit gates and refresh the audit section of `docs/CATALOG.md`
 - `npm run sim -- <balance|run|montecarlo> <design.json> [--site <id>] [--years N] [--seed N]`
-- `npm run test:pacing` — the playtest bots' pacing gates (3 seeds × 3 sites)
+- `npm run test:pacing` — the playtest bots' pacing gates (3 seeds × 6 sites)
 - `npm run test:comparisons [-- --update]` — LL-50: the LL-10 comparisons (new-game and all-experimental) against the committed reports; a moved headline needs a note in `docs/COMPARISON_NOTES.md`
 - `npm run sim -- coverage [--md docs/LL_49_COVERAGE.md]` — LL-49 alert coverage: every survival cliff warned a week ahead
 - `python3 scripts/catalog_patch.py data/catalog_patches/<patch>.json` — add catalog systems as xlsx rows
@@ -46,8 +46,8 @@ A top-down homestead planning simulator. Players place systems (shelters, panels
 - `packages/cli` — headless runner
 - `apps/web` — Vite + React + PixiJS + Zustand UI
 - `tests/e2e` — Playwright specs
-- `data/sites` — climate presets and natural nodes
-- `data/starts`, `data/quests` — the two starts and their tutorial quest lines
+- `data/sites` — climate presets and natural nodes (six sites since LL-51)
+- `data/starts`, `data/quests` — the starts (adapt, greenfield, cabin, farm) and the tutorial quest lines
 - `packages/cli/bots` — playtest bots and pacing gates
 
 ## Conventions

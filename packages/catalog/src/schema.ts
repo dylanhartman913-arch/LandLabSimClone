@@ -658,6 +658,14 @@ export const SiteSchema = z.object({
    * Positions are fractions of the parcel side, like terrain.
    */
   nodes: z.array(NodeSchema).default([]),
+  /**
+   * LL-51: what makes the site hard beyond its climate. `riskChanceMult` scales an LL-38 risk kind's
+   * chance per interval (capped at 1) when Warned risk events are on; sites without it are unchanged.
+   */
+  hazards: z
+    .object({ riskChanceMult: z.record(RiskKindSchema, z.number().positive()).default({}), text: z.string() })
+    .strict()
+    .optional(),
   notes: z.string(),
 });
 export type Site = z.infer<typeof SiteSchema>;
@@ -683,7 +691,13 @@ export const StartSchema = z
      */
     startDay: z.union([z.number().int().min(0).max(364), z.literal('spring')]),
     /** Default household (adults), and the range the start screen offers. */
-    household: z.object({ default: z.number().int().min(1), min: z.number().int().min(1), max: z.number().int().min(1) }),
+    household: z.object({
+      default: z.number().int().min(1),
+      min: z.number().int().min(1),
+      max: z.number().int().min(1),
+      /** LL-51: children the start screen offers on top of the adults (LL-36 child role). */
+      maxChildren: z.number().int().min(0).default(3),
+    }),
     /** Systems already built and running; x, y as fractions of the parcel side. `perPerson` scales with the household. */
     instances: z.array(
       z
@@ -702,6 +716,13 @@ export const StartSchema = z
     autoGather: z.object({ waterDays: z.number(), woodWeeks: z.number(), foodWeeks: z.number() }).partial().optional(),
     /** Share of an unmet need a backstop may fill in a week, as a multiple of its catalog output (default 3). */
     backstopCapMult: z.number().positive().optional(),
+    /** LL-51: opt-in rules this start needs from day 1 (the farm's mortgage needs Finance). */
+    settings: z.record(z.string(), z.boolean()).optional(),
+    /** LL-51: an amortizing mortgage on the land (needs `settings.finance`). Rate is annual; payments are monthly, billed daily. */
+    mortgage: z
+      .object({ principal: z.number().positive(), annualRate: z.number().min(0).max(1), years: z.number().int().min(1).max(40) })
+      .strict()
+      .optional(),
     tutorial: z.string().nullable(),
     /** What the HUD leads with. */
     headline: z.enum(['self-reliance', 'off-grid']),

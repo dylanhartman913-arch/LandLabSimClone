@@ -2,7 +2,7 @@ import type { Catalog } from '@homestead/catalog';
 import { explained } from '../provenance.ts';
 import { cashRunway } from '../views/recovery.ts';
 import { wearsOut } from './maintenance.ts';
-import type { FinanceDay, FinanceState, GameState, Instance } from './types.ts';
+import type { FinanceDay, FinanceState, GameState, Instance, MortgageState } from './types.ts';
 
 /** LL-37: absent state initializes lazily, so legacy snapshots remain byte-for-byte compatible. */
 function account(catalog: Catalog, state: GameState): FinanceState {
@@ -10,6 +10,17 @@ function account(catalog: Catalog, state: GameState): FinanceState {
   return (
     state.finance ?? { debt: 0, taxDue: 0, insured: false, emergencyDays: catalog.finance.emergencyDays }
   );
+}
+
+/** LL-51: the level monthly payment that repays `principal` over `years` at `annualRate`. */
+export function mortgagePayment(principal: number, annualRate: number, years: number): number {
+  const r = annualRate / 12;
+  const n = years * 12;
+  return r === 0 ? principal / n : (principal * r) / (1 - (1 + r) ** -n);
+}
+
+export function newMortgage(m: { principal: number; annualRate: number; years: number }): MortgageState {
+  return { balance: m.principal, annualRate: m.annualRate, payment: mortgagePayment(m.principal, m.annualRate, m.years), arrears: 0 };
 }
 
 /** Convert an existing legacy cash deficit into labeled opening debt when opting in. */
@@ -82,6 +93,19 @@ export function advanceFinance(catalog: Catalog, prev: GameState, cash: number, 
   const interest = (state.debt * rule.annualInterest) / 365;
   const capitalized = interest - pay(interest);
   state.debt += capitalized;
+  // LL-51: the mortgage accrues daily; the monthly payment is billed in daily twelfths of a year, arrears first.
+  let mortgage: FinanceDay['mortgage'];
+  if (state.mortgage) {
+    const m = { ...state.mortgage };
+    const accrued = (m.balance * m.annualRate) / 365;
+    m.balance += accrued;
+    const due = Math.min(m.balance, m.arrears + (m.payment * 12) / 365);
+    const paid = pay(due);
+    m.arrears = due - paid;
+    m.balance -= paid;
+    state.mortgage = m;
+    mortgage = { interest: accrued, paid, balance: m.balance, arrears: m.arrears };
+  }
   const taxAssessed = (prev.settings.parcelAcres * rule.landValuePerAcre * rule.propertyTaxRate) / 365;
   state.taxDue += taxAssessed;
   const taxPaid = pay(state.taxDue);
@@ -112,6 +136,7 @@ export function advanceFinance(catalog: Catalog, prev: GameState, cash: number, 
     covered,
     debt: state.debt,
     taxDue: state.taxDue,
+    ...(mortgage ? { mortgage } : {}),
   };
   return { state, cash, record };
 }
@@ -124,7 +149,8 @@ export function financeView(state: GameState, catalog: Catalog) {
   const scheduled =
     (f.debt * r.annualInterest) / 365 +
     (state.settings.parcelAcres * r.landValuePerAcre * r.propertyTaxRate) / 365 +
-    (f.insured ? r.insurancePerYear / 365 : 0);
+    (f.insured ? r.insurancePerYear / 365 : 0) +
+    (f.mortgage ? (f.mortgage.payment * 12) / 365 : 0);
   const burn = state.ledgers.length >= 7 ? Math.max(0, runway.burn) : scheduled;
   const target = burn * f.emergencyDays;
   return {
@@ -178,5 +204,15 @@ export function financeView(state: GameState, catalog: Catalog) {
       'reserve target plus unpaid tax less cash; credit excluded',
     ),
     runwayDays: state.ledgers.length >= 7 ? runway.days : null,
+    mortgage: f.mortgage
+      ? {
+          balance: explained(f.mortgage.balance, 'principal plus accrued interest, less payments'),
+          payment: explained(f.mortgage.payment, 'level monthly payment that repays the start’s principal over its term', {
+            refs: { annualRate: f.mortgage.annualRate },
+          }),
+          arrears: explained(f.mortgage.arrears, 'installments billed but not yet paid; paid first from later cash, no penalty'),
+          annualRate: f.mortgage.annualRate,
+        }
+      : null,
   };
 }

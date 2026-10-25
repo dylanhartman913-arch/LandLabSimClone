@@ -25,9 +25,21 @@ Reproduce with `npm run sim -- coverage --md docs/LL_49_COVERAGE.md`. Real weath
 | October 22 playtest (original line, ignores alerts) | asheville-nc | 1 | Carbon (sawdust) | 90 | 10 | Carbon | 1 | 75 | pass |
 | October 22 playtest (original line, ignores alerts) | asheville-nc | 2 | Carbon (sawdust) | 90 | 10 | Carbon | 1 | 75 | pass |
 | October 22 playtest (original line, ignores alerts) | asheville-nc | 3 | Carbon (sawdust) | 90 | 10 | Carbon | 1 | 75 | pass |
+| October 22 playtest (original line, ignores alerts) | tucson-az | 1 | Carbon (sawdust) | 92 | 11 | Carbon | 2 | 77 | pass |
+| October 22 playtest (original line, ignores alerts) | tucson-az | 2 | Carbon (sawdust) | 93 | 11 | Carbon | 2 | 78 | pass |
+| October 22 playtest (original line, ignores alerts) | tucson-az | 3 | Carbon (sawdust) | 93 | 11 | Carbon | 2 | 78 | pass |
+| October 22 playtest (original line, ignores alerts) | olympia-wa | 1 | Carbon (sawdust) | 90 | 10 | Carbon | 1 | 75 | pass |
+| October 22 playtest (original line, ignores alerts) | olympia-wa | 2 | Carbon (sawdust) | 90 | 10 | Carbon | 1 | 75 | pass |
+| October 22 playtest (original line, ignores alerts) | olympia-wa | 3 | Carbon (sawdust) | 90 | 10 | Carbon | 1 | 75 | pass |
+| October 22 playtest (original line, ignores alerts) | marquette-mi | 1 | Carbon (sawdust) | 91 | 11 | Carbon | 1 | 76 | pass |
+| October 22 playtest (original line, ignores alerts) | marquette-mi | 2 | Carbon (sawdust) | 91 | 11 | Carbon | 1 | 76 | pass |
+| October 22 playtest (original line, ignores alerts) | marquette-mi | 3 | Carbon (sawdust) | 91 | 11 | Carbon | 1 | 76 | pass |
 | No automatic water gathering (ignores alerts) | front-range | 1 | Safe water | 30 | 7 | water-runway | 1 | 29 | pass |
 | No automatic water gathering (ignores alerts) | laramie-wy | 1 | Safe water | 30 | 7 | water-runway | 1 | 29 | pass |
 | No automatic water gathering (ignores alerts) | asheville-nc | 1 | Safe water | 30 | 7 | water-runway | 1 | 29 | pass |
+| No automatic water gathering (ignores alerts) | tucson-az | 1 | Safe water | 30 | 7 | water-runway | 1 | 29 | pass |
+| No automatic water gathering (ignores alerts) | olympia-wa | 1 | Safe water | 30 | 7 | water-runway | 1 | 29 | pass |
+| No automatic water gathering (ignores alerts) | marquette-mi | 1 | Safe water | 30 | 7 | water-runway | 1 | 29 | pass |
 | $600 starting cash (ignores alerts) | front-range | 1 | Food | 173 | 7 | food-runway | 2 | 172 | pass |
 | $600 starting cash (ignores alerts) | front-range | 1 | Chicken feed | 171 | 6 | Chicken feed | 3 | — | pass |
 | $600 starting cash (ignores alerts) | front-range | 1 | Cash | 161 | 19 | cash-runway | 1 | 83 | pass |
@@ -38,5 +50,14 @@ Reproduce with `npm run sim -- coverage --md docs/LL_49_COVERAGE.md`. Real weath
 | $600 starting cash (ignores alerts) | asheville-nc | 1 | Food | 172 | 9 | food-runway | 2 | 171 | pass |
 | $600 starting cash (ignores alerts) | asheville-nc | 1 | Chicken feed | 170 | 6 | Chicken feed | 4 | — | pass |
 | $600 starting cash (ignores alerts) | asheville-nc | 1 | Cash | 160 | 29 | cash-runway | 1 | 89 | pass |
+| $600 starting cash (ignores alerts) | tucson-az | 1 | Food | 165 | 10 | food-runway | 2 | 164 | pass |
+| $600 starting cash (ignores alerts) | tucson-az | 1 | Chicken feed | 174 | 6 | Chicken feed | 4 | — | pass |
+| $600 starting cash (ignores alerts) | tucson-az | 1 | Cash | 154 | 26 | cash-runway | 1 | — | pass |
+| $600 starting cash (ignores alerts) | olympia-wa | 1 | Food | 173 | 8 | food-runway | 2 | 172 | pass |
+| $600 starting cash (ignores alerts) | olympia-wa | 1 | Chicken feed | 170 | 6 | Chicken feed | 3 | — | pass |
+| $600 starting cash (ignores alerts) | olympia-wa | 1 | Cash | 161 | 19 | cash-runway | 1 | 83 | pass |
+| $600 starting cash (ignores alerts) | marquette-mi | 1 | Food | 166 | 7 | food-runway | 2 | 165 | pass |
+| $600 starting cash (ignores alerts) | marquette-mi | 1 | Chicken feed | 173 | 6 | Chicken feed | 4 | — | pass |
+| $600 starting cash (ignores alerts) | marquette-mi | 1 | Cash | 156 | 19 | cash-runway | 1 | 85 | pass |
 
 Runs that reach no cliff (every novice gate run among them) pass without a row.

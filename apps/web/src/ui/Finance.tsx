@@ -52,6 +52,15 @@ export function Finance() {
           Repay
         </button>
       </div>
+      {view.mortgage && (
+        <p data-testid="mortgage">
+          Mortgage: <WhyNum value={view.mortgage.balance} title="Mortgage balance" format={fmtMoney} /> owed at{' '}
+          {fmtPct(view.mortgage.annualRate, 1)} a year. Payment{' '}
+          <WhyNum value={view.mortgage.payment} title="Monthly mortgage payment" format={fmtMoney} /> a month,
+          paid daily from cash. Behind on payments:{' '}
+          <WhyNum value={view.mortgage.arrears} title="Mortgage arrears" format={fmtMoney} />.
+        </p>
+      )}
       <p>
         Property tax: <WhyNum value={view.taxPerYear} title="Annual property tax" format={fmtMoney} /> per
         year, assessed and paid daily. Unpaid tax:{' '}

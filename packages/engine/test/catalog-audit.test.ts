@@ -58,6 +58,6 @@ describe('LL-47 catalog audit gates', () => {
     const a = catalogAudit(fixture, sites);
     expect(a.unsuppliable.sort()).toEqual(['Biochar Double Barrel Retort', 'Pellet Mill (small)']);
     const hydro = audit.systems.find((s) => s.name === 'Micro-Hydro Turbine (500 W)')!;
-    expect(hydro.sites.map((s) => s.missing)).toEqual([['Stream flow'], ['Stream flow'], []]);
+    expect(hydro.sites.map((s) => s.missing)).toEqual([['Stream flow'], ['Stream flow'], [], ['Stream flow'], [], ['Stream flow']]);
   });
 });

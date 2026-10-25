@@ -1921,7 +1921,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   const ledger = buildLedger(d);
   if (finance) {
     ledger.finance = finance.record;
-    ledger.cash.out += finance.record.taxPaid + finance.record.premium + finance.record.interest - finance.record.capitalized;
+    ledger.cash.out += finance.record.taxPaid + finance.record.premium + finance.record.interest - finance.record.capitalized + (finance.record.mortgage?.paid ?? 0);
   }
   if (d.access) ledger.access = d.access;
   if (risk) ledger.risks = prev.risks!.threats.filter((t) => absDay >= t.startsAt && absDay < t.endsAt).map((t) => ({ id: t.id, kind: t.kind, ...(t.targetId ? { targetId: t.targetId } : {}) }));

@@ -13,7 +13,8 @@ export function QuestCard() {
   const readOnly = useGame((s) => s.readOnly);
   if (progress.tutorialSkipped || readOnly) return null;
   if (game.tutorial) return <TutorialCard />;
-  const q = QUESTS.find((x) => progress.quests[x.id] === undefined);
+  // A start without a quest line (LL-51's cabin and farm) has no tutorial; the old line is for custom games.
+  const q = game.start ? undefined : QUESTS.find((x) => progress.quests[x.id] === undefined);
   const done = QUESTS.filter((x) => progress.quests[x.id] !== undefined).length;
   const badges = MILESTONES.filter((m) => progress.milestones[m.id] !== undefined);
   if (!q) {

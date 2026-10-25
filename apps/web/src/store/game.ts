@@ -962,7 +962,7 @@ function updateProgress(): void {
   const milestones = { ...p.milestones };
   let changed = false;
   // Games from a start run their own quest line in the engine (G16); the old line is for custom games.
-  const current = s.game.tutorial ? undefined : QUESTS.find((q) => quests[q.id] === undefined);
+  const current = s.game.tutorial || s.game.start ? undefined : QUESTS.find((q) => quests[q.id] === undefined);
   if (current && !p.tutorialSkipped && current.check(s.game, s.catalog).done) {
     quests[current.id] = day;
     changed = true;

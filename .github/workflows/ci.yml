@@ -7,7 +7,7 @@ on:
 
 jobs:
   pacing:
-    # CLAUDE.md rule 9: the playtest bots must pass their pacing gates (3 seeds × 3 sites).
+    # CLAUDE.md rule 9: the playtest bots must pass their pacing gates (3 seeds × 6 sites).
     name: Pacing gates (playtest bots)
     runs-on: ubuntu-latest
     timeout-minutes: 15

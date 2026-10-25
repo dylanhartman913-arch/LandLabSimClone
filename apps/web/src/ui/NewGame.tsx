@@ -22,6 +22,7 @@ export function NewGame() {
   const [startId, setStartId] = useState('greenfield');
   const [siteId, setSite] = useState('front-range');
   const [household, setHousehold] = useState(2);
+  const [children, setChildren] = useState(0);
   const [difficulty, setDifficulty] = useState<Difficulty>('standard');
   if (!open) return null;
   if (custom) return <CustomGame onBack={() => setCustom(false)} />;
@@ -31,7 +32,7 @@ export function NewGame() {
       siteId,
       seed: Math.floor(Math.random() * 2 ** 31), // UI-side: the seed is then saved with the game
       settings: { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, employmentPriority: true, siteCrewRates: true, cashFloor: true, serviceWarmUp: true, tutorialSeasons: true, householdStart: true },
-      start: { id: startId, difficulty, household },
+      start: { id: startId, difficulty, household, ...(children ? { children } : {}) },
     };
     try {
       st.loadGame(init, [], startGame(st.catalog, init));
@@ -64,6 +65,7 @@ export function NewGame() {
                 onClick={() => {
                   setStartId(x.id);
                   setHousehold(x.household.default);
+                  setChildren(0);
                 }}
                 data-testid={`start-${x.id}`}
               >
@@ -118,7 +120,22 @@ export function NewGame() {
               data-testid="start-household"
             />
           </label>
+          {chosen.household.maxChildren > 0 && (
+            <label>
+              Children
+              <input
+                type="number"
+                min={0}
+                max={chosen.household.maxChildren}
+                value={children}
+                onChange={(e) => setChildren(Math.max(0, Math.min(chosen.household.maxChildren, Number(e.target.value))))}
+                data-testid="start-children"
+              />
+            </label>
+          )}
         </div>
+        {children > 0 && <p className="small" data-testid="children-note">Children need 70% of an adult’s food, water and space and do a quarter of an adult’s work. Choosing children turns on Household roles, skills and health.</p>}
+        {chosen.mortgage && <p className="small" data-testid="mortgage-note">This start includes a {fmtMoney(chosen.mortgage.principal)} mortgage, paid daily from cash, and turns on Credit, tax and insurance{chosen.settings?.sellingAndTrade ? ' and Selling and trade' : ''}.</p>}
         {startId === 'greenfield' && <p className="small" data-testid="starter-limits">Starter camp: one tent covers about one adult’s nominal shelter need, and the bucket toilet serves one adult. Larger households start below full coverage. Starting cash is {fmtMoney(chosen.cash)} per adult to fund supplies and upgrades; tutorial assistance is extra. Electricity also starts below full coverage.</p>}
         <h3>Difficulty</h3>
         <div className="choice-grid three" role="radiogroup" aria-label="Difficulty">

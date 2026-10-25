@@ -1,0 +1,302 @@
+{
+  "schema": "homestead.site.v1",
+  "id": "tucson-az",
+  "name": "Sonoran desert, Arizona",
+  "description": "Hot and arid at 2,400 ft: mild winters, brutal summers that need cooling, a July\u2013September monsoon, intense sun and about 11 inches of rain. Water is the limit.",
+  "crewRate": 17,
+  "latitude": 32.2,
+  "elevationFt": 2400,
+  "assumptions": {
+    "hdd": 1500,
+    "cdd": 3600,
+    "psh": 6.4,
+    "pvDerate": 0.78,
+    "precipIn": 11.2,
+    "galPerSqftIn": 0.623,
+    "windCf": 0.12,
+    "hydroCf": 0.85,
+    "seasonsPerYear": 2
+  },
+  "monthly": {
+    "hdd": [
+      370,
+      260,
+      180,
+      70,
+      10,
+      0,
+      0,
+      0,
+      0,
+      30,
+      200,
+      380
+    ],
+    "cdd": [
+      0,
+      5,
+      50,
+      160,
+      400,
+      650,
+      720,
+      680,
+      560,
+      290,
+      40,
+      0
+    ],
+    "psh": [
+      4.8,
+      5.7,
+      6.6,
+      7.6,
+      8.0,
+      8.0,
+      7.1,
+      6.9,
+      6.7,
+      6.1,
+      5.2,
+      4.6
+    ],
+    "precipIn": [
+      0.9,
+      0.7,
+      0.7,
+      0.3,
+      0.2,
+      0.2,
+      2.1,
+      2.3,
+      1.3,
+      0.9,
+      0.6,
+      1.0
+    ],
+    "windCfMult": [
+      0.9,
+      1.0,
+      1.15,
+      1.2,
+      1.2,
+      1.1,
+      1.0,
+      0.95,
+      0.9,
+      0.85,
+      0.85,
+      0.9
+    ]
+  },
+  "growingSeason": {
+    "startDay": 59,
+    "endDay": 330
+  },
+  "ambient": {
+    "Sunlight": true,
+    "Rainfall": true,
+    "Wind": true,
+    "Stream flow": false
+  },
+  "terrain": {
+    "slopePct": 2,
+    "aspect": "south",
+    "stream": null,
+    "existingTrees": [
+      {
+        "x": 0.2,
+        "y": 0.2,
+        "species": "Velvet mesquite"
+      },
+      {
+        "x": 0.8,
+        "y": 0.3,
+        "species": "Blue palo verde"
+      }
+    ],
+    "coordinates": "fractions of the parcel side (0-1), so terrain scales with parcel size"
+  },
+  "hazards": {
+    "riskChanceMult": {
+      "smoke": 2,
+      "drawdown": 1.5
+    },
+    "text": "Wildfire smoke comes twice as often and wells draw down sooner in a dry year (LL-38 risk events)."
+  },
+  "notes": "Approximate NOAA 1991\u20132020 normals for Tucson International Airport (HDD/CDD base 65\u00b0F, NREL solar resource). No creek: a slow seep in the wash gives about 40% of a mountain spring's yield and less in a dry year, and rain pools fill in the monsoon and dry fast. Mesquite deadfall regrows slowly.",
+  "nodes": [
+    {
+      "id": "deadfall-1",
+      "type": "deadfall",
+      "x": 0.22,
+      "y": 0.25,
+      "resource": "Woody biomass",
+      "yieldPerHour": 30,
+      "stock": 500,
+      "maxStock": 500,
+      "regrowPerDay": 1.2,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "id": "seep-1",
+      "type": "spring",
+      "x": 0.85,
+      "y": 0.55,
+      "resource": "Water",
+      "yieldPerHour": 10,
+      "stock": null,
+      "maxStock": null,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "untreated": true,
+      "droughtSensitive": true
+    },
+    {
+      "id": "pools-1",
+      "type": "rain-pools",
+      "x": 0.5,
+      "y": 0.65,
+      "resource": "Water",
+      "yieldPerHour": 10,
+      "stock": 0,
+      "maxStock": 300,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "untreated": true,
+      "rainFill": 200,
+      "evaporatePerDay": 0.35
+    },
+    {
+      "id": "pools-2",
+      "type": "rain-pools",
+      "x": 0.8,
+      "y": 0.75,
+      "resource": "Water",
+      "yieldPerHour": 10,
+      "stock": 0,
+      "maxStock": 150,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "untreated": true,
+      "rainFill": 100,
+      "evaporatePerDay": 0.35
+    },
+    {
+      "id": "greens-1",
+      "type": "wild-greens",
+      "x": 0.35,
+      "y": 0.85,
+      "resource": "Green biomass",
+      "yieldPerHour": 6,
+      "stock": 120,
+      "maxStock": 120,
+      "regrowPerDay": 5,
+      "months": [
+        2,
+        3,
+        4,
+        8,
+        9
+      ],
+      "extra": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "perHour": 1.0
+        }
+      ]
+    },
+    {
+      "id": "berries-1",
+      "type": "berry-thicket",
+      "x": 0.12,
+      "y": 0.75,
+      "resource": "Vegetables fruit fiber herbs",
+      "yieldPerHour": 2,
+      "stock": 0,
+      "maxStock": 100,
+      "regrowPerDay": 2,
+      "months": [
+        7,
+        8
+      ]
+    },
+    {
+      "id": "clay-1",
+      "type": "clay-bank",
+      "x": 0.9,
+      "y": 0.9,
+      "resource": "Soil",
+      "yieldPerHour": 3,
+      "stock": null,
+      "maxStock": null,
+      "regrowPerDay": 0,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    }
+  ]
+}

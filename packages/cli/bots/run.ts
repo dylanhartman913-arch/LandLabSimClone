@@ -27,6 +27,9 @@ export interface PlayOptions {
   site: string;
   difficulty?: Difficulty;
   seed?: number;
+  /** Adults and children (LL-51); default the start's default adults and no children. */
+  household?: number;
+  children?: number;
   days: number;
   catalog?: Catalog;
   /** Game settings on top of the start's, as a new game's init would set them. */
@@ -43,7 +46,7 @@ export interface PlayResult {
 /** Play a start with a bot for `days` days: each morning the bot acts, then the day runs. */
 export function playBot(bot: Bot, o: PlayOptions): PlayResult {
   const catalog = o.catalog ?? defaultCatalog;
-  let state = gameFromStart(catalog, getSite(o.site), typeof o.start === 'string' ? getStart(o.start) : o.start, { difficulty: o.difficulty ?? 'standard', seed: o.seed ?? 1, warmUp: o.settings?.serviceWarmUp === true, tutorialSeasons: o.settings?.tutorialSeasons === true, householdStart: o.settings?.householdStart === true });
+  let state = gameFromStart(catalog, getSite(o.site), typeof o.start === 'string' ? getStart(o.start) : o.start, { difficulty: o.difficulty ?? 'standard', seed: o.seed ?? 1, ...(o.household ? { household: o.household } : {}), ...(o.children ? { children: o.children } : {}), warmUp: o.settings?.serviceWarmUp === true, tutorialSeasons: o.settings?.tutorialSeasons === true, householdStart: o.settings?.householdStart === true });
   if (o.settings) state = { ...state, settings: { ...state.settings, ...o.settings } };
   const ledgers: DayLedger[] = [];
   const events: GameEvent[] = [];

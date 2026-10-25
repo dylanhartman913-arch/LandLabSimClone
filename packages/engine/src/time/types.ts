@@ -380,6 +380,15 @@ export interface FinanceState {
   taxDue: number;
   insured: boolean;
   emergencyDays: number;
+  /** LL-51: a start's mortgage. `payment` is monthly; unpaid installments wait in `arrears` (no penalty). */
+  mortgage?: MortgageState;
+}
+
+export interface MortgageState {
+  balance: number;
+  annualRate: number;
+  payment: number;
+  arrears: number;
 }
 
 export interface FinanceDay {
@@ -394,6 +403,8 @@ export interface FinanceDay {
   covered: boolean;
   debt: number;
   taxDue: number;
+  /** LL-51, only with a mortgage: today's interest, payment, and the balance and arrears after them. */
+  mortgage?: { interest: number; paid: number; balance: number; arrears: number };
 }
 
 export interface RiskThreat {
@@ -479,6 +490,8 @@ export interface GameState {
     id: string;
     difficulty: string;
     household: number;
+    /** LL-51: children on top of the adults (absent: none). */
+    children?: number;
     headline: 'self-reliance' | 'off-grid';
     tutorial: string | null;
   };

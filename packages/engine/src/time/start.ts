@@ -4,6 +4,7 @@ import { stepDay } from './step.ts';
 import { getPlans } from './plans.ts';
 import { newTutorial } from '../tutorial.ts';
 import { QUEST_LINES } from '@homestead/catalog';
+import { newMortgage } from './finance.ts';
 import type { GameState } from './types.ts';
 
 /** Days before the last spring frost that a `spring` start begins. */
@@ -18,6 +19,8 @@ export interface StartOptions {
   difficulty?: Difficulty;
   /** Adults in the household (defaults to the start's default). */
   household?: number;
+  /** LL-51: children on top of the adults (0 to the start's `maxChildren`). They turn on LL-36 household roles. */
+  children?: number;
   seed?: number;
   /** v0.7 (`settings.serviceWarmUp`): a second silent day, fed by the household's own by-products. */
   warmUp?: boolean;
@@ -36,7 +39,12 @@ export function gameFromStart(catalog: Catalog, site: Site, start: Start, opts: 
   const d = start.difficulty[difficulty];
   if (!d) throw new Error(`Start "${start.id}" has no difficulty "${difficulty}"`);
   const people = Math.max(start.household.min, Math.min(start.household.max, opts.household ?? start.household.default));
-  const scale = (people / start.household.default) * d.stockMult;
+  const children = Math.max(0, Math.min(start.household.maxChildren, Math.round(opts.children ?? 0)));
+  if (children && !catalog.householdRoles) throw new Error('Children need the household role rules in the catalog');
+  // Stocks scale with what the household eats: a child needs a share of an adult's supplies (LL-36).
+  const childNeeds = children ? catalog.householdRoles!.roles.child.needs : 0;
+  const scale = ((people + children * childNeeds) / start.household.default) * d.stockMult;
+  if (start.mortgage && !start.settings?.finance) throw new Error(`Start "${start.id}": a mortgage needs settings.finance`);
   const startDay = start.startDay === 'spring' ? springStartDay(site) : start.startDay;
   const stocks: Record<string, number> = {};
   for (const [r, v] of Object.entries(start.stockpile)) stocks[r] = v * scale;
@@ -53,9 +61,14 @@ export function gameFromStart(catalog: Catalog, site: Site, start: Start, opts: 
       peopleLeave: true,
       ...(start.autoGather ? { autoGather: { ...start.autoGather } } : {}),
       ...(start.backstopCapMult ? { backstopCapMult: start.backstopCapMult } : {}),
+      ...start.settings,
+      // Children are people with the LL-36 child role, so they turn household roles on.
+      ...(children ? { householdRoles: true } : {}),
     },
     opts.seed ?? 1,
   );
+  if (start.mortgage)
+    s = { ...s, finance: { debt: 0, taxDue: 0, insured: false, emergencyDays: catalog.finance!.emergencyDays, mortgage: newMortgage(start.mortgage) } };
   const side = parcelSideFt(s.settings);
   const byName = new Map(catalog.systems.map((x) => [x.name, x.id]));
   for (const it of start.instances) {
@@ -63,6 +76,13 @@ export function gameFromStart(catalog: Catalog, site: Site, start: Start, opts: 
     if (!id) throw new Error(`Start "${start.id}": no catalog system named "${it.system}"`);
     const n = it.perPerson ? people : it.count;
     for (let k = 0; k < n; k++) s = placeSystem(catalog, s, id, it.x * side, it.y * side, 'prebuilt').state;
+    // Children join the adults' household (perPerson rows place people).
+    if (it.perPerson)
+      for (let k = 0; k < children; k++) {
+        s = placeSystem(catalog, s, id, it.x * side, it.y * side, 'prebuilt').state;
+        const child = s.instances.at(-1)!;
+        if (child.person) s = { ...s, instances: s.instances.map((i) => (i.id === child.id ? { ...i, person: { ...i.person!, role: 'child' as const } } : i)) };
+      }
   }
   // The kit was already running yesterday: carry over one silent day's direct-use output and
   // group results (so the house's sanitation and the cars' miles count on day 1), nothing else.
@@ -87,7 +107,7 @@ export function gameFromStart(catalog: Catalog, site: Site, start: Start, opts: 
   s = { ...s, stocks: carried, direct: eve.direct, services: eve.services, lastDay: eve.lastDay, ...(opts.warmUp ? { flags: eve.flags } : {}) };
   return {
     ...s,
-    start: { id: start.id, difficulty, household: people, headline: start.headline, tutorial: start.tutorial },
+    start: { id: start.id, difficulty, household: people, ...(children ? { children } : {}), headline: start.headline, tutorial: start.tutorial },
     ...(start.tutorial ? { tutorial: newTutorial(tutorialLineFor(start.tutorial, opts.tutorialSeasons), s.calendar.absDay) } : {}),
   };
 }

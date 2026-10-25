@@ -268,7 +268,9 @@ export function prepareRisks(
       let chance: number, choice: number;
       [chance, rng] = nextRandom(rng);
       [choice, rng] = nextRandom(rng);
-      if (threats.some((t) => t.kind === kind) || chance >= rule.events[kind].chance) continue;
+      // LL-51: a site's hazards scale the chance; the two draws above happen either way, so other kinds are unchanged.
+      const odds = Math.min(1, rule.events[kind].chance * (prev.site.hazards?.riskChanceMult[kind] ?? 1));
+      if (threats.some((t) => t.kind === kind) || chance >= odds) continue;
       let targets: Instance[] = [];
       const active = instances.filter((i) => i.status === 'active' && (i.scale ?? 1) > 0);
       if (kind === 'breakdown')

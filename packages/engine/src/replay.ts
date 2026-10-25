@@ -33,7 +33,7 @@ export interface GameInit {
   seed: number;
   settings: Partial<GameSettings>;
   /** Began from a start config (G15): its id, difficulty, and household. `settings` are applied on top. */
-  start?: { id: string; difficulty: Difficulty; household: number };
+  start?: { id: string; difficulty: Difficulty; household: number; children?: number };
 }
 
 /**
@@ -147,6 +147,7 @@ export function startGame(catalog: Catalog, init: GameInit): GameState {
     const g = gameFromStart(catalog, getSite(init.siteId), getStart(init.start.id), {
       difficulty: init.start.difficulty,
       household: init.start.household,
+      ...(init.start.children ? { children: init.start.children } : {}),
       seed: init.seed,
       warmUp: init.settings.serviceWarmUp === true,
       tutorialSeasons: init.settings.tutorialSeasons === true,

@@ -1,0 +1,130 @@
+{
+  "id": "cabin",
+  "title": "Move into an off-grid cabin",
+  "pitch": "A paid-off log cabin on five wooded acres: a mass heater, a small solar kit, a rain cistern and an outhouse. No grid and no job; make the land and the stockpile last.",
+  "parcelAcres": 5,
+  "startDay": "spring",
+  "household": {
+    "default": 2,
+    "min": 1,
+    "max": 4,
+    "maxChildren": 3
+  },
+  "instances": [
+    {
+      "system": "Log Cabin Kit",
+      "x": 0.5,
+      "y": 0.45
+    },
+    {
+      "system": "Human Being",
+      "x": 0.5,
+      "y": 0.45,
+      "perPerson": true
+    },
+    {
+      "system": "Rocket Mass Heater",
+      "x": 0.545,
+      "y": 0.45
+    },
+    {
+      "system": "Tiny Wood Stove",
+      "x": 0.455,
+      "y": 0.45
+    },
+    {
+      "system": "500W Photovoltaic Panels",
+      "x": 0.42,
+      "y": 0.38
+    },
+    {
+      "system": "500W Photovoltaic Panels",
+      "x": 0.44,
+      "y": 0.38
+    },
+    {
+      "system": "Portable Power Station (1 kWh)",
+      "x": 0.46,
+      "y": 0.38
+    },
+    {
+      "system": "Rainwater Collection System + Cistern (550 Gallons)",
+      "x": 0.5,
+      "y": 0.51
+    },
+    {
+      "system": "Drinking Water Filter",
+      "x": 0.52,
+      "y": 0.51
+    },
+    {
+      "system": "Composting Outhouse",
+      "x": 0.4,
+      "y": 0.55
+    },
+    {
+      "system": "Raised Beds (24 sq ft)",
+      "x": 0.5,
+      "y": 0.6
+    },
+    {
+      "system": "Raised Beds (24 sq ft)",
+      "x": 0.53,
+      "y": 0.6
+    }
+  ],
+  "stockpile": {
+    "Food": 170000,
+    "Drinking water": 30,
+    "Woody biomass": 1500,
+    "Seeds": 8,
+    "Carbon": 150,
+    "Compost": 50,
+    "Soil": 48
+  },
+  "cash": 6000,
+  "autoGather": {
+    "waterDays": 3,
+    "woodWeeks": 3,
+    "foodWeeks": 1
+  },
+  "tutorial": null,
+  "headline": "off-grid",
+  "difficulty": {
+    "gentle": {
+      "label": "Gentle",
+      "blurb": "Slow wellbeing loss, a bigger stockpile.",
+      "wellbeingMult": 0.5,
+      "stockMult": 1.5,
+      "weatherMode": "average"
+    },
+    "standard": {
+      "label": "Standard",
+      "blurb": "An average year, every year.",
+      "wellbeingMult": 1,
+      "stockMult": 1,
+      "weatherMode": "average"
+    },
+    "real": {
+      "label": "Real weather",
+      "blurb": "Droughts, cold snaps, and good years, drawn from the site's history.",
+      "wellbeingMult": 1,
+      "stockMult": 1,
+      "weatherMode": "real"
+    }
+  },
+  "preview": {
+    "kit": [
+      "A 700 sq ft log cabin with a rocket mass heater and a wood cookstove",
+      "Two 500 W panels and a power station",
+      "A 550-gallon rain cistern, a water filter and a composting outhouse",
+      "Two raised beds on five wooded acres"
+    ],
+    "stockpile": [
+      "About 6 weeks of food",
+      "1,500 lbs of firewood",
+      "Seed, sawdust and compost",
+      "$6,000"
+    ]
+  }
+}

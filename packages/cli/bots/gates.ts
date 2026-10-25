@@ -9,7 +9,8 @@ import { NEW_GAME_SETTINGS } from './run.ts';
 import type { Bot } from './types.ts';
 
 export const GATE_SEEDS = [1, 2, 3];
-export const GATE_SITES = ['front-range', 'laramie-wy', 'asheville-nc'];
+/** Every shipped site: the original three, then LL-51's hot-arid, wet-mild and cold-lake sites. */
+export const GATE_SITES = ['front-range', 'laramie-wy', 'asheville-nc', 'tucson-az', 'olympia-wa', 'marquette-mi'];
 
 export interface GateRun {
   site: string;
@@ -29,6 +30,9 @@ export interface Gate {
   makeBot(): Bot;
   /** Settings a new game would start with (default: the start's own). */
   settings?: Partial<GameState['settings']>;
+  /** LL-51: adults and children (default: the start's default adults, no children). */
+  household?: number;
+  children?: number;
   /** One run's verdict; `bot` is the instance that played it. */
   check(r: PlayResult, site: string, catalog: Catalog, bot: Bot): { pass: boolean; detail: string };
   /** Across seeds on one site (default: every seed passes). */
@@ -105,6 +109,75 @@ export const NOVICE_GATE: Gate = {
   },
 };
 export const NOVICE_WARNING_DAYS = 14;
+
+/** Mortgage installments billed but unpaid at the worst point of the run (LL-51). */
+const maxArrears = (r: PlayResult) => Math.max(0, ...r.ledgers.map((l) => l.finance?.mortgage?.arrears ?? 0));
+
+/** LL-51: the off-grid cabin and the mortgaged farm, on every site. */
+const START_GATES: Gate[] = [
+  {
+    id: 'cabin-idle',
+    start: 'cabin',
+    difficulty: 'standard',
+    bot: 'idle',
+    rule: 'no hardship for 28 days; nobody leaves before day 60',
+    days: 60,
+    settings: NEW_GAME_SETTINGS,
+    makeBot: idleBot,
+    check(r) {
+      const h = firstHardship(r);
+      const a = firstDay(r, away);
+      return { pass: h >= 28 && a >= 60, detail: `first hardship ${fmtDay(h)}, first to town ${fmtDay(a)}` };
+    },
+  },
+  {
+    // No job and no tutorial: a novice who only answers alerts buys food until the cash runs out.
+    ...NOVICE_GATE,
+    id: 'cabin-novice',
+    start: 'cabin',
+    rule: 'a novice who acts on Act now stays home through day 240, and every departure is warned 14+ days ahead',
+    check(r, site, catalog, bot) {
+      const v = NOVICE_GATE.check(r, site, catalog, bot);
+      const start = r.ledgers[0]!.absDay;
+      const left = r.events.filter((e) => e.kind === 'went-to-town').map((e) => e.absDay - start);
+      return { pass: (left.length ? Math.min(...left) : Infinity) >= 240 && !v.detail.includes('unwarned'), detail: v.detail };
+    },
+  },
+  {
+    id: 'farm-idle',
+    start: 'farm',
+    difficulty: 'standard',
+    bot: 'idle',
+    rule: 'the job covers the mortgage: no installment missed, nobody leaves, wellbeing ≥ 70 all year',
+    days: 365,
+    settings: NEW_GAME_SETTINGS,
+    makeBot: idleBot,
+    check(r) {
+      const a = firstDay(r, away);
+      const low = Math.min(...r.ledgers.map((l) => l.wellbeing ?? 0));
+      const arrears = maxArrears(r);
+      return { pass: !Number.isFinite(a) && arrears < 0.01 && low >= 70, detail: `first to town ${fmtDay(a)}, most behind on the mortgage $${arrears.toFixed(0)}, lowest wellbeing ${low.toFixed(0)}, cash at the end $${r.state.cash.toFixed(0)}` };
+    },
+  },
+  {
+    id: 'farm-family',
+    start: 'farm',
+    difficulty: 'real',
+    bot: 'idle',
+    household: 2,
+    children: 2,
+    rule: 'two adults and two children (LL-36 roles) get through year 1 at home with no installment missed',
+    days: 365,
+    settings: NEW_GAME_SETTINGS,
+    makeBot: idleBot,
+    check(r) {
+      const a = firstDay(r, away);
+      const arrears = maxArrears(r);
+      const kids = r.state.instances.filter((i) => i.person?.role === 'child').length;
+      return { pass: kids === 2 && !Number.isFinite(a) && arrears < 0.01, detail: `${kids} children, first to town ${fmtDay(a)}, most behind on the mortgage $${arrears.toFixed(0)}` };
+    },
+  },
+];
 
 /** The pacing gates (playability roadmap, G16). CI fails if any misses. */
 export const GATES: Gate[] = [
@@ -183,6 +256,7 @@ export const GATES: Gate[] = [
     },
   },
   NOVICE_GATE,
+  ...START_GATES,
 ];
 
 export interface GateResult {
@@ -202,7 +276,7 @@ export function runGates(opts: { gates?: Gate[]; sites?: string[]; seeds?: numbe
       for (const seed of opts.seeds ?? GATE_SEEDS) {
         const bot = gate.makeBot();
         const settings = { ...gate.settings, ...opts.settings };
-        const r = playBot(bot, { start: gate.start, site, difficulty: gate.difficulty, seed, days: gate.days, catalog, ...(Object.keys(settings).length ? { settings } : {}) });
+        const r = playBot(bot, { start: gate.start, site, difficulty: gate.difficulty, seed, days: gate.days, catalog, household: gate.household, children: gate.children, ...(Object.keys(settings).length ? { settings } : {}) });
         runs.push({ site, seed, ...gate.check(r, site, catalog, bot) });
       }
       out.push({ gate, site, runs, pass: gate.combine ? gate.combine(runs) : runs.every((x) => x.pass) });
