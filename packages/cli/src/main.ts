@@ -2,7 +2,7 @@ import { ENGINE_VERSION } from '@homestead/engine';
 import { DEFAULT_SITE_ID, getSite } from '@homestead/catalog';
 import { numFlag, parseArgs } from './args.ts';
 import { runBalance } from './commands/balance.ts';
-import { runCompare } from './commands/compare.ts';
+import { compareCi, PROFILES, runCompare } from './commands/compare.ts';
 import { runCoverageCommand } from './commands/coverage.ts';
 import { runMonteCarlo } from './commands/montecarlo.ts';
 import { runPacing } from './commands/pacing.ts';
@@ -20,8 +20,10 @@ Usage:
   npm run sim -- pacing      (the playtest bots' pacing gates; exits 1 if any misses)
   npm run sim -- coverage [--md report.md]
                  (LL-49 alert coverage: exits 1 if a cliff is under-warned or never reached)
-  npm run sim -- compare [--md report.md] [--json runs.json] [--days N]
+  npm run sim -- compare [--md report.md] [--json runs.json] [--days N] [--profile new-game|experimental]
                  (LL-10 controlled first-year strategy comparisons)
+  npm run sim -- compare --ci [--update]
+                 (LL-50: both profiles against the committed reports, headlines and notes)
 
 Monte Carlo runs seeds N, N+1, … (default 1) in real weather; the app's Monte Carlo
 panel shows the same numbers for the same design file, site, years, and seeds.
@@ -42,11 +44,19 @@ function main(argv: string[]): number {
       return r.pass ? 0 : 1;
     }
     case 'compare': {
+      if (args.flags.ci) {
+        const r = compareCi({ update: args.flags.update === true });
+        console.log(r.text);
+        return r.pass ? 0 : 1;
+      }
+      const profile = typeof args.flags.profile === 'string' ? PROFILES.find((p) => p.id === args.flags.profile) : undefined;
+      if (args.flags.profile !== undefined && !profile) throw new Error(`--profile must be one of ${PROFILES.map((p) => p.id).join(', ')}`);
       console.log(
         runCompare({
           md: typeof args.flags.md === 'string' ? args.flags.md : undefined,
           json: typeof args.flags.json === 'string' ? args.flags.json : undefined,
           days: numFlag(args.flags, 'days', 365),
+          profile,
         }),
       );
       return 0;

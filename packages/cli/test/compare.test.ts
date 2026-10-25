@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { catalog } from '@homestead/catalog';
 import { gameDigest } from '@homestead/engine';
-import { COMPARISONS, NEW_GAME_SETTINGS, firstColdDay, measure, runComparisons, winterRescue } from '../bots/compare.ts';
+import { readFileSync } from 'node:fs';
+import { COMPARISONS, NEW_GAME_SETTINGS, firstColdDay, measure, runComparisons, winterRescue, type RunMetrics } from '../bots/compare.ts';
+import { EXPERIMENTAL_MECHANICS } from '../bots/run.ts';
+import { HEADLINES_PATH, NOTES_PATH, PROFILES, headlineDigest, headlines, noteFor } from '../src/commands/compare.ts';
 import { playBot, tutorialFollowerBot } from '../bots/index.ts';
 
 const variant = (c: string, v: string) => COMPARISONS.find((x) => x.id === c)!.variants.find((x) => x.id === v)!;
@@ -64,6 +67,42 @@ describe('Phase 8 first-year acceptance', () => {
         if (id !== 'rescue') expect(r.metrics.minWellbeing).toBeGreaterThanOrEqual(60);
         if (id === 'tutorial') expect(r.metrics.subsidy).toBe(0);
       }
+    }
+  });
+});
+
+describe('LL-50: strategy comparisons in CI', () => {
+  it('the committed headlines have a finished note, and their digest matches their content', () => {
+    const file = JSON.parse(readFileSync(HEADLINES_PATH, 'utf8'));
+    expect(headlineDigest(file.headlines)).toBe(file.digest);
+    expect(Object.keys(file.headlines)).toEqual(PROFILES.map((p) => p.id));
+    const note = noteFor(readFileSync(NOTES_PATH, 'utf8'), file.digest);
+    expect(note).not.toBeNull();
+    expect(note).not.toMatch(/TODO/);
+  });
+
+  it('a headline is what a player would notice: a moved cash total changes it, a gift price does not', () => {
+    const [r] = runComparisons({ comparisons: [COMPARISONS.find((c) => c.id === 'stacking')!], sites: ['asheville-nc'], seeds: [], days: 30 });
+    const h = headlines([r!]);
+    expect(Object.keys(h)).toEqual(['stacking/one/standard', 'stacking/three/standard']);
+    const bump = (dx: Partial<RunMetrics>) => headlines([{ ...r!, variants: r!.variants.map((v) => ({ ...v, runs: v.runs.map((x) => ({ ...x, metrics: { ...x.metrics, ...dx } })) })) }]);
+    expect(bump({ subsidy: 99 })).toEqual(h);
+    expect(bump({ cashEnd: r!.variants[0]!.runs[0]!.metrics.cashEnd + 500 })['stacking/one/standard']).not.toBe(h['stacking/one/standard']);
+    expect(bump({ departures: 1 })['stacking/one/standard']).toMatch(/^left 1\/1/);
+  });
+
+  it('a note is found by the digest in its heading, not by a mention in another note', () => {
+    const notes = '# Notes\n\n## abc123 — engine 1\n\nWhy: x\n\n## def456 — engine 2\n\nWhy: TODO, see abc999\n';
+    expect(noteFor(notes, 'abc123')).toMatch(/Why: x/);
+    expect(noteFor(notes, 'def456')).toMatch(/TODO/);
+    expect(noteFor(notes, 'abc999')).toBeNull();
+  });
+
+  it('the experimental profile turns on every mechanic a new game leaves off', () => {
+    const exp = PROFILES.find((p) => p.id === 'experimental')!;
+    for (const k of EXPERIMENTAL_MECHANICS) {
+      expect(exp.settings[k]).toBe(true);
+      expect((NEW_GAME_SETTINGS as Record<string, unknown>)[k]).toBeUndefined();
     }
   });
 });

@@ -1372,3 +1372,13 @@ Empty shelters request no heat/cooling. Closing an unassigned shelter supplies n
 **Validation:** **578/578** unit tests (3 new: the sweep, a hidden-runway fixture that fails, and Comfort-only warnings that don't count). Typecheck and lint pass. No UI change, so no browser run.
 
 **Limits:** greenfield only; stress starts are edited greenfield kits; water and food leads sit right at the 7-day threshold.
+
+## October 25, 2026 — Phase 11, LL-50 strategy comparisons in CI
+
+**Shipped:** no simulation change (engine stays **0.25.0**). `npm run test:comparisons` (`sim compare --ci`) runs the LL-10 suite under two profiles, new-game rules and new-game rules with all twelve experimental mechanics on, so a change to a gated mechanic shows up even though a new game leaves it off. It fails on a stale report (`docs/PHASE_4_COMPARISONS.md`, new `docs/PHASE_4_COMPARISONS_EXPERIMENTAL.md`), on a headline that differs from `docs/comparisons/headlines.json` (departures, median short days, lowest wellbeing, end cash to $100, home-grown share to 1%), and when the headlines' digest has no finished note in `docs/COMPARISON_NOTES.md`. `--update` regenerates everything and opens a `Why: TODO` stub listing the moved headlines. New nightly workflow `.github/workflows/nightly.yml` (07:17 UTC and manual) uploads the regenerated files on failure. `runComparisons` takes settings; `EXPERIMENTAL_MECHANICS` lives in `bots/run.ts`. Details: `docs/LL_50.md`.
+
+**Measurement:** both profiles in about 15 s. The first run caught real drift: the committed report's tutorial gifts were $3,248, now $3,273 after Phase 10 catalog prices; no new-game headline moved. Experimental profile: everyone stays home except Laramie's paid crew for the late heater (15 days in town); home-grown food 12–13% vs 19–22%.
+
+**Validation:** **582/582** unit tests (4 new). Typecheck and lint pass. Tampering with one committed headline fails the check with the diff; restoring it passes. No UI change, so no browser run.
+
+**Limits:** medians hide a single bad seed except through the departure count; the experimental profile turns every gate on at once, so it says that something moved, not which gate. The nightly job reports; it does not commit.

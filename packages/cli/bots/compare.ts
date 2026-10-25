@@ -371,7 +371,7 @@ export interface ComparisonResult {
 }
 
 /** Run comparisons in Standard (one run per site) and real weather (each seed per site), start greenfield, 2 adults. */
-export function runComparisons(o: { comparisons?: Comparison[]; sites?: string[]; seeds?: number[]; days?: number; catalog?: Catalog } = {}): ComparisonResult[] {
+export function runComparisons(o: { comparisons?: Comparison[]; sites?: string[]; seeds?: number[]; days?: number; catalog?: Catalog; settings?: Partial<GameState['settings']> } = {}): ComparisonResult[] {
   const catalog = o.catalog ?? defaultCatalog;
   const days = o.days ?? COMPARE_DAYS;
   const cells: { difficulty: Difficulty; seed: number }[] = [
@@ -384,7 +384,7 @@ export function runComparisons(o: { comparisons?: Comparison[]; sites?: string[]
       for (const cell of cells) {
         let baseline: PlayResult | null = null;
         comparison.variants.forEach((variant, k) => {
-          const r = playBot(variant.bot(baseline), { start: 'greenfield', site, difficulty: cell.difficulty, seed: cell.seed, days, catalog, settings: NEW_GAME_SETTINGS });
+          const r = playBot(variant.bot(baseline), { start: 'greenfield', site, difficulty: cell.difficulty, seed: cell.seed, days, catalog, settings: o.settings ?? NEW_GAME_SETTINGS });
           baseline ??= r;
           const expected = baseline.actions.filter((a) => a.kind !== 'ui' && a.kind !== 'tutorial').length;
           const got = r.actions.filter((a) => a.kind !== 'ui' && a.kind !== 'tutorial').length;

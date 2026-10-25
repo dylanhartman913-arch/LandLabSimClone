@@ -24,7 +24,8 @@
     "catalog:check": "tsx packages/catalog/src/cli/check.ts",
     "catalog:audit": "tsx packages/cli/src/audit.ts",
     "sim": "tsx packages/cli/src/main.ts",
-    "test:pacing": "tsx packages/cli/src/main.ts pacing"
+    "test:pacing": "tsx packages/cli/src/main.ts pacing",
+    "test:comparisons": "tsx packages/cli/src/main.ts compare --ci"
   },
   "engines": {
     "node": ">=20"

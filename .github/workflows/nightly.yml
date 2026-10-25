@@ -1,0 +1,36 @@
+name: Nightly comparisons
+
+# LL-50: the LL-10 strategy comparisons, under new-game rules and with every experimental mechanic on.
+# Fails when a committed report is stale or a headline outcome moved without a note in docs/COMPARISON_NOTES.md.
+on:
+  schedule:
+    - cron: '17 7 * * *'
+  workflow_dispatch:
+
+jobs:
+  comparisons:
+    name: Strategy comparisons
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Comparisons against committed reports, headlines and notes
+        run: npm run test:comparisons
+      - name: Regenerate for review
+        if: failure()
+        run: npm run test:comparisons -- --update
+      - name: Upload regenerated reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: comparisons
+          path: |
+            docs/PHASE_4_COMPARISONS.md
+            docs/PHASE_4_COMPARISONS_EXPERIMENTAL.md
+            docs/comparisons/headlines.json
+            docs/COMPARISON_NOTES.md

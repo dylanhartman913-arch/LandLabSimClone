@@ -5,6 +5,22 @@ import type { Bot } from './types.ts';
 /** What a new game started in the app sets (NewGame.tsx): the same rules a player gets today. */
 export const NEW_GAME_SETTINGS = { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, employmentPriority: true, siteCrewRates: true, cashFloor: true, serviceWarmUp: true, tutorialSeasons: true, householdStart: true };
 
+/** The opt-in Phase 9–10 rules under Settings → Experimental mechanics (Settings.tsx), all off in a new game. */
+export const EXPERIMENTAL_MECHANICS = [
+  'wearAndRepair',
+  'sellingAndTrade',
+  'foodPreservation',
+  'livestockLifecycle',
+  'shelterOccupancy',
+  'storagePools',
+  'toolGathering',
+  'soilFertility',
+  'householdRoles',
+  'finance',
+  'riskEvents',
+  'transportAccess',
+] as const;
+
 export interface PlayOptions {
   /** A start id, or a start definition (a stress fixture's edited kit or stockpile). */
   start: string | Start;
