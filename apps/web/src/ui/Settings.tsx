@@ -116,6 +116,7 @@ export function Settings() {
           'livestockLifecycle',
           'shelterOccupancy',
           'storagePools',
+          'toolGathering',
         ] as const
       ).map((key) => (
         <label key={key} className="check">
@@ -132,6 +133,7 @@ export function Settings() {
               livestockLifecycle: 'Livestock lifecycle',
               shelterOccupancy: 'Shelter occupancy',
               storagePools: 'Separate storage and winter water',
+              toolGathering: 'Tools multiply gathering',
             }[key]
           }
         </label>

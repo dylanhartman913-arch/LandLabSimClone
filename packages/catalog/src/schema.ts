@@ -319,7 +319,17 @@ export const WinterStorageRuleSchema = z.object({
 });
 export type WinterStorageRule = z.infer<typeof WinterStorageRuleSchema>;
 
+export const ToolRuleSchema = z.object({
+  systemId: z.string(),
+  job: z.enum(['gather-wood', 'gather-food', 'gather-soil', 'gather-carbon', 'gather-water']),
+  resource: z.string(), multiplier: z.number().min(1),
+  fuel: z.object({ resource: z.string(), perHour: z.number().positive() }).optional(),
+  note: z.string(),
+});
+export type ToolRule = z.infer<typeof ToolRuleSchema>;
+
 export const CatalogSchema = z.object({
+  toolRules: z.array(ToolRuleSchema).optional(),
   winterStorage: WinterStorageRuleSchema.optional(),
   preservationRecipes: z.array(PreservationRecipeSchema).optional(),
   livestockRules: z.array(LivestockRuleSchema).optional(),
@@ -344,6 +354,7 @@ export type Catalog = z.infer<typeof CatalogSchema>;
 export const OverridesSchema = z
   .object({
     version: z.literal(1),
+    toolRules: z.array(ToolRuleSchema).optional(),
     winterStorage: WinterStorageRuleSchema.optional(),
     preservationRecipes: z.array(PreservationRecipeSchema).optional(),
     livestockRules: z.array(LivestockRuleSchema).optional(),

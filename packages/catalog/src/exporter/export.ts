@@ -828,6 +828,15 @@ export function exportCatalog(input: ExportInput): ExportResult {
       if (!rawFlows.some((f) => f.systemId === t.systemId && f.direction === 'out' && f.resource === 'Water storage'))
         problems.push(`Storage rule: tank ${t.systemId} provides no Water storage`);
   }
+  const tools = overridesParsed.data.toolRules ?? [];
+  if (new Set(tools.map((t) => t.systemId)).size !== tools.length) problems.push('Tool rule: duplicate system rules');
+  for (const t of tools) {
+    if (!rawSystems.some((s) => s.id === t.systemId)) problems.push(`Tool rule: unknown system ${t.systemId}`);
+    if (!rawFlows.some((f) => f.systemId === t.systemId && f.direction === 'out' && f.resource === t.resource))
+      problems.push(`Tool rule: ${t.systemId} does not make ${t.resource}`);
+    if (t.fuel && !rawFlows.some((f) => f.systemId === t.systemId && f.direction === 'in' && f.resource === t.fuel!.resource))
+      problems.push(`Tool rule: ${t.systemId} does not use ${t.fuel.resource}`);
+  }
   const merged = applyEngineFields(rawSystems, rawResources, rawFlows, overridesParsed.data, problems);
   for (const m of storage?.feed.members ?? []) {
     const r = merged.resources.find((x) => x.name === m.resource);
@@ -839,6 +848,7 @@ export function exportCatalog(input: ExportInput): ExportResult {
 
   const source = { file: input.xlsxName, sha256: sha256(input.xlsx) };
   const catalog = CatalogSchema.parse({
+    toolRules: overridesParsed.data.toolRules,
     winterStorage: overridesParsed.data.winterStorage,
     preservationRecipes: overridesParsed.data.preservationRecipes,
     livestockRules: overridesParsed.data.livestockRules,

@@ -1,5 +1,6 @@
 import { ShelterOccupancy } from './ShelterOccupancy.tsx';
 import { WinterWater } from './WinterWater.tsx';
+import { ToolGathering } from './ToolGathering.tsx';
 import { useEffect, useRef, useState } from 'react';
 import {
   maintenanceView,
@@ -132,6 +133,7 @@ export function SystemCard() {
           <InstanceMechanics key={instanceId} id={instanceId} />
           <ShelterOccupancy key={`home-${instanceId}`} id={instanceId} />
           <WinterWater key={`winter-${instanceId}`} id={instanceId} />
+          <ToolGathering key={`tool-${instanceId}`} id={instanceId} />
         </>
       )}
       {inst ? (

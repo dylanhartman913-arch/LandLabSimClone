@@ -4,6 +4,7 @@ import { seedState } from './rng.ts';
 import { preserveFood } from './preservation.ts';
 import { wearInstance } from './maintenance.ts';
 import { settleTrades } from './trade.ts';
+import { toolCapacity, toolMultiplier, toolShare } from './tools.ts';
 import { advanceWinter, frozenCapacity, roomFor, statePools, storagePools, type StoragePool } from './storage.ts';
 import { CONTRACTOR_HOURS_PER_DAY, recoverResidents } from './recovery.ts';
 import { NEED_KEYS, type Catalog, type NeedKey, type Resource } from '@homestead/catalog';
@@ -333,13 +334,26 @@ function stockAt(d: Day, id: string): number {
 function hoursFor(d: Day, job: JobId, resource: string, amount: number): number {
   let left = amount;
   let hours = 0;
+  // LL-34: plan with the tool's boost, as far as tool hours and fuel stretch.
+  const tool = toolCapacity(d.catalog, d.prev, d.instances, job, resource);
+  let toolLeft = tool?.hours ?? 0;
+  let fuel = tool?.rule.fuel ? (d.stocks[tool.rule.fuel.resource] ?? 0) : Infinity;
   for (const x of nodesFor(d, job, resource)) {
     if (left <= EPS) break;
     const primary = x.n.resource === resource;
     const avail = primary ? stockAt(d, x.n.id) : (stockAt(d, x.n.id) / x.n.yieldPerHour) * x.rate;
     const take = Math.min(left, avail);
     if (take <= EPS) continue;
-    hours += take / x.eff;
+    let eff = x.eff;
+    if (tool && primary) {
+      const work = take / x.rate;
+      const share = toolShare(tool, toolLeft, fuel, work);
+      eff *= toolMultiplier(tool, share);
+      const used = (take / (x.rate * toolMultiplier(tool, share))) * share;
+      toolLeft -= used;
+      if (tool.rule.fuel) fuel -= used * tool.rule.fuel.perHour;
+    }
+    hours += take / eff;
     left -= take;
   }
   return hours;
@@ -375,11 +389,14 @@ const RESTOCK_DAYS = 2;
 /** …and each auto-gather job takes at most this share of the day's labor. */
 export const MAX_GATHER_SHARE = 0.4;
 
+/** LL-34: days of use an owned tool keeps on hand when no auto-gather target covers its resource. */
+const TOOL_STOCK_DAYS = 7;
+
 /** Auto-gather rules (G14): what each gathering job should fetch today, and the hours it takes. */
 function planGathering(d: Day): Map<JobId, GatherPlan> {
   const out = new Map<JobId, GatherPlan>();
-  const ag = d.prev.settings.autoGather;
-  if (!ag || !d.prev.site.nodes.length) return out;
+  const ag = d.prev.settings.autoGather ?? {};
+  if ((!d.prev.settings.autoGather && !d.prev.settings.toolGathering) || !d.prev.site.nodes.length) return out;
   const req = (r: string) => (d.byResource.get(r) ?? []).reduce((a, q) => a + q.amount, 0);
   const stock = (r: string) => d.stocks[r] ?? 0;
   if ((ag.waterDays ?? 0) > 0) {
@@ -434,6 +451,19 @@ function planGathering(d: Day): Map<JobId, GatherPlan> {
     const h = lbs > EPS ? hoursFor(d, 'gather-food', veg.name, lbs) : 0;
     if (h > EPS) out.set('gather-food', { want: { [veg.name]: lbs }, boil: 0, hours: h });
   }
+  // LL-34: an owned tool works for what the household uses (about a week ahead) when no target covers it.
+  if (d.prev.settings.toolGathering)
+    for (const rule of d.catalog.toolRules ?? []) {
+      if (out.get(rule.job)?.want[rule.resource] !== undefined) continue;
+      if (rule.job === 'gather-wood' && (ag.woodWeeks ?? 0) > 0) continue;
+      if (!toolCapacity(d.catalog, d.prev, d.instances, rule.job, rule.resource)) continue;
+      const daily = req(rule.resource) + (d.boostReq.get(rule.resource) ?? 0);
+      const gap = Math.min(RESTOCK_DAYS * daily, Math.max(0, TOOL_STOCK_DAYS * daily - stock(rule.resource)));
+      const h = gap > EPS ? hoursFor(d, rule.job, rule.resource, gap) : 0;
+      if (h <= EPS) continue;
+      const prior = out.get(rule.job);
+      out.set(rule.job, prior ? { ...prior, want: { ...prior.want, [rule.resource]: gap }, hours: prior.hours + h } : { want: { [rule.resource]: gap }, boil: 0, hours: h });
+    }
   return out;
 }
 
@@ -448,19 +478,40 @@ function gather(d: Day, job: JobId, hours: number, plan: GatherPlan | undefined)
   const resources = wants.length ? wants.map(([r]) => r) : [...new Set(d.prev.site.nodes.filter((n) => NODE_JOB[n.type] === job).map((n) => n.resource))];
   for (const resource of resources) {
     let want = plan ? (plan.want[resource] ?? 0) : Infinity;
+    // LL-34: the household's tools for this resource, shared across the day's nodes.
+    const tool = toolCapacity(d.catalog, d.prev, d.instances, job, resource);
+    let toolLeft = tool?.hours ?? 0;
+    const fuelRes = tool?.rule.fuel?.resource;
     for (const x of nodesFor(d, job, resource)) {
       if (left <= EPS || want <= EPS) break;
+      const primary = x.n.resource === resource;
+      const share =
+        tool && primary ? toolShare(tool, toolLeft, fuelRes ? (d.stocks[fuelRes] ?? 0) : Infinity, left / (1 + x.walk)) : 0;
+      const mult = tool && share > 0 ? toolMultiplier(tool, share) : 1;
+      const eff = x.eff * mult;
       // Working the node yields its main resource; by-products (food from wild greens) come along.
-      const primaryEff = x.n.resource === resource ? x.eff : nodeYield(x.n, d.prev.yearWeather, d.prev.settings.weatherMode) / (1 + x.walk);
+      const primaryEff = primary ? eff : nodeYield(x.n, d.prev.yearWeather, d.prev.settings.weatherMode) / (1 + x.walk);
       const stock = stockAt(d, x.n.id);
       if (stock <= EPS) continue;
-      const h = Math.min(left, want / x.eff, stock / primaryEff);
+      const h = Math.min(left, want / eff, stock / primaryEff);
       const amount = h * primaryEff;
       if (amount <= EPS) continue;
       left -= h;
-      want -= h * x.eff;
+      want -= h * eff;
       if (Number.isFinite(stock)) (d.nodeStock ??= {})[x.n.id] = stock - amount;
       const walkHours = (h * x.walk) / (1 + x.walk);
+      let toolFields: Partial<GatherRecord> = {};
+      if (tool && share > 0) {
+        const toolHours = (h / (1 + x.walk)) * share;
+        toolLeft -= toolHours;
+        let fuel = 0;
+        if (fuelRes) {
+          fuel = Math.min(d.stocks[fuelRes] ?? 0, toolHours * tool.rule.fuel!.perHour);
+          d.stocks[fuelRes] = (d.stocks[fuelRes] ?? 0) - fuel;
+          d.res[fuelRes]!.consumed += fuel;
+        }
+        toolFields = { toolIds: tool.ids, toolHours, toolExtra: amount - amount / mult, ...(fuelRes ? { fuel } : {}) };
+      }
       const land = (r: string, units: number) => {
         d.stocks[r] = (d.stocks[r] ?? 0) + units;
         const led = d.res[r];
@@ -478,6 +529,7 @@ function gather(d: Day, job: JobId, hours: number, plan: GatherPlan | undefined)
           amount: units,
           hours: h,
           walkHours,
+          ...(r === x.n.resource ? toolFields : {}),
         });
       };
       land(x.n.resource, amount);

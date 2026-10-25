@@ -17,6 +17,8 @@ export interface GameSettings {
   shelterOccupancy?: boolean;
   /** LL-33: separate raw/drinking water pools, feed storage, and outdoor tanks that freeze. */
   storagePools?: boolean;
+  /** LL-34: tools multiply gathering at the land's nodes instead of producing on their own. */
+  toolGathering?: boolean;
   parcelAcres: number;
   startingCash: number;
   weatherMode: WeatherMode;
@@ -306,6 +308,11 @@ export interface GatherRecord {
   /** Hours at the node plus the walk there and back. */
   hours: number;
   walkHours: number;
+  /** LL-34: tools that worked this haul, their hours at the node, the extra yield, and fuel burned. */
+  toolIds?: string[];
+  toolHours?: number;
+  toolExtra?: number;
+  fuel?: number;
 }
 
 /** A market purchase waiting for the next trip (G12). */

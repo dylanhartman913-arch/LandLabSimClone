@@ -1,4 +1,31 @@
 {
+  "toolRules": [
+    {
+      "systemId": "S151",
+      "job": "gather-wood",
+      "resource": "Woody biomass",
+      "multiplier": 1.7,
+      "fuel": {
+        "resource": "Gasoline",
+        "perHour": 0.091
+      },
+      "note": "LL-34 experimental balance from the catalog row: 150 lb of wood per 2.2 h is about 68 lb/h, 1.7× the 40 lb/h of hand-gathered deadfall; 0.2 gal gasoline per 2.2 h is 0.091 gal per working hour."
+    },
+    {
+      "systemId": "S150",
+      "job": "gather-food",
+      "resource": "Green biomass",
+      "multiplier": 2.4,
+      "note": "LL-34 experimental balance from the catalog row: 30 lb of green biomass per 2.1 h is about 14 lb/h, 2.4× the 6 lb/h of hand-cut wild greens. Applies to green biomass only, not foraged food."
+    },
+    {
+      "systemId": "S057",
+      "job": "gather-soil",
+      "resource": "Soil",
+      "multiplier": 2,
+      "note": "LL-34 experimental balance. The catalog row (20 lb per 0.5 h) would imply 13× a 3 lb/h clay bank, but a broadfork loosens beds rather than digging clay, so the boost is capped at 2×."
+    }
+  ],
   "winterStorage": {
     "feed": {
       "capacityResource": "Storage space",

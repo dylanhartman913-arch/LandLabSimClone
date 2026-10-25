@@ -64,3 +64,8 @@ Optional `shelterThermal` maps preserve yesterday’s routed thermal output by h
 ## Phase 9 storage pools and winter water (LL-33, engine 0.13.0)
 
 `storagePools` remains explicitly opt-in; startup and continuation migrations do not enable it. Logged `winterize` actions set the optional instance `winter` field (`protection`, `setupHours`, `frost`, and `frozen` gallons of locked ice) and charge cash at once. Daily ledgers gain an optional `winter` record per affected tank and an optional `frozen` term on the Water resource. A settings action that turns the gate off returns all locked ice to the Water stock and clears frost; protections are retained. The `winterStorage` rule comes from `data/catalog_overrides.json`; the workbook and its hash are unchanged. Legacy digest fixtures pass without this setting.
+
+## Phase 9 tools multiply gathering (LL-34, engine 0.14.0)
+
+`toolGathering` remains explicitly opt-in; startup and continuation migrations do not enable it, and it is toggled only by a logged settings action. No new instance or state fields: tool use is recorded on the existing daily `gathered` records as optional `toolIds`, `toolHours`, `toolExtra` and `fuel`, and gasoline burned is in the Gasoline ledger's `consumed`. The `toolRules` come from `data/catalog_overrides.json`; the workbook and its hash are unchanged. Legacy digest fixtures pass without this setting.
+

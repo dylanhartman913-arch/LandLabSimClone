@@ -5,6 +5,7 @@ import { conditionOutput } from './maintenance.ts';
 import { getSystem } from '../catalog-index.ts';
 import { parcelSideFt } from './game.ts';
 import { getPlans } from './plans.ts';
+import { toolRule } from './tools.ts';
 import type { GameState, Instance } from './types.ts';
 
 /** How an instance's position changes its flows. */
@@ -145,6 +146,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     !state.settings.shelterOccupancy &&
     !state.settings.wearAndRepair &&
     !state.settings.livestockLifecycle &&
+    !state.settings.toolGathering &&
     hit &&
     sameLayout(hit.sig, state)
   )
@@ -392,6 +394,22 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     }
   }
 
+  // LL-34: a tool no longer produces on its own. It boosts gathering at the nodes, so its
+  // recurring labor falls to catalog upkeep and its fuel is burned per working hour instead.
+  if (state.settings.toolGathering) {
+    for (const inst of active) {
+      const rule = toolRule(catalog, inst.systemId);
+      if (!rule) continue;
+      const s = get(inst.id);
+      const plan = plans.bySystem.get(inst.systemId)!;
+      const labor = plan.inputs.find((f) => f.resource === 'Labor');
+      s.outMult[rule.resource] = 0;
+      if (labor && labor.weekly > 0) s.inMult.Labor = (s.inMult.Labor ?? 1) * Math.min(1, sysOf(inst).weeklyUpkeepHrs / labor.weekly);
+      if (rule.fuel) s.inMult[rule.fuel.resource] = 0;
+      s.notes.push(`Tool: multiplies ${rule.resource} gathering at the land's nodes ×${rule.multiplier}; no standalone output.`);
+    }
+  }
+
   // Delivery (G11): heat and cooling only count when they reach a shelter.
   const resByName = new Map(catalog.resources.map((r) => [r.name, r]));
   const shelters = active.filter((i) =>
@@ -449,7 +467,12 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     ]);
     map.set(inst.id, s);
   }
-  if (!state.settings.shelterOccupancy && !state.settings.wearAndRepair && !state.settings.livestockLifecycle)
+  if (
+    !state.settings.shelterOccupancy &&
+    !state.settings.wearAndRepair &&
+    !state.settings.livestockLifecycle &&
+    !state.settings.toolGathering
+  )
     cache.set(catalog, { sig: layoutOf(state), map });
   return map;
 }

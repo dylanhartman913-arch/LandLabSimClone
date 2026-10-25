@@ -1,3 +1,4 @@
+import { toolRule } from '../time/tools.ts';
 import type { Catalog, InputRole } from '@homestead/catalog';
 import { getSystem, indexCatalog } from '../catalog-index.ts';
 import { explained, type Explained } from '../provenance.ts';
@@ -88,7 +89,7 @@ export function systemCard(
   const inputs: CardInput[] = flows.inputs.map((v) => {
     const role = v.flow.inputRole ?? 'required';
     const inputFactor =
-      inst && state.settings.shelterOccupancy && v.flow.period !== 'One-time'
+      inst && (state.settings.shelterOccupancy || (state.settings.toolGathering && toolRule(catalog, inst.systemId))) && v.flow.period !== 'One-time'
         ? (computeSpatial(catalog, state).get(inst.id)?.inMult[v.resource] ?? 1)
         : 1;
     const needed = v.qty.value * inputFactor;
@@ -234,6 +235,13 @@ export function systemCard(
       formula += ' × realized operation × storage output factor';
       refs.operating = group.sat;
       refs.storageOutput = factor;
+    }
+    const tool = inst && state.settings.toolGathering ? toolRule(catalog, inst.systemId) : null;
+    if (tool && tool.resource === v.resource) {
+      // LL-34: the tool's output now arrives through gathering at the nodes (see Tool use).
+      produced = 0;
+      formula = 'no standalone output: the tool multiplies gathering at the nodes';
+      refs = { nominal: v.qty.value };
     }
     if (inst && group && (state.settings.livestockLifecycle || inst.animal) && livestockRule(catalog, inst)) {
       const factor = computeSpatial(catalog, state).get(inst.id)?.outMult[v.resource] ?? 1;
