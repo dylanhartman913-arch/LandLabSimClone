@@ -1,6 +1,10 @@
+import { fodderPlan } from './fodder.ts';
+import { springNode, waterSpatial } from './water.ts';
+import { riskOutputFactor } from './risks.ts';
 import { shelterAssignments, CLOSED_SHELTER_UPKEEP } from './occupancy.ts';
 import type { AdjacencyRule, Catalog, System } from '@homestead/catalog';
 import { animalOutput } from './livestock.ts';
+import { paddockFactor, paddockHost, paddockWork } from './husbandry.ts';
 import { conditionOutput } from './maintenance.ts';
 import { getSystem } from '../catalog-index.ts';
 import { parcelSideFt } from './game.ts';
@@ -147,12 +151,18 @@ function layoutOf(state: GameState): LayoutSig {
 export function computeSpatial(catalog: Catalog, state: GameState): Map<string, InstanceSpatial> {
   const hit = cache.get(catalog);
   if (
+    !state.instances.some((i) => i.status === 'active' && i.systemId === catalog.fodder?.meadowId) &&
+    !state.instances.some((i) => i.status === 'active' && i.systemId === catalog.livestockInfrastructure?.paddockId) &&
+    !state.settings.storagePools &&
+    !state.settings.foodPreservation &&
     !state.settings.shelterOccupancy &&
     !state.settings.wearAndRepair &&
     !state.settings.livestockLifecycle &&
     !state.settings.toolGathering &&
     !state.settings.soilFertility &&
     !state.settings.householdRoles &&
+    !state.settings.riskEvents &&
+    !state.settings.transportAccess &&
     hit &&
     sameLayout(hit.sig, state)
   )
@@ -298,6 +308,26 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
       }
     }
 
+  // LL-43: a rotated pasture grows more, in proportion to yesterday's moving labor on its kit.
+  const herd = catalog.livestockInfrastructure;
+  if (herd) {
+    const best = new Map<string, number>();
+    for (const kit of active) {
+      if (kit.systemId !== herd.paddockId) continue;
+      get(kit.id).soloKey = kit.id;
+      const host = paddockHost(catalog, state, kit);
+      if (!host) continue;
+      const condition = state.settings.wearAndRepair ? conditionOutput(kit, sysOf(kit)) : 1;
+      best.set(host.id, Math.max(best.get(host.id) ?? 1, paddockFactor(catalog, paddockWork(state, kit), condition)));
+    }
+    for (const [id, factor] of best) {
+      const s = get(id);
+      s.soloKey = id;
+      for (const res of herd.paddock.resources) s.outMult[res] = (s.outMult[res] ?? 1) * factor;
+      s.notes.push(`Rotational paddocks: ${herd.paddock.resources.join(' and ')} × ${factor.toFixed(3)} from yesterday's moving labor.`);
+    }
+  }
+
   // Assigned capacities (roofs for rain catchment, paddocks for grazing animals).
   for (const a of catalog.assignedCapacities) {
     const providers = active
@@ -400,6 +430,31 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     }
   }
 
+  for (const p of fodderPlan(catalog, state, active)) {
+    const s = get(p.instanceId);
+    s.soloKey = p.instanceId;
+    s.inMult.Labor = (s.inMult.Labor ?? 1) * p.laborFactor;
+    s.outMult.Hay = (s.outMult.Hay ?? 1) * p.rainFactor;
+    s.notes.push('Meadow: seasonal cutting plus year-round upkeep; rainfall limits yield. Scythes reduce cutting labor only, sharing their daily hours with gathering.');
+  }
+
+  // LL-40/41: new infrastructure reuses the existing storage and preservation gates.
+  for (const inst of active) {
+    const s = get(inst.id);
+    const plan = plans.bySystem.get(inst.systemId)!;
+    if (inst.systemId === catalog.waterInfrastructure?.springId) {
+      s.soloKey = inst.id;
+      if (!springNode(catalog, state, inst)) s.outMult.Water = 0;
+      s.notes.push('Piped raw water requires an in-season spring within the connection radius; treatment is still required.');
+    }
+    waterSpatial(catalog, state, inst, plan, s);
+    if (!state.settings.foodPreservation && plan.outputs.some((o) => o.resource === 'Cheese' || o.resource === 'Seeds')) {
+      for (const f of plan.inputs) s.inMult[f.resource] = 0;
+      for (const f of plan.outputs) s.outMult[f.resource] = 0;
+      s.notes.push('Enable food preservation to process milk or save seed.');
+    }
+  }
+
   // LL-34: a tool no longer produces on its own. It boosts gathering at the nodes, so its
   // recurring labor falls to catalog upkeep and its fuel is burned per working hour instead.
   if (state.settings.toolGathering) {
@@ -447,6 +502,28 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
         for (const o of plan.outputs) if (!o.isCapacity && o.resource !== 'Wellbeing') s.outMult[o.resource] = (s.outMult[o.resource] ?? 1) * growing;
         s.notes.push(`Growing skill: harvest × ${growing.toFixed(3)}.`);
       }
+    }
+  }
+
+  if (state.settings.riskEvents) {
+    for (const inst of active) {
+      const s = get(inst.id);
+      for (const o of plans.bySystem.get(inst.systemId)!.outputs) {
+        const factor = riskOutputFactor(catalog, state, inst, o.resource, o.isCapacity);
+        if (factor !== 1) {
+          s.outMult[o.resource] = (s.outMult[o.resource] ?? 1) * factor;
+          s.notes.push(`Warned risk event: ${o.resource} output × ${factor.toFixed(2)}; see current risks for mitigation.`);
+        }
+      }
+    }
+  }
+
+  if (state.settings.transportAccess) {
+    for (const inst of active) {
+      if (!plans.bySystem.get(inst.systemId)!.inputs.some((f) => f.resource === 'Transportation')) continue;
+      const s = get(inst.id);
+      s.inMult.Transportation = 0;
+      s.notes.push('Transportation access: no flat weekly input. Actual errands, work and town journeys use measured mileage or paid travel; see trip history. Annual forecasts omit trip fares.');
     }
   }
 
@@ -508,12 +585,17 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     map.set(inst.id, s);
   }
   if (
+    !state.instances.some((i) => i.status === 'active' && i.systemId === catalog.fodder?.meadowId) &&
+    !state.settings.storagePools &&
+    !state.settings.foodPreservation &&
     !state.settings.shelterOccupancy &&
     !state.settings.wearAndRepair &&
     !state.settings.livestockLifecycle &&
     !state.settings.toolGathering &&
     !state.settings.soilFertility &&
-    !state.settings.householdRoles
+    !state.settings.householdRoles &&
+    !state.settings.riskEvents &&
+    !state.settings.transportAccess
   )
     cache.set(catalog, { sig: layoutOf(state), map });
   return map;

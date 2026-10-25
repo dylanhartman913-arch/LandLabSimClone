@@ -1,11 +1,18 @@
+import type { AccessDay } from './types.ts';
+import { beginAccess, requestAccess } from './access.ts';
+import { prepareRisks, riskActive, riskWeather, smokeExposure } from './risks.ts';
+import { advanceFinance } from './finance.ts';
 import { shelterAssignments } from './occupancy.ts';
 import { advanceLivestock, animalState, livestockRule } from './livestock.ts';
+import { advanceHatching, clutchReserve } from './husbandry.ts';
 import { seedState } from './rng.ts';
+import { fodderRecords } from './fodder.ts';
+import { springNode, waterTests } from './water.ts';
 import { preserveFood } from './preservation.ts';
-import { wearInstance } from './maintenance.ts';
+import { conditionOutput, wearInstance } from './maintenance.ts';
 import { settleTrades } from './trade.ts';
 import { advanceHousehold, householdSkill, laborFactor } from './household.ts';
-import { advanceGarden, coverShares, gardenRule } from './fertility.ts';
+import { advanceGarden, advanceSowing, coverShares, gardenRule, seedingShares } from './fertility.ts';
 import { toolCapacity, toolMultiplier, toolShare } from './tools.ts';
 import { advanceWinter, frozenCapacity, roomFor, statePools, storagePools, type StoragePool } from './storage.ts';
 import { CONTRACTOR_HOURS_PER_DAY, recoverResidents } from './recovery.ts';
@@ -109,6 +116,7 @@ interface SideInput {
 
 /** Everything one day's phases share. Created and mutated only inside stepDay. */
 interface Day {
+  access?: AccessDay;
   thermal: Record<string, Record<string, number>>;
   thermalTargets: Map<string, string[]>;
   homes: Map<string, string | null>;
@@ -174,6 +182,7 @@ interface Day {
   gatherUsed: number;
   gathered: GatherRecord[];
   boiled: { gal: number; fuelHours: number; laborHours: number } | null;
+  springDraw: Record<string, number>;
   nodeStock: Record<string, number> | undefined;
   /** Systems that provide Shelter (where the household lives). */
   shelterIds: ReadonlySet<string>;
@@ -487,6 +496,11 @@ function gather(d: Day, job: JobId, hours: number, plan: GatherPlan | undefined)
     // LL-34: the household's tools for this resource, shared across the day's nodes.
     const tool = toolCapacity(d.catalog, d.prev, d.instances, job, resource);
     let toolLeft = tool?.hours ?? 0;
+    // LL-42: a reserved scythe cannot regain its hours when idle labor triggers a second gathering pass.
+    if (tool && tool.rule.systemId === d.catalog.fodder?.scytheId &&
+      d.instances.some((i) => i.status === 'active' && i.systemId === d.catalog.fodder?.meadowId))
+      toolLeft = Math.max(0, toolLeft - d.gathered.reduce((n, g) =>
+        n + (g.toolIds?.some((id) => tool.ids.includes(id)) ? g.toolHours ?? 0 : 0), 0));
     const fuelRes = tool?.rule.fuel?.resource;
     for (const x of nodesFor(d, job, resource)) {
       if (left <= EPS || want <= EPS) break;
@@ -716,6 +730,7 @@ function reuseIdleLabor(d: Day): void {
 function buildRequests(d: Day): void {
   for (const g of d.groups) {
     for (const plan of g.plan.inputs) {
+      if (d.prev.settings.transportAccess && plan.resource === 'Transportation') continue;
       // A backstop's bill is charged per unit delivered (G12), not as a fixed Capital request.
       if (g.plan.backstop && !d.unlimited && plan.resource === 'Capital') continue;
       const amount =
@@ -770,6 +785,8 @@ function allocate(d: Day): void {
   const { meta, stocks, direct } = d;
   const reserved: Record<string, number> = {};
   d.seed = plantingReserve(d.instances, d.plans);
+  const clutch = d.prev.settings.livestockLifecycle ? clutchReserve(d.catalog, d.instances) : 0;
+  if (clutch > 0) d.seed.Eggs = (d.seed.Eggs ?? 0) + clutch;
   d.ordered = [...d.byResource.entries()].sort(
     ([a], [b]) => Number(meta.get(a)!.satisfiedBy.length > 0) - Number(meta.get(b)!.satisfiedBy.length > 0),
   );
@@ -834,8 +851,28 @@ export const MARKET_DELIVERY_FEE = 25;
  * yesterday, and standing orders whose stock fell below their threshold. Nothing is bought
  * while cash is at or below zero.
  */
+function arrangeAccess(d: Day): void {
+  if (!d.access) return;
+  const rule = d.catalog.transportAccess!;
+  for (const g of d.groups) {
+    if (g.plan.isHuman || g.plan.backstop || rule.localSalesIds.includes(g.plan.system.id)) continue;
+    const transport = g.plan.inputs.find((p) => p.resource === 'Transportation');
+    if (!transport) continue;
+    let share = g.sat;
+    for (const reqs of d.byResource.values()) for (const q of reqs)
+      if (q.group === g && q.plan.role === 'required' && q.amount > EPS) share = Math.min(share, q.grant / q.amount);
+    const miles = dailyAmount(transport, d.day, d.weather, d.table) * g.w * share;
+    if (miles <= EPS) continue;
+    const purpose = g.plan.outputs.some((o) => o.cls === 'Money') ? 'commute' : 'supply';
+    if (!requestAccess(d, d.catalog, { key: `${purpose}:${g.key}`, purpose, systemId: g.plan.system.id, miles, fare: miles * rule.commuteFarePerMile })) {
+      g.sat = 0;
+      g.limitedBy = 'Transportation';
+    }
+  }
+}
+
 function debit(d: Day, amount: number): void {
-  if (d.prev.settings.cashFloor) {
+  if (d.prev.settings.cashFloor || d.prev.settings.finance) {
     if (amount > d.cash + EPS) throw new Error('Cash allocation exceeds available funds');
     d.cash = Math.max(0, d.cash - amount);
   } else d.cash -= amount;
@@ -843,7 +880,7 @@ function debit(d: Day, amount: number): void {
 
 function marketTrip(d: Day): void {
   const m = d.market;
-  if (!m) return;
+  if (!m || riskActive(d.prev, 'blizzard')) return;
   const orders = m.orders.map((o) => ({ ...o }));
   for (const so of m.standing) {
     const stock = d.stocks[so.resource] ?? 0;
@@ -856,17 +893,30 @@ function marketTrip(d: Day): void {
   if (!wanted.length) return;
   if (d.cash <= 0) {
     d.broke = true;
-    if (d.prev.settings.cashFloor) d.market = { ...m, orders: m.orders.map((o) => ({ ...o })) };
+    if (d.prev.settings.cashFloor || d.prev.settings.finance) d.market = { ...m, orders: m.orders.map((o) => ({ ...o })) };
     return;
+  }
+  if (d.access && d.prev.settings.storagePools) {
+    const pools = statePools(d.prev, d.catalog);
+    if (!wanted.some((o) => roomFor(pools, d.stocks, o.resource) > EPS)) {
+      d.market = { ...m, orders: m.orders.map((o) => ({ ...o })) };
+      return;
+    }
   }
   let trip: 'own transport' | 'delivery' = 'delivery';
   const miles = d.stocks['Transportation'] ?? 0;
-  if (miles >= MARKET_TRIP_MILES) {
+  if (d.access) {
+    if (!requestAccess(d, d.catalog, { key: 'market', purpose: 'market', miles: d.catalog.transportAccess!.marketMiles, fare: d.catalog.transportAccess!.deliveryFare, reserveCash: EPS })) {
+      d.market = { ...m, orders: m.orders.map((o) => ({ ...o })) };
+      return;
+    }
+    trip = d.access.trips.find((t) => t.key === 'market')!.ownMiles > 0 ? 'own transport' : 'delivery';
+  } else if (miles >= MARKET_TRIP_MILES) {
     d.stocks['Transportation'] = miles - MARKET_TRIP_MILES;
     d.res['Transportation']!.consumed += MARKET_TRIP_MILES;
     trip = 'own transport';
   } else {
-    if (d.prev.settings.cashFloor && d.cash <= MARKET_DELIVERY_FEE) {
+    if ((d.prev.settings.cashFloor || d.prev.settings.finance) && d.cash <= MARKET_DELIVERY_FEE) {
       d.broke = true;
       d.market = { ...m, orders: m.orders.map((o) => ({ ...o })) };
       return;
@@ -922,7 +972,7 @@ function dispatchBackstops(d: Day): void {
   const unpaid = new Set<Group>();
   for (const g of groups) {
     const fee = (g.plan.backstop!.fee / 7) * g.w;
-    if (d.prev.settings.cashFloor && fee > d.cash) {
+    if ((d.prev.settings.cashFloor || d.prev.settings.finance) && fee > d.cash) {
       unpaid.add(g);
       d.broke = true;
     } else if (fee > 0) {
@@ -963,8 +1013,11 @@ function dispatchBackstops(d: Day): void {
       const price = g.plan.backstop!.prices[resource]!;
       const capMult = (d.prev.settings.backstopCapMult ?? BACKSTOP_CAP_MULT) / BACKSTOP_CAP_MULT;
       const cap = ((g.plan.backstop!.capWeekly[resource] ?? 0) / 7) * g.w * (own.get(g) ?? 1) * capMult;
+      if (d.access && d.catalog.transportAccess!.deliveryIds.includes(g.plan.system.id) && cap * (g.spatial.outMult[resource] ?? 1) > EPS &&
+        !requestAccess(d, d.catalog, { key: 'market', purpose: 'market', miles: d.catalog.transportAccess!.marketMiles, fare: d.catalog.transportAccess!.deliveryFare, reserveCash: EPS })) continue;
       const affordable = price > 0 ? d.cash / price : Infinity;
-      const amount = Math.min(unmet - delivered, cap, affordable);
+      const riskCap = d.prev.settings.riskEvents ? cap * (g.spatial.outMult[resource] ?? 1) : cap;
+      const amount = Math.min(unmet - delivered, riskCap, affordable);
       if (amount <= EPS) continue;
       if (amount < Math.min(unmet - delivered, cap) - EPS) d.broke = true;
       delivered += amount;
@@ -1015,7 +1068,7 @@ function record(g: Group, r: string, requested: number, received: number, grante
 
 /** Step 6a: Leontief satisfaction over required, capacity, and ambient inputs; boosts. */
 function satisfy(d: Day): void {
-  if (d.prev.settings.cashFloor && !d.unlimited)
+  if ((d.prev.settings.cashFloor || d.prev.settings.finance || d.prev.settings.transportAccess) && !d.unlimited)
     allocateByTier(d.byResource.get('Capital') ?? [], Math.max(0, d.cash));
   for (const reqs of d.byResource.values()) {
     for (const q of reqs) {
@@ -1076,11 +1129,15 @@ function consume(d: Day): void {
   }
   for (const [resource, reqs] of d.ordered) {
     let totalUse = 0;
+    let processed = 0;
     let requested = 0;
     let granted = 0;
     for (const q of reqs) {
       const use = q.plan.role === 'required' ? Math.min(q.grant, q.group.sat * q.amount) : q.grant;
       totalUse += use;
+      if ((resource === 'Milk' || resource === 'Vegetables fruit fiber herbs') &&
+        q.group.plan.outputs.some((o) => o.resource === 'Cheese' || o.resource === 'Seeds')) processed += use;
+      if (q.group.plan.system.id === d.catalog.fodder?.mixId && ['Grain', 'Green biomass', 'Grubs'].includes(resource)) processed += use;
       requested += q.amount;
       granted += q.grant;
       record(q.group, resource, q.amount, use, q.grant);
@@ -1140,7 +1197,8 @@ function consume(d: Day): void {
       }
       const after = (stocks[resource] ?? 0) - fromStock;
       stocks[resource] = after < 0 && after > -EPS ? 0 : after;
-      led!.consumed += totalUse;
+      led!.consumed += totalUse - processed;
+      if (processed > 0) led!.processed = (led!.processed ?? 0) + processed;
     }
   }
 }
@@ -1188,16 +1246,29 @@ function produce(d: Day): void {
     const unitMult = p.isHuman ? 1 : g.sat * g.boostMult;
     for (let k = 0; k < p.outputs.length; k++) {
       const o = p.outputs[k]!;
-      perUnit[o.resource] = (perUnit[o.resource] ?? 0) + base[k]! * unitMult;
+      const passiveFeedStorage = o.isCapacity && o.resource === 'Feed storage';
+      perUnit[o.resource] = (perUnit[o.resource] ?? 0) + base[k]! * (passiveFeedStorage ? 1 : unitMult);
       potUnit[o.resource] = (potUnit[o.resource] ?? 0) + base[k]!;
       if (p.isHuman && o.resource === 'Labor') {
         d.needs['Est. Required Labor'].potential += base[k]! * matSum;
         continue; // actual is counted in the pool
       }
-      const amount = base[k]! * multSum;
+      let amount = base[k]! * (passiveFeedStorage ? matSum : multSum);
+      if (p.system.id === d.catalog.waterInfrastructure?.springId && o.resource === 'Water') {
+        const node = springNode(d.catalog, d.prev, d.instances[g.members[0]!]!);
+        if (!node) amount = 0;
+        else {
+          const already = d.springDraw[node.id] ?? 0;
+          amount = Math.min(amount, Math.max(0, nodeYield(node, d.prev.yearWeather, d.prev.settings.weatherMode) - already), stockAt(d, node.id));
+          d.springDraw[node.id] = already + amount;
+          if (Number.isFinite(stockAt(d, node.id))) (d.nodeStock ??= {})[node.id] = stockAt(d, node.id) - amount;
+        }
+        perUnit[o.resource] = amount / Math.max(EPS, g.w);
+      }
       const pot = base[k]! * matSum;
-      if (o.needsRow) d.needs[o.needsRow].potential += pot * o.needFactor;
+      if (o.needsRow && !(d.access && o.resource === 'Transportation')) d.needs[o.needsRow].potential += pot * o.needFactor;
       const led = o.cls === 'Flow' ? d.res[o.resource] : undefined;
+      if (led && o.resource === 'Cheese' && amount > 0) led.converted = (led.converted ?? 0) + amount;
       if (led) led.potential += pot;
       if (g.spatial.undelivered[o.resource]) {
         // Made, but it never reaches a shelter: potential only (G11).
@@ -1219,7 +1290,7 @@ function produce(d: Day): void {
             bag[o.resource] = (bag[o.resource] ?? 0) + (amount * q.amount) / demand;
           }
       }
-      if (o.needsRow) {
+      if (o.needsRow && !(d.access && o.resource === 'Transportation')) {
         d.needs[o.needsRow].provided += amount * o.needFactor;
         if (p.bought) d.needs[o.needsRow].bought += amount * o.needFactor;
       }
@@ -1301,11 +1372,12 @@ function updatePeople(d: Day): void {
           d.prev.settings.shelterOccupancy && coolFrac !== null
             ? residentThermalShare(d, g, 'Cooling')
             : coolFrac,
-        transportation: frac('Transportation'),
+        transportation: d.prev.settings.transportAccess ? null : frac('Transportation'),
         hotWater: frac('Hot water'),
         cookingFuel: frac('Cooking fuel'),
       },
       servicePoints,
+      ...(d.prev.settings.riskEvents ? { smoke: smokeExposure(d.catalog, d.prev, d.instances[g.members[0]!]!) } : {}),
       mult,
     };
     // Members of a group see the same day; two people in the same state get the same update
@@ -1349,7 +1421,7 @@ function updatePeople(d: Day): void {
 
   // Someone in town comes home once home could keep them: a shelter, a week of food, and
   // three days of drinking water on hand, and nobody at home going short today.
-  if (!d.prev.settings.safeRecovery && !d.prev.settings.shelterOccupancy)
+  if (!d.prev.settings.safeRecovery && !d.prev.settings.shelterOccupancy && !d.prev.settings.transportAccess)
     for (let i = 0; i < d.instances.length; i++) {
     const p = d.instances[i]!.person;
     if (!p?.away || d.absDay - p.away.since < WB_AWAY_MIN_DAYS || anyShort) continue;
@@ -1437,7 +1509,9 @@ function storeAndSpoil(d: Day): void {
     if (stock <= 0) continue;
     const m = meta.get(r)!;
     const cut = m.storedIn?.capacityResource === 'Food storage' ? COLD_STORAGE_SPOIL_CUT * coldShare : 0;
-    const loss = stock * (m.spoilPerWeek / 7) * (1 - cut);
+    const rodentLoss = r === 'Grain' && d.prev.settings.foodPreservation
+      ? Math.max(0, stock - (d.capAvail.get('Grain storage') ?? 0)) * (d.catalog.waterInfrastructure?.grainRodentLossPerWeek ?? 0) / 7 : 0;
+    const loss = Math.min(stock, stock * (m.spoilPerWeek / 7) * (1 - cut) + rodentLoss);
     stocks[r] = stock - loss;
     res[r]!.spoiled += loss;
     d.spoiledToday[r] = loss;
@@ -1450,6 +1524,17 @@ function advanceFertility(d: Day, catalog: Catalog) {
   const satOf = new Map<string, number>();
   for (const g of d.groups) for (const i of g.members) satOf.set(d.instances[i]!.id, g.sat);
   const cover = coverShares(catalog, d.instances, (id) => (satOf.get(id) ?? 0) > 0);
+  const seeding = catalog.soilFertility.seeding;
+  if (seeding)
+    for (const g of d.groups) {
+      if (g.plan.system.id !== seeding.systemId) continue;
+      const seed = g.plan.inputs.find((f) => f.resource === 'Seeds');
+      if (!seed?.window || d.day < seed.window.first || d.day > seed.window.last) continue;
+      const per = g.inputs.Seeds;
+      for (const i of g.members)
+        d.instances[i] = advanceSowing(d.instances[i]!, d.day, seed.window, per?.requested ?? 0, per?.received ?? 0);
+    }
+  const seeded = seedingShares(catalog, d.instances, (id) => satOf.get(id) ?? 0);
   const records = [];
   for (const g of d.groups) {
     if (!gardenRule(catalog, g.plan.system.id)) continue;
@@ -1462,6 +1547,7 @@ function advanceFertility(d: Day, catalog: Catalog) {
         compostRequested: c?.requested ?? 0,
         compostReceived: c?.received ?? 0,
         cover: cover.get(d.instances[i]!.id) ?? 0,
+        seeded: seeded.get(d.instances[i]!.id) ?? 0,
       });
       d.instances[i] = r.inst;
       records.push(r.record);
@@ -1541,7 +1627,7 @@ function emitEvents(d: Day): GameState['flags'] {
 }
 
 export function spendTotal(s: DaySpend): number {
-  let t = s.fees + s.delivery;
+  let t = s.fees + s.delivery + (s.access ?? 0);
   for (const v of Object.values(s.backstop)) t += v;
   for (const v of Object.values(s.market)) t += v;
   return t;
@@ -1562,12 +1648,13 @@ function buildLedger(d: Day): DayLedger {
     resources: d.res,
     needs: d.needs,
     cash: {
-      start: prev.cash + prev.pendingCash.purchases - prev.pendingCash.refunds,
-      in: d.cashIn,
-      out: d.capitalUsed + spendTotal(d.spend),
+      start: prev.cash + prev.pendingCash.purchases - prev.pendingCash.refunds - (prev.pendingCash.borrowed ?? 0) + (prev.pendingCash.repaid ?? 0),
+      in: d.cashIn + (prev.pendingCash.borrowed ?? 0),
+      out: d.capitalUsed + spendTotal(d.spend) + (prev.pendingCash.repaid ?? 0),
       purchases: prev.pendingCash.purchases,
       refunds: prev.pendingCash.refunds,
       end: d.cash,
+      ...(prev.pendingCash.borrowed || prev.pendingCash.repaid ? { borrowed: prev.pendingCash.borrowed ?? 0, repaid: prev.pendingCash.repaid ?? 0 } : {}),
     },
     labor: {
       pool: d.pool,
@@ -1624,7 +1711,11 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     yearWeather = yw;
     weatherLog = [...(weatherLog ?? []), yw];
   }
-  const weather = weatherFor(prev.site, table, day, prev.settings.weatherMode, yearWeather);
+  const original = prev;
+  let weather = weatherFor(prev.site, table, day, prev.settings.weatherMode, yearWeather);
+  const risk = prepareRisks(catalog, prev, weather, yearWeather);
+  if (risk) prev = risk.state;
+  weather = riskWeather(catalog, prev, weather);
   const res: Record<string, ResourceDay> = {};
   for (const r of plans.flowResources) res[r] = newResourceDay((prev.stocks[r] ?? 0) + (prev.direct[r] ?? 0));
   const needs = {} as Record<NeedKey, NeedDay>;
@@ -1649,7 +1740,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     absDay,
     unlimited: prev.settings.unlimitedSupply === true,
     weather,
-    events: [],
+    events: risk?.events ?? [],
     stocks: { ...prev.stocks },
     direct: { ...prev.direct },
     instances: prev.instances.slice(), // copied per instance only when one changes
@@ -1695,6 +1786,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     gatherUsed: 0,
     gathered: [],
     boiled: null,
+    springDraw: {},
     nodeStock: prev.nodeStock ? { ...prev.nodeStock } : undefined,
     shelterIds,
   };
@@ -1709,12 +1801,14 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
             thermalDestinations(catalog, prev, inst, out.resource),
           );
       }
+  beginAccess(d);
   startConstruction(d); // 2
   marketTrip(d); // 2b
   buildRequests(d); // 3
   laborPool(d); // 4: labor by job priority, gathering included (G14)
   allocate(d); // 5
   dispatchBackstops(d); // 5b
+  arrangeAccess(d); // LL-39: commute/supply access before final cash allocation
   satisfy(d); // 6
   consume(d);
   if (prev.settings.reuseIdleLabor) reuseIdleLabor(d); // 6d
@@ -1730,19 +1824,22 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   );
   // Food storage works only when its actual operating inputs were met, under the new preservation gate.
   if (prev.settings.foodPreservation) {
-    let foodStorage = 0;
-    for (const g of d.groups)
-      for (const out of g.plan.outputs) {
-        if (out.resource !== 'Food storage' || !out.isCapacity) continue;
-        const mat = g.members.reduce(
-          (sum, i) => sum + maturity(d.instances[i]!, g.plan, d.absDay) * (d.instances[i]!.scale ?? 1),
-          0,
-        );
-        foodStorage += out.qty * mat * g.sat * g.boostMult * (g.spatial.outMult[out.resource] ?? 1);
-      }
-    d.capAvail.set('Food storage', foodStorage);
+    for (const capacity of ['Food storage', 'Grain storage']) {
+      let foodStorage = 0;
+      for (const g of d.groups)
+        for (const out of g.plan.outputs) {
+          if (out.resource !== capacity || !out.isCapacity) continue;
+          const mat = g.members.reduce(
+            (sum, i) => sum + maturity(d.instances[i]!, g.plan, d.absDay) * (d.instances[i]!.scale ?? 1),
+            0,
+          );
+          foodStorage += out.qty * mat * g.sat * g.boostMult * (g.spatial.outMult[out.resource] ?? 1);
+        }
+      d.capAvail.set(capacity, foodStorage);
+    }
   }
   const animals = advanceLivestock(d, catalog, satisfaction);
+  const hatching = advanceHatching(d, catalog, satisfaction, animals.removed);
   const preserved = preserveFood(d, catalog, satisfaction);
   const trades = settleTrades(d, catalog);
   const fertility = advanceFertility(d, catalog); // 7a: LL-35 gardens
@@ -1752,6 +1849,11 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   if (!prev.settings.foodPreservation && !('Preserved food' in prev.stocks)) {
     delete d.stocks['Preserved food'];
     delete d.res['Preserved food'];
+  }
+  // Do not add an unused new food resource to legacy save/digest records.
+  if (!('Cheese' in prev.stocks) && !prev.instances.some((i) => plans.bySystem.get(i.systemId)!.outputs.some((o) => o.resource === 'Cheese'))) {
+    delete d.stocks.Cheese;
+    delete d.res.Cheese;
   }
   d.cash += d.cashIn; // 9
   finishConstruction(d);
@@ -1779,7 +1881,22 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     d.householdRng = household.rng;
     d.events.push(...household.events);
   }
+  if (d.access) {
+    const leaving = d.events.filter((e) => e.kind === 'went-to-town').length;
+    if (leaving) requestAccess(d, catalog, { key: 'town-out', purpose: 'town-out', miles: catalog.transportAccess!.townMilesPerPerson * leaving, fare: catalog.transportAccess!.townFare, emergency: true });
+  }
+  const finance = advanceFinance(catalog, original, d.cash, d.instances);
+  if (finance) {
+    d.cash = finance.cash;
+    d.cashIn += finance.record.claim;
+  }
   const ledger = buildLedger(d);
+  if (finance) {
+    ledger.finance = finance.record;
+    ledger.cash.out += finance.record.taxPaid + finance.record.premium + finance.record.interest - finance.record.capitalized;
+  }
+  if (d.access) ledger.access = d.access;
+  if (risk) ledger.risks = prev.risks!.threats.filter((t) => absDay >= t.startsAt && absDay < t.endsAt).map((t) => ({ id: t.id, kind: t.kind, ...(t.targetId ? { targetId: t.targetId } : {}) }));
   if (household?.record) ledger.household = household.record;
   if (prev.settings.shelterOccupancy) {
     ledger.shelters = d.groups
@@ -1805,8 +1922,13 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     };
   }
   if (trades.length) ledger.trades = trades;
+  const fodder = fodderRecords(catalog, d.prev, satisfaction);
+  if (fodder.length) ledger.fodder = fodder;
   if (preserved.length) ledger.preserved = preserved;
+  const tests = waterTests(d.prev, catalog, satisfaction);
+  if (tests.length) ledger.waterTests = tests;
   if (animals.records.length) ledger.livestock = animals.records;
+  if (hatching.length) ledger.hatching = hatching;
   if (winter.records.length) ledger.winter = winter.records;
   if (fertility.length) ledger.fertility = fertility;
 
@@ -1820,12 +1942,15 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
       ? { livestockRng: d.livestockRng }
       : {}),
     ...(prev.settings.householdRoles || prev.householdRng !== undefined ? { householdRng: d.householdRng } : {}),
+    ...(risk ? { riskRng: prev.riskRng, risks: { ...prev.risks!, readiness: Object.fromEntries(d.groups.flatMap((g) => g.members.map((i) => [d.instances[i]!.id, g.sat * (prev.settings.wearAndRepair ? conditionOutput(d.instances[i]!, g.plan.system) : 1)]))) } } : {}),
     nextInstanceId: d.nextInstanceId,
     calendar:
       nextDay >= 365
         ? { day: 0, year: year + 1, absDay: absDay + 1 }
         : { day: nextDay, year, absDay: absDay + 1 },
     cash: d.cash,
+    ...(d.access ? { access: { fareDue: d.access.fareDue } } : {}),
+    ...(finance ? { finance: finance.state } : {}),
     stocks: d.stocks,
     direct: d.direct,
     services: d.services,
@@ -1841,8 +1966,16 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     flags,
   };
   const recovery = recoverResidents(state, catalog);
-  state = recovery.state;
-  for (const instanceId of recovery.returned) d.events.push({ kind: 'came-home', absDay, instanceId });
+  let returned = recovery.returned;
+  if (d.access && returned.length) {
+    const cashBefore = d.cash;
+    const accepted = requestAccess(d, catalog, { key: 'town-home', purpose: 'town-home', miles: catalog.transportAccess!.townMilesPerPerson * returned.length, fare: catalog.transportAccess!.townFare, emergency: true });
+    if (!accepted) returned = [];
+    ledger.cash.out += cashBefore - d.cash;
+    ledger.cash.end = d.cash;
+    state = { ...(accepted ? recovery.state : state), cash: d.cash, access: { fareDue: d.access.fareDue } };
+  } else state = recovery.state;
+  for (const instanceId of returned) d.events.push({ kind: 'came-home', absDay, instanceId });
   // The tutorial (G16): a finished quest's reward lands between days.
   if (state.tutorial && !state.tutorial.skipped) {
     const t = advanceTutorial(state, catalog);

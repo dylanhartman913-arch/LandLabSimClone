@@ -15,6 +15,7 @@ export type ChecklistMode = 'current' | 'average' | 'completed' | 'season' | 'wo
 
 export interface ChecklistRowView {
   need: NeedKey;
+  access?: boolean;
   unit: string;
   /** Actual: what feeding systems delivered once supply chains are taken into account (G11). */
   provided: Explained;
@@ -46,6 +47,11 @@ export interface ChecklistView {
   summary: string;
   /** Which days a time-mode view covers. */
   range: { from: number; to: number } | null;
+  /**
+   * LL-45: hot water is a comfort need (it drifts wellbeing) but not a scored checklist row, as in the
+   * workbook. Measured views report its share met, outside every score. Null when nobody asked for any.
+   */
+  hotWater?: { pct: Explained; needed: Explained } | null;
 }
 
 const UNITS: Record<NeedKey, string> = {
@@ -83,7 +89,7 @@ export function sparklines(ledgers: readonly DayLedger[]): Record<NeedKey, numbe
 }
 
 function summaryText(rows: ChecklistRowView[], overall: number, mode: ChecklistMode): string {
-  const scored = rows.filter((r) => r.covered !== 'n/a');
+  const scored = rows.filter((r) => r.covered !== 'n/a' && !r.access);
   const met = scored.filter((r) => r.covered === '✓').map((r) => r.need);
   const worst = [...scored]
     .sort((a, b) => a.pct.value - b.pct.value)
@@ -129,6 +135,7 @@ export function checklistView(
       need === 'Heated shelter' && heatNotes.length ? { ...e, explain: { ...e.explain, notes: [...(e.explain.notes ?? []), ...heatNotes] } } : e;
     const rows: ChecklistRowView[] = bal.checklist.map((r) => ({
       need: r.need,
+      ...(state.settings.transportAccess && r.need === 'Transportation' ? { access: true } : {}),
       unit: r.unit,
       provided: r.provided,
       potential: r.potential!,
@@ -172,7 +179,7 @@ export function checklistView(
     let bestI = 0;
     let bestScore = Infinity;
     for (let i = 0; i + 7 <= ledgers.length; i++) {
-      const s = summarizeLedgers(ledgers.slice(i, i + 7), catalog).overallScore;
+      const s = summarizeLedgers(ledgers.slice(i, i + 7), catalog, state.settings.transportAccess).overallScore;
       if (s < bestScore) {
         bestScore = s;
         bestI = i;
@@ -180,7 +187,8 @@ export function checklistView(
     }
     window = ledgers.slice(bestI, bestI + 7);
   }
-  const sum = summarizeLedgers(window, catalog);
+  const sum = summarizeLedgers(window, catalog, state.settings.transportAccess);
+  const measuredAccess = state.settings.transportAccess || window.some((l) => l.access !== undefined);
   const from = window[0]?.absDay ?? state.calendar.absDay;
   const to = window.at(-1)?.absDay ?? state.calendar.absDay;
   const days = window.length;
@@ -321,10 +329,11 @@ export function checklistView(
     const cov: '✓' | '✗' | 'n/a' = r.needed <= 0 ? 'n/a' : r.pct >= 1 - 1e-9 ? '✓' : '✗';
     return {
       need: r.need,
+      ...(measuredAccess && r.need === 'Transportation' ? { access: true } : {}),
       unit: UNITS[r.need],
       provided: explained(
         r.provided,
-        `actual: average weekly output of resources feeding ${r.need} that reached its users over ${label} (time mode)`,
+        measuredAccess && r.need === 'Transportation' ? 'completed access-trip miles, own transport or paid alternatives; weekly equivalent, excluded from household score' : `actual: average weekly output of resources feeding ${r.need} that reached its users over ${label} (time mode)`,
         {
           refs: { ...refs, potential: r.potential },
           notes: gatherNotes(r.need),
@@ -332,10 +341,10 @@ export function checklistView(
       ),
       potential: explained(
         Math.max(r.potential, r.delivered),
-        `potential: average weekly output of resources feeding ${r.need} over ${label} if every input were met, including at least the measured delivery from stocks`,
+        measuredAccess && r.need === 'Transportation' ? 'attempted trip miles if all access were available; weekly equivalent' : `potential: average weekly output of resources feeding ${r.need} over ${label} if every input were met, including at least the measured delivery from stocks`,
         { refs: { ...refs, productionPotential: r.potential, measuredDelivery: r.delivered } },
       ),
-      needed: explained(r.needed, `average weekly requests for resources feeding ${r.need} over ${label}`, {
+      needed: explained(r.needed, measuredAccess && r.need === 'Transportation' ? 'actual attempted trip miles, not a flat resident need; weekly equivalent' : `average weekly requests for resources feeding ${r.need} over ${label}`, {
         refs,
         ...(r.need === 'Heated shelter' && heatNeed.length ? { notes: heatNeed.map((n) => `Heat needed: ${n}`) } : {}),
       }),
@@ -358,9 +367,9 @@ export function checklistView(
     };
   });
   const overall = explained(sum.overallScore, 'average % covered over rows with any need', {
-    refs: Object.fromEntries(rows.filter((r) => r.covered !== 'n/a').map((r) => [r.need, r.pct.value])),
+    refs: Object.fromEntries(rows.filter((r) => r.covered !== 'n/a' && !r.access).map((r) => [r.need, r.pct.value])),
   });
-  const scored = rows.filter((r) => r.needed.value > 0);
+  const scored = rows.filter((r) => r.needed.value > 0 && !r.access);
   const potentialOverall = explained(
     scored.length ? scored.reduce((a, r) => a + Math.min(1, r.potential.value / r.needed.value), 0) / scored.length : 0,
     'average of min(1, potential ÷ needed) over rows with any need',
@@ -376,5 +385,23 @@ export function checklistView(
     }),
     summary: days ? summaryText(rows, overall.value, mode) : 'No measured days yet. Run the clock to see current operations; forecasts are available separately.',
     range: { from, to },
+    hotWater: hotWaterComfort(window, mode === 'current' ? 'the last 7 measured days' : mode === 'season' ? 'this season' : 'the worst week this year'),
+  };
+}
+
+function hotWaterComfort(window: readonly DayLedger[], label: string): ChecklistView['hotWater'] {
+  let requested = 0;
+  let unmet = 0;
+  for (const l of window) {
+    requested += l.resources['Hot water']?.requested ?? 0;
+    unmet += l.resources['Hot water']?.unmet ?? 0;
+  }
+  if (requested <= 1e-9) return null;
+  const weeks = window.length / 7;
+  return {
+    pct: explained(1 - unmet / requested, `hot water delivered ÷ requested over ${label}; a comfort need, not scored`, {
+      refs: { requested, unmet },
+    }),
+    needed: explained(requested / weeks, `average weekly hot water requested over ${label}`),
   };
 }

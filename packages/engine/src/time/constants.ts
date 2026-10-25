@@ -10,6 +10,8 @@ export const REFUND_BUILDING = 1;
 export const COLD_STORAGE_SPOIL_CUT = 0.8;
 export const LEDGER_DAYS_KEPT = 730;
 export const EPS = 1e-9;
+/** One person can work one tool for at most this many hours a day. */
+export const TOOL_HOURS_PER_DAY = 8;
 
 export const DEFAULT_STARTING_CASH = 100_000;
 export const DEFAULT_ARRIVAL_SUPPLIES: Record<string, number> = {

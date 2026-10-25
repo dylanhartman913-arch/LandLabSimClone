@@ -1,0 +1,109 @@
+{
+  "patch": "ll43-livestock",
+  "source": "New (LL43)",
+  "note": "Four Upgrade Roadmap 2 livestock-lifecycle systems. Existing workbook numbers are unchanged. Reference quantities and game assumptions are distinguished in row notes.",
+  "systems": [
+    {
+      "name": "Egg Incubator (24 eggs)",
+      "categories": "Livestock; Fowl",
+      "buy": 180,
+      "diy": null,
+      "setup": 1,
+      "upkeep": 0.1,
+      "footprint": 4,
+      "lifespan": 8,
+      "description": "Hatch your own flock's eggs into chicks; needs steady electricity for 21 days.",
+      "confidence": "low",
+      "notes": "Batch: 24 eggs from stock + 0.5 kWh/day for 21 days -> about 70% hatch as Baby Chicks (LL-31 cohort). Chicken eggs hatch in about 21 days: https://agritech.tnau.ac.in/animal_husbandry/ani_chik_hatching%20of%20eggs.html ; hatch rate, power draw and the two-missed-day tolerance are experimental game assumptions. Needs a mature laying flock on the parcel (fertile eggs). Eggs and electricity are drawn per batch, not as steady weekly flows.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.1,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "Broody Hen Nest Box",
+      "categories": "Livestock; Fowl",
+      "buy": 40,
+      "diy": 10,
+      "setup": 1,
+      "upkeep": 0.05,
+      "footprint": 4,
+      "lifespan": 10,
+      "description": "Let a broody hen hatch a clutch in spring and summer; she stops laying while she sits.",
+      "confidence": "low",
+      "notes": "Batch: 8 eggs from stock under one hen from a mature flock within 30 ft, 21 days -> about 85% hatch as Baby Chicks. A standard hen covers about 6-12 eggs: https://www.hobbyfarms.com/how-to-work-with-a-broody-hen/ ; broodiness limited to days with at least 13 h daylight. Hatch rate, range and daylight threshold are experimental game assumptions.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.05,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Waste lumber",
+          "qty": 10,
+          "period": "One-time",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "Predator-Proof Run (12 birds)",
+      "categories": "Livestock; Fowl",
+      "buy": 600,
+      "diy": 200,
+      "setup": 12,
+      "upkeep": 0.25,
+      "footprint": 120,
+      "lifespan": 12,
+      "description": "A roofed, buried-wire run that keeps up to 12 birds nearby safe from predators.",
+      "confidence": "low",
+      "notes": "Protects up to 12 lifecycle poultry within 20 ft from LL-31 predator losses while staffed (80% upkeep met). Lumber frame plus hardware cloth; 150 lb lumber is a game assumption. Capacity, range and costs are experimental game balance.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.25,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Waste lumber",
+          "qty": 150,
+          "period": "One-time",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "Rotational Paddock Kit",
+      "categories": "Livestock; Land",
+      "buy": 450,
+      "diy": 250,
+      "setup": 4,
+      "upkeep": 1,
+      "footprint": 0,
+      "lifespan": 10,
+      "description": "Portable fencing to rest and rotate a pasture; raises its hay and green biomass when moved weekly.",
+      "confidence": "low",
+      "notes": "Place on a pasture: its Hay and Green biomass output x up to 1.15, scaled by how much of the 1 h/week moving labor was done. Evidence is mixed: UF/IFAS reports more forage under rotation on bahiagrass https://rcrec-ona.ifas.ufl.edu/news-and-publications/in-focus-archives/forage/grazing-methods-impact-on-forage-cattle-production/ while a rangeland review found continuous grazing equal or better in most experiments https://bioone.org/journals/rangeland-ecology-and-management/volume-61/issue-1/06-159R.1/Rotational-Grazing-on-Rangelands--Reconciliation-of-Perception-and-Experimental/10.2111/06-159R.1.full ; the 15% bonus is a conservative game assumption.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 1,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    }
+  ]
+}

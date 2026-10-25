@@ -77,3 +77,53 @@ Optional `shelterThermal` maps preserve yesterday’s routed thermal output by h
 
 `householdRoles` remains explicitly opt-in; startup and continuation migrations do not enable it. Logged `role` actions set the optional person `role`; persons also gain optional `skills` (practice hours) and `condition` (ill or injured, days left). The optional `householdRng` stream is saved and fingerprinted when present; it advances only while the gate is on and never touches the climate or livestock streams. Daily ledgers gain an optional `household` record (practice hours and injury risk) and `person` events. The `householdRoles` rule comes from `data/catalog_overrides.json`; the workbook and its hash are unchanged. Turning the gate off keeps saved roles, skills and conditions but restores identical adults. Legacy digest fixtures pass without this setting.
 
+## Phase 9 finance (LL-37, engine 0.17.0)
+
+`finance` remains explicitly opt-in; startup and continuation migrations do not enable it. Logged `finance` actions borrow, repay, choose insurance or set reserve days. Optional `GameState.finance` holds debt, unpaid tax, policy choice and reserve days, and participates in the digest. A settings action enabling Finance initializes the account and converts any legacy negative cash to labeled opening debt. Turning the gate off pauses assessments without forgiving liabilities.
+
+Between-day draws and repayments use optional `pendingCash.borrowed`/`repaid`, included in the digest while pending, then reset with the next day. Optional cash-ledger `borrowed`/`repaid` fields retain their classification even if the gate was disabled before stepping. Optional daily `finance` records track assessed interest, capitalized interest, assessed/paid tax, premiums, coverage, claims and closing liabilities. Cash inflows/outflows include financing for conservation; runway and the net-positive-season milestone exclude principal transfers and insurance payouts. Reports identify them explicitly. Finance rules are validated overrides; the workbook and its source hash are unchanged. Legacy digest fixtures remain unchanged.
+
+## Phase 9 warned risk events (LL-38, engine 0.18.0)
+
+`riskEvents` remains explicitly opt-in. Optional `risks` holds threats (`id`, kind, warned/start/end absolute days and optional target instance) and previous-day measured defense readiness. Optional `riskRng` supplies a fixed two draws per kind every configured interval, independently of eligibility or mitigation; it never advances the weather, predator or household streams. Both optional fields participate in digests and JSON continuation. Daily ledgers gain an optional active-risk list; `risk` events record warnings, starts, ends and averted equipment failures. The existing LL-31 predator state/stream stays authoritative.
+
+A logged settings action disabling the gate clears threats and readiness, freezes the risk stream and stops transient effects; equipment condition and already-realized losses remain. Re-enabling schedules future risks from the saved stream. Finance sees the original positive condition before a warned breakdown sets it to zero, so existing equipment insurance can record exactly one covered failure. No automatic migration, save-schema change or workbook/source-hash change is introduced. Legacy digests remain unchanged.
+
+## Phase 9 transportation access (LL-39, engine 0.19.0)
+
+`transportAccess` remains explicitly opt-in. No new action kinds: existing logged settings, orders, work, trades and town transitions determine trips. Optional daily `access` records hold trip purpose/key, optional system, attempted and own miles, paid/deferred fare, completion/reason, old-fare repayment and closing fare due. Optional `GameState.access.fareDue` stores unpaid emergency town fares and participates in the digest; ordinary commuting and deliveries cannot defer fares. Paid non-market fares and settlement use optional `spend.access`; market alternatives retain `spend.delivery`. End-of-day return-trip cash is reflected in the same day's ledger.
+
+With the gate on, recurring catalog Transportation inputs are replaced by actual trips, residents lose no travel wellbeing, and the checklist access row is outside household coverage/self-reliance averages. Mixed measured windows using access ignore legacy flat travel demand on days without trip records. Workbook flows, source hash and raw parity stay unchanged. Disabling pauses settlement of saved fare liabilities and restores legacy inputs; re-enabling resumes. Startup/continuation never enables the experiment automatically. Legacy digest fixtures remain unchanged; replay/JSON continuation cover a real zero-cash departure and its still-payable fare.
+
+## LL-40/41 catalog expansion (0.20.0)
+
+No new action or automatic setting migration. New system IDs S179–S189 are workbook-backed and use existing placement, movement, removal, settings and `preserve` actions. First-flush and potable/freeze behavior reuse `storagePools`; processing and rodent protection reuse `foodPreservation`; testing warnings reuse `riskEvents`. Existing settings remain off by default.
+
+`DayLedger.waterTests?` records `{ instanceId, warning }` only after a fully supplied active kit operates under the risk gate. Records persist through ordinary ledger serialization. A kit warning is precautionary, not a laboratory pass/fail result. Spring boxes use existing `nodeStock`; multiple boxes share a day-local site-flow budget. Heat-traced tanks acquire the existing `winter` structure with built-in installed heating on their first storage-pool day. Their protection cannot be removed by a retrofit action.
+
+Cheese uses canonical pounds and the existing `processed`/`converted` ledger fields. Here `converted` is in the resource's own unit (kcal for Preserved food; pounds for Cheese), and reporting applies the resource's kcal factor. Fresh inputs transformed into cheese or seed are not household meals. Unused Cheese is omitted from legacy game initialization; unused new resources do not alter the compact legacy numeric balance digest. New catalog source hashes change normally with the workbook. Older records without these optional fields continue to load; new records require the expanded catalog for their new system IDs.
+
+## LL-42 feed and fodder (0.21.0)
+
+Workbook system IDs S190–S192 use existing placement, settings, purchase, movement and removal actions. No new action or setting migration. Meadow production is seasonal, with rainfall and actual labor constraints; scythe assistance uses `toolGathering`. Dedicated `Feed storage` is a capacity in cu ft and joins the existing LL-33 pool only when `storagePools` is enabled. The feed mix works whenever placed and supplied.
+
+Optional `DayLedger.fodder` entries contain `{ instanceId, scytheIds, cuttingHours, toolHours, savedHours }` for seasonal meadow cutting after operating satisfaction. All hours are realized daily values. Tool reservations are derived each day, not carried as a new saved bank. Meadow records, stock, condition and settings reproduce through JSON continuation; older states simply omit the optional records. Feed-mix inputs use `ResourceDay.processed` in canonical pounds and do not become household meals. No new flow stock is introduced. The compact legacy balance serializer omits unused Feed storage, preserving prior numeric digest assertions while the source workbook hash changes normally.
+
+
+## LL-43 livestock lifecycle infrastructure (0.22.0)
+
+Workbook system IDs S193–S196 use existing placement, movement and removal actions. One new logged action, `{ kind: 'hatch', id, operation: 'set' | 'cancel' }`, sets or cancels a clutch on an incubator or nest box; it requires `livestockLifecycle`, a mature hen cohort and, for a nest box, a free hen within range and at least 13 h of daylight. No setting migration; every existing gate stays off by default.
+
+Optional `Instance.hatch` is `{ eggs, days, missed, henId? }`: `eggs` is 0 while the clutch waits for a full set of eggs in stock (those eggs are held back from meals like a planting reserve), then the number set; `days` and `missed` count incubation days. Optional `DayLedger.hatching` entries hold `{ instanceId, eggsSet, counted, kWh, hatched }`. Eggs set use `ResourceDay.processed`; incubator power uses `consumed`. Hatched chicks are an ordinary LL-31 Baby Chicks cohort placed like a birth. New livestock event kinds `eggs-set` and `hatch-failed` join the existing livestock events.
+
+The predator-proof run and paddock kit add no saved state: run coverage and the paddock multiplier are derived from the layout and the previous day's satisfaction. A kit is its own solo allocation group, and its pasture becomes a solo group while a kit sits on it. Older states omit every new field and replay unchanged; legacy digests are unchanged.
+
+## LL-44 waste, soil and sanitation (0.23.0)
+
+Workbook system IDs S197–S201 use existing placement, movement and removal actions; no new action or setting migration. The windrow, both carbon sources and the laundry station are ordinary workbook flows. Cover crop seeding works only under the existing `soilFertility` gate through the optional `soilFertility.seeding` rule.
+
+The kit's Seeds flow (F0873) is a window flow (weeks 35–41) by override; its annual quantity keeps workbook parity. Optional `Instance.sown` (0–1) is the share of this year's seed received in that window; it resets on the window's first day and persists until the next. Off-season fertility gain from the kit is folded into the existing `DayLedger.fertility[].cover` field. Older states omit `sown` (treated as unsown) and replay unchanged; legacy digests are unchanged.
+
+## LL-45 heat, hot water and shelter efficiency (0.24.0)
+
+Workbook system IDs S202–S204 use existing placement, movement and removal actions; no new action, saved field or setting. The liner and draft-proofing kit are host modifiers in `catalog_overrides.json` (`systems.S202/S204.modifies`), derived from the layout each day like the weatherization retrofit. The boiler's wood flow (F0881) is steady by flow-timing override; its annual quantity keeps workbook parity. `ChecklistView.hotWater` is a view-only field computed from existing ledger `Hot water` requested/unmet. Legacy digests are unchanged.

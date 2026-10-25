@@ -57,7 +57,7 @@ export function projectPreview(
   const cost = costFor(catalog, systemId, mode);
   const hours = setupHoursFor(catalog, systemId, mode);
   const candidate =
-    (!state.settings.cashFloor || state.cash >= cost) &&
+    (!(state.settings.cashFloor || state.settings.finance) || state.cash >= cost) &&
     position && canPlace(catalog, state, systemId, position.x, position.y).ok
       ? placeSystem(catalog, state, systemId, position.x, position.y, mode)
       : null;

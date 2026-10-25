@@ -1,7 +1,9 @@
 import { setShelter, closeShelter } from './time/occupancy.ts';
 import { manageLivestock } from './time/livestock.ts';
+import { setHatch } from './time/husbandry.ts';
 import { setPreservation } from './time/preservation.ts';
 import { releaseFrozen, setWinterProtection } from './time/storage.ts';
+import { activateFinance, manageFinance } from './time/finance.ts';
 import { setRole } from './time/household.ts';
 import { serviceSystem } from './time/maintenance.ts';
 import { queueTrade } from './time/trade.ts';
@@ -45,7 +47,9 @@ export type Action = { at: number } & (
   | { kind: 'closeShelter'; id: string; closed: boolean }
   | { kind: 'preserve'; id: string; resource: string | null; keep: number }
   | { kind: 'livestock'; id: string; operation: 'breed' | 'cull' | 'cancel' }
+  | { kind: 'hatch'; id: string; operation: 'set' | 'cancel' }
   | { kind: 'winterize'; id: string; protection: 'insulated' | 'heated' | null }
+  | { kind: 'finance'; operation: 'borrow' | 'repay' | 'insurance' | 'reserve'; amount: number }
   | { kind: 'role'; id: string; role: 'adult' | 'child' | 'elder' }
   | { kind: 'service'; id: string; replace: boolean }
   | { kind: 'sell'; resource: string; amount: number; keep: number; receive?: string }
@@ -92,6 +96,10 @@ export function applyAction(catalog: Catalog, s: GameState, a: Action): GameStat
       return setPreservation(catalog, s, a.id, a.resource, a.keep);
     case 'livestock':
       return manageLivestock(catalog, s, a.id, a.operation);
+    case 'hatch':
+      return setHatch(catalog, s, a.id, a.operation);
+    case 'finance':
+      return manageFinance(catalog, s, a.operation, a.amount);
     case 'role':
       return setRole(catalog, s, a.id, a.role);
     case 'winterize':
@@ -115,7 +123,9 @@ export function applyAction(catalog: Catalog, s: GameState, a: Action): GameStat
     case 'delete':
       return deleteInstance(s, a.id, a.cashDelta);
     case 'settings': {
-      const next = { ...s, settings: { ...s.settings, ...a.settings } };
+      let next = { ...s, settings: { ...s.settings, ...a.settings } };
+      if ('riskEvents' in a.settings && !a.settings.riskEvents) delete next.risks;
+      if (a.settings.finance && !s.settings.finance) next = activateFinance(catalog, next);
       if ('shelterOccupancy' in a.settings && !!a.settings.shelterOccupancy !== !!s.settings.shelterOccupancy)
         delete next.shelterThermal;
       if (s.settings.storagePools && 'storagePools' in a.settings && !a.settings.storagePools) return releaseFrozen(next);
@@ -170,6 +180,11 @@ export function gameDigest(s: GameState): string {
   return digest({
     calendar: s.calendar,
     cash: s.cash,
+    ...(s.access !== undefined ? { access: s.access } : {}),
+    ...(s.risks !== undefined ? { risks: s.risks } : {}),
+    ...(s.riskRng !== undefined ? { riskRng: s.riskRng } : {}),
+    ...(s.finance !== undefined ? { finance: s.finance } : {}),
+    ...(s.pendingCash.borrowed || s.pendingCash.repaid ? { financing: { borrowed: s.pendingCash.borrowed ?? 0, repaid: s.pendingCash.repaid ?? 0 } } : {}),
     rng: s.rng,
     ...(s.shelterThermal !== undefined ? { shelterThermal: s.shelterThermal } : {}),
     ...(s.livestockRng !== undefined ? { livestockRng: s.livestockRng } : {}),

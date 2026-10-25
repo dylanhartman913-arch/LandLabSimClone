@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { livestockView, preservationView } from '@homestead/engine';
+import { fodderView, husbandryView, livestockView, seedingView, preservationView, waterInfrastructureView } from '@homestead/engine';
 import { useGame } from '../store/game.ts';
 import { fmtMoney, fmtPct } from '../lib/format.ts';
 import { WhyNum } from './Why.tsx';
+
+/** Whole counted days (display only). */
+const wholeDays = (n: number) => String(Math.round(n));
 
 /** Player policies and finite work orders for the opt-in food/animal mechanics. */
 export function InstanceMechanics({ id }: { id: string }) {
@@ -10,6 +13,10 @@ export function InstanceMechanics({ id }: { id: string }) {
   const catalog = useGame((s) => s.catalog);
   const preserve = preservationView(game, catalog, id);
   const animal = livestockView(game, catalog, id);
+  const water = waterInfrastructureView(game, catalog, id);
+  const fodder = fodderView(game, catalog, id);
+  const herd = husbandryView(game, catalog, id);
+  const seeding = seedingView(game, catalog, id);
   const [resource, setResource] = useState(preserve?.order?.resource ?? preserve?.inputs[0]?.name ?? '');
   const [keep, setKeep] = useState(String(preserve?.order?.keep ?? 0));
   const [error, setError] = useState('');
@@ -22,9 +29,43 @@ export function InstanceMechanics({ id }: { id: string }) {
       setError(error.message);
     }
   };
-  if (!preserve && !animal) return null;
+  if (!preserve && !animal && !water && !fodder && !herd && !seeding) return null;
   return (
     <div className="inst-box" data-testid="instance-mechanics">
+      {fodder && <section data-testid="fodder-controls">
+        <h3>Feed and fodder</h3>
+        <p>{fodder.text}</p>
+        {fodder.rain && <p>Rainfall yield factor: <WhyNum value={fodder.rain} title="Meadow rainfall factor" format={fmtPct} />.</p>}
+        {fodder.cutting && <p>Yesterday: <WhyNum value={fodder.cutting} title="Cutting labor" /> h cutting; <WhyNum value={fodder.saved!} title="Cutting labor saved" /> h saved with scythes.</p>}
+        {fodder.capacity && <p>Shared feed pool: <WhyNum value={fodder.capacity} title="Feed pool capacity" /> cu ft.</p>}
+      </section>}
+      {seeding && <section data-testid="seeding-controls">
+        <h3>Cover crop</h3>
+        <p>{seeding.text}</p>
+        <p className="small">Gardens in range: {seeding.gardens}. Area covered: <WhyNum value={seeding.share} title="Share of garden area covered" format={fmtPct} />. Seed sown this year: <WhyNum value={seeding.sown} title="Seed sown" format={fmtPct} />.</p>
+      </section>}
+      {herd && <section data-testid="husbandry-controls">
+        <h3>{herd.kind === 'run' ? 'Predator protection' : herd.kind === 'paddock' ? 'Rotational grazing' : 'Hatching'}</h3>
+        <p>{herd.text}</p>
+        {herd.hatchRate && <p className="small">Expected hatch: <WhyNum value={herd.hatchRate} title="Hatch rate" format={fmtPct} /> of eggs set.</p>}
+        {herd.status && <p className="small">{herd.status}</p>}
+        {herd.daysLeft && <p>Clutch: <WhyNum value={herd.daysLeft} title="Days to hatch" format={wholeDays} /> days to hatch; <WhyNum value={herd.missed!} title="Missed days" format={wholeDays} /> missed.</p>}
+        {herd.lastKWh && <p className="small">Yesterday: <WhyNum value={herd.lastKWh} title="Incubator power" /> kWh.</p>}
+        {herd.protectedBirds && <p>Birds protected: <WhyNum value={herd.protectedBirds} title="Birds protected" />.</p>}
+        {herd.paddock && <p>Pasture yield: × <WhyNum value={herd.paddock} title="Paddock yield factor" />.</p>}
+        {(herd.kind === 'incubator' || herd.kind === 'nest') && (herd.set
+          ? <button className="btn small ghost" onClick={() => act({ kind: 'hatch', id, operation: 'cancel' })}>Cancel clutch (eggs are lost)</button>
+          : <>
+              <button className="btn small" disabled={!!herd.blocked} onClick={() => act({ kind: 'hatch', id, operation: 'set' })}>Set eggs</button>
+              {herd.blocked && <p className="small muted">{herd.blocked}</p>}
+            </>)}
+      </section>}
+      {water && <section data-testid="water-infrastructure">
+        <h3>Water infrastructure</h3>
+        <p>{water.text}</p>
+        {water.radius && <p>Connection radius: <WhyNum value={water.radius} title="Spring connection radius" /> ft.</p>}
+        {water.warning && <p role="alert">{water.warning}</p>}
+      </section>}
       {preserve && (
         <section data-testid="preservation-controls">
           <h3>Preserve surplus</h3>

@@ -1,5 +1,6 @@
+import { requestAccess } from './access.ts';
 import { getQuestLine, type Catalog, type NeedKey } from '@homestead/catalog';
-import type { DayLedger, DaySpend, GameState, ResourceDay, NeedDay } from './types.ts';
+import type { AccessDay, GameEvent, DayLedger, DaySpend, GameState, ResourceDay, NeedDay } from './types.ts';
 
 export function ruthTrades(state: GameState): boolean {
   const t = state.tutorial;
@@ -42,6 +43,8 @@ export function queueTrade(
 
 interface TradeDay {
   prev: GameState;
+  access?: AccessDay;
+  events: GameEvent[];
   market: GameState['market'];
   stocks: Record<string, number>;
   produced: Record<string, number>;
@@ -81,8 +84,12 @@ export function settleTrades(d: TradeDay, catalog: Catalog): NonNullable<DayLedg
     if (
       available <= 0 ||
       idle < 0.5 ||
-      (!order.receive && !tripPaid && (d.stocks.Transportation ?? 0) < 10 && d.cash < 25)
+      (!d.access && !order.receive && !tripPaid && (d.stocks.Transportation ?? 0) < 10 && d.cash < 25)
     ) {
+      pending.push(order);
+      continue;
+    }
+    if (d.access && !order.receive && !requestAccess(d, catalog, { key: 'market', purpose: 'market', miles: catalog.transportAccess!.marketMiles, fare: catalog.transportAccess!.deliveryFare })) {
       pending.push(order);
       continue;
     }
@@ -91,7 +98,7 @@ export function settleTrades(d: TradeDay, catalog: Catalog): NonNullable<DayLedg
     d.upkeepRequested += 0.5;
     d.laborBySystem[stand?.systemId ?? 'Market work'] =
       (d.laborBySystem[stand?.systemId ?? 'Market work'] ?? 0) + 0.5;
-    if (!order.receive && !tripPaid) {
+    if (!d.access && !order.receive && !tripPaid) {
       if ((d.stocks.Transportation ?? 0) >= 10) {
         d.stocks.Transportation! -= 10;
         d.res.Transportation!.consumed += 10;

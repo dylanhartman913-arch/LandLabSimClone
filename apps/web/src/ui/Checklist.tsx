@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useState } from 'react';
 import {
+  accessView,
   checklistView,
   designBalance,
   designCounts,
@@ -63,6 +64,7 @@ export function Checklist() {
   if (!open) return null;
   const st = useGame.getState();
   const v = checklistView(game, catalog, mode, bal);
+  const access = accessView(game);
   const forecast = mode === 'average' || mode === 'completed';
   const counts = designCounts(game, { activeOnly: mode !== 'average' });
   const week = resourceWeek(game, catalog);
@@ -109,6 +111,10 @@ export function Checklist() {
           {v.summary}
         </p>
       </div>
+      {access && <p data-testid="access-explanation">{access.detail}</p>}
+      {game.settings.riskEvents && game.ledgers.at(-1)?.waterTests?.map((t) =>
+        <p key={t.instanceId} role="alert" data-testid="water-test-warning">{t.warning}</p>,
+      )}
       <table className="checklist" data-testid="checklist-table">
           <caption>{forecast ? 'Average-year forecast; flows as weekly equivalents, capacities as labeled.' : v.range ? `Measured days ${v.range.from}–${v.range.to}; ${mode === 'worst' ? 'each need’s worst week in this history' : 'flows as weekly equivalents'}, capacities as labeled.` : 'No measured days yet.'}</caption>
         <thead>
@@ -134,13 +140,13 @@ export function Checklist() {
                   {NEED_ICON[r.need]}
                 </span>{' '}
                 <button className="link" onClick={() => st.openResource(NEED_RESOURCE[r.need])} title={`Where ${NEED_RESOURCE[r.need]} comes from`}>
-                  {r.need}
+                  {r.access ? 'Transportation access' : r.need}
                 </button>
               </td>
               <td>
                 <WhyNum
                   value={r.provided}
-                  title={`${r.need}: ${forecast ? 'forecast' : 'measured production'}`}
+                  title={r.access ? 'Transportation access: completed trip miles' : `${r.need}: ${forecast ? 'forecast' : 'measured production'}`}
                   unit={r.need === 'Shelter' ? `${r.unit} capacity` : r.unit}
                   testId={`provided-${r.need}`}
                 />
@@ -170,7 +176,7 @@ export function Checklist() {
                 />
               </td>
               <td className={`covered ${r.covered === '✓' ? 'yes' : r.covered === '✗' ? 'no' : ''}`}>
-                {r.covered === '✓' ? '✓ Covered' : r.covered === '✗' ? '✗ Short' : 'n/a'}
+                {r.covered === '✓' ? '✓ Covered' : r.covered === '✗' ? '✗ Short' : r.access ? (forecast ? 'No trip forecast' : 'No trips attempted') : 'n/a'}
               </td>
               <td>
                 {r.covered === 'n/a' ? (
@@ -202,6 +208,12 @@ export function Checklist() {
           ))}
         </tbody>
       </table>
+      {!forecast && v.hotWater && (
+        <p className="small" data-testid="comfort-hot-water">
+          Hot water (comfort, not scored): <WhyNum value={v.hotWater.pct} title="Hot water met" format={fmtPct} /> of{' '}
+          <WhyNum value={v.hotWater.needed} title="Hot water requested" unit="gal" /> a week met. A shortfall lowers wellbeing slowly; it does not change the coverage score.
+        </p>
+      )}
       <p className="muted small">
         {forecast
           ? 'Annual forecast assumes maturity and steady site conditions; it excludes stockpiles, gathering, market orders and the time needed to build. Planned design includes unfinished systems; completed design excludes them.'

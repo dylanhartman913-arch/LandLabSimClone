@@ -20,6 +20,7 @@ function filterOf(e: GameEvent): Filter {
     case 'livestock':
       return 'animals';
     case 'winter-water':
+    case 'risk':
       return 'weather';
     case 'person':
       return 'people';
@@ -40,6 +41,7 @@ function filterOf(e: GameEvent): Filter {
       return 'people';
     case 'purchases-stopped':
     case 'market':
+    case 'access':
       return 'money';
     case 'quest':
       return 'people';
@@ -61,6 +63,9 @@ export function describeEvent(
   instSys: (id: string) => string | null,
 ): string {
   switch (e.kind) {
+    case 'risk':
+    case 'access':
+      return e.message;
     case 'livestock':
       return e.event === 'predator-warning' ? `Predator tracks: ${e.amount} days to secure a working guardian or housing.`
         : e.event === 'predator-loss' ? `Predators took ${fmtNum(e.amount)} animal(s).`
@@ -116,6 +121,7 @@ export function describeEvent(
 
 function instanceOf(e: GameEvent): string | undefined {
   switch (e.kind) {
+    case 'risk':
     case 'livestock':
     case 'winter-water':
     case 'person':

@@ -1,0 +1,203 @@
+{
+  "patch": "ll41-food-processing",
+  "source": "New (LL41)",
+  "note": "Upgrade Roadmap 2. References and explicit game assumptions are recorded in each row. Existing rows are unchanged.",
+  "resources": [
+    {
+      "name": "Cheese",
+      "unit": "lbs",
+      "class": "Flow",
+      "needsRow": "Food",
+      "factorToNeed": 1800,
+      "note": "Pressed cheese; 1,800 kcal/lb experimental balance."
+    },
+    {
+      "name": "Grain storage",
+      "unit": "lbs",
+      "class": "Capacity",
+      "note": "Rodent-protected grain capacity, LL-30."
+    }
+  ],
+  "systems": [
+    {
+      "name": "Water-Bath Canner",
+      "categories": "Food System; Cooking; Storage",
+      "buy": 65,
+      "diy": null,
+      "setup": 0,
+      "upkeep": 0.25,
+      "footprint": 2,
+      "lifespan": 15,
+      "description": "Preserves acidified produce using a standing preservation rule.",
+      "notes": "Only the acidified fruit/vegetable portion of the blended produce resource is eligible; acidity and additives are abstracted. Never meat or root crops. https://nchfp.uga.edu/how/general-canning-information/ensuring-safe-canned-foods/ Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "confidence": "low",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.25,
+          "period": "Weekly"
+        },
+        {
+          "dir": "Output",
+          "resource": "Food storage",
+          "qty": 5,
+          "period": "Capacity"
+        }
+      ]
+    },
+    {
+      "name": "Electric Dehydrator",
+      "categories": "Food System; Storage",
+      "buy": 300,
+      "diy": null,
+      "setup": 0,
+      "upkeep": 0.1,
+      "footprint": 4,
+      "lifespan": 15,
+      "description": "Dries surplus produce or meat using electricity and spare labor.",
+      "notes": "600 W reference unit; assumed 8-hour full batch uses 4.8 kWh. https://excaliburdehydratorsaustralia.com/pages/model-comparison Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "confidence": "low",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.1,
+          "period": "Weekly"
+        },
+        {
+          "dir": "Output",
+          "resource": "Food storage",
+          "qty": 5,
+          "period": "Capacity"
+        }
+      ]
+    },
+    {
+      "name": "Smokehouse",
+      "categories": "Food System; Storage",
+      "buy": 500,
+      "diy": null,
+      "setup": 8,
+      "upkeep": 0.25,
+      "footprint": 36,
+      "lifespan": 15,
+      "description": "Turns meat or fish into preserved food using wood and spare labor.",
+      "notes": "Preserved-food abstraction includes curing and drying; smoke alone is not represented as a safety guarantee. Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "confidence": "low",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.25,
+          "period": "Weekly"
+        },
+        {
+          "dir": "Output",
+          "resource": "Food storage",
+          "qty": 10,
+          "period": "Capacity"
+        }
+      ]
+    },
+    {
+      "name": "Cheese Press",
+      "categories": "Food System",
+      "buy": 120,
+      "diy": null,
+      "setup": 0,
+      "upkeep": 1,
+      "footprint": 2,
+      "lifespan": 15,
+      "description": "Turns milk into a smaller, slower-spoiling cheese supply.",
+      "notes": "1.25 gal milk per pound cheese, NMSU Extension: https://pubs.nmsu.edu/_e/E216/index.html ; 1,800 kcal/lb cheese, 1% weekly spoilage are game assumptions; whey calories leave the food pool. Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "confidence": "low",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 1,
+          "period": "Weekly"
+        },
+        {
+          "dir": "Input",
+          "resource": "Milk",
+          "qty": 1.25,
+          "period": "Weekly"
+        },
+        {
+          "dir": "Output",
+          "resource": "Cheese",
+          "qty": 1,
+          "period": "Weekly"
+        }
+      ]
+    },
+    {
+      "name": "Grain Bin",
+      "categories": "Food System; Storage",
+      "buy": 220,
+      "diy": null,
+      "setup": 2,
+      "upkeep": 0.1,
+      "footprint": 9,
+      "lifespan": 15,
+      "description": "Sealed grain capacity prevents the added rodent loss on protected grain.",
+      "notes": "LL-30: uncovered grain loses an additional 1%/week; 450 lb protected per bin (10 cu ft at existing catalog 45 lb/cu ft). Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "confidence": "low",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.1,
+          "period": "Weekly"
+        },
+        {
+          "dir": "Output",
+          "resource": "Food storage",
+          "qty": 10,
+          "period": "Capacity"
+        },
+        {
+          "dir": "Output",
+          "resource": "Grain storage",
+          "qty": 450,
+          "period": "Capacity"
+        }
+      ]
+    },
+    {
+      "name": "Seed Saving Station",
+      "categories": "Food System",
+      "buy": 40,
+      "diy": null,
+      "setup": 0,
+      "upkeep": 0.5,
+      "footprint": 4,
+      "lifespan": 15,
+      "description": "Reserves garden produce for cleaning and drying seed instead of eating it.",
+      "notes": "One pound of seed-bearing garden output yields one ounce of Seeds per week; mixed-crop abstraction. LL-30 required. Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "confidence": "low",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.5,
+          "period": "Weekly"
+        },
+        {
+          "dir": "Input",
+          "resource": "Vegetables fruit fiber herbs",
+          "qty": 1,
+          "period": "Weekly"
+        },
+        {
+          "dir": "Output",
+          "resource": "Seeds",
+          "qty": 1,
+          "period": "Weekly"
+        }
+      ]
+    }
+  ]
+}

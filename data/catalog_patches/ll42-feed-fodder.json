@@ -1,0 +1,132 @@
+{
+  "patch": "ll42-feed-fodder",
+  "source": "New (LL42)",
+  "note": "Three Upgrade Roadmap 2 animal-feed systems. Existing workbook numbers are unchanged. Reference quantities and game assumptions are distinguished in row notes.",
+  "resources": [
+    {
+      "name": "Feed storage",
+      "unit": "cu ft",
+      "class": "Capacity",
+      "note": "Dedicated hay/feed volume; joins the LL-33 feed pool without providing tool storage."
+    }
+  ],
+  "systems": [
+    {
+      "name": "Hay Meadow (1/10 acre)",
+      "categories": "Land",
+      "buy": 150,
+      "diy": 60,
+      "setup": 8,
+      "upkeep": 0.1,
+      "footprint": 4356,
+      "lifespan": 15,
+      "description": "Grow and cut dryland hay; a working scythe reduces cutting labor without raising the land yield.",
+      "confidence": "low",
+      "notes": "About 200 lb hay/year on 0.1 acre: within CSU dryland grass hay range 0.5-1.5 tons/acre. https://boulder.extension.colostate.edu/wp-content/uploads/sites/7/2021/03/BoCo-Rural-Living-Guide-Agriculture-Rev-1.pdf ; footprint uses 4,356 sq ft, output follows the growing season and drought. Total Labor 0.3 h/week includes 0.1 h upkeep and 0.2 h cutting; LL-34 scythe speeds cutting only. Costs, labor, mix ratios, loss and usable storage are experimental game balance.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.3,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Rainfall",
+          "qty": {
+            "formula": "rain"
+          },
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Hay",
+          "qty": 4,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "Poultry Feed Mix",
+      "categories": "Food System",
+      "buy": 250,
+      "diy": 90,
+      "setup": 1,
+      "upkeep": 0.1,
+      "footprint": 9,
+      "lifespan": 15,
+      "description": "Mix grain, green biomass and grubs into stored chicken feed.",
+      "confidence": "low",
+      "notes": "7 lb Grain + 2 lb Green biomass + 1 lb Grubs -> 9 lb Chicken feed per week; 1 lb processing loss. All three ingredients are required. Nutrient balancing is abstracted; not a poultry ration recommendation. https://extension.umn.edu/agriculture/animals-and-livestock/poultry/raising-chickens-for-eggs Costs, labor, mix ratios, loss and usable storage are experimental game balance.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 1,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Grain",
+          "qty": 7,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Green biomass",
+          "qty": 2,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Grubs",
+          "qty": 1,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Chicken feed",
+          "qty": 9,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "Hay Barn",
+      "categories": "Storage",
+      "buy": 900,
+      "diy": 350,
+      "setup": 16,
+      "upkeep": 0.1,
+      "footprint": 100,
+      "lifespan": 15,
+      "description": "Covered, dedicated storage for hay and poultry feed.",
+      "confidence": "low",
+      "notes": "200 cu ft usable storage shared by Hay and Chicken feed. Existing LL-33 densities apply: 9.5 lb hay/cu ft and 40 lb feed/cu ft, so mixed stocks use the same room. Provides no tool storage. Storage rationale: https://extension.psu.edu/how-much-does-that-bale-really-weigh-feeding-and-fertilizer-implications Costs, labor, mix ratios, loss and usable storage are experimental game balance.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.1,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Feed storage",
+          "qty": 200,
+          "period": "Capacity",
+          "note": ""
+        }
+      ]
+    }
+  ]
+}

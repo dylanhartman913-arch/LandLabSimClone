@@ -1,4 +1,4 @@
-import type { NeedKey, Site } from '@homestead/catalog';
+import type { RiskKind, NeedKey, Site } from '@homestead/catalog';
 import type { SurvivalNeed, WellbeingTerm } from './wellbeing.ts';
 import type { DayWeather } from './climate.ts';
 import type { YearWeather } from './weather.ts';
@@ -23,6 +23,12 @@ export interface GameSettings {
   soilFertility?: boolean;
   /** LL-36: children and elders, skills from practice, illness and injury. */
   householdRoles?: boolean;
+  /** LL-37: explicit credit, tax, failure insurance and reserve planning. */
+  finance?: boolean;
+  /** LL-38: warned risk events with an independent saved random stream. */
+  riskEvents?: boolean;
+  /** LL-39: demand comes from trips, not a flat need per resident. */
+  transportAccess?: boolean;
   parcelAcres: number;
   startingCash: number;
   weatherMode: WeatherMode;
@@ -130,11 +136,15 @@ export interface Instance {
   servicing?: { activeSince: number | null };
   preservation?: { resource: string; keep: number };
   animal?: AnimalState;
+  /** LL-43 incubator or nest box batch: eggs set (0 while waiting for eggs), counted and missed days, sitting hen. */
+  hatch?: { eggs: number; days: number; missed: number; henId?: string };
   /** Undefined: deterministic automatic assignment; null: explicitly unsheltered. */
   shelterId?: string | null;
   shelterClosed?: boolean;
   /** LL-35 garden fertility (1 = the catalog's full yield); absent means the rule's starting level. */
   fertility?: number;
+  /** LL-44 cover crop seeding: share of this year's seed sown in its window (0–1), kept until the next window. */
+  sown?: number;
   /** LL-33 outdoor tank: protection bought, its install hours, frost (°F-days) and locked ice (gal). */
   winter?: { protection?: 'insulated' | 'heated'; setupHours?: number; frost: number; frozen?: number };
   setupHoursNeeded: number;
@@ -177,7 +187,7 @@ export interface ResourceDay {
   sold?: number;
   /** Food transformed by processing, separate from meals. */
   processed?: number;
-  /** Of production, kcal converted from another food (not new harvest). */
+  /** Of production, canonical units converted from another food (not new harvest). */
   converted?: number;
   /** Net raw water locked in (positive) or released from (negative) frozen tanks. */
   frozen?: number;
@@ -219,7 +229,10 @@ export interface DayLedger {
   year: number;
   resources: Record<string, ResourceDay>;
   needs: Record<NeedKey, NeedDay>;
-  cash: { start: number; in: number; out: number; purchases: number; refunds: number; end: number };
+  finance?: FinanceDay;
+  access?: AccessDay;
+  risks?: { id: string; kind: RiskKind; targetId?: string }[];
+  cash: { start: number; in: number; out: number; purchases: number; refunds: number; end: number; borrowed?: number; repaid?: number };
   labor: {
     pool: number;
     construction: number;
@@ -261,6 +274,8 @@ export interface DayLedger {
     heaterNeedKWh: number;
   }[];
   residentShares?: { shelter: number; heat: number; cooling: number };
+  fodder?: { instanceId: string; scytheIds: string[]; cuttingHours: number; toolHours: number; savedHours: number }[];
+  waterTests?: { instanceId: string; warning: string }[];
   preserved?: {
     instanceId: string;
     resource: string;
@@ -271,9 +286,11 @@ export interface DayLedger {
     energyResource: string;
     energy: number;
   }[];
+  /** LL-43: each incubator or nest box batch's day: eggs set, whether the day counted, power used, chicks hatched. */
+  hatching?: { instanceId: string; eggsSet: number; counted: boolean; kWh: number; hatched: number }[];
   livestock?: {
     instanceId: string;
-    kind: 'matured' | 'born' | 'culled' | 'died' | 'predator-warning' | 'predator-loss' | 'protected';
+    kind: 'matured' | 'born' | 'culled' | 'died' | 'predator-warning' | 'predator-loss' | 'protected' | 'eggs-set' | 'hatch-failed';
     amount: number;
   }[];
   trades?: {
@@ -315,6 +332,8 @@ export interface DaySpend {
   fees: number;
   /** Market delivery charges (when no transport was available for the trip). */
   delivery: number;
+  /** LL-39: paid commuting/supply/town fares and settlement of emergency fares. */
+  access?: number;
   /**
    * Running costs by system (G16): the Capital each system draws (a house payment, a car).
    * Already part of cash out, so not in `spendTotal`; shown as bills.
@@ -352,6 +371,59 @@ export interface StandingOrder {
   orderUpTo: number;
 }
 
+export interface FinanceState {
+  debt: number;
+  taxDue: number;
+  insured: boolean;
+  emergencyDays: number;
+}
+
+export interface FinanceDay {
+  borrowed: number;
+  repaid: number;
+  interest: number;
+  capitalized: number;
+  taxAssessed: number;
+  taxPaid: number;
+  premium: number;
+  claim: number;
+  covered: boolean;
+  debt: number;
+  taxDue: number;
+}
+
+export interface RiskThreat {
+  id: string;
+  kind: RiskKind;
+  warnedAt: number;
+  startsAt: number;
+  endsAt: number;
+  targetId?: string;
+}
+
+export interface RiskState {
+  threats: RiskThreat[];
+  /** Previous day's actual operating share; new or unfunded defenses have no readiness. */
+  readiness: Record<string, number>;
+}
+
+export interface AccessTrip {
+  key: string;
+  purpose: 'market' | 'commute' | 'supply' | 'town-out' | 'town-home';
+  systemId?: string;
+  miles: number;
+  ownMiles: number;
+  fare: number;
+  deferred: number;
+  completed: boolean;
+  reason?: string;
+}
+export interface AccessDay {
+  trips: AccessTrip[];
+  repaid: number;
+  fareDue: number;
+}
+
 export interface GameState {
   schema: 'homestead.game.v1';
   seed: number;
@@ -360,10 +432,14 @@ export interface GameState {
   livestockRng?: number;
   /** LL-36: independent stream for illness and injury draws. */
   householdRng?: number;
+  riskRng?: number;
+  risks?: RiskState;
   site: Site;
   settings: GameSettings;
   calendar: { day: number; year: number; absDay: number };
   cash: number;
+  finance?: FinanceState;
+  access?: { fareDue: number };
   stocks: Record<string, number>;
   /** Yesterday's output usable today by daytime loads without storage (see Resource.directUseShare). */
   direct: Record<string, number>;
@@ -378,7 +454,7 @@ export interface GameState {
   weather: DayWeather;
   ledgers: DayLedger[];
   /** Pending purchases/refunds since the last step (placement happens between days). */
-  pendingCash: { purchases: number; refunds: number };
+  pendingCash: { purchases: number; refunds: number; borrowed?: number; repaid?: number };
   /**
    * Rolling flags used to emit "first day of" events: for each resource that is short,
    * the systems it curtails; whether electricity is spilling.
@@ -408,6 +484,8 @@ export interface GameState {
 }
 
 export type GameEvent =
+  | { kind: 'access'; absDay: number; blocked: boolean; message: string }
+  | { kind: 'risk'; absDay: number; instanceId?: string; risk: RiskKind; phase: 'warning' | 'started' | 'ended' | 'averted'; message: string }
   | { kind: 'person'; absDay: number; instanceId: string; event: 'ill' | 'injured' | 'recovered'; days: number }
   | { kind: 'winter-water'; absDay: number; instanceId: string; event: 'froze' | 'thawed'; gal: number }
   | {

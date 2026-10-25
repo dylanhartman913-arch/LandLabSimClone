@@ -1,3 +1,5 @@
+import { accessView } from '../time/access.ts';
+import { riskView } from '../time/risks.ts';
 import type { Catalog } from '@homestead/catalog';
 import type { BuildMode, GameState } from '../time/types.ts';
 import { contractorRate, contractorQuote, returnCheckItems, returnChecks, SURVIVAL_RESOURCE } from '../time/recovery.ts';
@@ -107,13 +109,19 @@ export const CASH_WARN_DAYS = 30;
 export function cashRunway(state: GameState, catalog?: Catalog) {
   const recent = state.ledgers.slice(-28);
   if (recent.length < 7) return { days: Infinity, burn: 0, lines: [] as [string, number][] };
-  const burn = recent.reduce((a, l) => a + l.cash.out - l.cash.in, 0) / recent.length;
+  const burn = recent.reduce((a, l) => a + l.cash.out - l.cash.in - (l.cash.repaid ?? 0) + (l.cash.borrowed ?? 0) + (l.finance?.claim ?? 0), 0) / recent.length;
   const lines = new Map<string, number>();
   const add = (k: string, v: number) => v > 0 && lines.set(k, (lines.get(k) ?? 0) + v);
   for (const l of recent) {
     for (const [r, v] of Object.entries(l.spend.market)) add(r, v);
     for (const [r, v] of Object.entries(l.spend.backstop)) add(r, v);
     for (const [id, v] of Object.entries(l.spend.running ?? {})) add(catalog?.systems.find((x) => x.id === id)?.name ?? id, v);
+    if (l.finance) {
+      add('Credit interest', l.finance.interest - l.finance.capitalized);
+      add('Property tax', l.finance.taxPaid);
+      add('Failure insurance', l.finance.premium);
+    }
+    add('Travel fares', l.spend.access ?? 0);
     add('Delivery fees', l.spend.delivery);
     add('Connection fees', l.spend.fees);
   }
@@ -130,7 +138,12 @@ export function survivalAlerts(
   catalog: Catalog,
   forecast?: Pick<ReturnType<typeof transitionForecast>, 'firstHarm' | 'departureDay' | 'cashZeroDay' | 'days'>,
 ): SurvivalAlert[] {
-  const out: SurvivalAlert[] = [];
+  const out: SurvivalAlert[] = riskView(state, catalog).map((r) => ({
+    id: `risk:${r.id}`, title: r.title, detail: r.detail, resource: r.resource,
+    work: true, days: r.days.value, weight: 2, current: r.active,
+  }));
+  const access = accessView(state);
+  if (access?.blockedToday.length) out.push({ id: 'transport-access', title: 'Travel access is blocked', detail: access.blockedToday.map((t) => `${t.purpose}: ${t.reason}`).join(' ') + ' Fund paid travel, provide operating mileage, or wait for roads to reopen. No flat household travel requirement applies.', resource: 'Transportation', work: true, days: 0, weight: 2 });
   const recovery = townRecoveryView(state, catalog);
   if (recovery.people.length)
     out.push({

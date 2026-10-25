@@ -104,11 +104,12 @@ export function Reports() {
             <div>
               <h3>Money</h3>
               <p>
-                In {fmtMoney(r.cash.in)}, running costs {fmtMoney(r.cash.out)}, purchases{' '}
+                Cash in {fmtMoney(r.cash.in)}, {r.financing ? 'cash out' : 'running costs'} {fmtMoney(r.cash.out)}, purchases{' '}
                 {fmtMoney(r.cash.purchases)}, refunds {fmtMoney(r.cash.refunds)}
                 {r.cash.assistance > 0 ? `, neighbor's assistance ${fmtMoney(r.cash.assistance)}` : ''}. Net{' '}
                 <strong>{fmtMoney(r.cash.net)}</strong>.
               </p>
+              {r.financing && <p className="small muted">Cash in includes {fmtMoney(r.financing.borrowed)} borrowed and {fmtMoney(r.financing.claims)} insurance payouts; cash out includes {fmtMoney(r.financing.repaid)} in debt repayments.</p>}
               <h3>Losses</h3>
               <p>
                 Spilled power {fmtNum(r.spilledPower)} kWh.

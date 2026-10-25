@@ -7,8 +7,8 @@ import type { DayLedger, GameState, Instance } from './types.ts';
 
 /**
  * LL-35 (`soilFertility`): each garden keeps a fertility level. Cropping draws it down in proportion
- * to the realized harvest; compost at the catalog's own rate replaces exactly that draw; manure and
- * a nearby clover cover crop add more. Yield follows fertility.
+ * to the realized harvest; compost at the catalog's own rate replaces exactly that draw; manure,
+ * a nearby clover cover crop and (LL-44) an off-season sown cover crop add more. Yield follows fertility.
  */
 export type FertilityRecord = NonNullable<DayLedger['fertility']>[number];
 
@@ -55,12 +55,35 @@ export function coverShares(catalog: Catalog, instances: readonly Instance[], wo
   return out;
 }
 
+/**
+ * LL-44: share of each garden a working seeding kit sows with an off-season cover crop: the kit's
+ * area, shared by gardens within range in proportion to their area, scaled by the kit's upkeep met
+ * and by the share of its seed actually sown in the last sowing window.
+ */
+export function seedingShares(catalog: Catalog, instances: readonly Instance[], sat: (id: string) => number): Map<string, number> {
+  const seeding = catalog.soilFertility?.seeding;
+  const out = new Map<string, number>();
+  if (!seeding) return out;
+  const gardens = instances.filter((i) => i.status === 'active' && gardenRule(catalog, i.systemId));
+  const area = (i: Instance) => getSystem(catalog, i.systemId).footprintSqft * (i.scale ?? 1);
+  for (const k of instances) {
+    if (k.status !== 'active' || k.systemId !== seeding.systemId) continue;
+    const work = Math.max(0, Math.min(1, sat(k.id))) * (k.sown ?? 0);
+    const near = gardens.filter((g) => dist(g, k) <= seeding.rangeFt);
+    const total = near.reduce((a, g) => a + area(g), 0);
+    if (total <= 0 || work <= 0) continue;
+    const share = Math.min(1, (seeding.areaSqft * (k.scale ?? 1)) / total) * work;
+    for (const g of near) out.set(g.id, Math.min(1, (out.get(g.id) ?? 0) + share));
+  }
+  return out;
+}
+
 /** One garden's day, after production. Mutates stocks (manure) through the shared day accounting. */
 export function advanceGarden(
   d: ProcessingDay,
   catalog: Catalog,
   inst: Instance,
-  day: { growing: boolean; seasonDays: number; sat: number; compostRequested: number; compostReceived: number; cover: number },
+  day: { growing: boolean; seasonDays: number; sat: number; compostRequested: number; compostReceived: number; cover: number; seeded?: number },
 ): { inst: Instance; record: FertilityRecord } {
   const rule = catalog.soilFertility!;
   const garden = gardenRule(catalog, inst.systemId)!;
@@ -80,7 +103,11 @@ export function advanceGarden(
   const fed = perYear > 0 ? (garden.drawPerYear * compostEq) / perYear : 0;
   const days = Math.max(1, day.seasonDays);
   const draw = day.growing ? (garden.drawPerYear / days) * day.sat * yieldFactor(rule, f) : 0;
-  const cover = day.growing ? (rule.cover.gainPerYear / days) * day.cover : 0;
+  // The clover grows with the season; a sown cover crop grows while the beds rest.
+  const restDays = Math.max(1, 365 - day.seasonDays);
+  const cover =
+    (day.growing ? (rule.cover.gainPerYear / days) * day.cover : 0) +
+    (!day.growing && rule.seeding ? (rule.seeding.gainPerYear / restDays) * (day.seeded ?? 0) : 0);
   const next = Math.min(rule.maxFertility, Math.max(0, f + fed + cover - draw));
   return {
     inst: { ...inst, fertility: next },
@@ -108,5 +135,37 @@ export function fertilityView(state: GameState, catalog: Catalog, id: string) {
       gained: explained(total('fed') + total('cover'), 'fertility added by compost, manure and cover crop, last 7 days'),
       drawn: explained(total('draw'), 'fertility removed by cropping, last 7 days'),
     },
+  };
+}
+
+/**
+ * LL-44: the kit's seed is a window flow. On each window day it adds today's received ÷ requested
+ * seed over the window's length; the first window day starts a new year's sowing.
+ */
+export function advanceSowing(inst: Instance, day: number, window: { first: number; days: number }, requested: number, received: number): Instance {
+  const base = day === window.first ? 0 : (inst.sown ?? 0);
+  const filled = requested > 0 ? Math.min(1, received / requested) : 0;
+  return { ...inst, sown: Math.min(1, base + filled / window.days) };
+}
+
+/** Card model for a cover crop seeding kit (LL-44). */
+export function seedingView(state: GameState, catalog: Catalog, id: string) {
+  const seeding = catalog.soilFertility?.seeding;
+  const inst = state.instances.find((i) => i.id === id);
+  if (!seeding || !inst || inst.systemId !== seeding.systemId) return null;
+  const near = state.instances.filter(
+    (g) => g.status === 'active' && gardenRule(catalog, g.systemId) && dist(g, inst) <= seeding.rangeFt,
+  );
+  const area = near.reduce((a, g) => a + getSystem(catalog, g.systemId).footprintSqft * (g.scale ?? 1), 0);
+  return {
+    text: state.settings.soilFertility
+      ? `Sows ${seeding.areaSqft} sq ft of gardens within ${seeding.rangeFt} ft after harvest (late August to mid October). While the beds rest it adds up to ${seeding.gainPerYear} fertility a year, shared by their area and scaled by the seed sown.`
+      : 'Enable Soil fertility to rebuild beds with a cover crop.',
+    gardens: near.length,
+    sown: explained(inst.sown ?? 0, 'share of this year’s seed received in the late-summer sowing window'),
+    share: explained(
+      area > 0 ? Math.min(1, (seeding.areaSqft * (inst.scale ?? 1)) / area) : 0,
+      'share of nearby garden area the kit covers when fully sown and staffed: its area ÷ garden area, capped at 1',
+    ),
   };
 }

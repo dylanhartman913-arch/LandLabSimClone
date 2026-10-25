@@ -20,6 +20,7 @@ export const FLOW_GROUPS: Record<FlowGroup, { label: string; resources: string[]
       'Honey',
       'Meat',
       'Milk',
+      'Cheese',
       'Fish',
       'Nuts',
       'Mushrooms',

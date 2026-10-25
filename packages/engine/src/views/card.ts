@@ -89,7 +89,8 @@ export function systemCard(
   const inputs: CardInput[] = flows.inputs.map((v) => {
     const role = v.flow.inputRole ?? 'required';
     const inputFactor =
-      inst && (state.settings.shelterOccupancy || (state.settings.toolGathering && toolRule(catalog, inst.systemId)) || (state.settings.householdRoles && inst.person)) && v.flow.period !== 'One-time'
+      state.settings.transportAccess && v.resource === 'Transportation' && v.flow.period !== 'One-time' ? 0 :
+      inst && (inst.systemId === catalog.fodder?.meadowId || state.settings.storagePools || state.settings.foodPreservation || state.settings.shelterOccupancy || (state.settings.toolGathering && toolRule(catalog, inst.systemId)) || (state.settings.householdRoles && inst.person) || state.settings.transportAccess) && v.flow.period !== 'One-time'
         ? (computeSpatial(catalog, state).get(inst.id)?.inMult[v.resource] ?? 1)
         : 1;
     const needed = v.qty.value * inputFactor;
@@ -185,7 +186,9 @@ export function systemCard(
     return {
       view: v,
       role,
-      needed: explained(
+      needed: state.settings.transportAccess && v.resource === 'Transportation' && v.flow.period !== 'One-time'
+        ? explained(0, 'flat weekly Transportation input removed; actual trip access is recorded separately', { notes: ['Work commutes, market errands and town journeys use measured mileage or paid travel. Annual catalog forecasts omit trip fares.'] })
+        : explained(
         needed,
         inputFactor === 1
           ? v.qty.explain.formula
@@ -229,12 +232,27 @@ export function systemCard(
       formula += ' × occupancy/condition output factor';
       refs.shelterOutput = factor;
     }
-    if (inst && group && state.settings.foodPreservation && v.resource === 'Food storage') {
+    if (inst && group && state.settings.foodPreservation && ['Food storage', 'Grain storage'].includes(v.resource)) {
       const factor = computeSpatial(catalog, state).get(inst.id)?.outMult[v.resource] ?? 1;
       produced *= group.sat * group.boostMult * factor;
       formula += ' × realized operation × storage output factor';
       refs.operating = group.sat;
       refs.storageOutput = factor;
+    }
+    if (inst && v.resource === 'Feed storage') {
+      const factor = computeSpatial(catalog, state).get(inst.id)?.outMult[v.resource] ?? 1;
+      produced *= factor;
+      formula += ' × physical feed-storage condition factor';
+      refs.storageCondition = factor;
+    }
+    if (inst && (
+      inst.systemId === catalog.fodder?.meadowId || inst.systemId === catalog.waterInfrastructure?.springId || v.flow.qty.kind === 'rainCapture' ||
+      v.resource === 'Cheese' || v.resource === 'Seeds'
+    )) {
+      const factor = computeSpatial(catalog, state).get(inst.id)?.outMult[v.resource] ?? 1;
+      produced = group ? (group.outputs[v.resource] ?? 0) * 7 : produced * factor;
+      formula = group ? 'measured daily output × 7' : 'nominal × infrastructure/preservation factor';
+      refs = group ? { measuredDaily: group.outputs[v.resource] ?? 0 } : { nominal: v.qty.value, factor };
     }
     const tool = inst && state.settings.toolGathering ? toolRule(catalog, inst.systemId) : null;
     if (tool && tool.resource === v.resource) {

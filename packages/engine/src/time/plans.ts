@@ -155,6 +155,8 @@ export function getPlans(catalog: Catalog, site: Site): Plans {
 
   for (const sp of bySystem.values()) {
     const sys = sp.system;
+    if (sp.system.id === catalog.fodder?.mixId || sp.outputs.some((o) => o.resource === 'Cheese' || o.resource === 'Seeds'))
+      for (const input of sp.inputs) if (input.needsRow === 'Food') delete input.needsRow;
     if (!sys.backstop) continue;
     const capWeekly: Record<string, number> = {};
     for (const o of sp.outputs) capWeekly[o.resource] = (capWeekly[o.resource] ?? 0) + o.weekly * BACKSTOP_CAP_MULT;

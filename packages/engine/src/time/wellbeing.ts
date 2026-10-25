@@ -79,6 +79,8 @@ export interface PersonDay {
   comfort: Record<ComfortNeed, number | null>;
   /** Wellbeing points (Service) available per person this week. */
   servicePoints: number;
+  /** LL-38: smoke exposure points before difficulty scaling. */
+  smoke?: number;
   /** Difficulty multiplier on survival penalties and drift. */
   mult: number;
 }
@@ -155,6 +157,7 @@ export function updateWellbeing(old: PersonState, today: PersonDay): PersonUpdat
     const svc = Math.min(WB_SERVICE_MAX, today.servicePoints * WB_SERVICE_PER_POINT);
     if (svc > 1e-9) terms.push({ label: 'Time by the fire and small comforts', points: svc });
   }
+  if ((today.smoke ?? 0) > 0) terms.push({ label: 'Wildfire smoke: air exposure', points: -today.smoke! * today.mult });
   let change = terms.reduce((a, t) => a + t.points, 0);
   if (change < -WB_MAX_LOSS) {
     terms.push({ label: `A bad day costs at most ${WB_MAX_LOSS} points`, points: -WB_MAX_LOSS - change });

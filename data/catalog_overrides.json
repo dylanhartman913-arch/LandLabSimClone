@@ -87,6 +87,136 @@
         }
       ],
       "note": "Place it on the shelter it serves (G16, replaces the HEAT_BEDDING_HDD constant)."
+    },
+    "S202": {
+      "modifies": [
+        {
+          "to": "category:Canvas",
+          "resource": "Heat",
+          "direction": "in",
+          "multiplier": 0.75,
+          "scope": "host",
+          "note": "An insulated liner cuts its canvas shelter's heat loss by 25% (LL-45 game assumption)."
+        }
+      ],
+      "note": "Place it on the canvas tent, yurt or teepee it lines (LL-45)."
+    },
+    "S204": {
+      "modifies": [
+        {
+          "to": "S009",
+          "resource": "Heat",
+          "direction": "in",
+          "multiplier": 0.85,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+        },
+        {
+          "to": "S009",
+          "resource": "Cooling",
+          "direction": "in",
+          "multiplier": 0.9,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+        },
+        {
+          "to": "S010",
+          "resource": "Heat",
+          "direction": "in",
+          "multiplier": 0.85,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+        },
+        {
+          "to": "S010",
+          "resource": "Cooling",
+          "direction": "in",
+          "multiplier": 0.9,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+        },
+        {
+          "to": "S040",
+          "resource": "Heat",
+          "direction": "in",
+          "multiplier": 0.85,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+        },
+        {
+          "to": "S040",
+          "resource": "Cooling",
+          "direction": "in",
+          "multiplier": 0.9,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+        },
+        {
+          "to": "S080",
+          "resource": "Heat",
+          "direction": "in",
+          "multiplier": 0.85,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+        },
+        {
+          "to": "S080",
+          "resource": "Cooling",
+          "direction": "in",
+          "multiplier": 0.9,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+        },
+        {
+          "to": "S085",
+          "resource": "Heat",
+          "direction": "in",
+          "multiplier": 0.85,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+        },
+        {
+          "to": "S085",
+          "resource": "Cooling",
+          "direction": "in",
+          "multiplier": 0.9,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+        },
+        {
+          "to": "S088",
+          "resource": "Heat",
+          "direction": "in",
+          "multiplier": 0.85,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+        },
+        {
+          "to": "S088",
+          "resource": "Cooling",
+          "direction": "in",
+          "multiplier": 0.9,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+        },
+        {
+          "to": "S091",
+          "resource": "Heat",
+          "direction": "in",
+          "multiplier": 0.85,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+        },
+        {
+          "to": "S091",
+          "resource": "Cooling",
+          "direction": "in",
+          "multiplier": 0.9,
+          "scope": "host",
+          "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+        }
+      ],
+      "note": "Place it on the small shelter it seals (LL-45)."
     }
   },
   "resources": {
@@ -203,6 +333,15 @@
         "unitsPerCapacityUnit": 48000
       },
       "note": "LL-30 low-spoilage shelf-stable kcal; experimental game balance, not food safety advice."
+    },
+    "Cheese": {
+      "spoilPerWeek": 0.01,
+      "storedIn": {
+        "capacityResource": "Food storage",
+        "buffer": 10,
+        "unitsPerCapacityUnit": 35
+      },
+      "note": "LL-41 pressed cheese game balance: slower spoilage than milk; whey is not recovered."
     }
   },
   "flows": {
@@ -335,6 +474,26 @@
       "inputRole": "boost",
       "boostWeight": 0.15,
       "note": "Hay is the staple for ruminants and rabbits; fresh forage supplements it."
+    },
+    "F0848": {
+      "timing": {
+        "kind": "growing-season"
+      },
+      "note": "LL-42: meadow hay is cut during the local growing season, not produced through winter. Annual potential stays at workbook parity."
+    },
+    "F0873": {
+      "timing": {
+        "kind": "window",
+        "startWeek": 35,
+        "endWeek": 41
+      },
+      "note": "LL-44: cover crop seed is sown after harvest, late August to mid October; the sown share sets the following rest season's fertility gain. Annual quantity stays at workbook parity."
+    },
+    "F0881": {
+      "timing": {
+        "kind": "steady"
+      },
+      "note": "LL-45: the water-jacket boiler is fired year-round for hot water, so its wood is steady; its heat still follows the heating season. Annual quantity stays at workbook parity."
     }
   },
   "adjacencyRules": [
@@ -650,6 +809,47 @@
       "energyPer1000Kcal": 0.5,
       "yieldFraction": 0.9,
       "note": "LL-30 experimental solar drying balance; daily sunlight limits processing; no fuel required."
+    },
+    {
+      "systemId": "S184",
+      "inputs": [
+        "Vegetables fruit fiber herbs"
+      ],
+      "kcalPerDay": 6000,
+      "laborPer1000Kcal": 0.5,
+      "energyResource": "Cooking fuel",
+      "energyPer1000Kcal": 0.2,
+      "yieldFraction": 0.9,
+      "note": "LL-41 experimental processing balance; losses are explicit. Water-bath blended produce means acidified produce only; smokehouse includes curing/drying. Not a food-safety recipe."
+    },
+    {
+      "systemId": "S185",
+      "inputs": [
+        "Vegetables fruit fiber herbs",
+        "Root crops",
+        "Meat",
+        "Fish",
+        "Mushrooms"
+      ],
+      "kcalPerDay": 6000,
+      "laborPer1000Kcal": 0.3,
+      "energyResource": "Electricity",
+      "energyPer1000Kcal": 0.8,
+      "yieldFraction": 0.9,
+      "note": "LL-41 experimental processing balance; losses are explicit. Water-bath blended produce means acidified produce only; smokehouse includes curing/drying. Not a food-safety recipe."
+    },
+    {
+      "systemId": "S186",
+      "inputs": [
+        "Meat",
+        "Fish"
+      ],
+      "kcalPerDay": 6000,
+      "laborPer1000Kcal": 0.4,
+      "energyResource": "Woody biomass",
+      "energyPer1000Kcal": 0.5,
+      "yieldFraction": 0.85,
+      "note": "LL-41 experimental processing balance; losses are explicit. Water-bath blended produce means acidified produce only; smokehouse includes curing/drying. Not a food-safety recipe."
     }
   ],
   "livestockRules": [
@@ -916,6 +1116,10 @@
       {
         "systemId": "S106",
         "freezeDegreeDays": 80
+      },
+      {
+        "systemId": "S182",
+        "freezeDegreeDays": 30
       }
     ],
     "insulation": {
@@ -1004,7 +1208,13 @@
       "rangeFt": 100,
       "gainPerYear": 0.2
     },
-    "note": "LL-35 experimental game balance. Fertility 1 is the catalog's full yield; yield = 30% + 70% × fertility, capped at 110%. A full year of cropping draws 0.35 (annual beds) or 0.15 (perennials), scaled by realized yield; the catalog's own compost rate replaces exactly that draw. Bought-soil beds start at 1, dug-in plots at 0.7, perennial plantings at 0.8. A pound of manure counts as half a pound of compost. A clover cover crop adds 0.2 a year to gardens within 100 ft, shared by their area."
+    "note": "LL-35 experimental game balance. Fertility 1 is the catalog's full yield; yield = 30% + 70% × fertility, capped at 110%. A full year of cropping draws 0.35 (annual beds) or 0.15 (perennials), scaled by realized yield; the catalog's own compost rate replaces exactly that draw. Bought-soil beds start at 1, dug-in plots at 0.7, perennial plantings at 0.8. A pound of manure counts as half a pound of compost. A clover cover crop adds 0.2 a year to gardens within 100 ft, shared by their area. LL-44: cover crop seeding sows 200 sq ft of gardens within 30 ft and adds up to 0.15 a year while the beds rest (outside the growing season), shared by garden area and scaled by the share of its seed sown in the late-summer window and by its upkeep met.",
+    "seeding": {
+      "systemId": "S200",
+      "rangeFt": 30,
+      "areaSqft": 200,
+      "gainPerYear": 0.15
+    }
   },
   "householdRoles": {
     "roles": {
@@ -1059,5 +1269,176 @@
       "labor": 0.3
     },
     "note": "LL-36 experimental game balance. A school-age child needs about 70% of an adult's food, water and supplies and does a quarter of an adult's work; an elder needs 90% and works half. Skills rise with each person's share of the hours practiced: building up to 50% faster DIY, growing up to 25% more harvest, gathering up to 30% more per hour, each half-learned after 150, 100 and 100 hours. Below 40 wellbeing a person may fall ill (up to 2% a day at 0), losing a week of work; building and chainsaw work carry a small chance of injury per hour (two weeks at 30% work)."
+  },
+  "finance": {
+    "creditLimit": 5000,
+    "annualInterest": 0.12,
+    "landValuePerAcre": 10000,
+    "propertyTaxRate": 0.01,
+    "insurancePerYear": 180,
+    "deductible": 250,
+    "coverage": 0.8,
+    "emergencyDays": 90,
+    "note": "LL-37 experimental game balance, not market quotes: tax on parcel acres at a fixed assessed value; insurance covers newly failed LL-28 equipment only, not routine maintenance, livestock or buildings removed by the player."
+  },
+  "riskEvents": {
+    "intervalDays": 28,
+    "events": {
+      "breakdown": {
+        "chance": 0.25,
+        "warningDays": 5,
+        "days": 1
+      },
+      "pests": {
+        "chance": 0.25,
+        "warningDays": 5,
+        "days": 7
+      },
+      "disease": {
+        "chance": 0.18,
+        "warningDays": 5,
+        "days": 10
+      },
+      "smoke": {
+        "chance": 0.25,
+        "warningDays": 3,
+        "days": 5
+      },
+      "blizzard": {
+        "chance": 0.3,
+        "warningDays": 3,
+        "days": 3
+      },
+      "outage": {
+        "chance": 0.18,
+        "warningDays": 3,
+        "days": 2
+      },
+      "drawdown": {
+        "chance": 0.5,
+        "warningDays": 7,
+        "days": 14
+      }
+    },
+    "breakdownBelow": 0.6,
+    "harvestFactor": 0.5,
+    "protectedHarvestFactor": 0.85,
+    "wellFactor": 0.35,
+    "droughtBelow": 0.8,
+    "smokeCdd": 8,
+    "smokePenalty": 1.5,
+    "refugeExposure": 0.25,
+    "blizzardHdd": 30,
+    "mitigationRangeFt": 100,
+    "pestDefenseIds": [
+      "S073",
+      "S134",
+      "S136"
+    ],
+    "diseaseDefenseIds": [
+      "S035"
+    ],
+    "refugeIds": [
+      "S006",
+      "S007",
+      "S040",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085",
+      "S088",
+      "S090"
+    ],
+    "gridIds": [
+      "S029"
+    ],
+    "wellIds": [
+      "S079",
+      "S103"
+    ],
+    "deliveryIds": [
+      "S028",
+      "S030",
+      "S102",
+      "S114",
+      "S115"
+    ],
+    "note": "LL-38 experimental game balance, not hazard predictions. Each eligible risk draws every 28 days from a separate saved stream, then warns before starting. Predators retain the LL-31 stream and guardian/housing protection. Operational mitigation is measured on the previous day: nearby birds, bat habitat or hedgerow soften pests; compost piles soften disease; enclosed shelter reduces smoke exposure. Batteries/generators, stored food/water/fuel and rain collection bridge supply interruptions."
+  },
+  "transportAccess": {
+    "marketMiles": 10,
+    "deliveryFare": 25,
+    "commuteFarePerMile": 0.5,
+    "townMilesPerPerson": 10,
+    "townFare": 25,
+    "deliveryIds": [
+      "S028",
+      "S030",
+      "S102",
+      "S114",
+      "S115"
+    ],
+    "localSalesIds": [
+      "S178"
+    ],
+    "note": "LL-39 experimental game balance. Market orders, physical supply deliveries and sale collection share one 10-mile trip or $25 delivery per day. Commuting miles follow the job catalog transport-to-work-hours ratio at hours actually allocated; paid travel is $0.50/mile. Remote work needs no commute. Town journeys use 10 person-miles per traveler or one $25 household ride; emergency fares can remain explicitly payable so zero-cash residents are not stranded. Operating vehicles provide only the previous measured day's mileage, with no multi-day bank."
+  },
+  "waterInfrastructure": {
+    "springId": "S179",
+    "springRadiusFt": 50,
+    "diverterId": "S180",
+    "rainLossFraction": 0.05,
+    "filterLaborMultiplier": 0.75,
+    "heatedTankId": "S182",
+    "testKitId": "S183",
+    "grainRodentLossPerWeek": 0.01,
+    "note": "LL-40/41 experimental balance. Spring flow capped at site yield per hour (one hour-equivalent/day), shared across all boxes. First flush trades 5% rain capture for 25% lower filter labor after measured operation. Test kit issues precautionary warnings, not simulated lab results."
+  },
+  "fodder": {
+    "meadowId": "S190",
+    "mixId": "S191",
+    "barnId": "S192",
+    "scytheId": "S150",
+    "rainReferenceIn": 15,
+    "droughtFloor": 0.2,
+    "note": "LL-42 experimental dryland balance. At 15 annual inches the 0.1-acre meadow yields about 200 lb/year; drier sites reduce yield linearly. Real-year drought scales that yield with a 20% floor. LL-34 scythe multiplier reduces cutting labor only; nominal hay yield never increases. Cutting reserves tool time before gathering, up to the existing 8 h/tool/day."
+  },
+  "livestockInfrastructure": {
+    "incubatorId": "S193",
+    "nestBoxId": "S194",
+    "runId": "S195",
+    "paddockId": "S196",
+    "chickSystemId": "S015",
+    "henSystemId": "S018",
+    "pastureIds": [
+      "S168"
+    ],
+    "hatchDays": 21,
+    "maxMissedDays": 2,
+    "incubator": {
+      "eggs": 24,
+      "kWhPerDay": 0.5,
+      "hatchRate": 0.7
+    },
+    "nestBox": {
+      "eggs": 8,
+      "hatchRate": 0.85,
+      "rangeFt": 30,
+      "minDaylightHours": 13
+    },
+    "run": {
+      "birds": 12,
+      "rangeFt": 20
+    },
+    "paddock": {
+      "bonus": 0.15,
+      "resources": [
+        "Hay",
+        "Green biomass"
+      ]
+    },
+    "note": "LL-43 experimental balance, not husbandry guidance. Eggs are set from stock and hatch after 21 counted days; an incubator day counts only with its 0.5 kWh and 80% upkeep met, a broody day only while her flock is active. More than two missed days loses the batch. A brooding hen stops laying. A staffed run protects up to 12 nearby birds from predator losses. A moved paddock kit raises its pasture's hay and greens up to 15%."
   }
 }

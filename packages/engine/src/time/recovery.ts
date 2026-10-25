@@ -194,7 +194,7 @@ export function recoverResidents(
   state: GameState,
   catalog: Catalog,
 ): { state: GameState; returned: string[] } {
-  if (!state.settings.safeRecovery && !state.settings.shelterOccupancy) return { state, returned: [] };
+  if (!state.settings.safeRecovery && !state.settings.shelterOccupancy && !state.settings.transportAccess) return { state, returned: [] };
   const eligible = state.instances.filter(
     (i) => i.person?.away && state.calendar.absDay - 1 - i.person.away.since >= WB_AWAY_MIN_DAYS,
   );

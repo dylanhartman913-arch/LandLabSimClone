@@ -6,7 +6,7 @@ import type { DayLedger, GameState } from '../time/types.ts';
 export interface BillLine {
   /** A resource name, a system (running costs), "Connection fees", or "Market delivery". */
   item: string;
-  kind: 'backstop' | 'market' | 'fees' | 'delivery' | 'running';
+  kind: 'backstop' | 'market' | 'fees' | 'delivery' | 'running' | 'finance' | 'access';
   /** Dollars over the last 7 days. */
   thisWeek: Explained;
   /** Dollars per week for up to the last 12 weeks, oldest first. */
@@ -48,6 +48,12 @@ export function weeklyBills(state: GameState, catalog?: Catalog): WeeklyBills {
   };
   blocks.forEach((days, w) => {
     for (const d of days) {
+      if (d.finance) {
+        line('Credit interest', 'finance')._w[w]! += d.finance.interest - d.finance.capitalized;
+        line('Property tax', 'finance')._w[w]! += d.finance.taxPaid;
+        line('Failure insurance', 'finance')._w[w]! += d.finance.premium;
+      }
+      if (d.spend.access) line('Travel fares', 'access')._w[w]! += d.spend.access;
       const s = d.spend;
       if (!s) continue;
       for (const [r, v] of Object.entries(s.backstop)) line(r, 'backstop')._w[w]! += v;
@@ -89,7 +95,7 @@ export function weeklyBills(state: GameState, catalog?: Catalog): WeeklyBills {
     replacementPerYear: explained(catalog ? state.instances.reduce((sum, i) => sum + (maintenanceView(state, catalog, i.id)?.replacementPerYear.value ?? 0), 0) : 0,
       'sum of purchase price ÷ lifespan for repairable assets; annual planning allowance, not cash charged'),
     deliveryShare,
-    thisWeek: explained(weeks.at(-1) ?? 0, 'Σ backstop deliveries × price + market purchases + connection fees + delivery + running costs (house, cars), last 7 days', {
+    thisWeek: explained(weeks.at(-1) ?? 0, 'Σ backstop deliveries × price + market purchases + connection fees + delivery + running costs (house, cars) + finance payments, last 7 days', {
       refs: Object.fromEntries(out.map((l) => [l.item, l.thisWeek.value])),
     }),
     weeks,

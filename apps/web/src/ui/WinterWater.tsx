@@ -61,7 +61,7 @@ export function WinterWater({ id }: { id: string }) {
           </p>
         ),
       )}
-      {v.protection && (
+      {v.protection && v.options.length > 0 && (
         <button className="btn small ghost" onClick={() => act({ kind: 'winterize', id, protection: null })}>
           Remove protection
         </button>

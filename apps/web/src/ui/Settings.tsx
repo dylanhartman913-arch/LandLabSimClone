@@ -119,6 +119,9 @@ export function Settings() {
           'toolGathering',
           'soilFertility',
           'householdRoles',
+          'finance',
+          'riskEvents',
+          'transportAccess',
         ] as const
       ).map((key) => (
         <label key={key} className="check">
@@ -138,6 +141,9 @@ export function Settings() {
               toolGathering: 'Tools multiply gathering',
               soilFertility: 'Soil fertility',
               householdRoles: 'Household roles, skills and health',
+              finance: 'Credit, tax and insurance',
+              riskEvents: 'Warned risk events',
+              transportAccess: 'Transportation as access',
             }[key]
           }
         </label>

@@ -39,7 +39,16 @@ export function animalOutput(state: GameState, catalog: Catalog, inst: Instance,
     resource === 'Eggs' && rule.seasonalEggs
       ? Math.max(0.2, Math.min(1, (daylightHours(state.site.latitude, state.calendar.day) - 8) / 8))
       : 1;
-  return aging * laying;
+  return aging * laying * broodingFactor(state, catalog, inst, resource);
+}
+
+/** LL-43: a hen sitting on a clutch stops laying for the brood. */
+function broodingFactor(state: GameState, catalog: Catalog, inst: Instance, resource: string): number {
+  const herd = catalog.livestockInfrastructure;
+  if (resource !== 'Eggs' || !herd || inst.systemId !== herd.henSystemId) return 1;
+  const sitting = state.instances.filter((i) => i.hatch?.henId === inst.id && i.hatch.eggs > 0).length;
+  const scale = inst.scale ?? 1;
+  return sitting ? Math.max(0, (scale - sitting) / scale) : 1;
 }
 
 export function manageLivestock(
@@ -78,7 +87,7 @@ export function manageLivestock(
   };
 }
 
-function operational(state: GameState, catalog: Catalog, inst: Instance): number {
+export function operational(state: GameState, catalog: Catalog, inst: Instance): number {
   return state.lastDay[instanceGroupKey(catalog, state, inst)]?.sat ?? 0;
 }
 
@@ -91,6 +100,7 @@ export function predatorProtection(
   const rule = livestockRule(catalog, inst);
   const sat = (i: Instance) => satisfaction?.get(i.id) ?? operational(state, catalog, i);
   if (rule?.secureHousing && sat(inst) >= 0.8) return true;
+  if (runCovers(state, catalog, inst, sat)) return true;
   const defense = catalog.predatorRule;
   if (!defense) return false;
   return state.instances.some(
@@ -101,6 +111,40 @@ export function predatorProtection(
       animalOutput(state, catalog, i, 'Pest control') > 0 &&
       Math.hypot(i.x - inst.x, i.y - inst.y) <= defense.guardianRadiusFt,
   );
+}
+
+/**
+ * LL-43: each staffed predator-proof run takes whole nearby poultry cohorts, in placement
+ * order, until its bird capacity is full. A cohort larger than a run's room is not covered.
+ */
+export function runCovers(
+  state: Pick<GameState, 'instances'>,
+  catalog: Catalog,
+  inst: Instance,
+  sat: (i: Instance) => number,
+): boolean {
+  const herd = catalog.livestockInfrastructure;
+  if (!herd) return false;
+  const fowl = (i: Instance) =>
+    i.status === 'active' &&
+    !!livestockRule(catalog, i)?.predatorRisk &&
+    !!catalog.systems.find((s) => s.id === i.systemId)?.categories.includes('Fowl');
+  if (!fowl(inst)) return false;
+  const poultry = state.instances.filter(fowl);
+  const covered = new Set<string>();
+  for (const run of state.instances) {
+    if (run.status !== 'active' || run.systemId !== herd.runId || sat(run) < 0.8) continue;
+    let room = herd.run.birds;
+    for (const c of poultry) {
+      if (covered.has(c.id) || Math.hypot(c.x - run.x, c.y - run.y) > herd.run.rangeFt) continue;
+      const birds = livestockRule(catalog, c)!.animalsPerUnit * (c.scale ?? 1);
+      if (birds <= room + 1e-9) {
+        room -= birds;
+        covered.add(c.id);
+      }
+    }
+  }
+  return covered.has(inst.id);
 }
 
 export function livestockView(state: GameState, catalog: Catalog, id: string) {
@@ -171,11 +215,41 @@ export function livestockView(state: GameState, catalog: Catalog, id: string) {
   };
 }
 
-interface LifecycleDay extends ProcessingDay {
+export interface LifecycleDay extends ProcessingDay {
   livestockRng: number;
   nextInstanceId: number;
   events: GameEvent[];
   needs: { Food: NeedDay };
+}
+
+/** Newborn cohort on the first free parcel spot (or beside its parent when it has no footprint). */
+export function placeOffspring(
+  d: LifecycleDay,
+  catalog: Catalog,
+  removed: ReadonlySet<string>,
+  systemId: string,
+  scale: number,
+  near: Instance,
+): Instance | null {
+  const target = catalog.systems.find((s) => s.id === systemId)!;
+  const state = {
+    ...d.prev,
+    instances: d.instances.filter((i) => !removed.has(i.id)),
+    nextInstanceId: d.nextInstanceId,
+  };
+  const width = footprintSideFt(target.footprintSqft);
+  const side = parcelSideFt(state.settings);
+  let spot: { x: number; y: number } | null = target.layer === 'none' ? { x: near.x, y: near.y } : null;
+  for (let y = width / 2; y <= side - width / 2 && !spot; y += Math.max(4, width + 2))
+    for (let x = width / 2; x <= side - width / 2 && !spot; x += Math.max(4, width + 2))
+      if (canPlace(catalog, state, target.id, x, y).ok) spot = { x, y };
+  if (!spot) return null;
+  const birth = placeSystem(catalog, state, target.id, spot.x, spot.y, 'prebuilt', { scale });
+  const child = birth.state.instances.find((i) => i.id === birth.instanceId)!;
+  child.animal = { ageDays: 0, growthDays: 0 };
+  d.instances.push(child);
+  d.nextInstanceId = birth.state.nextInstanceId;
+  return child;
 }
 
 /** Deferred removal preserves the day's allocation indices until ledger/event construction finishes. */
@@ -263,26 +337,8 @@ export function advanceLivestock(
         laborDone: animal.breeding.laborDone + hours,
       };
       if (animal.breeding.progressDays >= b.gestationDays && animal.breeding.laborDone >= required - 1e-9) {
-        const target = catalog.systems.find((s) => s.id === b.offspringSystemId)!;
-        const state = {
-          ...d.prev,
-          instances: d.instances.filter((i) => !removed.has(i.id)),
-          nextInstanceId: d.nextInstanceId,
-        };
-        const width = footprintSideFt(target.footprintSqft);
-        const side = parcelSideFt(state.settings);
-        let spot: { x: number; y: number } | null = target.layer === 'none' ? { x: inst.x, y: inst.y } : null;
-        for (let y = width / 2; y <= side - width / 2 && !spot; y += Math.max(4, width + 2))
-          for (let x = width / 2; x <= side - width / 2 && !spot; x += Math.max(4, width + 2))
-            if (canPlace(catalog, state, target.id, x, y).ok) spot = { x, y };
-        if (spot) {
-          const birth = placeSystem(catalog, state, target.id, spot.x, spot.y, 'prebuilt', {
-            scale: b.offspringScale * (inst.scale ?? 1),
-          });
-          const child = birth.state.instances.find((i) => i.id === birth.instanceId)!;
-          child.animal = { ageDays: 0, growthDays: 0 };
-          d.instances.push(child);
-          d.nextInstanceId = birth.state.nextInstanceId;
+        const child = placeOffspring(d, catalog, removed, b.offspringSystemId, b.offspringScale * (inst.scale ?? 1), inst);
+        if (child) {
           delete animal.breeding;
           emit(child, 'born', (livestockRule(catalog, child)?.animalsPerUnit ?? 1) * (child.scale ?? 1));
         }

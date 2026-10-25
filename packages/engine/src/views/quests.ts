@@ -200,7 +200,7 @@ export const MILESTONES: Milestone[] = [
     check: (state) => {
       const w = state.ledgers.slice(-91);
       if (w.length < 91) return false;
-      const net = w.reduce((a, l) => a + l.cash.in - l.cash.out - l.cash.purchases + l.cash.refunds, 0);
+      const net = w.reduce((a, l) => a + l.cash.in - (l.cash.borrowed ?? 0) - (l.finance?.claim ?? 0) - l.cash.out + (l.cash.repaid ?? 0) - l.cash.purchases + l.cash.refunds, 0);
       return net > 0;
     },
   },

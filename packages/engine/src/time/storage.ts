@@ -1,5 +1,6 @@
 import type { Catalog, WinterStorageRule } from '@homestead/catalog';
 import { explained } from '../provenance.ts';
+import { conditionOutput } from './maintenance.ts';
 import { getPlans, type Plans } from './plans.ts';
 import { availableToday, drawToday, spareLabor, workProcessing, type ProcessingDay } from './processing.ts';
 import type { DayLedger, GameEvent, GameState, Instance } from './types.ts';
@@ -84,7 +85,7 @@ export function storagePools(
       out.push({
         name: raw ? 'Raw water storage' : 'Drinking water storage',
         members: [m],
-        cap: raw ? Math.max(0, capacity(capRes) - frozenCap) + buffer : buffer,
+        cap: raw ? Math.max(0, capacity(capRes) - frozenCap) + buffer : buffer + capacity('Potable water storage'),
       });
     }
   }
@@ -93,7 +94,7 @@ export function storagePools(
     out.push({
       name: FEED_POOL,
       members: rule.feed.members.map((m) => ({ resource: m.resource, unitsPer: m.lbsPerCuFt })),
-      cap: Math.max(0, freeSpace) + rule.feed.bufferCuFt,
+      cap: Math.max(0, freeSpace) + capacity('Feed storage') + rule.feed.bufferCuFt,
     });
   return out;
 }
@@ -107,7 +108,10 @@ export function statePools(state: GameState, catalog: Catalog): StoragePool[] {
     if (inst.status !== 'active') continue;
     const plan = plans.bySystem.get(inst.systemId)!;
     for (const o of plan.outputs)
-      if (o.isCapacity) made.set(o.resource, (made.get(o.resource) ?? 0) + o.qty * (inst.scale ?? 1));
+      if (o.isCapacity) {
+        const condition = o.resource === 'Feed storage' && state.settings.wearAndRepair ? conditionOutput(inst, plan.system) : 1;
+        made.set(o.resource, (made.get(o.resource) ?? 0) + o.qty * (inst.scale ?? 1) * condition);
+      }
     for (const i of plan.inputs)
       if (i.role === 'capacity') used.set(i.resource, (used.get(i.resource) ?? 0) + i.qty * (inst.scale ?? 1));
   }
@@ -147,6 +151,7 @@ export function setWinterProtection(
   if (!state.settings.storagePools) throw new Error('Separate storage and winter water is disabled');
   const inst = state.instances.find((i) => i.id === id);
   if (!inst || !tankRule(catalog, inst.systemId)) throw new Error('Only outdoor water tanks can be winterized');
+  if (inst.systemId === catalog.waterInfrastructure?.heatedTankId) throw new Error('This tank has built-in heating');
   if ((inst.winter?.protection ?? null) === protection) throw new Error('This tank already has that protection');
   const cost = protection ? winterizeCost(catalog, state, inst, protection) : 0;
   if (cost > 0 && state.cash < cost) throw new Error('Cash cannot cover the winter protection');
@@ -198,7 +203,10 @@ export function advanceWinter(
   for (let k = 0; k < d.instances.length; k++) {
     const inst0 = d.instances[k]!;
     if (inst0.status !== 'active' || !tankRule(catalog, inst0.systemId)) continue;
-    const inst = { ...inst0, winter: { ...(inst0.winter ?? { frost: 0 }) } };
+    const builtIn = inst0.systemId === catalog.waterInfrastructure?.heatedTankId;
+    const inst = { ...inst0, winter: { ...(inst0.winter ?? (builtIn
+      ? { frost: 0, protection: 'heated' as const, setupHours: rule.heating.hours }
+      : { frost: 0 })) } };
     const w = inst.winter;
     if (w.protection) {
       const hours = w.protection === 'insulated' ? rule.insulation.hours : rule.heating.hours;
@@ -259,7 +267,8 @@ export function winterView(state: GameState, catalog: Catalog, id: string) {
   const inst = state.instances.find((i) => i.id === id);
   if (!state.settings.storagePools || !rule || !inst || !tankRule(catalog, inst.systemId)) return null;
   const plans = getPlans(catalog, state.site);
-  const w = inst.winter ?? { frost: 0 };
+  const builtIn = inst.systemId === catalog.waterInfrastructure?.heatedTankId;
+  const w = inst.winter ?? (builtIn ? { frost: 0, protection: 'heated' as const, setupHours: rule.heating.hours } : { frost: 0 });
   const today = state.ledgers.at(-1)?.winter?.find((r) => r.instanceId === id) ?? null;
   const hours = w.protection === 'insulated' ? rule.insulation.hours : w.protection === 'heated' ? rule.heating.hours : 0;
   return {
@@ -273,7 +282,7 @@ export function winterView(state: GameState, catalog: Catalog, id: string) {
     locked: explained(w.frozen ?? 0, 'raw water locked in ice when the tank froze; released on thaw'),
     meanF: today ? explained(today.meanF, '65 °F − heating degree days + cooling degree days, yesterday') : null,
     heater: today && today.heaterNeedKWh > 0 ? { kWh: explained(today.heaterKWh, 'electricity drawn after household use'), need: explained(today.heaterNeedKWh, `gal × ${rule.heating.kWhPerGalDegreeDay} kWh × °F below freezing`) } : null,
-    options: (['insulated', 'heated'] as const).map((p) => ({
+    options: (builtIn ? [] : ['insulated', 'heated'] as const).map((p) => ({
       protection: p,
       cost: explained(winterizeCost(catalog, state, inst, p), p === 'insulated' ? `$${rule.insulation.cost} + $${rule.insulation.costPerGal}/gal` : 'thermostatic heater kit'),
       hours: p === 'insulated' ? rule.insulation.hours : rule.heating.hours,

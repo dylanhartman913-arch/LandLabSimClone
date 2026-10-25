@@ -49,6 +49,7 @@ export interface Report {
   shortages: ShortageReport[];
   /** `refunds` excludes the neighbor's quest cash, which is `assistance` (LL-21); `net` counts both. */
   cash: { in: number; out: number; purchases: number; refunds: number; assistance: number; net: number };
+  financing?: { borrowed: number; repaid: number; claims: number };
   laborBySystem: { systemId: string; name: string; hours: number }[];
   constructionHours: number;
   spoiled: Record<string, number>;
@@ -161,7 +162,7 @@ export function rootCauseChain(
       continue;
     }
     // Terminal: why are the producers' outputs not enough?
-    const summary = summarizeLedgers(ledgers, catalog).resources[current];
+    const summary = summarizeLedgers(ledgers, catalog, state.settings.transportAccess).resources[current];
     const spilled = summary?.spilled ?? 0;
     const produced = summary?.produced ?? 0;
     // Seasonal output: average shape of the producers' output of `current` in this range.
@@ -226,12 +227,12 @@ export function buildReport(
   ledgers: readonly DayLedger[],
   title: string,
 ): Report {
-  const sum = summarizeLedgers(ledgers, catalog);
+  const sum = summarizeLedgers(ledgers, catalog, state.settings.transportAccess);
   const monthly: Report['monthly'] = [];
   let bucket: DayLedger[] = [];
   const flush = () => {
     if (!bucket.length) return;
-    const s = summarizeLedgers(bucket, catalog);
+    const s = summarizeLedgers(bucket, catalog, state.settings.transportAccess);
     const rows = {} as Record<NeedKey, number | null>;
     for (const r of s.checklist) rows[r.need] = r.needed > 0 ? r.pct : null;
     const first = bucket[0]!;
@@ -275,6 +276,13 @@ export function buildReport(
     overallScore: sum.overallScore,
     monthly,
     shortages,
+    ...(ledgers.some((l) => l.finance || l.cash.borrowed || l.cash.repaid) ? {
+      financing: {
+        borrowed: ledgers.reduce((a, l) => a + (l.cash.borrowed ?? 0), 0),
+        repaid: ledgers.reduce((a, l) => a + (l.cash.repaid ?? 0), 0),
+        claims: ledgers.reduce((a, l) => a + (l.finance?.claim ?? 0), 0),
+      },
+    } : {}),
     cash: (() => {
       // Quest rewards land between days as refunds; separate them as the neighbor's assistance.
       const line = state.tutorial ? getQuestLine(state.tutorial.line) : null;

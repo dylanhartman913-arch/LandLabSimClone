@@ -195,7 +195,7 @@ export interface GameStore {
   setInstancePriority(instanceId: string, priority: number): void;
   setInstanceLink(instanceId: string, resource: string, providerId: string | null): void;
   /** Order from the market for the next trip (G12). Logged for replay; not undoable (it's a purchase). */
-  phase9Action(body: Extract<ActionBody, { kind: 'service' | 'sell' | 'preserve' | 'livestock' | 'assignShelter' | 'closeShelter' | 'winterize' | 'role' }>): void;
+  phase9Action(body: Extract<ActionBody, { kind: 'service' | 'sell' | 'preserve' | 'livestock' | 'hatch' | 'assignShelter' | 'closeShelter' | 'winterize' | 'role' | 'finance' }>): void;
   marketBuy(resource: string, amount: number): boolean;
   /** Keep a stock above a level by standing order (keepAbove 0 removes it). */
   marketStanding(resource: string, keepAbove: number, orderUpTo?: number): boolean;
@@ -445,6 +445,7 @@ export const useGame = create<GameStore>()((set, get) => {
           ) {
             pauseReason ??= `${AUTO_PAUSE_TEXT.shortage} (${e.resource})`;
           }
+          if (ap.hardship && e.kind === 'risk' && e.phase === 'warning') pauseReason ??= e.message;
           if (ap.hardship && e.kind === 'livestock' && e.event === 'predator-warning') pauseReason ??= 'Predator tracks near livestock: secure protection before the attack.';
           if (ap.hardship && e.kind === 'hardship') pauseReason ??= AUTO_PAUSE_TEXT.hardship;
           if (ap.built && e.kind === 'built') pauseReason ??= AUTO_PAUSE_TEXT.built;
@@ -996,6 +997,12 @@ function toastForEvent(e: GameEvent): void {
   const s = useGame.getState();
   const name = (systemId: string) => s.catalog.systems.find((x) => x.id === systemId)?.name ?? systemId;
   switch (e.kind) {
+    case 'access':
+      s.toast(e.message, e.blocked ? 'warn' : 'info');
+      break;
+    case 'risk':
+      s.toast(e.message, e.phase === 'warning' || e.phase === 'started' ? 'warn' : 'info', e.instanceId);
+      break;
     case 'built': {
       const inst = s.game.instances.find((i) => i.id === e.instanceId);
       if (inst) s.toast(`${name(inst.systemId)} is built.`, 'info', e.instanceId);
@@ -1007,8 +1014,10 @@ function toastForEvent(e: GameEvent): void {
         : e.event === 'culled' ? `Culling complete: ${e.amount.toFixed(1)} lbs meat.`
         : e.event === 'born' ? `Birth / hatch: ${e.amount} animal(s).`
         : e.event === 'matured' ? 'Animals reached maturity.'
-        : e.event === 'protected' ? 'Housing or guardian prevented a predator loss.' : 'Animals died of old age.',
-        e.event === 'predator-warning' || e.event === 'predator-loss' ? 'warn' : 'info', e.instanceId);
+        : e.event === 'protected' ? 'Housing, a run or a guardian prevented a predator loss.'
+        : e.event === 'eggs-set' ? `${e.amount} eggs set to hatch.`
+        : e.event === 'hatch-failed' ? `Hatch failed: ${e.amount} eggs lost.` : 'Animals died of old age.',
+        e.event === 'predator-warning' || e.event === 'predator-loss' || e.event === 'hatch-failed' ? 'warn' : 'info', e.instanceId);
       break;
     case 'person':
       s.toast(e.event === 'ill' ? `Someone fell ill: little work for ${e.days} days.` : e.event === 'injured' ? `An injury at work: light duty for ${e.days} days.` : 'Recovered and back to full work.', e.event === 'recovered' ? 'info' : 'warn', e.instanceId);

@@ -73,7 +73,8 @@ export function selfRelianceOf(rows: readonly { need: NeedKey; pct: number; self
 }
 
 /** Summarize a run of daily ledgers (e.g. one year) into weekly averages and totals. */
-export function summarizeLedgers(ledgers: readonly DayLedger[], catalog: Catalog): Summary {
+export function summarizeLedgers(ledgers: readonly DayLedger[], catalog: Catalog, transportAccess = false): Summary {
+  const access = transportAccess || ledgers.some((l) => l.access !== undefined);
   const n = ledgers.length;
   const cap = capacityRowSet(catalog);
   const checklist: RowSummary[] = NEED_KEYS.map((need) => {
@@ -84,6 +85,7 @@ export function summarizeLedgers(ledgers: readonly DayLedger[], catalog: Catalog
     let bt = 0;
     for (const l of ledgers) {
       const x = l.needs[need];
+      if (access && need === 'Transportation' && !l.access) continue;
       bt += x.bought ?? 0;
       p += x.provided;
       pot += x.potential ?? x.provided;
@@ -116,7 +118,7 @@ export function summarizeLedgers(ledgers: readonly DayLedger[], catalog: Catalog
       worstWeekPct: worst,
     };
   });
-  const scored = checklist.filter((r) => r.needed > EPS);
+  const scored = checklist.filter((r) => r.needed > EPS && !(access && r.need === 'Transportation'));
   const resources: Record<string, ResourceSummary> = {};
   const cash = { in: 0, out: 0, purchases: 0, refunds: 0 };
   const labor = { pool: 0, construction: 0, upkeepRequested: 0, upkeepDelivered: 0 };
@@ -174,5 +176,5 @@ export function summarize(state: GameState, catalog: Catalog, range?: { from: nu
   const ls = range
     ? state.ledgers.filter((l) => l.absDay >= range.from && l.absDay <= range.to)
     : state.ledgers;
-  return summarizeLedgers(ls, catalog);
+  return summarizeLedgers(ls, catalog, state.settings.transportAccess);
 }

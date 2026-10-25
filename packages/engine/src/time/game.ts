@@ -37,7 +37,7 @@ export function initGame(
 ): GameState {
   const s = defaultSettings(settings);
   const stocks: Record<string, number> = {};
-  for (const r of catalog.resources) if (r.class === 'Flow' && r.storable && (r.name !== 'Preserved food' || s.foodPreservation || 'Preserved food' in s.startingStocks)) stocks[r.name] = 0;
+  for (const r of catalog.resources) if (r.class === 'Flow' && r.storable && (!['Preserved food', 'Cheese'].includes(r.name) || s.foodPreservation || r.name in s.startingStocks)) stocks[r.name] = 0;
   for (const [k, v] of Object.entries(s.startingStocks)) {
     if (!(k in stocks)) throw new Error(`startingStocks: "${k}" is not a storable Flow resource`);
     stocks[k] = v;
@@ -165,7 +165,7 @@ export function placeSystem(
   const sys = getSystem(catalog, systemId);
   const id = `i${state.nextInstanceId}`;
   const paid = costFor(catalog, systemId, buildMode);
-  if (state.settings.cashFloor && paid > state.cash) throw new Error(`Need $${paid.toFixed(2)}; cash is $${state.cash.toFixed(2)}.`);
+  if ((state.settings.cashFloor || state.settings.finance) && paid > state.cash) throw new Error(`Need $${paid.toFixed(2)}; cash is $${state.cash.toFixed(2)}.`);
   const hours = setupHoursFor(catalog, systemId, buildMode);
   const prebuilt = buildMode === 'prebuilt';
   const inst: Instance = {

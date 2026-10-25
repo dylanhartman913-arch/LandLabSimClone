@@ -132,9 +132,9 @@ export interface HudMetrics {
 /** Everything the top bar shows, each number with its provenance. */
 export function hudMetrics(state: GameState, catalog: Catalog): HudMetrics {
   const labor = laborWeek(state, catalog);
-  const summary = summarizeLedgers(state.ledgers.slice(-7), catalog);
+  const summary = summarizeLedgers(state.ledgers.slice(-7), catalog, state.settings.transportAccess);
   // No history is zero measured supply, never a silent forecast fallback.
-  const scored = summary.checklist.filter((r) => r.needed > 0);
+  const scored = summary.checklist.filter((r) => r.needed > 0 && !((state.settings.transportAccess || state.ledgers.slice(-7).some((l) => l.access !== undefined)) && r.need === 'Transportation'));
   const w = state.weather;
   return {
     measurementLabel: state.ledgers.length ? `Last ${Math.min(7, state.ledgers.length)} measured days` : 'No measured days yet',

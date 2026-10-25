@@ -24,7 +24,7 @@ export function ProjectPreview({ systemId, mode }: { systemId: string; mode: Bui
       </p>
       {v.cashAfter.value < 0 && (
         <p className="warn-text">
-          {game.settings.cashFloor
+          {(game.settings.cashFloor || game.settings.finance)
             ? 'Not enough cash to purchase this system.'
             : 'This purchase would put cash below zero.'}{' '}
           Income and operating supplies still need funding.

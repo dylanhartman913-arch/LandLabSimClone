@@ -282,10 +282,34 @@ export const CategorySchema = z.object({
 });
 export type Category = z.infer<typeof CategorySchema>;
 
+export const FodderRuleSchema = z.object({
+  meadowId: z.string(), mixId: z.string(), barnId: z.string(), scytheId: z.string(),
+  rainReferenceIn: z.number().positive(), droughtFloor: z.number().min(0).max(1), note: z.string(),
+});
+export type FodderRule = z.infer<typeof FodderRuleSchema>;
+
+export const LivestockInfrastructureSchema = z.object({
+  incubatorId: z.string(), nestBoxId: z.string(), runId: z.string(), paddockId: z.string(),
+  chickSystemId: z.string(), henSystemId: z.string(), pastureIds: z.array(z.string()).min(1),
+  hatchDays: z.number().int().positive(), maxMissedDays: z.number().int().nonnegative(),
+  incubator: z.object({ eggs: z.number().int().positive(), kWhPerDay: z.number().positive(), hatchRate: z.number().positive().max(1) }),
+  nestBox: z.object({ eggs: z.number().int().positive(), hatchRate: z.number().positive().max(1), rangeFt: z.number().positive(), minDaylightHours: z.number().positive().max(24) }),
+  run: z.object({ birds: z.number().positive(), rangeFt: z.number().nonnegative() }),
+  paddock: z.object({ bonus: z.number().positive().max(1), resources: z.array(z.string()).min(1) }),
+  note: z.string(),
+});
+export type LivestockInfrastructure = z.infer<typeof LivestockInfrastructureSchema>;
+
+export const WaterInfrastructureSchema = z.object({
+  springId: z.string(), springRadiusFt: z.number().positive(), diverterId: z.string(),
+  rainLossFraction: z.number().min(0).max(1), filterLaborMultiplier: z.number().positive().max(1),
+  heatedTankId: z.string(), testKitId: z.string(), grainRodentLossPerWeek: z.number().min(0).max(1), note: z.string(),
+});
+
 export const PreservationRecipeSchema = z.object({
   systemId: z.string(), inputs: z.array(z.string()).min(1),
   kcalPerDay: z.number().positive(), laborPer1000Kcal: z.number().positive(),
-  energyResource: z.enum(['Cooking fuel', 'Electricity', 'Sunlight']),
+  energyResource: z.enum(['Cooking fuel', 'Electricity', 'Sunlight', 'Woody biomass']),
   energyPer1000Kcal: z.number().positive(), yieldFraction: z.number().positive().max(1), note: z.string(),
 });
 export type PreservationRecipe = z.infer<typeof PreservationRecipeSchema>;
@@ -333,6 +357,8 @@ export const FertilityRuleSchema = z.object({
   floorYield: z.number().min(0).max(1), maxFertility: z.number().min(1),
   manureCompostEquivalent: z.number().nonnegative(),
   cover: z.object({ systemId: z.string(), rangeFt: z.number().positive(), gainPerYear: z.number().positive() }),
+  /** LL-44: an off-season cover crop sown on nearby beds, sharing its sown area among them. */
+  seeding: z.object({ systemId: z.string(), rangeFt: z.number().positive(), areaSqft: z.number().positive(), gainPerYear: z.number().positive() }).optional(),
   note: z.string(),
 });
 export type FertilityRule = z.infer<typeof FertilityRuleSchema>;
@@ -349,10 +375,51 @@ export const HouseholdRuleSchema = z.object({
 });
 export type HouseholdRule = z.infer<typeof HouseholdRuleSchema>;
 
+export const FinanceRuleSchema = z.object({
+  creditLimit: z.number().positive(), annualInterest: z.number().min(0).max(1),
+  landValuePerAcre: z.number().nonnegative(), propertyTaxRate: z.number().min(0).max(1),
+  insurancePerYear: z.number().positive(), deductible: z.number().nonnegative(),
+  coverage: z.number().positive().max(1), emergencyDays: z.number().int().positive(), note: z.string(),
+});
+export type FinanceRule = z.infer<typeof FinanceRuleSchema>;
+
+export const RiskKindSchema = z.enum(['breakdown', 'pests', 'disease', 'smoke', 'blizzard', 'outage', 'drawdown']);
+export type RiskKind = z.infer<typeof RiskKindSchema>;
+const RiskEventRuleSchema = z.object({
+  chance: z.number().min(0).max(1), warningDays: z.number().int().min(1), days: z.number().int().positive(),
+});
+export const RiskRuleSchema = z.object({
+  intervalDays: z.number().int().positive(),
+  events: z.object({ breakdown: RiskEventRuleSchema, pests: RiskEventRuleSchema, disease: RiskEventRuleSchema,
+    smoke: RiskEventRuleSchema, blizzard: RiskEventRuleSchema, outage: RiskEventRuleSchema, drawdown: RiskEventRuleSchema }),
+  breakdownBelow: z.number().positive().max(1),
+  harvestFactor: z.number().min(0).max(1), protectedHarvestFactor: z.number().min(0).max(1),
+  wellFactor: z.number().min(0).max(1), droughtBelow: z.number().positive().max(1),
+  smokeCdd: z.number().positive(), smokePenalty: z.number().positive(), refugeExposure: z.number().min(0).max(1),
+  blizzardHdd: z.number().positive(), mitigationRangeFt: z.number().positive(),
+  pestDefenseIds: z.array(z.string()).min(1), diseaseDefenseIds: z.array(z.string()).min(1),
+  refugeIds: z.array(z.string()).min(1), gridIds: z.array(z.string()).min(1), wellIds: z.array(z.string()).min(1),
+  deliveryIds: z.array(z.string()).min(1), note: z.string(),
+}).refine((r) => r.protectedHarvestFactor >= r.harvestFactor, 'mitigation cannot worsen harvests');
+export type RiskRule = z.infer<typeof RiskRuleSchema>;
+
+export const TransportAccessRuleSchema = z.object({
+  marketMiles: z.number().positive(), deliveryFare: z.number().positive(),
+  commuteFarePerMile: z.number().positive(), townMilesPerPerson: z.number().positive(), townFare: z.number().positive(),
+  deliveryIds: z.array(z.string()).min(1), localSalesIds: z.array(z.string()), note: z.string(),
+});
+export type TransportAccessRule = z.infer<typeof TransportAccessRuleSchema>;
+
 export const CatalogSchema = z.object({
+  transportAccess: TransportAccessRuleSchema.optional(),
+  riskEvents: RiskRuleSchema.optional(),
+  finance: FinanceRuleSchema.optional(),
   householdRoles: HouseholdRuleSchema.optional(),
   soilFertility: FertilityRuleSchema.optional(),
   toolRules: z.array(ToolRuleSchema).optional(),
+  fodder: FodderRuleSchema.optional(),
+  livestockInfrastructure: LivestockInfrastructureSchema.optional(),
+  waterInfrastructure: WaterInfrastructureSchema.optional(),
   winterStorage: WinterStorageRuleSchema.optional(),
   preservationRecipes: z.array(PreservationRecipeSchema).optional(),
   livestockRules: z.array(LivestockRuleSchema).optional(),
@@ -377,9 +444,15 @@ export type Catalog = z.infer<typeof CatalogSchema>;
 export const OverridesSchema = z
   .object({
     version: z.literal(1),
+    transportAccess: TransportAccessRuleSchema.optional(),
+    riskEvents: RiskRuleSchema.optional(),
+    finance: FinanceRuleSchema.optional(),
     householdRoles: HouseholdRuleSchema.optional(),
     soilFertility: FertilityRuleSchema.optional(),
     toolRules: z.array(ToolRuleSchema).optional(),
+    fodder: FodderRuleSchema.optional(),
+    livestockInfrastructure: LivestockInfrastructureSchema.optional(),
+    waterInfrastructure: WaterInfrastructureSchema.optional(),
     winterStorage: WinterStorageRuleSchema.optional(),
     preservationRecipes: z.array(PreservationRecipeSchema).optional(),
     livestockRules: z.array(LivestockRuleSchema).optional(),

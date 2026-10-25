@@ -1,4 +1,119 @@
 {
+  "transportAccess": {
+    "marketMiles": 10,
+    "deliveryFare": 25,
+    "commuteFarePerMile": 0.5,
+    "townMilesPerPerson": 10,
+    "townFare": 25,
+    "deliveryIds": [
+      "S028",
+      "S030",
+      "S102",
+      "S114",
+      "S115"
+    ],
+    "localSalesIds": [
+      "S178"
+    ],
+    "note": "LL-39 experimental game balance. Market orders, physical supply deliveries and sale collection share one 10-mile trip or $25 delivery per day. Commuting miles follow the job catalog transport-to-work-hours ratio at hours actually allocated; paid travel is $0.50/mile. Remote work needs no commute. Town journeys use 10 person-miles per traveler or one $25 household ride; emergency fares can remain explicitly payable so zero-cash residents are not stranded. Operating vehicles provide only the previous measured day's mileage, with no multi-day bank."
+  },
+  "riskEvents": {
+    "intervalDays": 28,
+    "events": {
+      "breakdown": {
+        "chance": 0.25,
+        "warningDays": 5,
+        "days": 1
+      },
+      "pests": {
+        "chance": 0.25,
+        "warningDays": 5,
+        "days": 7
+      },
+      "disease": {
+        "chance": 0.18,
+        "warningDays": 5,
+        "days": 10
+      },
+      "smoke": {
+        "chance": 0.25,
+        "warningDays": 3,
+        "days": 5
+      },
+      "blizzard": {
+        "chance": 0.3,
+        "warningDays": 3,
+        "days": 3
+      },
+      "outage": {
+        "chance": 0.18,
+        "warningDays": 3,
+        "days": 2
+      },
+      "drawdown": {
+        "chance": 0.5,
+        "warningDays": 7,
+        "days": 14
+      }
+    },
+    "breakdownBelow": 0.6,
+    "harvestFactor": 0.5,
+    "protectedHarvestFactor": 0.85,
+    "wellFactor": 0.35,
+    "droughtBelow": 0.8,
+    "smokeCdd": 8,
+    "smokePenalty": 1.5,
+    "refugeExposure": 0.25,
+    "blizzardHdd": 30,
+    "mitigationRangeFt": 100,
+    "pestDefenseIds": [
+      "S073",
+      "S134",
+      "S136"
+    ],
+    "diseaseDefenseIds": [
+      "S035"
+    ],
+    "refugeIds": [
+      "S006",
+      "S007",
+      "S040",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085",
+      "S088",
+      "S090"
+    ],
+    "gridIds": [
+      "S029"
+    ],
+    "wellIds": [
+      "S079",
+      "S103"
+    ],
+    "deliveryIds": [
+      "S028",
+      "S030",
+      "S102",
+      "S114",
+      "S115"
+    ],
+    "note": "LL-38 experimental game balance, not hazard predictions. Each eligible risk draws every 28 days from a separate saved stream, then warns before starting. Predators retain the LL-31 stream and guardian/housing protection. Operational mitigation is measured on the previous day: nearby birds, bat habitat or hedgerow soften pests; compost piles soften disease; enclosed shelter reduces smoke exposure. Batteries/generators, stored food/water/fuel and rain collection bridge supply interruptions."
+  },
+  "finance": {
+    "creditLimit": 5000,
+    "annualInterest": 0.12,
+    "landValuePerAcre": 10000,
+    "propertyTaxRate": 0.01,
+    "insurancePerYear": 180,
+    "deductible": 250,
+    "coverage": 0.8,
+    "emergencyDays": 90,
+    "note": "LL-37 experimental game balance, not market quotes: tax on parcel acres at a fixed assessed value; insurance covers newly failed LL-28 equipment only, not routine maintenance, livestock or buildings removed by the player."
+  },
   "householdRoles": {
     "roles": {
       "adult": {
@@ -99,7 +214,13 @@
       "rangeFt": 100,
       "gainPerYear": 0.2
     },
-    "note": "LL-35 experimental game balance. Fertility 1 is the catalog's full yield; yield = 30% + 70% × fertility, capped at 110%. A full year of cropping draws 0.35 (annual beds) or 0.15 (perennials), scaled by realized yield; the catalog's own compost rate replaces exactly that draw. Bought-soil beds start at 1, dug-in plots at 0.7, perennial plantings at 0.8. A pound of manure counts as half a pound of compost. A clover cover crop adds 0.2 a year to gardens within 100 ft, shared by their area."
+    "seeding": {
+      "systemId": "S200",
+      "rangeFt": 30,
+      "areaSqft": 200,
+      "gainPerYear": 0.15
+    },
+    "note": "LL-35 experimental game balance. Fertility 1 is the catalog's full yield; yield = 30% + 70% × fertility, capped at 110%. A full year of cropping draws 0.35 (annual beds) or 0.15 (perennials), scaled by realized yield; the catalog's own compost rate replaces exactly that draw. Bought-soil beds start at 1, dug-in plots at 0.7, perennial plantings at 0.8. A pound of manure counts as half a pound of compost. A clover cover crop adds 0.2 a year to gardens within 100 ft, shared by their area. LL-44: cover crop seeding sows 200 sq ft of gardens within 30 ft and adds up to 0.15 a year while the beds rest (outside the growing season), shared by garden area and scaled by the share of its seed sown in the late-summer window and by its upkeep met."
   },
   "toolRules": [
     {
@@ -128,6 +249,62 @@
       "note": "LL-34 experimental balance. The catalog row (20 lb per 0.5 h) would imply 13× a 3 lb/h clay bank, but a broadfork loosens beds rather than digging clay, so the boost is capped at 2×."
     }
   ],
+  "fodder": {
+    "meadowId": "S190",
+    "mixId": "S191",
+    "barnId": "S192",
+    "scytheId": "S150",
+    "rainReferenceIn": 15,
+    "droughtFloor": 0.2,
+    "note": "LL-42 experimental dryland balance. At 15 annual inches the 0.1-acre meadow yields about 200 lb/year; drier sites reduce yield linearly. Real-year drought scales that yield with a 20% floor. LL-34 scythe multiplier reduces cutting labor only; nominal hay yield never increases. Cutting reserves tool time before gathering, up to the existing 8 h/tool/day."
+  },
+  "livestockInfrastructure": {
+    "incubatorId": "S193",
+    "nestBoxId": "S194",
+    "runId": "S195",
+    "paddockId": "S196",
+    "chickSystemId": "S015",
+    "henSystemId": "S018",
+    "pastureIds": [
+      "S168"
+    ],
+    "hatchDays": 21,
+    "maxMissedDays": 2,
+    "incubator": {
+      "eggs": 24,
+      "kWhPerDay": 0.5,
+      "hatchRate": 0.7
+    },
+    "nestBox": {
+      "eggs": 8,
+      "hatchRate": 0.85,
+      "rangeFt": 30,
+      "minDaylightHours": 13
+    },
+    "run": {
+      "birds": 12,
+      "rangeFt": 20
+    },
+    "paddock": {
+      "bonus": 0.15,
+      "resources": [
+        "Hay",
+        "Green biomass"
+      ]
+    },
+    "note": "LL-43 experimental balance, not husbandry guidance. Eggs are set from stock and hatch after 21 counted days; an incubator day counts only with its 0.5 kWh and 80% upkeep met, a broody day only while her flock is active. More than two missed days loses the batch. A brooding hen stops laying. A staffed run protects up to 12 nearby birds from predator losses. A moved paddock kit raises its pasture's hay and greens up to 15%."
+  },
+  "waterInfrastructure": {
+    "springId": "S179",
+    "springRadiusFt": 50,
+    "diverterId": "S180",
+    "rainLossFraction": 0.05,
+    "filterLaborMultiplier": 0.75,
+    "heatedTankId": "S182",
+    "testKitId": "S183",
+    "grainRodentLossPerWeek": 0.01,
+    "note": "LL-40/41 experimental balance. Spring flow capped at site yield per hour (one hour-equivalent/day), shared across all boxes. First flush trades 5% rain capture for 25% lower filter labor after measured operation. Test kit issues precautionary warnings, not simulated lab results."
+  },
   "winterStorage": {
     "feed": {
       "capacityResource": "Storage space",
@@ -160,6 +337,10 @@
       {
         "systemId": "S106",
         "freezeDegreeDays": 80
+      },
+      {
+        "systemId": "S182",
+        "freezeDegreeDays": 30
       }
     ],
     "insulation": {
@@ -206,6 +387,47 @@
       "energyPer1000Kcal": 0.5,
       "yieldFraction": 0.9,
       "note": "LL-30 experimental solar drying balance; daily sunlight limits processing; no fuel required."
+    },
+    {
+      "systemId": "S184",
+      "inputs": [
+        "Vegetables fruit fiber herbs"
+      ],
+      "kcalPerDay": 6000,
+      "laborPer1000Kcal": 0.5,
+      "energyResource": "Cooking fuel",
+      "energyPer1000Kcal": 0.2,
+      "yieldFraction": 0.9,
+      "note": "LL-41 experimental processing balance; losses are explicit. Water-bath blended produce means acidified produce only; smokehouse includes curing/drying. Not a food-safety recipe."
+    },
+    {
+      "systemId": "S185",
+      "inputs": [
+        "Vegetables fruit fiber herbs",
+        "Root crops",
+        "Meat",
+        "Fish",
+        "Mushrooms"
+      ],
+      "kcalPerDay": 6000,
+      "laborPer1000Kcal": 0.3,
+      "energyResource": "Electricity",
+      "energyPer1000Kcal": 0.8,
+      "yieldFraction": 0.9,
+      "note": "LL-41 experimental processing balance; losses are explicit. Water-bath blended produce means acidified produce only; smokehouse includes curing/drying. Not a food-safety recipe."
+    },
+    {
+      "systemId": "S186",
+      "inputs": [
+        "Meat",
+        "Fish"
+      ],
+      "kcalPerDay": 6000,
+      "laborPer1000Kcal": 0.4,
+      "energyResource": "Woody biomass",
+      "energyPer1000Kcal": 0.5,
+      "yieldFraction": 0.85,
+      "note": "LL-41 experimental processing balance; losses are explicit. Water-bath blended produce means acidified produce only; smokehouse includes curing/drying. Not a food-safety recipe."
     }
   ],
   "livestockRules": [
@@ -443,7 +665,7 @@
   "schemaVersion": 1,
   "source": {
     "file": "LandLab_Sim_Systems_v2.xlsx",
-    "sha256": "120359ad73cadddf6e4ab759b3f8a06f154e0bdfeb932db9ad67375aab7db3b3"
+    "sha256": "849c48e01c86bf1483cde4de9ab7b0d47535f68977d47877931cddf0efcd8af7"
   },
   "assumptions": {
     "hdd": 6000,
@@ -867,6 +1089,7 @@
         "Vegetables fruit fiber herbs",
         "Eggs",
         "Root crops",
+        "Cheese",
         "Grain",
         "Honey",
         "Nuts",
@@ -2867,6 +3090,142 @@
         "factorToNeed": "xlsx",
         "spoilPerWeek": "override",
         "storedIn": "override",
+        "storable": "default-rule",
+        "satisfiedBy": "default-rule",
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
+      }
+    },
+    {
+      "name": "Potable water storage",
+      "unit": "gal",
+      "class": "Capacity",
+      "note": "Safe-water tank volume only; LL-33 separate pools.",
+      "spoilPerWeek": 0,
+      "storedIn": null,
+      "storable": false,
+      "directUseShare": 0,
+      "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
+      "provenance": {
+        "name": "xlsx",
+        "unit": "xlsx",
+        "class": "xlsx",
+        "note": "xlsx",
+        "spoilPerWeek": "default-rule",
+        "storedIn": "default-rule",
+        "storable": "default-rule",
+        "satisfiedBy": "default-rule",
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
+      }
+    },
+    {
+      "name": "Cheese",
+      "unit": "lbs",
+      "class": "Flow",
+      "needsRow": "Food",
+      "factorToNeed": 1800,
+      "note": "Pressed cheese; 1,800 kcal/lb experimental balance.",
+      "spoilPerWeek": 0.01,
+      "storedIn": {
+        "capacityResource": "Food storage",
+        "buffer": 10,
+        "unitsPerCapacityUnit": 35
+      },
+      "storable": true,
+      "directUseShare": 0,
+      "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
+      "provenance": {
+        "name": "xlsx",
+        "unit": "xlsx",
+        "class": "xlsx",
+        "note": "xlsx",
+        "needsRow": "xlsx",
+        "factorToNeed": "xlsx",
+        "spoilPerWeek": "override",
+        "storedIn": "override",
+        "storable": "default-rule",
+        "satisfiedBy": "default-rule",
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
+      }
+    },
+    {
+      "name": "Grain storage",
+      "unit": "lbs",
+      "class": "Capacity",
+      "note": "Rodent-protected grain capacity, LL-30.",
+      "spoilPerWeek": 0,
+      "storedIn": null,
+      "storable": false,
+      "directUseShare": 0,
+      "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
+      "provenance": {
+        "name": "xlsx",
+        "unit": "xlsx",
+        "class": "xlsx",
+        "note": "xlsx",
+        "spoilPerWeek": "default-rule",
+        "storedIn": "default-rule",
+        "storable": "default-rule",
+        "satisfiedBy": "default-rule",
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "default-rule",
+        "marketUnit": "default-rule",
+        "marketAvailable": "default-rule"
+      }
+    },
+    {
+      "name": "Feed storage",
+      "unit": "cu ft",
+      "class": "Capacity",
+      "note": "Dedicated hay/feed volume; joins the LL-33 feed pool without providing tool storage.",
+      "spoilPerWeek": 0,
+      "storedIn": null,
+      "storable": false,
+      "directUseShare": 0,
+      "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": null,
+      "marketUnit": null,
+      "marketAvailable": false,
+      "provenance": {
+        "name": "xlsx",
+        "unit": "xlsx",
+        "class": "xlsx",
+        "note": "xlsx",
+        "spoilPerWeek": "default-rule",
+        "storedIn": "default-rule",
         "storable": "default-rule",
         "satisfiedBy": "default-rule",
         "directUseShare": "default-rule",
@@ -12893,6 +13252,1397 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S178",
       "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S179",
+      "name": "Spring Box with Gravity Line",
+      "categories": [
+        "Water-System"
+      ],
+      "source": "New (LL40)",
+      "description": "Pipes untreated water from a nearby site spring; no fetching trip.",
+      "costBuy": 650,
+      "setupLaborHrs": 16,
+      "weeklyUpkeepHrs": 0.25,
+      "footprintSqft": 4,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "Requires an in-season spring within 50 ft. Nominal 25 gal/day, capped by node availability and drought. https://extension.psu.edu/spring-development-and-protection Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S179",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S180",
+      "name": "First-Flush Diverter",
+      "categories": [
+        "Water-System"
+      ],
+      "source": "New (LL40)",
+      "description": "Diverts dirty roof runoff before collection; reduces the labor of rainwater filtering.",
+      "costBuy": 80,
+      "setupLaborHrs": 2,
+      "weeklyUpkeepHrs": 0.1,
+      "footprintSqft": 1,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "With storage pools: discard 5% of captured rainwater; 25% less filter labor with yesterday's working diverter. Does not make water potable. https://www.rainharvest.com/info/rainharvesting/RainHarvesting-Delta-First-Flush-Post-Wall-Installation-Guide.pdf Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S180",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S181",
+      "name": "Potable Water Tank (100 gal)",
+      "categories": [
+        "Water-System",
+        "Storage"
+      ],
+      "source": "New (LL40)",
+      "description": "A covered container for treated drinking water only.",
+      "costBuy": 180,
+      "setupLaborHrs": 2,
+      "weeklyUpkeepHrs": 0.05,
+      "footprintSqft": 12,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "LL-33 separate storage pools required; no raw-water capacity or treatment. Assumed indoor/frost-protected. Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S181",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S182",
+      "name": "Heat-Traced Water Tank (100 gal)",
+      "categories": [
+        "Water-System",
+        "Storage"
+      ],
+      "source": "New (LL40)",
+      "description": "An outdoor raw-water tank with an installed thermostatic heat trace.",
+      "costBuy": 320,
+      "setupLaborHrs": 4,
+      "weeklyUpkeepHrs": 0.1,
+      "footprintSqft": 12,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "LL-33 freezing model: automatic heating needs 0.0008 kWh per gallon per freezing degree-day; without power it freezes. Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S182",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S183",
+      "name": "Water Test Kit",
+      "categories": [
+        "Water-System"
+      ],
+      "source": "New (LL40)",
+      "description": "Checks untreated sources and warns that raw water still needs treatment.",
+      "costBuy": 35,
+      "setupLaborHrs": 0,
+      "weeklyUpkeepHrs": 0.25,
+      "footprintSqft": 0,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "LL-38 risk gate: measured upkeep and reagent spending enable a precautionary contamination warning; no invented pathogen measurement. https://extension.psu.edu/spring-development-and-protection Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S183",
+      "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S184",
+      "name": "Water-Bath Canner",
+      "categories": [
+        "Food System",
+        "Cooking",
+        "Storage"
+      ],
+      "source": "New (LL41)",
+      "description": "Preserves acidified produce using a standing preservation rule.",
+      "costBuy": 65,
+      "setupLaborHrs": 0,
+      "weeklyUpkeepHrs": 0.25,
+      "footprintSqft": 2,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "Only the acidified fruit/vegetable portion of the blended produce resource is eligible; acidity and additives are abstracted. Never meat or root crops. https://nchfp.uga.edu/how/general-canning-information/ensuring-safe-canned-foods/ Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S184",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S185",
+      "name": "Electric Dehydrator",
+      "categories": [
+        "Food System",
+        "Storage"
+      ],
+      "source": "New (LL41)",
+      "description": "Dries surplus produce or meat using electricity and spare labor.",
+      "costBuy": 300,
+      "setupLaborHrs": 0,
+      "weeklyUpkeepHrs": 0.1,
+      "footprintSqft": 4,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "600 W reference unit; assumed 8-hour full batch uses 4.8 kWh. https://excaliburdehydratorsaustralia.com/pages/model-comparison Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S185",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S186",
+      "name": "Smokehouse",
+      "categories": [
+        "Food System",
+        "Storage"
+      ],
+      "source": "New (LL41)",
+      "description": "Turns meat or fish into preserved food using wood and spare labor.",
+      "costBuy": 500,
+      "setupLaborHrs": 8,
+      "weeklyUpkeepHrs": 0.25,
+      "footprintSqft": 36,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "Preserved-food abstraction includes curing and drying; smoke alone is not represented as a safety guarantee. Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S186",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S187",
+      "name": "Cheese Press",
+      "categories": [
+        "Food System"
+      ],
+      "source": "New (LL41)",
+      "description": "Turns milk into a smaller, slower-spoiling cheese supply.",
+      "costBuy": 120,
+      "setupLaborHrs": 0,
+      "weeklyUpkeepHrs": 1,
+      "footprintSqft": 2,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "1.25 gal milk per pound cheese, NMSU Extension: https://pubs.nmsu.edu/_e/E216/index.html ; 1,800 kcal/lb cheese, 1% weekly spoilage are game assumptions; whey calories leave the food pool. Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S187",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S188",
+      "name": "Grain Bin",
+      "categories": [
+        "Food System",
+        "Storage"
+      ],
+      "source": "New (LL41)",
+      "description": "Sealed grain capacity prevents the added rodent loss on protected grain.",
+      "costBuy": 220,
+      "setupLaborHrs": 2,
+      "weeklyUpkeepHrs": 0.1,
+      "footprintSqft": 9,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "LL-30: uncovered grain loses an additional 1%/week; 450 lb protected per bin (10 cu ft at existing catalog 45 lb/cu ft). Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S188",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S189",
+      "name": "Seed Saving Station",
+      "categories": [
+        "Food System"
+      ],
+      "source": "New (LL41)",
+      "description": "Reserves garden produce for cleaning and drying seed instead of eating it.",
+      "costBuy": 40,
+      "setupLaborHrs": 0,
+      "weeklyUpkeepHrs": 0.5,
+      "footprintSqft": 4,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "One pound of seed-bearing garden output yields one ounce of Seeds per week; mixed-crop abstraction. LL-30 required. Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S189",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S190",
+      "name": "Hay Meadow (1/10 acre)",
+      "categories": [
+        "Land"
+      ],
+      "source": "New (LL42)",
+      "description": "Grow and cut dryland hay; a working scythe reduces cutting labor without raising the land yield.",
+      "costBuy": 150,
+      "costDiy": 60,
+      "setupLaborHrs": 8,
+      "weeklyUpkeepHrs": 0.1,
+      "footprintSqft": 4356,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "About 200 lb hay/year on 0.1 acre: within CSU dryland grass hay range 0.5-1.5 tons/acre. https://boulder.extension.colostate.edu/wp-content/uploads/sites/7/2021/03/BoCo-Rural-Living-Guide-Agriculture-Rev-1.pdf ; footprint uses 4,356 sq ft, output follows the growing season and drought. Total Labor 0.3 h/week includes 0.1 h upkeep and 0.2 h cutting; LL-34 scythe speeds cutting only. Costs, labor, mix ratios, loss and usable storage are experimental game balance.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S190",
+      "layer": "ground",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S191",
+      "name": "Poultry Feed Mix",
+      "categories": [
+        "Food System"
+      ],
+      "source": "New (LL42)",
+      "description": "Mix grain, green biomass and grubs into stored chicken feed.",
+      "costBuy": 250,
+      "costDiy": 90,
+      "setupLaborHrs": 1,
+      "weeklyUpkeepHrs": 0.1,
+      "footprintSqft": 9,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "7 lb Grain + 2 lb Green biomass + 1 lb Grubs -> 9 lb Chicken feed per week; 1 lb processing loss. All three ingredients are required. Nutrient balancing is abstracted; not a poultry ration recommendation. https://extension.umn.edu/agriculture/animals-and-livestock/poultry/raising-chickens-for-eggs Costs, labor, mix ratios, loss and usable storage are experimental game balance.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S191",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S192",
+      "name": "Hay Barn",
+      "categories": [
+        "Storage"
+      ],
+      "source": "New (LL42)",
+      "description": "Covered, dedicated storage for hay and poultry feed.",
+      "costBuy": 900,
+      "costDiy": 350,
+      "setupLaborHrs": 16,
+      "weeklyUpkeepHrs": 0.1,
+      "footprintSqft": 100,
+      "lifespanYrs": 15,
+      "confidence": "low",
+      "notes": "200 cu ft usable storage shared by Hay and Chicken feed. Existing LL-33 densities apply: 9.5 lb hay/cu ft and 40 lb feed/cu ft, so mixed stocks use the same room. Provides no tool storage. Storage rationale: https://extension.psu.edu/how-much-does-that-bale-really-weigh-feeding-and-fertilizer-implications Costs, labor, mix ratios, loss and usable storage are experimental game balance.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S192",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S193",
+      "name": "Egg Incubator (24 eggs)",
+      "categories": [
+        "Livestock",
+        "Fowl"
+      ],
+      "source": "New (LL43)",
+      "description": "Hatch your own flock's eggs into chicks; needs steady electricity for 21 days.",
+      "costBuy": 180,
+      "setupLaborHrs": 1,
+      "weeklyUpkeepHrs": 0.1,
+      "footprintSqft": 4,
+      "lifespanYrs": 8,
+      "confidence": "low",
+      "notes": "Batch: 24 eggs from stock + 0.5 kWh/day for 21 days -> about 70% hatch as Baby Chicks (LL-31 cohort). Chicken eggs hatch in about 21 days: https://agritech.tnau.ac.in/animal_husbandry/ani_chik_hatching%20of%20eggs.html ; hatch rate, power draw and the two-missed-day tolerance are experimental game assumptions. Needs a mature laying flock on the parcel (fertile eggs). Eggs and electricity are drawn per batch, not as steady weekly flows.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 1,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S193",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S194",
+      "name": "Broody Hen Nest Box",
+      "categories": [
+        "Livestock",
+        "Fowl"
+      ],
+      "source": "New (LL43)",
+      "description": "Let a broody hen hatch a clutch in spring and summer; she stops laying while she sits.",
+      "costBuy": 40,
+      "costDiy": 10,
+      "setupLaborHrs": 1,
+      "weeklyUpkeepHrs": 0.05,
+      "footprintSqft": 4,
+      "lifespanYrs": 10,
+      "confidence": "low",
+      "notes": "Batch: 8 eggs from stock under one hen from a mature flock within 30 ft, 21 days -> about 85% hatch as Baby Chicks. A standard hen covers about 6-12 eggs: https://www.hobbyfarms.com/how-to-work-with-a-broody-hen/ ; broodiness limited to days with at least 13 h daylight. Hatch rate, range and daylight threshold are experimental game assumptions.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 1,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S194",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S195",
+      "name": "Predator-Proof Run (12 birds)",
+      "categories": [
+        "Livestock",
+        "Fowl"
+      ],
+      "source": "New (LL43)",
+      "description": "A roofed, buried-wire run that keeps up to 12 birds nearby safe from predators.",
+      "costBuy": 600,
+      "costDiy": 200,
+      "setupLaborHrs": 12,
+      "weeklyUpkeepHrs": 0.25,
+      "footprintSqft": 120,
+      "lifespanYrs": 12,
+      "confidence": "low",
+      "notes": "Protects up to 12 lifecycle poultry within 20 ft from LL-31 predator losses while staffed (80% upkeep met). Lumber frame plus hardware cloth; 150 lb lumber is a game assumption. Capacity, range and costs are experimental game balance.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 1,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S195",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S196",
+      "name": "Rotational Paddock Kit",
+      "categories": [
+        "Livestock",
+        "Land"
+      ],
+      "source": "New (LL43)",
+      "description": "Portable fencing to rest and rotate a pasture; raises its hay and green biomass when moved weekly.",
+      "costBuy": 450,
+      "costDiy": 250,
+      "setupLaborHrs": 4,
+      "weeklyUpkeepHrs": 1,
+      "footprintSqft": 0,
+      "lifespanYrs": 10,
+      "confidence": "low",
+      "notes": "Place on a pasture: its Hay and Green biomass output x up to 1.15, scaled by how much of the 1 h/week moving labor was done. Evidence is mixed: UF/IFAS reports more forage under rotation on bahiagrass https://rcrec-ona.ifas.ufl.edu/news-and-publications/in-focus-archives/forage/grazing-methods-impact-on-forage-cattle-production/ while a rangeland review found continuous grazing equal or better in most experiments https://bioone.org/journals/rangeland-ecology-and-management/volume-61/issue-1/06-159R.1/Rotational-Grazing-on-Rangelands--Reconciliation-of-Perception-and-Experimental/10.2111/06-159R.1.full ; the 15% bonus is a conservative game assumption.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 1,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S196",
+      "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S197",
+      "name": "Manure Windrow",
+      "categories": [
+        "Compost"
+      ],
+      "source": "New (LL44)",
+      "description": "Turn livestock manure and carbon bedding into finished compost.",
+      "costBuy": 100,
+      "costDiy": 30,
+      "setupLaborHrs": 4,
+      "weeklyUpkeepHrs": 1,
+      "footprintSqft": 60,
+      "lifespanYrs": 10,
+      "confidence": "low",
+      "notes": "30 lb Manure + 15 lb Carbon + 10 gal Water + 1 h turning per week -> 25 lb Compost; the 20 lb mass difference is water and carbon lost while composting. Carbon is needed to balance nitrogen-rich manure. Ratios, losses and labor are experimental game balance.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S197",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S198",
+      "name": "Leaf Litter Gathering",
+      "categories": [
+        "Biomass",
+        "Compost"
+      ],
+      "source": "New (LL44)",
+      "description": "Rake and bag fallen leaves and litter as carbon for toilets and compost.",
+      "costBuy": 30,
+      "setupLaborHrs": 0,
+      "weeklyUpkeepHrs": 1.5,
+      "footprintSqft": 0,
+      "lifespanYrs": 5,
+      "confidence": "low",
+      "notes": "1.5 h/week raking and hauling -> 30 lb Carbon; buy covers rakes and tarps. Spread evenly over the year (stored bags); a seasonal leaf-fall model is not included. Yield and labor are experimental game balance.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S198",
+      "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S199",
+      "name": "Sawmill Sawdust Pickup",
+      "categories": [
+        "Conventional",
+        "Compost"
+      ],
+      "source": "New (LL44)",
+      "description": "Buy bulk sawdust from a local sawmill as carbon cover material.",
+      "costBuy": 0,
+      "setupLaborHrs": 0,
+      "weeklyUpkeepHrs": 0.25,
+      "footprintSqft": 0,
+      "lifespanYrs": 20,
+      "confidence": "low",
+      "notes": "$6/week + 0.25 h unloading -> 100 lb Carbon (sawdust or shavings). Price and haul abstraction are experimental game balance; untreated wood only.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S199",
+      "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S200",
+      "name": "Cover Crop Seeding",
+      "categories": [
+        "Garden",
+        "Plants"
+      ],
+      "source": "New (LL44)",
+      "description": "Sow a winter cover crop on nearby beds after harvest to rebuild their soil.",
+      "costBuy": 15,
+      "setupLaborHrs": 0.5,
+      "weeklyUpkeepHrs": 0.1,
+      "footprintSqft": 0,
+      "lifespanYrs": 10,
+      "confidence": "low",
+      "notes": "2 oz Seeds per season + 0.1 h/week sows about 200 sq ft of garden within 30 ft; while beds rest, it adds up to 0.15 LL-35 fertility a year, shared by garden area. Seed rate, coverage and gain are experimental game balance.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S200",
+      "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S201",
+      "name": "Laundry Station",
+      "categories": [
+        "Sanitation",
+        "Tools"
+      ],
+      "source": "New (LL44)",
+      "description": "A washtub, wringer and line for washing clothes by hand with hot water.",
+      "costBuy": 250,
+      "costDiy": 80,
+      "setupLaborHrs": 2,
+      "weeklyUpkeepHrs": 2,
+      "footprintSqft": 16,
+      "lifespanYrs": 10,
+      "confidence": "low",
+      "notes": "30 gal Water + 20 gal Hot water + 2 h/week -> 5 Wellbeing and 45 gal Greywater (5 gal carried off in wet clothes and evaporation). Quantities are experimental game balance for a small household's hand laundry.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S201",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S202",
+      "name": "Canvas Tent Winter Liner",
+      "categories": [
+        "Heating",
+        "Canvas"
+      ],
+      "source": "New (LL45)",
+      "description": "An insulated inner liner hung inside a canvas tent or yurt; a cheap step before a bigger heater.",
+      "costBuy": 180,
+      "costDiy": 70,
+      "setupLaborHrs": 1,
+      "weeklyUpkeepHrs": 0.05,
+      "footprintSqft": 0,
+      "lifespanYrs": 5,
+      "confidence": "low",
+      "notes": "Place it on the canvas shelter it lines: that shelter's heat need x 0.75. Liner insulation value and lifespan are experimental game assumptions.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S202",
+      "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S203",
+      "name": "Wood Boiler with Water Jacket",
+      "categories": [
+        "Heating"
+      ],
+      "source": "New (LL45)",
+      "description": "A wood stove with a water jacket and tank: heat in winter and hot water all year from firewood.",
+      "costBuy": 2800,
+      "costDiy": 1000,
+      "setupLaborHrs": 12,
+      "weeklyUpkeepHrs": 0.5,
+      "footprintSqft": 16,
+      "lifespanYrs": 20,
+      "confidence": "low",
+      "notes": "50 lb Woody biomass/week, fired year-round -> 150,000 BTU/week Heat (heating season) + 140 gal/week Hot water. Summer firing for hot water gives heat nobody needs. Efficiency and split are experimental game assumptions.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S203",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S204",
+      "name": "Draft-Proofing Kit (small shelter)",
+      "categories": [
+        "Heating",
+        "Cooling"
+      ],
+      "source": "New (LL45)",
+      "description": "Weatherstripping, caulk and door sweeps for a tiny house, camper, cabin or dome.",
+      "costBuy": 120,
+      "costDiy": 60,
+      "setupLaborHrs": 3,
+      "weeklyUpkeepHrs": 0.02,
+      "footprintSqft": 0,
+      "lifespanYrs": 5,
+      "confidence": "low",
+      "notes": "Place it on a small hard shelter (camper, camper van, solar cabin, tiny house, container, earthbag dome, treehouse): heat need x 0.85, cooling need x 0.9. Overlaps the whole-house weatherization retrofit; the game multiplies them. Values are experimental game assumptions.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S204",
+      "layer": "none",
       "outdoor": false,
       "backstop": false,
       "backstopFee": 0,
@@ -34823,6 +36573,1688 @@
         "inputRole": "default-rule",
         "timing": "default-rule"
       }
+    },
+    {
+      "id": "F0822",
+      "systemId": "S179",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.25
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0823",
+      "systemId": "S179",
+      "direction": "out",
+      "resource": "Water",
+      "qty": {
+        "kind": "const",
+        "value": 175
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0824",
+      "systemId": "S180",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0825",
+      "systemId": "S181",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.05
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0826",
+      "systemId": "S181",
+      "direction": "out",
+      "resource": "Potable water storage",
+      "qty": {
+        "kind": "const",
+        "value": 100
+      },
+      "period": "Capacity",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0827",
+      "systemId": "S182",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0828",
+      "systemId": "S182",
+      "direction": "out",
+      "resource": "Water storage",
+      "qty": {
+        "kind": "const",
+        "value": 100
+      },
+      "period": "Capacity",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0829",
+      "systemId": "S183",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.25
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0830",
+      "systemId": "S183",
+      "direction": "in",
+      "resource": "Capital",
+      "qty": {
+        "kind": "const",
+        "value": 1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0831",
+      "systemId": "S184",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.25
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0832",
+      "systemId": "S184",
+      "direction": "out",
+      "resource": "Food storage",
+      "qty": {
+        "kind": "const",
+        "value": 5
+      },
+      "period": "Capacity",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0833",
+      "systemId": "S185",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0834",
+      "systemId": "S185",
+      "direction": "out",
+      "resource": "Food storage",
+      "qty": {
+        "kind": "const",
+        "value": 5
+      },
+      "period": "Capacity",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0835",
+      "systemId": "S186",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.25
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0836",
+      "systemId": "S186",
+      "direction": "out",
+      "resource": "Food storage",
+      "qty": {
+        "kind": "const",
+        "value": 10
+      },
+      "period": "Capacity",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0837",
+      "systemId": "S187",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0838",
+      "systemId": "S187",
+      "direction": "in",
+      "resource": "Milk",
+      "qty": {
+        "kind": "const",
+        "value": 1.25
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0839",
+      "systemId": "S187",
+      "direction": "out",
+      "resource": "Cheese",
+      "qty": {
+        "kind": "const",
+        "value": 1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0840",
+      "systemId": "S188",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0841",
+      "systemId": "S188",
+      "direction": "out",
+      "resource": "Food storage",
+      "qty": {
+        "kind": "const",
+        "value": 10
+      },
+      "period": "Capacity",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0842",
+      "systemId": "S188",
+      "direction": "out",
+      "resource": "Grain storage",
+      "qty": {
+        "kind": "const",
+        "value": 450
+      },
+      "period": "Capacity",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0843",
+      "systemId": "S189",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.5
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0844",
+      "systemId": "S189",
+      "direction": "in",
+      "resource": "Vegetables fruit fiber herbs",
+      "qty": {
+        "kind": "const",
+        "value": 1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0845",
+      "systemId": "S189",
+      "direction": "out",
+      "resource": "Seeds",
+      "qty": {
+        "kind": "const",
+        "value": 1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0846",
+      "systemId": "S190",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.3
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0847",
+      "systemId": "S190",
+      "direction": "in",
+      "resource": "Rainfall",
+      "qty": {
+        "kind": "rain"
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "ambient",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0848",
+      "systemId": "S190",
+      "direction": "out",
+      "resource": "Hay",
+      "qty": {
+        "kind": "const",
+        "value": 4
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "growing-season"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "override"
+      }
+    },
+    {
+      "id": "F0849",
+      "systemId": "S191",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0850",
+      "systemId": "S191",
+      "direction": "in",
+      "resource": "Grain",
+      "qty": {
+        "kind": "const",
+        "value": 7
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0851",
+      "systemId": "S191",
+      "direction": "in",
+      "resource": "Green biomass",
+      "qty": {
+        "kind": "const",
+        "value": 2
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0852",
+      "systemId": "S191",
+      "direction": "in",
+      "resource": "Grubs",
+      "qty": {
+        "kind": "const",
+        "value": 1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0853",
+      "systemId": "S191",
+      "direction": "out",
+      "resource": "Chicken feed",
+      "qty": {
+        "kind": "const",
+        "value": 9
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0854",
+      "systemId": "S192",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0855",
+      "systemId": "S192",
+      "direction": "out",
+      "resource": "Feed storage",
+      "qty": {
+        "kind": "const",
+        "value": 200
+      },
+      "period": "Capacity",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0856",
+      "systemId": "S193",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0857",
+      "systemId": "S194",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.05
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0858",
+      "systemId": "S194",
+      "direction": "in",
+      "resource": "Waste lumber",
+      "qty": {
+        "kind": "const",
+        "value": 10
+      },
+      "period": "One-time",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0859",
+      "systemId": "S195",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.25
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0860",
+      "systemId": "S195",
+      "direction": "in",
+      "resource": "Waste lumber",
+      "qty": {
+        "kind": "const",
+        "value": 150
+      },
+      "period": "One-time",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0861",
+      "systemId": "S196",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0862",
+      "systemId": "S197",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0863",
+      "systemId": "S197",
+      "direction": "in",
+      "resource": "Manure",
+      "qty": {
+        "kind": "const",
+        "value": 30
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0864",
+      "systemId": "S197",
+      "direction": "in",
+      "resource": "Carbon",
+      "qty": {
+        "kind": "const",
+        "value": 15
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0865",
+      "systemId": "S197",
+      "direction": "in",
+      "resource": "Water",
+      "qty": {
+        "kind": "const",
+        "value": 10
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0866",
+      "systemId": "S197",
+      "direction": "out",
+      "resource": "Compost",
+      "qty": {
+        "kind": "const",
+        "value": 25
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0867",
+      "systemId": "S198",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 1.5
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0868",
+      "systemId": "S198",
+      "direction": "out",
+      "resource": "Carbon",
+      "qty": {
+        "kind": "const",
+        "value": 30
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0869",
+      "systemId": "S199",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.25
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0870",
+      "systemId": "S199",
+      "direction": "in",
+      "resource": "Capital",
+      "qty": {
+        "kind": "const",
+        "value": 6
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0871",
+      "systemId": "S199",
+      "direction": "out",
+      "resource": "Carbon",
+      "qty": {
+        "kind": "const",
+        "value": 100
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0872",
+      "systemId": "S200",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.1
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0873",
+      "systemId": "S200",
+      "direction": "in",
+      "resource": "Seeds",
+      "qty": {
+        "kind": "const",
+        "value": 2
+      },
+      "period": "Per season",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "window",
+        "startWeek": 35,
+        "endWeek": 41
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "override"
+      }
+    },
+    {
+      "id": "F0874",
+      "systemId": "S201",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 2
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0875",
+      "systemId": "S201",
+      "direction": "in",
+      "resource": "Water",
+      "qty": {
+        "kind": "const",
+        "value": 30
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0876",
+      "systemId": "S201",
+      "direction": "in",
+      "resource": "Hot water",
+      "qty": {
+        "kind": "const",
+        "value": 20
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0877",
+      "systemId": "S201",
+      "direction": "out",
+      "resource": "Wellbeing",
+      "qty": {
+        "kind": "const",
+        "value": 5
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0878",
+      "systemId": "S201",
+      "direction": "out",
+      "resource": "Greywater",
+      "qty": {
+        "kind": "const",
+        "value": 45
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0879",
+      "systemId": "S202",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.05
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0880",
+      "systemId": "S203",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.5
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0881",
+      "systemId": "S203",
+      "direction": "in",
+      "resource": "Woody biomass",
+      "qty": {
+        "kind": "const",
+        "value": 50
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "override"
+      }
+    },
+    {
+      "id": "F0882",
+      "systemId": "S203",
+      "direction": "out",
+      "resource": "Heat",
+      "qty": {
+        "kind": "const",
+        "value": 150000
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "heating"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0883",
+      "systemId": "S203",
+      "direction": "out",
+      "resource": "Hot water",
+      "qty": {
+        "kind": "const",
+        "value": 140
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0884",
+      "systemId": "S204",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 0.02
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
     }
   ],
   "adjacencyRules": [
@@ -35106,6 +38538,216 @@
         "stack": "once"
       },
       "note": "Wool blankets and sleeping bags let the household stay warm at a much lower indoor temperature, so the shelter needs a fifth of the heat (fitted to the bedding rule it replaces; see docs/BALANCE_LOG.md)."
+    },
+    {
+      "from": "S202",
+      "to": "category:Canvas",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Heat",
+        "multiplier": 0.75,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "An insulated liner cuts its canvas shelter's heat loss by 25% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S009",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Heat",
+        "multiplier": 0.85,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S009",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Cooling",
+        "multiplier": 0.9,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S010",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Heat",
+        "multiplier": 0.85,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S010",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Cooling",
+        "multiplier": 0.9,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S040",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Heat",
+        "multiplier": 0.85,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S040",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Cooling",
+        "multiplier": 0.9,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S080",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Heat",
+        "multiplier": 0.85,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S080",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Cooling",
+        "multiplier": 0.9,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S085",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Heat",
+        "multiplier": 0.85,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S085",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Cooling",
+        "multiplier": 0.9,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S088",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Heat",
+        "multiplier": 0.85,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S088",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Cooling",
+        "multiplier": 0.9,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S091",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Heat",
+        "multiplier": 0.85,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's heat loss by 15% (LL-45 game assumption)."
+    },
+    {
+      "from": "S204",
+      "to": "S091",
+      "radiusFt": 0,
+      "scope": "host",
+      "effect": {
+        "resource": "Cooling",
+        "multiplier": 0.9,
+        "mode": "scale",
+        "direction": "in",
+        "stack": "once"
+      },
+      "note": "Draft-proofing cuts this small shelter's cooling load by 10% (LL-45 game assumption)."
     }
   ],
   "assignedCapacities": [

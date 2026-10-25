@@ -797,6 +797,44 @@ export function exportCatalog(input: ExportInput): ExportResult {
     const ids = rules.map((r) => r.systemId);
     if (new Set(ids).size !== ids.length) problems.push(`${label}: duplicate system rules`);
   }
+  const fodder = overridesParsed.data.fodder;
+  if (fodder) {
+    for (const id of [fodder.meadowId, fodder.mixId, fodder.barnId, fodder.scytheId])
+      if (!rawSystems.some((s) => s.id === id)) problems.push(`Fodder rule: unknown system ${id}`);
+    for (const [id, resource, direction] of [
+      [fodder.meadowId, 'Hay', 'out'], [fodder.meadowId, 'Rainfall', 'in'],
+      [fodder.mixId, 'Chicken feed', 'out'], [fodder.mixId, 'Grain', 'in'],
+      [fodder.mixId, 'Green biomass', 'in'], [fodder.mixId, 'Grubs', 'in'],
+      [fodder.barnId, 'Feed storage', 'out'],
+    ]) if (!rawFlows.some((f) => f.systemId === id && f.resource === resource && f.direction === direction))
+      problems.push(`Fodder rule: ${id} must have ${direction} ${resource}`);
+    const meadow = rawSystems.find((s) => s.id === fodder.meadowId);
+    const labor = rawFlows.find((f) => f.systemId === fodder.meadowId && f.resource === 'Labor' && f.direction === 'in');
+    if (!meadow || !labor || labor.qty.kind !== 'const' || labor.period !== 'Weekly' || labor.qty.value <= meadow.weeklyUpkeepHrs)
+      problems.push('Fodder rule: meadow needs weekly cutting labor above its upkeep');
+    if (!overridesParsed.data.toolRules?.some((t) => t.systemId === fodder.scytheId && t.resource === 'Green biomass' && !t.fuel))
+      problems.push('Fodder rule: scythe must have a fuel-free green biomass tool rule');
+    if (!rawResources.some((r) => r.name === 'Feed storage' && r.class === 'Capacity' && r.unit === 'cu ft'))
+      problems.push('Fodder rule: Feed storage must be a capacity in cu ft');
+  }
+  const herd = overridesParsed.data.livestockInfrastructure;
+  if (herd) {
+    for (const id of [herd.incubatorId, herd.nestBoxId, herd.runId, herd.paddockId, herd.chickSystemId, herd.henSystemId, ...herd.pastureIds])
+      if (!rawSystems.some((s) => s.id === id)) problems.push(`Livestock infrastructure: unknown system ${id}`);
+    const rules = overridesParsed.data.livestockRules ?? [];
+    const chick = rules.find((r) => r.systemId === herd.chickSystemId);
+    if (!chick || chick.maturesInto?.systemId !== herd.henSystemId)
+      problems.push('Livestock infrastructure: hatched chicks must mature into the laying hen system');
+    if (!rules.some((r) => r.systemId === herd.henSystemId && r.seasonalEggs))
+      problems.push('Livestock infrastructure: hens must be an egg-laying lifecycle system');
+    for (const id of herd.pastureIds)
+      for (const resource of herd.paddock.resources)
+        if (!rawFlows.some((f) => f.systemId === id && f.resource === resource && f.direction === 'out'))
+          problems.push(`Livestock infrastructure: pasture ${id} must have out ${resource}`);
+  }
+  const water = overridesParsed.data.waterInfrastructure;
+  if (water) for (const id of [water.springId, water.diverterId, water.heatedTankId, water.testKitId])
+    if (!rawSystems.some((s) => s.id === id)) problems.push(`Water infrastructure: unknown system ${id}`);
   const preserved = rawResources.find((r) => r.name === 'Preserved food');
   if (overridesParsed.data.preservationRecipes?.length && (!preserved || preserved.unit !== 'kcal' || preserved.class !== 'Flow' || preserved.needsRow !== 'Food' || preserved.factorToNeed !== 1))
     problems.push('Preservation output must be Preserved food in kcal, feeding Food at factor 1');
@@ -828,6 +866,16 @@ export function exportCatalog(input: ExportInput): ExportResult {
       if (!rawFlows.some((f) => f.systemId === t.systemId && f.direction === 'out' && f.resource === 'Water storage'))
         problems.push(`Storage rule: tank ${t.systemId} provides no Water storage`);
   }
+  const access = overridesParsed.data.transportAccess;
+  if (access) {
+    for (const id of [...access.deliveryIds, ...access.localSalesIds])
+      if (!rawSystems.some((s) => s.id === id)) problems.push(`Transport access rule: unknown system ${id}`);
+  }
+  const risks = overridesParsed.data.riskEvents;
+  if (risks) {
+    for (const id of [...risks.pestDefenseIds, ...risks.diseaseDefenseIds, ...risks.refugeIds, ...risks.gridIds, ...risks.wellIds, ...risks.deliveryIds])
+      if (!rawSystems.some((s) => s.id === id)) problems.push(`Risk rule: unknown system ${id}`);
+  }
   const house = overridesParsed.data.householdRoles;
   if (house) {
     for (const id of [...house.growingSystemIds, ...Object.keys(house.injury.toolPerHour)])
@@ -844,6 +892,8 @@ export function exportCatalog(input: ExportInput): ExportResult {
       if (g.initial > fert.maxFertility) problems.push(`Fertility rule: garden ${g.systemId} starts above the maximum`);
     }
     if (!rawSystems.some((s) => s.id === fert.cover.systemId)) problems.push(`Fertility rule: unknown cover crop ${fert.cover.systemId}`);
+    if (fert.seeding && !rawFlows.some((f) => f.systemId === fert.seeding!.systemId && f.direction === 'in' && f.resource === 'Seeds'))
+      problems.push(`Fertility rule: cover crop seeding ${fert.seeding.systemId} must take Seeds`);
   }
   const tools = overridesParsed.data.toolRules ?? [];
   if (new Set(tools.map((t) => t.systemId)).size !== tools.length) problems.push('Tool rule: duplicate system rules');
@@ -865,9 +915,15 @@ export function exportCatalog(input: ExportInput): ExportResult {
 
   const source = { file: input.xlsxName, sha256: sha256(input.xlsx) };
   const catalog = CatalogSchema.parse({
+    transportAccess: overridesParsed.data.transportAccess,
+    riskEvents: overridesParsed.data.riskEvents,
+    finance: overridesParsed.data.finance,
     householdRoles: overridesParsed.data.householdRoles,
     soilFertility: overridesParsed.data.soilFertility,
     toolRules: overridesParsed.data.toolRules,
+    fodder: overridesParsed.data.fodder,
+    livestockInfrastructure: overridesParsed.data.livestockInfrastructure,
+    waterInfrastructure: overridesParsed.data.waterInfrastructure,
     winterStorage: overridesParsed.data.winterStorage,
     preservationRecipes: overridesParsed.data.preservationRecipes,
     livestockRules: overridesParsed.data.livestockRules,

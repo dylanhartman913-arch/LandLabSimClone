@@ -1,3 +1,5 @@
+import { fodderPlan, type FodderState } from './fodder.ts';
+import { TOOL_HOURS_PER_DAY } from './constants.ts';
 import type { Catalog, ToolRule } from '@homestead/catalog';
 import { explained } from '../provenance.ts';
 import { getSystem } from '../catalog-index.ts';
@@ -7,8 +9,7 @@ import type { GameState, Instance } from './types.ts';
 
 /** LL-34 (`toolGathering`): tools multiply a gathering job's yield per hour at the land's own nodes. */
 
-/** One person can work one tool for at most this many hours a day. */
-export const TOOL_HOURS_PER_DAY = 8;
+export { TOOL_HOURS_PER_DAY } from './constants.ts';
 
 export function toolRule(catalog: Catalog, systemId: string): ToolRule | null {
   return catalog.toolRules?.find((t) => t.systemId === systemId) ?? null;
@@ -26,7 +27,7 @@ export interface ToolCapacity {
 
 export function toolCapacity(
   catalog: Catalog,
-  state: Pick<GameState, 'settings'>,
+  state: FodderState,
   instances: readonly Instance[],
   job: JobId,
   resource: string,
@@ -41,7 +42,9 @@ export function toolCapacity(
     ? tools.reduce((a, i) => a + conditionOutput(i, sys), 0) / tools.length
     : 1;
   const hours = tools.reduce((a, i) => a + (i.scale ?? 1), 0) * TOOL_HOURS_PER_DAY;
-  return { rule, hours, condition, ids: tools.map((i) => i.id) };
+  const reserved = rule.systemId === catalog.fodder?.scytheId
+    ? fodderPlan(catalog, state, instances).reduce((n, p) => n + p.toolHours, 0) : 0;
+  return { rule, hours: Math.max(0, hours - reserved), condition, ids: tools.map((i) => i.id) };
 }
 
 /**

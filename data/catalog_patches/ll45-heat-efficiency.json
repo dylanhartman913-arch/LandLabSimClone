@@ -1,0 +1,94 @@
+{
+  "patch": "ll45-heat-efficiency",
+  "source": "New (LL45)",
+  "note": "Three Upgrade Roadmap 2 heat, hot water and shelter-efficiency systems. Existing workbook numbers are unchanged. Heat-need reductions are engine modifiers in catalog_overrides.json; all quantities are labeled game assumptions in row notes.",
+  "systems": [
+    {
+      "name": "Canvas Tent Winter Liner",
+      "categories": "Heating; Canvas",
+      "buy": 180,
+      "diy": 70,
+      "setup": 1,
+      "upkeep": 0.05,
+      "footprint": 0,
+      "lifespan": 5,
+      "description": "An insulated inner liner hung inside a canvas tent or yurt; a cheap step before a bigger heater.",
+      "confidence": "low",
+      "notes": "Place it on the canvas shelter it lines: that shelter's heat need x 0.75. Liner insulation value and lifespan are experimental game assumptions.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.05,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "Wood Boiler with Water Jacket",
+      "categories": "Heating",
+      "buy": 2800,
+      "diy": 1000,
+      "setup": 12,
+      "upkeep": 0.5,
+      "footprint": 16,
+      "lifespan": 20,
+      "description": "A wood stove with a water jacket and tank: heat in winter and hot water all year from firewood.",
+      "confidence": "low",
+      "notes": "50 lb Woody biomass/week, fired year-round -> 150,000 BTU/week Heat (heating season) + 140 gal/week Hot water. Summer firing for hot water gives heat nobody needs. Efficiency and split are experimental game assumptions.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.5,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Woody biomass",
+          "qty": 50,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Heat",
+          "qty": 150000,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Hot water",
+          "qty": 140,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "Draft-Proofing Kit (small shelter)",
+      "categories": "Heating; Cooling",
+      "buy": 120,
+      "diy": 60,
+      "setup": 3,
+      "upkeep": 0.02,
+      "footprint": 0,
+      "lifespan": 5,
+      "description": "Weatherstripping, caulk and door sweeps for a tiny house, camper, cabin or dome.",
+      "confidence": "low",
+      "notes": "Place it on a small hard shelter (camper, camper van, solar cabin, tiny house, container, earthbag dome, treehouse): heat need x 0.85, cooling need x 0.9. Overlaps the whole-house weatherization retrofit; the game multiplies them. Values are experimental game assumptions.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.02,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    }
+  ]
+}

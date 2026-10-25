@@ -1,0 +1,201 @@
+{
+  "patch": "ll44-waste-soil",
+  "source": "New (LL44)",
+  "note": "Five Upgrade Roadmap 2 waste, soil and sanitation systems. Existing workbook numbers are unchanged. Reference quantities and game assumptions are distinguished in row notes. Laundry Station is tagged Sanitation rather than Water-System, which is at its 20-system target.",
+  "systems": [
+    {
+      "name": "Manure Windrow",
+      "categories": "Compost",
+      "buy": 100,
+      "diy": 30,
+      "setup": 4,
+      "upkeep": 1,
+      "footprint": 60,
+      "lifespan": 10,
+      "description": "Turn livestock manure and carbon bedding into finished compost.",
+      "confidence": "low",
+      "notes": "30 lb Manure + 15 lb Carbon + 10 gal Water + 1 h turning per week -> 25 lb Compost; the 20 lb mass difference is water and carbon lost while composting. Carbon is needed to balance nitrogen-rich manure. Ratios, losses and labor are experimental game balance.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 1,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Manure",
+          "qty": 30,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Carbon",
+          "qty": 15,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Water",
+          "qty": 10,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Compost",
+          "qty": 25,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "Leaf Litter Gathering",
+      "categories": "Biomass; Compost",
+      "buy": 30,
+      "diy": null,
+      "setup": 0,
+      "upkeep": 1.5,
+      "footprint": 0,
+      "lifespan": 5,
+      "description": "Rake and bag fallen leaves and litter as carbon for toilets and compost.",
+      "confidence": "low",
+      "notes": "1.5 h/week raking and hauling -> 30 lb Carbon; buy covers rakes and tarps. Spread evenly over the year (stored bags); a seasonal leaf-fall model is not included. Yield and labor are experimental game balance.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 1.5,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Carbon",
+          "qty": 30,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "Sawmill Sawdust Pickup",
+      "categories": "Conventional; Compost",
+      "buy": 0,
+      "diy": null,
+      "setup": 0,
+      "upkeep": 0.25,
+      "footprint": 0,
+      "lifespan": 20,
+      "description": "Buy bulk sawdust from a local sawmill as carbon cover material.",
+      "confidence": "low",
+      "notes": "$6/week + 0.25 h unloading -> 100 lb Carbon (sawdust or shavings). Price and haul abstraction are experimental game balance; untreated wood only.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.25,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Capital",
+          "qty": 6,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Carbon",
+          "qty": 100,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "Cover Crop Seeding",
+      "categories": "Garden; Plants",
+      "buy": 15,
+      "diy": null,
+      "setup": 0.5,
+      "upkeep": 0.1,
+      "footprint": 0,
+      "lifespan": 10,
+      "description": "Sow a winter cover crop on nearby beds after harvest to rebuild their soil.",
+      "confidence": "low",
+      "notes": "2 oz Seeds per season + 0.1 h/week sows about 200 sq ft of garden within 30 ft; while beds rest, it adds up to 0.15 LL-35 fertility a year, shared by garden area. Seed rate, coverage and gain are experimental game balance.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.1,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Seeds",
+          "qty": 2,
+          "period": "Per season",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "Laundry Station",
+      "categories": "Sanitation; Tools",
+      "buy": 250,
+      "diy": 80,
+      "setup": 2,
+      "upkeep": 2,
+      "footprint": 16,
+      "lifespan": 10,
+      "description": "A washtub, wringer and line for washing clothes by hand with hot water.",
+      "confidence": "low",
+      "notes": "30 gal Water + 20 gal Hot water + 2 h/week -> 5 Wellbeing and 45 gal Greywater (5 gal carried off in wet clothes and evaporation). Quantities are experimental game balance for a small household's hand laundry.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 2,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Water",
+          "qty": 30,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Hot water",
+          "qty": 20,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Wellbeing",
+          "qty": 5,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Greywater",
+          "qty": 45,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    }
+  ]
+}

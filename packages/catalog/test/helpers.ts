@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs';
 import * as XLSX from 'xlsx';
 import { DEFAULT_OVERRIDES, DEFAULT_XLSX, exportCatalog } from '../src/exporter/index.ts';
 
-/** The next free system ID after the shipped catalog (S178 after the LL-29 farm stand patch). */
-export const NEW_SYSTEM_ID = 'S179';
+/** The next free system ID after the LL-45 expansion. */
+export const NEW_SYSTEM_ID = 'S205';
 
 export const realXlsx = new Uint8Array(readFileSync(DEFAULT_XLSX));
 export const realOverrides: unknown = JSON.parse(readFileSync(DEFAULT_OVERRIDES, 'utf8'));
@@ -84,8 +84,8 @@ export function withNewSystem(wb: XLSX.WorkBook): void {
     at('N', { t: 's', v: '' });
     fr++;
   };
-  addFlow('F0822', 'Input', 'Labor', 0.5, 'hours');
-  addFlow('F0823', 'Input', 'Vegetables fruit fiber herbs', 3, 'lbs');
-  addFlow('F0824', 'Output', 'Vegetables fruit fiber herbs', 2.4, 'lbs');
+  addFlow('F0885', 'Input', 'Labor', 0.5, 'hours');
+  addFlow('F0886', 'Input', 'Vegetables fruit fiber herbs', 3, 'lbs');
+  addFlow('F0887', 'Output', 'Vegetables fruit fiber herbs', 2.4, 'lbs');
   flows['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: fr - 2, c: 13 } });
 }

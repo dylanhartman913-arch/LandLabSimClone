@@ -1,5 +1,6 @@
+import { Finance } from './Finance.tsx';
 import { useMemo, useState } from 'react';
-import { marketView, weeklyBills, ruthTrades, type MarketRow } from '@homestead/engine';
+import { accessView, marketView, weeklyBills, ruthTrades, type MarketRow } from '@homestead/engine';
 import { fmtDays, fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { sparkPoints } from '../lib/sparkline.ts';
 import { useGame } from '../store/game.ts';
@@ -13,6 +14,7 @@ export function Market() {
   const bills = useMemo(() => weeklyBills(game, catalog), [game, catalog]);
   const rows = useMemo(() => marketView(game, catalog), [game, catalog]);
   const scale = Math.max(1, ...bills.weeks);
+  const access = accessView(game);
   return (
     <section className="panel wide" role="dialog" aria-label="Market and bills" data-testid="market">
       <header className="panel-head">
@@ -21,6 +23,12 @@ export function Market() {
           ✕
         </button>
       </header>
+      {game.settings.finance && <Finance />}
+      {access && <div data-testid="transport-access">
+        <h3>Transportation access</h3>
+        <p>{access.detail}</p>
+        <p>Last 7 measured days: <WhyNum value={access.completed} title="Completed trips" /> completed; <WhyNum value={access.blocked} title="Blocked trips" /> blocked. Own mileage used: <WhyNum value={access.ownMiles} title="Own mileage used" unit="miles" />. Travel paid: <WhyNum value={access.paid} title="Travel paid" format={fmtMoney} />. Emergency fares payable: <WhyNum value={access.fareDue} title="Emergency fares payable" format={fmtMoney} />.</p>
+      </div>}
       <h3>Weekly bills</h3>
       <div className="bills-head">
         <div>
@@ -62,7 +70,7 @@ export function Market() {
             {bills.lines.map((l) => (
               <tr key={`${l.kind}|${l.item}`}>
                 <td>{l.item}</td>
-                <td className="muted">{l.kind === 'backstop' ? 'utility / store' : l.kind === 'market' ? 'market' : l.kind === 'fees' ? 'connections' : 'delivery'}</td>
+                <td className="muted">{l.kind === 'backstop' ? 'utility / store' : l.kind === 'market' ? 'market' : l.kind === 'fees' ? 'connections' : l.kind === 'finance' ? 'finance' : l.kind === 'access' ? 'travel' : 'delivery'}</td>
                 <td className="num">
                   <WhyNum value={l.thisWeek} title={`${l.item} this week`} format={fmtMoney} />
                 </td>

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "source": {
     "file": "LandLab_Sim_Systems_v2.xlsx",
-    "sha256": "120359ad73cadddf6e4ab759b3f8a06f154e0bdfeb932db9ad67375aab7db3b3"
+    "sha256": "849c48e01c86bf1483cde4de9ab7b0d47535f68977d47877931cddf0efcd8af7"
   },
   "counts": {
     "S002": 1,
@@ -509,6 +509,30 @@
       "status": "Surplus"
     },
     "Preserved food": {
+      "produced": 0,
+      "consumed": 0,
+      "net": 0,
+      "status": "Not in design"
+    },
+    "Potable water storage": {
+      "produced": 0,
+      "consumed": 0,
+      "net": 0,
+      "status": "Not in design"
+    },
+    "Cheese": {
+      "produced": 0,
+      "consumed": 0,
+      "net": 0,
+      "status": "Not in design"
+    },
+    "Grain storage": {
+      "produced": 0,
+      "consumed": 0,
+      "net": 0,
+      "status": "Not in design"
+    },
+    "Feed storage": {
       "produced": 0,
       "consumed": 0,
       "net": 0,
@@ -6259,6 +6283,447 @@
     "F0821": {
       "qty": 10,
       "weeklyPerUnit": 10,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0822": {
+      "qty": 0.25,
+      "weeklyPerUnit": 0.25,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0823": {
+      "qty": 175,
+      "weeklyPerUnit": 175,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0824": {
+      "qty": 0.1,
+      "weeklyPerUnit": 0.1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0825": {
+      "qty": 0.05,
+      "weeklyPerUnit": 0.05,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0826": {
+      "qty": 100,
+      "weeklyPerUnit": 100,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0827": {
+      "qty": 0.1,
+      "weeklyPerUnit": 0.1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0828": {
+      "qty": 100,
+      "weeklyPerUnit": 100,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0829": {
+      "qty": 0.25,
+      "weeklyPerUnit": 0.25,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0830": {
+      "qty": 1,
+      "weeklyPerUnit": 1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0831": {
+      "qty": 0.25,
+      "weeklyPerUnit": 0.25,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0832": {
+      "qty": 5,
+      "weeklyPerUnit": 5,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0833": {
+      "qty": 0.1,
+      "weeklyPerUnit": 0.1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0834": {
+      "qty": 5,
+      "weeklyPerUnit": 5,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0835": {
+      "qty": 0.25,
+      "weeklyPerUnit": 0.25,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0836": {
+      "qty": 10,
+      "weeklyPerUnit": 10,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0837": {
+      "qty": 1,
+      "weeklyPerUnit": 1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0838": {
+      "qty": 1.25,
+      "weeklyPerUnit": 1.25,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0839": {
+      "qty": 1,
+      "weeklyPerUnit": 1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0840": {
+      "qty": 0.1,
+      "weeklyPerUnit": 0.1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0841": {
+      "qty": 10,
+      "weeklyPerUnit": 10,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0842": {
+      "qty": 450,
+      "weeklyPerUnit": 450,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0843": {
+      "qty": 0.5,
+      "weeklyPerUnit": 0.5,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0844": {
+      "qty": 1,
+      "weeklyPerUnit": 1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0845": {
+      "qty": 1,
+      "weeklyPerUnit": 1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0846": {
+      "qty": 0.3,
+      "weeklyPerUnit": 0.3,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0847": {
+      "qty": 0.288461538461538,
+      "weeklyPerUnit": 0.288461538461538,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0848": {
+      "qty": 4,
+      "weeklyPerUnit": 4,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0849": {
+      "qty": 1,
+      "weeklyPerUnit": 1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0850": {
+      "qty": 7,
+      "weeklyPerUnit": 7,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0851": {
+      "qty": 2,
+      "weeklyPerUnit": 2,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0852": {
+      "qty": 1,
+      "weeklyPerUnit": 1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0853": {
+      "qty": 9,
+      "weeklyPerUnit": 9,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0854": {
+      "qty": 0.1,
+      "weeklyPerUnit": 0.1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0855": {
+      "qty": 200,
+      "weeklyPerUnit": 200,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0856": {
+      "qty": 0.1,
+      "weeklyPerUnit": 0.1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0857": {
+      "qty": 0.05,
+      "weeklyPerUnit": 0.05,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0858": {
+      "qty": 10,
+      "weeklyPerUnit": 0,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0859": {
+      "qty": 0.25,
+      "weeklyPerUnit": 0.25,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0860": {
+      "qty": 150,
+      "weeklyPerUnit": 0,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0861": {
+      "qty": 1,
+      "weeklyPerUnit": 1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0862": {
+      "qty": 1,
+      "weeklyPerUnit": 1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0863": {
+      "qty": 30,
+      "weeklyPerUnit": 30,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0864": {
+      "qty": 15,
+      "weeklyPerUnit": 15,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0865": {
+      "qty": 10,
+      "weeklyPerUnit": 10,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0866": {
+      "qty": 25,
+      "weeklyPerUnit": 25,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0867": {
+      "qty": 1.5,
+      "weeklyPerUnit": 1.5,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0868": {
+      "qty": 30,
+      "weeklyPerUnit": 30,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0869": {
+      "qty": 0.25,
+      "weeklyPerUnit": 0.25,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0870": {
+      "qty": 6,
+      "weeklyPerUnit": 6,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0871": {
+      "qty": 100,
+      "weeklyPerUnit": 100,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0872": {
+      "qty": 0.1,
+      "weeklyPerUnit": 0.1,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0873": {
+      "qty": 2,
+      "weeklyPerUnit": 0.0384615384615385,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0874": {
+      "qty": 2,
+      "weeklyPerUnit": 2,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0875": {
+      "qty": 30,
+      "weeklyPerUnit": 30,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0876": {
+      "qty": 20,
+      "weeklyPerUnit": 20,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0877": {
+      "qty": 5,
+      "weeklyPerUnit": 5,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0878": {
+      "qty": 45,
+      "weeklyPerUnit": 45,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0879": {
+      "qty": 0.05,
+      "weeklyPerUnit": 0.05,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0880": {
+      "qty": 0.5,
+      "weeklyPerUnit": 0.5,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0881": {
+      "qty": 50,
+      "weeklyPerUnit": 50,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0882": {
+      "qty": 150000,
+      "weeklyPerUnit": 150000,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0883": {
+      "qty": 140,
+      "weeklyPerUnit": 140,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0884": {
+      "qty": 0.02,
+      "weeklyPerUnit": 0.02,
       "count": 0,
       "weeklyTotal": 0,
       "contribution": 0

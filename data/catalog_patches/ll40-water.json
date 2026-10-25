@@ -1,0 +1,144 @@
+{
+  "patch": "ll40-water",
+  "source": "New (LL40)",
+  "note": "Upgrade Roadmap 2. References and explicit game assumptions are recorded in each row. Existing rows are unchanged.",
+  "resources": [
+    {
+      "name": "Potable water storage",
+      "unit": "gal",
+      "class": "Capacity",
+      "note": "Safe-water tank volume only; LL-33 separate pools."
+    }
+  ],
+  "systems": [
+    {
+      "name": "Spring Box with Gravity Line",
+      "categories": "Water-System",
+      "buy": 650,
+      "diy": null,
+      "setup": 16,
+      "upkeep": 0.25,
+      "footprint": 4,
+      "lifespan": 15,
+      "description": "Pipes untreated water from a nearby site spring; no fetching trip.",
+      "notes": "Requires an in-season spring within 50 ft. Nominal 25 gal/day, capped by node availability and drought. https://extension.psu.edu/spring-development-and-protection Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "confidence": "low",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.25,
+          "period": "Weekly"
+        },
+        {
+          "dir": "Output",
+          "resource": "Water",
+          "qty": 175,
+          "period": "Weekly"
+        }
+      ]
+    },
+    {
+      "name": "First-Flush Diverter",
+      "categories": "Water-System",
+      "buy": 80,
+      "diy": null,
+      "setup": 2,
+      "upkeep": 0.1,
+      "footprint": 1,
+      "lifespan": 15,
+      "description": "Diverts dirty roof runoff before collection; reduces the labor of rainwater filtering.",
+      "notes": "With storage pools: discard 5% of captured rainwater; 25% less filter labor with yesterday's working diverter. Does not make water potable. https://www.rainharvest.com/info/rainharvesting/RainHarvesting-Delta-First-Flush-Post-Wall-Installation-Guide.pdf Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "confidence": "low",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.1,
+          "period": "Weekly"
+        }
+      ]
+    },
+    {
+      "name": "Potable Water Tank (100 gal)",
+      "categories": "Water-System; Storage",
+      "buy": 180,
+      "diy": null,
+      "setup": 2,
+      "upkeep": 0.05,
+      "footprint": 12,
+      "lifespan": 15,
+      "description": "A covered container for treated drinking water only.",
+      "notes": "LL-33 separate storage pools required; no raw-water capacity or treatment. Assumed indoor/frost-protected. Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "confidence": "low",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.05,
+          "period": "Weekly"
+        },
+        {
+          "dir": "Output",
+          "resource": "Potable water storage",
+          "qty": 100,
+          "period": "Capacity"
+        }
+      ]
+    },
+    {
+      "name": "Heat-Traced Water Tank (100 gal)",
+      "categories": "Water-System; Storage",
+      "buy": 320,
+      "diy": null,
+      "setup": 4,
+      "upkeep": 0.1,
+      "footprint": 12,
+      "lifespan": 15,
+      "description": "An outdoor raw-water tank with an installed thermostatic heat trace.",
+      "notes": "LL-33 freezing model: automatic heating needs 0.0008 kWh per gallon per freezing degree-day; without power it freezes. Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "confidence": "low",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.1,
+          "period": "Weekly"
+        },
+        {
+          "dir": "Output",
+          "resource": "Water storage",
+          "qty": 100,
+          "period": "Capacity"
+        }
+      ]
+    },
+    {
+      "name": "Water Test Kit",
+      "categories": "Water-System",
+      "buy": 35,
+      "diy": null,
+      "setup": 0,
+      "upkeep": 0.25,
+      "footprint": 0,
+      "lifespan": 15,
+      "description": "Checks untreated sources and warns that raw water still needs treatment.",
+      "notes": "LL-38 risk gate: measured upkeep and reagent spending enable a precautionary contamination warning; no invented pathogen measurement. https://extension.psu.edu/spring-development-and-protection Costs, labor, capacities and throughput are experimental game balance, not engineering specifications.",
+      "confidence": "low",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 0.25,
+          "period": "Weekly"
+        },
+        {
+          "dir": "Input",
+          "resource": "Capital",
+          "qty": 1,
+          "period": "Weekly"
+        }
+      ]
+    }
+  ]
+}
