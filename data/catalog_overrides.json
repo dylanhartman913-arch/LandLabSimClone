@@ -342,6 +342,12 @@
         "unitsPerCapacityUnit": 35
       },
       "note": "LL-41 pressed cheese game balance: slower spoilage than milk; whey is not recovered."
+    },
+    "Woolen goods": {
+      "marketPrice": 25,
+      "marketUnit": "$/lbs",
+      "marketAvailable": false,
+      "note": "LL-46 experimental sale reference price for hand-spun and woven goods; game balance assumption, not a sourced quote. Sales and barter only; not available to buy."
     }
   },
   "flows": {
@@ -494,6 +500,24 @@
         "kind": "steady"
       },
       "note": "LL-45: the water-jacket boiler is fired year-round for hot water, so its wood is steady; its heat still follows the heating season. Annual quantity stays at workbook parity."
+    },
+    "F0885": {
+      "timing": {
+        "kind": "growing-season"
+      },
+      "note": "LL-46: the CSA runs through the local growing season only (Labor). Annual quantity stays at workbook parity."
+    },
+    "F0886": {
+      "timing": {
+        "kind": "growing-season"
+      },
+      "note": "LL-46: the CSA runs through the local growing season only (Vegetables fruit fiber herbs). Annual quantity stays at workbook parity."
+    },
+    "F0887": {
+      "timing": {
+        "kind": "growing-season"
+      },
+      "note": "LL-46: the CSA runs through the local growing season only (Capital). Annual quantity stays at workbook parity."
     }
   },
   "adjacencyRules": [
@@ -1440,5 +1464,12 @@
       ]
     },
     "note": "LL-43 experimental balance, not husbandry guidance. Eggs are set from stock and hatch after 21 counted days; an incubator day counts only with its 0.5 kWh and 80% upkeep met, a broody day only while her flock is active. More than two missed days loses the batch. A brooding hen stops laying. A staffed run protects up to 12 nearby birds from predator losses. A moved paddock kit raises its pasture's hay and greens up to 15%."
+  },
+  "incomeTrade": {
+    "csaId": "S205",
+    "makeGoodFactor": 0.5,
+    "spinningId": "S206",
+    "laborBarterValuePerHour": 12,
+    "note": "LL-46 experimental balance. A CSA week short of produce or packing refunds the missing share and pays half of it again as a make-good. Ruth takes spare household labor in barter at $12/hour of goods value (70% trade terms already included), after the tutorial."
   }
 }

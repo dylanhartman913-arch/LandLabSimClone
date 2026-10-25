@@ -1,4 +1,11 @@
 {
+  "incomeTrade": {
+    "csaId": "S205",
+    "makeGoodFactor": 0.5,
+    "spinningId": "S206",
+    "laborBarterValuePerHour": 12,
+    "note": "LL-46 experimental balance. A CSA week short of produce or packing refunds the missing share and pays half of it again as a make-good. Ruth takes spare household labor in barter at $12/hour of goods value (70% trade terms already included), after the tutorial."
+  },
   "transportAccess": {
     "marketMiles": 10,
     "deliveryFare": 25,
@@ -665,7 +672,7 @@
   "schemaVersion": 1,
   "source": {
     "file": "LandLab_Sim_Systems_v2.xlsx",
-    "sha256": "849c48e01c86bf1483cde4de9ab7b0d47535f68977d47877931cddf0efcd8af7"
+    "sha256": "58afce59d8ab902837582b5370dc5be3bfdabfe5e046cd330df2adcce508f480"
   },
   "assumptions": {
     "hdd": 6000,
@@ -3234,6 +3241,38 @@
         "marketPrice": "default-rule",
         "marketUnit": "default-rule",
         "marketAvailable": "default-rule"
+      }
+    },
+    {
+      "name": "Woolen goods",
+      "unit": "lbs",
+      "class": "Flow",
+      "note": "Hand-spun and woven wool (yarn, blankets, clothing) for sale or barter.",
+      "spoilPerWeek": 0,
+      "storedIn": null,
+      "storable": true,
+      "directUseShare": 0,
+      "satisfiedBy": [],
+      "deliversTo": "any",
+      "deliveryRadiusFt": 0,
+      "marketPrice": 25,
+      "marketUnit": "$/lbs",
+      "marketAvailable": false,
+      "provenance": {
+        "name": "xlsx",
+        "unit": "xlsx",
+        "class": "xlsx",
+        "note": "xlsx",
+        "spoilPerWeek": "default-rule",
+        "storedIn": "default-rule",
+        "storable": "default-rule",
+        "satisfiedBy": "default-rule",
+        "directUseShare": "default-rule",
+        "deliversTo": "default-rule",
+        "deliveryRadiusFt": "default-rule",
+        "marketPrice": "override",
+        "marketUnit": "override",
+        "marketAvailable": "override"
       }
     }
   ],
@@ -14643,6 +14682,115 @@
       "yearsToFullOutput": 0,
       "spriteKey": "system:S204",
       "layer": "none",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S205",
+      "name": "CSA Share Program (4 half shares)",
+      "categories": [
+        "Garden",
+        "Tools"
+      ],
+      "source": "New (LL46)",
+      "description": "Four households prepay for a weekly box of produce through the growing season; short boxes cost a make-good.",
+      "costBuy": 150,
+      "costDiy": 60,
+      "setupLaborHrs": 4,
+      "weeklyUpkeepHrs": 2,
+      "footprintSqft": 16,
+      "lifespanYrs": 10,
+      "confidence": "low",
+      "notes": "Growing season only: 12 lb Vegetables fruit fiber herbs + 2 h packing per week -> $45/week (about $3.75/lb, above the 50-80% LL-29 sale price because members commit for the season). A short week refunds the missing share and pays half that again as a make-good. Members collect on the farm, so no transport. Prices and penalty are experimental game balance.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S205",
+      "layer": "object",
+      "outdoor": false,
+      "backstop": false,
+      "backstopFee": 0,
+      "backstopPrices": {},
+      "provenance": {
+        "id": "xlsx",
+        "name": "xlsx",
+        "categories": "xlsx",
+        "source": "xlsx",
+        "description": "xlsx",
+        "costBuy": "xlsx",
+        "setupLaborHrs": "xlsx",
+        "weeklyUpkeepHrs": "xlsx",
+        "footprintSqft": "xlsx",
+        "lifespanYrs": "xlsx",
+        "confidence": "xlsx",
+        "notes": "xlsx",
+        "starterCount": "xlsx",
+        "gameListedInputs": "xlsx",
+        "gameListedOutputs": "xlsx",
+        "costDiy": "xlsx",
+        "priorityTier": "default-rule",
+        "yearsToFullOutput": "default-rule",
+        "spriteKey": "default-rule",
+        "layer": "default-rule",
+        "outdoor": "default-rule",
+        "backstop": "default-rule",
+        "backstopFee": "default-rule",
+        "backstopPrices": "default-rule"
+      }
+    },
+    {
+      "id": "S206",
+      "name": "Spinning Wheel and Loom",
+      "categories": [
+        "Tools"
+      ],
+      "source": "New (LL46)",
+      "description": "Spin your flock's wool into yarn and weave it into blankets and cloth to keep, sell or barter.",
+      "costBuy": 600,
+      "costDiy": 200,
+      "setupLaborHrs": 2,
+      "weeklyUpkeepHrs": 4,
+      "footprintSqft": 9,
+      "lifespanYrs": 25,
+      "confidence": "low",
+      "notes": "0.5 lb Wool + 4 h/week -> 0.45 lb Woolen goods (10% lost in washing, carding and spinning) + 4 Wellbeing. Woolen goods sell at a $25/lb reference price through LL-29 sales. Rates and price are experimental game balance.",
+      "starterCount": 0,
+      "gameListedInputs": "",
+      "gameListedOutputs": "",
+      "priorityTier": 2,
+      "yearsToFullOutput": 0,
+      "spriteKey": "system:S206",
+      "layer": "object",
       "outdoor": false,
       "backstop": false,
       "backstopFee": 0,
@@ -38253,6 +38401,192 @@
         "period": "xlsx",
         "note": "xlsx",
         "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0885",
+      "systemId": "S205",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 2
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "growing-season"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "override"
+      }
+    },
+    {
+      "id": "F0886",
+      "systemId": "S205",
+      "direction": "in",
+      "resource": "Vegetables fruit fiber herbs",
+      "qty": {
+        "kind": "const",
+        "value": 12
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "growing-season"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "override"
+      }
+    },
+    {
+      "id": "F0887",
+      "systemId": "S205",
+      "direction": "out",
+      "resource": "Capital",
+      "qty": {
+        "kind": "const",
+        "value": 45
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "growing-season"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "override"
+      }
+    },
+    {
+      "id": "F0888",
+      "systemId": "S206",
+      "direction": "in",
+      "resource": "Labor",
+      "qty": {
+        "kind": "const",
+        "value": 4
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0889",
+      "systemId": "S206",
+      "direction": "in",
+      "resource": "Wool",
+      "qty": {
+        "kind": "const",
+        "value": 0.5
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": "required",
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "inputRole": "default-rule",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0890",
+      "systemId": "S206",
+      "direction": "out",
+      "resource": "Woolen goods",
+      "qty": {
+        "kind": "const",
+        "value": 0.45
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
+        "timing": "default-rule"
+      }
+    },
+    {
+      "id": "F0891",
+      "systemId": "S206",
+      "direction": "out",
+      "resource": "Wellbeing",
+      "qty": {
+        "kind": "const",
+        "value": 4
+      },
+      "period": "Weekly",
+      "note": "",
+      "inputRole": null,
+      "timing": {
+        "kind": "steady"
+      },
+      "provenance": {
+        "id": "xlsx",
+        "systemId": "xlsx",
+        "direction": "xlsx",
+        "resource": "xlsx",
+        "qty": "xlsx",
+        "period": "xlsx",
+        "note": "xlsx",
         "timing": "default-rule"
       }
     }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { fodderView, husbandryView, livestockView, seedingView, preservationView, waterInfrastructureView } from '@homestead/engine';
+import { csaView, fodderView, husbandryView, livestockView, seedingView, preservationView, waterInfrastructureView } from '@homestead/engine';
 import { useGame } from '../store/game.ts';
 import { fmtMoney, fmtPct } from '../lib/format.ts';
 import { WhyNum } from './Why.tsx';
@@ -17,6 +17,7 @@ export function InstanceMechanics({ id }: { id: string }) {
   const fodder = fodderView(game, catalog, id);
   const herd = husbandryView(game, catalog, id);
   const seeding = seedingView(game, catalog, id);
+  const csa = csaView(game, catalog, id);
   const [resource, setResource] = useState(preserve?.order?.resource ?? preserve?.inputs[0]?.name ?? '');
   const [keep, setKeep] = useState(String(preserve?.order?.keep ?? 0));
   const [error, setError] = useState('');
@@ -29,7 +30,7 @@ export function InstanceMechanics({ id }: { id: string }) {
       setError(error.message);
     }
   };
-  if (!preserve && !animal && !water && !fodder && !herd && !seeding) return null;
+  if (!preserve && !animal && !water && !fodder && !herd && !seeding && !csa) return null;
   return (
     <div className="inst-box" data-testid="instance-mechanics">
       {fodder && <section data-testid="fodder-controls">
@@ -38,6 +39,11 @@ export function InstanceMechanics({ id }: { id: string }) {
         {fodder.rain && <p>Rainfall yield factor: <WhyNum value={fodder.rain} title="Meadow rainfall factor" format={fmtPct} />.</p>}
         {fodder.cutting && <p>Yesterday: <WhyNum value={fodder.cutting} title="Cutting labor" /> h cutting; <WhyNum value={fodder.saved!} title="Cutting labor saved" /> h saved with scythes.</p>}
         {fodder.capacity && <p>Shared feed pool: <WhyNum value={fodder.capacity} title="Feed pool capacity" /> cu ft.</p>}
+      </section>}
+      {csa && <section data-testid="csa-controls">
+        <h3>CSA shares</h3>
+        <p>{csa.text}</p>
+        {csa.share && <p className="small">Yesterday: <WhyNum value={csa.share} title="Boxes packed" format={fmtPct} /> of boxes packed; earned <WhyNum value={csa.revenue!} title="CSA income" format={fmtMoney} />; make-good <WhyNum value={csa.makeGood!} title="CSA make-good" format={fmtMoney} />.</p>}
       </section>}
       {seeding && <section data-testid="seeding-controls">
         <h3>Cover crop</h3>

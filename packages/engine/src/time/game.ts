@@ -37,7 +37,7 @@ export function initGame(
 ): GameState {
   const s = defaultSettings(settings);
   const stocks: Record<string, number> = {};
-  for (const r of catalog.resources) if (r.class === 'Flow' && r.storable && (!['Preserved food', 'Cheese'].includes(r.name) || s.foodPreservation || r.name in s.startingStocks)) stocks[r.name] = 0;
+  for (const r of catalog.resources) if (r.class === 'Flow' && r.storable && (!['Preserved food', 'Cheese'].includes(r.name) || s.foodPreservation || r.name in s.startingStocks) && (r.name !== 'Woolen goods' || r.name in s.startingStocks)) stocks[r.name] = 0;
   for (const [k, v] of Object.entries(s.startingStocks)) {
     if (!(k in stocks)) throw new Error(`startingStocks: "${k}" is not a storable Flow resource`);
     stocks[k] = v;

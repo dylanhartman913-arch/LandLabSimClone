@@ -1,2 +1,2 @@
 /** Engine version. Bump the minor on any change that alters simulation output. */
-export const ENGINE_VERSION = '0.24.0';
+export const ENGINE_VERSION = '0.25.0';

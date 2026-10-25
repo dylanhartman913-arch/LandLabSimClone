@@ -188,9 +188,10 @@ function TradeControls() {
   const [keep, setKeep] = useState('0');
   const [receive, setReceive] = useState('');
   const [error, setError] = useState('');
+  const laborBarter = ruthTrades(game) && catalog.incomeTrade ? catalog.incomeTrade.laborBarterValuePerHour : null;
   return <div data-testid="trade-controls">
     <h3>Sell surplus or barter</h3>
-    <p className="small muted">Orders run after household use and before spoilage. The reserve stays home. Selling pays 50% of the reference retail price, or 80% with an operating Farm Stand. Each order needs half an hour of spare labor; selling uses a 10-mile trip or $25 collection. Ruth trades at 70% after the tutorial, without a trip.</p>
+    <p className="small muted">Orders run after household use and before spoilage. The reserve stays home. Selling pays 50% of the reference retail price, or 80% with an operating Farm Stand. Each order needs half an hour of spare labor; selling uses a 10-mile trip or $25 collection. Ruth trades at 70% after the tutorial, without a trip.{laborBarter !== null && ` She also takes spare work: each hour buys ${fmtMoney(laborBarter)} of goods.`}</p>
     <form className="form" onSubmit={(e) => {
       e.preventDefault();
       try {
@@ -201,7 +202,7 @@ function TradeControls() {
         setError(error.message);
       }
     }}>
-      <label>Give<select aria-label="Give" value={resource} onChange={(e) => setResource(e.target.value)}>{goods.map((r) => <option key={r.name} value={r.name}>{r.name} ({r.unit})</option>)}</select></label>
+      <label>Give<select aria-label="Give" value={resource} onChange={(e) => setResource(e.target.value)}>{goods.map((r) => <option key={r.name} value={r.name}>{r.name} ({r.unit})</option>)}{laborBarter && <option value="Labor">Labor (hours of spare work for Ruth)</option>}</select></label>
       <label>Amount<input type="number" min="0.001" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
       <label>Keep at least<input type="number" min="0" step="any" value={keep} onChange={(e) => setKeep(e.target.value)} /></label>
       <label>Receive<select aria-label="Receive" value={receive} onChange={(e) => setReceive(e.target.value)}><option value="">Cash</option>{ruthTrades(game) && goods.filter((r) => r.marketAvailable && r.name !== resource).map((r) => <option key={r.name} value={r.name}>{r.name} ({r.unit})</option>)}</select></label>

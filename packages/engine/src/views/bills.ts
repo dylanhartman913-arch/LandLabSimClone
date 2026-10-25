@@ -60,6 +60,7 @@ export function weeklyBills(state: GameState, catalog?: Catalog): WeeklyBills {
       for (const [r, v] of Object.entries(s.market)) line(r, 'market')._w[w]! += v;
       if (s.fees) line('Connection fees', 'fees')._w[w]! += s.fees;
       if (s.delivery) line('Market delivery', 'delivery')._w[w]! += s.delivery;
+      if (s.makeGood) line('CSA make-good', 'fees')._w[w]! += s.makeGood;
       for (const [id, v] of Object.entries(s.running ?? {})) line(sysName(id), 'running')._w[w]! += v;
     }
   });

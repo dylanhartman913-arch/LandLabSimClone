@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "source": {
     "file": "LandLab_Sim_Systems_v2.xlsx",
-    "sha256": "849c48e01c86bf1483cde4de9ab7b0d47535f68977d47877931cddf0efcd8af7"
+    "sha256": "58afce59d8ab902837582b5370dc5be3bfdabfe5e046cd330df2adcce508f480"
   },
   "counts": {
     "S002": 1,
@@ -533,6 +533,12 @@
       "status": "Not in design"
     },
     "Feed storage": {
+      "produced": 0,
+      "consumed": 0,
+      "net": 0,
+      "status": "Not in design"
+    },
+    "Woolen goods": {
       "produced": 0,
       "consumed": 0,
       "net": 0,
@@ -6727,6 +6733,55 @@
       "count": 0,
       "weeklyTotal": 0,
       "contribution": 0
+    },
+    "F0885": {
+      "qty": 2,
+      "weeklyPerUnit": 2,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0886": {
+      "qty": 12,
+      "weeklyPerUnit": 12,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0887": {
+      "qty": 45,
+      "weeklyPerUnit": 45,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0888": {
+      "qty": 4,
+      "weeklyPerUnit": 4,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": 0
+    },
+    "F0889": {
+      "qty": 0.5,
+      "weeklyPerUnit": 0.5,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0890": {
+      "qty": 0.45,
+      "weeklyPerUnit": 0.45,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
+    },
+    "F0891": {
+      "qty": 4,
+      "weeklyPerUnit": 4,
+      "count": 0,
+      "weeklyTotal": 0,
+      "contribution": null
     }
   }
 }

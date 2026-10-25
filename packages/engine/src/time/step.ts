@@ -1518,6 +1518,32 @@ function storeAndSpoil(d: Day): void {
   }
 }
 
+/**
+ * LL-46: a CSA earns its Capital output only for the share of each growing-season day's boxes
+ * actually packed (produce and packing labor). The missing share is refunded by that lower
+ * output, and a make-good of `makeGoodFactor` × the missing revenue is paid on top, as far as cash allows.
+ */
+function settleCsa(d: Day): NonNullable<DayLedger['csa']> {
+  const rule = d.catalog.incomeTrade;
+  if (!rule || !d.prev.settings.sellingAndTrade || !d.weather.growing) return [];
+  const out: NonNullable<DayLedger['csa']> = [];
+  for (const g of d.groups) {
+    if (g.plan.system.id !== rule.csaId) continue;
+    const day = d.lastDay[g.key];
+    const promised = (day?.potential.Capital ?? 0) * g.w;
+    if (promised <= EPS) continue;
+    const revenue = (day?.outputs.Capital ?? 0) * g.w;
+    const owed = Math.max(0, promised - revenue) * rule.makeGoodFactor;
+    const makeGood = d.prev.settings.cashFloor || d.prev.settings.finance ? Math.min(owed, Math.max(0, d.cash)) : owed;
+    if (makeGood > EPS) {
+      debit(d, makeGood);
+      d.spend.makeGood = (d.spend.makeGood ?? 0) + makeGood;
+    }
+    out.push({ instanceIds: g.members.map((i) => d.instances[i]!.id), share: revenue / promised, revenue, makeGood });
+  }
+  return out;
+}
+
 /** Step 7a (LL-35): each garden's fertility after today's harvest, compost, manure and cover crop. */
 function advanceFertility(d: Day, catalog: Catalog) {
   if (!d.prev.settings.soilFertility || !catalog.soilFertility) return [];
@@ -1627,7 +1653,7 @@ function emitEvents(d: Day): GameState['flags'] {
 }
 
 export function spendTotal(s: DaySpend): number {
-  let t = s.fees + s.delivery + (s.access ?? 0);
+  let t = s.fees + s.delivery + (s.access ?? 0) + (s.makeGood ?? 0);
   for (const v of Object.values(s.backstop)) t += v;
   for (const v of Object.values(s.market)) t += v;
   return t;
@@ -1813,6 +1839,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   consume(d);
   if (prev.settings.reuseIdleLabor) reuseIdleLabor(d); // 6d
   produce(d);
+  const csa = settleCsa(d);
   updatePeople(d); // 7
   if (prev.settings.wearAndRepair)
     for (const g of d.groups)
@@ -1850,11 +1877,12 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     delete d.stocks['Preserved food'];
     delete d.res['Preserved food'];
   }
-  // Do not add an unused new food resource to legacy save/digest records.
-  if (!('Cheese' in prev.stocks) && !prev.instances.some((i) => plans.bySystem.get(i.systemId)!.outputs.some((o) => o.resource === 'Cheese'))) {
-    delete d.stocks.Cheese;
-    delete d.res.Cheese;
-  }
+  // Do not add an unused new resource (LL-41 cheese, LL-46 woolen goods) to legacy save/digest records.
+  for (const late of ['Cheese', 'Woolen goods'])
+    if (!(late in prev.stocks) && !prev.instances.some((i) => plans.bySystem.get(i.systemId)!.outputs.some((o) => o.resource === late))) {
+      delete d.stocks[late];
+      delete d.res[late];
+    }
   d.cash += d.cashIn; // 9
   finishConstruction(d);
   const flags = emitEvents(d); // 10
@@ -1922,6 +1950,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     };
   }
   if (trades.length) ledger.trades = trades;
+  if (csa.length) ledger.csa = csa;
   const fodder = fodderRecords(catalog, d.prev, satisfaction);
   if (fodder.length) ledger.fodder = fodder;
   if (preserved.length) ledger.preserved = preserved;

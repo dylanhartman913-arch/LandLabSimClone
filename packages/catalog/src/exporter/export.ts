@@ -832,6 +832,16 @@ export function exportCatalog(input: ExportInput): ExportResult {
         if (!rawFlows.some((f) => f.systemId === id && f.resource === resource && f.direction === 'out'))
           problems.push(`Livestock infrastructure: pasture ${id} must have out ${resource}`);
   }
+  const income = overridesParsed.data.incomeTrade;
+  if (income) {
+    for (const id of [income.csaId, income.spinningId])
+      if (!rawSystems.some((s) => s.id === id)) problems.push(`Income rule: unknown system ${id}`);
+    for (const [id, resource, direction] of [
+      [income.csaId, 'Capital', 'out'], [income.csaId, 'Vegetables fruit fiber herbs', 'in'],
+      [income.spinningId, 'Wool', 'in'], [income.spinningId, 'Woolen goods', 'out'],
+    ]) if (!rawFlows.some((f) => f.systemId === id && f.resource === resource && f.direction === direction))
+      problems.push(`Income rule: ${id} must have ${direction} ${resource}`);
+  }
   const water = overridesParsed.data.waterInfrastructure;
   if (water) for (const id of [water.springId, water.diverterId, water.heatedTankId, water.testKitId])
     if (!rawSystems.some((s) => s.id === id)) problems.push(`Water infrastructure: unknown system ${id}`);
@@ -922,6 +932,7 @@ export function exportCatalog(input: ExportInput): ExportResult {
     soilFertility: overridesParsed.data.soilFertility,
     toolRules: overridesParsed.data.toolRules,
     fodder: overridesParsed.data.fodder,
+    incomeTrade: overridesParsed.data.incomeTrade,
     livestockInfrastructure: overridesParsed.data.livestockInfrastructure,
     waterInfrastructure: overridesParsed.data.waterInfrastructure,
     winterStorage: overridesParsed.data.winterStorage,

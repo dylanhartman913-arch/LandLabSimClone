@@ -1,0 +1,94 @@
+{
+  "patch": "ll46-income-trade",
+  "source": "New (LL46)",
+  "note": "Two Upgrade Roadmap 2 income systems and one resource. Existing workbook numbers are unchanged. The farm stand and Ruth's produce barter shipped in LL-29 (S178); labor barter is an engine rule. All prices and rates are labeled game assumptions in row notes.",
+  "resources": [
+    {
+      "name": "Woolen goods",
+      "unit": "lbs",
+      "class": "Flow",
+      "note": "Hand-spun and woven wool (yarn, blankets, clothing) for sale or barter."
+    }
+  ],
+  "systems": [
+    {
+      "name": "CSA Share Program (4 half shares)",
+      "categories": "Garden; Tools",
+      "buy": 150,
+      "diy": 60,
+      "setup": 4,
+      "upkeep": 2,
+      "footprint": 16,
+      "lifespan": 10,
+      "description": "Four households prepay for a weekly box of produce through the growing season; short boxes cost a make-good.",
+      "confidence": "low",
+      "notes": "Growing season only: 12 lb Vegetables fruit fiber herbs + 2 h packing per week -> $45/week (about $3.75/lb, above the 50-80% LL-29 sale price because members commit for the season). A short week refunds the missing share and pays half that again as a make-good. Members collect on the farm, so no transport. Prices and penalty are experimental game balance.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 2,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Vegetables fruit fiber herbs",
+          "qty": 12,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Capital",
+          "qty": 45,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "Spinning Wheel and Loom",
+      "categories": "Tools",
+      "buy": 600,
+      "diy": 200,
+      "setup": 2,
+      "upkeep": 4,
+      "footprint": 9,
+      "lifespan": 25,
+      "description": "Spin your flock's wool into yarn and weave it into blankets and cloth to keep, sell or barter.",
+      "confidence": "low",
+      "notes": "0.5 lb Wool + 4 h/week -> 0.45 lb Woolen goods (10% lost in washing, carding and spinning) + 4 Wellbeing. Woolen goods sell at a $25/lb reference price through LL-29 sales. Rates and price are experimental game balance.",
+      "flows": [
+        {
+          "dir": "Input",
+          "resource": "Labor",
+          "qty": 4,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Input",
+          "resource": "Wool",
+          "qty": 0.5,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Woolen goods",
+          "qty": 0.45,
+          "period": "Weekly",
+          "note": ""
+        },
+        {
+          "dir": "Output",
+          "resource": "Wellbeing",
+          "qty": 4,
+          "period": "Weekly",
+          "note": ""
+        }
+      ]
+    }
+  ]
+}

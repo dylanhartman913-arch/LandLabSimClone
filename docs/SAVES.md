@@ -127,3 +127,9 @@ The kit's Seeds flow (F0873) is a window flow (weeks 35–41) by override; its a
 ## LL-45 heat, hot water and shelter efficiency (0.24.0)
 
 Workbook system IDs S202–S204 use existing placement, movement and removal actions; no new action, saved field or setting. The liner and draft-proofing kit are host modifiers in `catalog_overrides.json` (`systems.S202/S204.modifies`), derived from the layout each day like the weatherization retrofit. The boiler's wood flow (F0881) is steady by flow-timing override; its annual quantity keeps workbook parity. `ChecklistView.hotWater` is a view-only field computed from existing ledger `Hot water` requested/unmet. Legacy digests are unchanged.
+
+## LL-46 income and trade (0.25.0)
+
+Workbook system IDs S205–S206 and the `Woolen goods` resource (canonical lbs, sale reference price in overrides) use existing placement and trade actions. No new action kind: labor barter is an ordinary `sell` action with `resource: 'Labor'` and a required `receive`, stored in the existing `market.sales` queue (amount in hours). The CSA's three flows (F0885–F0887) are growing-season by flow-timing override; annual quantities keep workbook parity. The CSA runs only under the existing `sellingAndTrade` gate.
+
+Optional `DayLedger.csa` entries hold `{ instanceIds, share, revenue, makeGood }` for growing-season days; optional `DaySpend.makeGood` is included in `spendTotal` and shown as a "CSA make-good" bill. Labor barter receipts are ordinary `trades` entries with `resource: 'Labor'` and `revenue: 0`; its hours appear under `laborBySystem['Neighbor work']`. Older states omit every new field and replay unchanged; legacy digests are unchanged.

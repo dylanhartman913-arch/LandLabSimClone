@@ -1,4 +1,5 @@
 import { requestAccess } from './access.ts';
+import { explained } from '../provenance.ts';
 import { getQuestLine, type Catalog, type NeedKey } from '@homestead/catalog';
 import type { AccessDay, GameEvent, DayLedger, DaySpend, GameState, ResourceDay, NeedDay } from './types.ts';
 
@@ -23,7 +24,10 @@ export function queueTrade(
   receive?: string,
 ): GameState {
   if (!state.settings.sellingAndTrade) throw new Error('Selling and trade is disabled');
-  tradable(catalog, resource);
+  if (resource === 'Labor') {
+    if (!catalog.incomeTrade) throw new Error('Labor has no barter rule');
+    if (!receive) throw new Error('Labor has no cash trade; barter it with Ruth for goods');
+  } else tradable(catalog, resource);
   if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(keep) || keep < 0)
     throw new Error('Trade a finite positive amount and keep a nonnegative reserve');
   if (receive) {
@@ -62,6 +66,37 @@ interface TradeDay {
   spend: DaySpend;
 }
 
+/**
+ * LL-46: Ruth takes spare household labor (after upkeep, gathering and construction) for goods at a
+ * fixed value per hour. At least half an hour must be free; the rest of the order waits.
+ */
+function barterLabor(
+  d: TradeDay,
+  catalog: Catalog,
+  order: { amount: number; receive?: string },
+): { receipt: NonNullable<DayLedger['trades']>[number]; left: number } | null {
+  const idle = Math.max(0, d.pool - d.constructionUsed - d.gatherUsed - d.laborUsed);
+  if (idle < 0.5 || !order.receive) return null;
+  const hours = Math.min(order.amount, idle);
+  const target = tradable(catalog, order.receive);
+  const receivedAmount = (hours * catalog.incomeTrade!.laborBarterValuePerHour) / target.marketPrice!;
+  d.laborUsed += hours;
+  d.upkeepRequested += hours;
+  d.res.Labor!.consumed += hours;
+  d.laborBySystem['Neighbor work'] = (d.laborBySystem['Neighbor work'] ?? 0) + hours;
+  d.stocks[target.name] = (d.stocks[target.name] ?? 0) + receivedAmount;
+  d.res[target.name]!.purchased += receivedAmount;
+  d.bought[target.name] = (d.bought[target.name] ?? 0) + receivedAmount;
+  if (target.needsRow) {
+    const n = d.needs[target.needsRow];
+    const provided = receivedAmount * (target.factorToNeed ?? 1);
+    n.provided += provided;
+    n.potential += provided;
+    n.bought += provided;
+  }
+  return { receipt: { resource: 'Labor', amount: hours, revenue: 0, received: target.name, receivedAmount }, left: order.amount - hours };
+}
+
 /** Sell after household consumption, before spoilage. Unfilled orders wait; reserves are never sold. */
 export function settleTrades(d: TradeDay, catalog: Catalog): NonNullable<DayLedger['trades']> {
   const sales = d.market?.sales;
@@ -78,6 +113,12 @@ export function settleTrades(d: TradeDay, catalog: Catalog): NonNullable<DayLedg
     Object.entries(d.prev.lastDay).some(([k, g]) => k.startsWith(`${stand.systemId}|`) && g.sat >= 0.99);
   let tripPaid = false;
   for (const order of sales) {
+    if (order.resource === 'Labor') {
+      const result = barterLabor(d, catalog, order);
+      if (result) results.push(result.receipt);
+      if (!result || result.left > 1e-9) pending.push(result ? { ...order, amount: result.left } : order);
+      continue;
+    }
     const r = tradable(catalog, order.resource);
     const available = Math.max(0, (d.stocks[r.name] ?? 0) + (d.produced[r.name] ?? 0) - order.keep);
     const idle = Math.max(0, d.pool - d.constructionUsed - d.gatherUsed - d.laborUsed);
@@ -136,4 +177,20 @@ export function settleTrades(d: TradeDay, catalog: Catalog): NonNullable<DayLedg
   }
   d.market = { ...d.market!, sales: pending };
   return results;
+}
+
+/** LL-46 card model for a CSA: its terms and yesterday's boxes. */
+export function csaView(state: GameState, catalog: Catalog, id: string) {
+  const rule = catalog.incomeTrade;
+  const inst = state.instances.find((i) => i.id === id);
+  if (!rule || !inst || inst.systemId !== rule.csaId) return null;
+  const last = state.ledgers.at(-1)?.csa?.find((c) => c.instanceIds.includes(id)) ?? null;
+  return {
+    text: state.settings.sellingAndTrade
+      ? `Members prepay for a weekly box through the growing season. A short week refunds the missing share and pays ${Math.round(rule.makeGoodFactor * 100)}% of it again as a make-good.`
+      : 'Enable Selling and trade to run a CSA.',
+    share: last ? explained(last.share, 'share of yesterday’s promised boxes packed: produce and packing labor met') : null,
+    revenue: last ? explained(last.revenue, 'CSA income earned yesterday') : null,
+    makeGood: last ? explained(last.makeGood, `make-good paid yesterday: missing revenue × ${rule.makeGoodFactor}`) : null,
+  };
 }

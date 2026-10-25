@@ -403,6 +403,12 @@ export const RiskRuleSchema = z.object({
 }).refine((r) => r.protectedHarvestFactor >= r.harvestFactor, 'mitigation cannot worsen harvests');
 export type RiskRule = z.infer<typeof RiskRuleSchema>;
 
+export const IncomeTradeRuleSchema = z.object({
+  csaId: z.string(), makeGoodFactor: z.number().min(0).max(2), spinningId: z.string(),
+  laborBarterValuePerHour: z.number().positive(), note: z.string(),
+});
+export type IncomeTradeRule = z.infer<typeof IncomeTradeRuleSchema>;
+
 export const TransportAccessRuleSchema = z.object({
   marketMiles: z.number().positive(), deliveryFare: z.number().positive(),
   commuteFarePerMile: z.number().positive(), townMilesPerPerson: z.number().positive(), townFare: z.number().positive(),
@@ -411,6 +417,7 @@ export const TransportAccessRuleSchema = z.object({
 export type TransportAccessRule = z.infer<typeof TransportAccessRuleSchema>;
 
 export const CatalogSchema = z.object({
+  incomeTrade: IncomeTradeRuleSchema.optional(),
   transportAccess: TransportAccessRuleSchema.optional(),
   riskEvents: RiskRuleSchema.optional(),
   finance: FinanceRuleSchema.optional(),
@@ -444,6 +451,7 @@ export type Catalog = z.infer<typeof CatalogSchema>;
 export const OverridesSchema = z
   .object({
     version: z.literal(1),
+    incomeTrade: IncomeTradeRuleSchema.optional(),
     transportAccess: TransportAccessRuleSchema.optional(),
     riskEvents: RiskRuleSchema.optional(),
     finance: FinanceRuleSchema.optional(),

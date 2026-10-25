@@ -286,6 +286,8 @@ export interface DayLedger {
     energyResource: string;
     energy: number;
   }[];
+  /** LL-46: each CSA group's growing-season day: share delivered, revenue earned, make-good paid. */
+  csa?: { instanceIds: string[]; share: number; revenue: number; makeGood: number }[];
   /** LL-43: each incubator or nest box batch's day: eggs set, whether the day counted, power used, chicks hatched. */
   hatching?: { instanceId: string; eggsSet: number; counted: boolean; kWh: number; hatched: number }[];
   livestock?: {
@@ -334,6 +336,8 @@ export interface DaySpend {
   delivery: number;
   /** LL-39: paid commuting/supply/town fares and settlement of emergency fares. */
   access?: number;
+  /** LL-46: CSA make-good paid to members for short weeks. */
+  makeGood?: number;
   /**
    * Running costs by system (G16): the Capital each system draws (a house payment, a car).
    * Already part of cash out, so not in `spendTotal`; shown as bills.

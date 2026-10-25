@@ -153,6 +153,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
   if (
     !state.instances.some((i) => i.status === 'active' && i.systemId === catalog.fodder?.meadowId) &&
     !state.instances.some((i) => i.status === 'active' && i.systemId === catalog.livestockInfrastructure?.paddockId) &&
+    !state.instances.some((i) => i.systemId === catalog.incomeTrade?.csaId) &&
     !state.settings.storagePools &&
     !state.settings.foodPreservation &&
     !state.settings.shelterOccupancy &&
@@ -448,6 +449,11 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
       s.notes.push('Piped raw water requires an in-season spring within the connection radius; treatment is still required.');
     }
     waterSpatial(catalog, state, inst, plan, s);
+    if (inst.systemId === catalog.incomeTrade?.csaId && !state.settings.sellingAndTrade) {
+      for (const f of plan.inputs) s.inMult[f.resource] = 0;
+      for (const f of plan.outputs) s.outMult[f.resource] = 0;
+      s.notes.push('Enable Selling and trade to run a CSA.');
+    }
     if (!state.settings.foodPreservation && plan.outputs.some((o) => o.resource === 'Cheese' || o.resource === 'Seeds')) {
       for (const f of plan.inputs) s.inMult[f.resource] = 0;
       for (const f of plan.outputs) s.outMult[f.resource] = 0;
