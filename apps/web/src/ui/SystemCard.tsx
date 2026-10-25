@@ -2,6 +2,7 @@ import { ShelterOccupancy } from './ShelterOccupancy.tsx';
 import { WinterWater } from './WinterWater.tsx';
 import { ToolGathering } from './ToolGathering.tsx';
 import { SoilFertility } from './SoilFertility.tsx';
+import { HouseholdRole } from './HouseholdRole.tsx';
 import { useEffect, useRef, useState } from 'react';
 import {
   maintenanceView,
@@ -136,6 +137,7 @@ export function SystemCard() {
           <WinterWater key={`winter-${instanceId}`} id={instanceId} />
           <ToolGathering key={`tool-${instanceId}`} id={instanceId} />
           <SoilFertility key={`soil-${instanceId}`} id={instanceId} />
+          <HouseholdRole key={`role-${instanceId}`} id={instanceId} />
         </>
       )}
       {inst ? (

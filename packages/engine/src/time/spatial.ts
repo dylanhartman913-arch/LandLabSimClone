@@ -6,6 +6,7 @@ import { getSystem } from '../catalog-index.ts';
 import { parcelSideFt } from './game.ts';
 import { getPlans } from './plans.ts';
 import { toolRule } from './tools.ts';
+import { householdSkill, roleNeeds } from './household.ts';
 import { fertilityOf, followsFertility, gardenRule, yieldFactor } from './fertility.ts';
 import type { GameState, Instance } from './types.ts';
 
@@ -151,6 +152,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     !state.settings.livestockLifecycle &&
     !state.settings.toolGathering &&
     !state.settings.soilFertility &&
+    !state.settings.householdRoles &&
     hit &&
     sameLayout(hit.sig, state)
   )
@@ -428,6 +430,26 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     }
   }
 
+  // LL-36: a child or elder has their own share of needs; practiced growers raise harvests.
+  if (state.settings.householdRoles && catalog.householdRoles) {
+    const growing = householdSkill(catalog, state.settings, state.instances).growing;
+    for (const inst of active) {
+      const plan = plans.bySystem.get(inst.systemId)!;
+      if (inst.person) {
+        const needs = roleNeeds(catalog, state.settings, inst.person);
+        if (needs === 1) continue;
+        const s = get(inst.id);
+        for (const f of plan.inputs) s.inMult[f.resource] = (s.inMult[f.resource] ?? 1) * needs;
+        for (const o of plan.outputs) if (o.resource !== 'Labor') s.outMult[o.resource] = (s.outMult[o.resource] ?? 1) * needs;
+        s.notes.push(`${inst.person.role === 'child' ? 'Child' : 'Elder'}: needs × ${needs}.`);
+      } else if (growing > 1 && catalog.householdRoles.growingSystemIds.includes(inst.systemId)) {
+        const s = get(inst.id);
+        for (const o of plan.outputs) if (!o.isCapacity && o.resource !== 'Wellbeing') s.outMult[o.resource] = (s.outMult[o.resource] ?? 1) * growing;
+        s.notes.push(`Growing skill: harvest × ${growing.toFixed(3)}.`);
+      }
+    }
+  }
+
   // Delivery (G11): heat and cooling only count when they reach a shelter.
   const resByName = new Map(catalog.resources.map((r) => [r.name, r]));
   const shelters = active.filter((i) =>
@@ -490,7 +512,8 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
     !state.settings.wearAndRepair &&
     !state.settings.livestockLifecycle &&
     !state.settings.toolGathering &&
-    !state.settings.soilFertility
+    !state.settings.soilFertility &&
+    !state.settings.householdRoles
   )
     cache.set(catalog, { sig: layoutOf(state), map });
   return map;

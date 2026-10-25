@@ -89,7 +89,7 @@ export function systemCard(
   const inputs: CardInput[] = flows.inputs.map((v) => {
     const role = v.flow.inputRole ?? 'required';
     const inputFactor =
-      inst && (state.settings.shelterOccupancy || (state.settings.toolGathering && toolRule(catalog, inst.systemId))) && v.flow.period !== 'One-time'
+      inst && (state.settings.shelterOccupancy || (state.settings.toolGathering && toolRule(catalog, inst.systemId)) || (state.settings.householdRoles && inst.person)) && v.flow.period !== 'One-time'
         ? (computeSpatial(catalog, state).get(inst.id)?.inMult[v.resource] ?? 1)
         : 1;
     const needed = v.qty.value * inputFactor;

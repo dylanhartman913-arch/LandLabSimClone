@@ -73,3 +73,7 @@ Optional `shelterThermal` maps preserve yesterday’s routed thermal output by h
 
 `soilFertility` remains explicitly opt-in; startup and continuation migrations do not enable it, and it is toggled only by a logged settings action. Gardens gain an optional instance `fertility` field, absent until the first gated day (absent means the rule's starting level). Daily ledgers gain optional `fertility` records per garden. Manure drawn for gardens is in the Manure ledger's `consumed`. The `soilFertility` rule comes from `data/catalog_overrides.json`; the workbook and its hash are unchanged. Turning the gate off keeps saved fertility but restores the legacy compost switch. Legacy digest fixtures pass without this setting.
 
+## Phase 9 household roles, skills and health (LL-36, engine 0.16.0)
+
+`householdRoles` remains explicitly opt-in; startup and continuation migrations do not enable it. Logged `role` actions set the optional person `role`; persons also gain optional `skills` (practice hours) and `condition` (ill or injured, days left). The optional `householdRng` stream is saved and fingerprinted when present; it advances only while the gate is on and never touches the climate or livestock streams. Daily ledgers gain an optional `household` record (practice hours and injury risk) and `person` events. The `householdRoles` rule comes from `data/catalog_overrides.json`; the workbook and its hash are unchanged. Turning the gate off keeps saved roles, skills and conditions but restores identical adults. Legacy digest fixtures pass without this setting.
+

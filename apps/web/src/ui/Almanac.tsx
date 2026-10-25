@@ -21,6 +21,8 @@ function filterOf(e: GameEvent): Filter {
       return 'animals';
     case 'winter-water':
       return 'weather';
+    case 'person':
+      return 'people';
     case 'shortage':
     case 'shortage-ended':
     case 'spill':
@@ -66,6 +68,12 @@ export function describeEvent(
         : e.event === 'born' ? `Birth / hatch: ${fmtNum(e.amount)} animal(s).`
         : e.event === 'matured' ? 'Animals reached maturity.'
         : e.event === 'protected' ? 'Working housing or a guardian prevented a predator loss.' : 'Animals died of old age.';
+    case 'person':
+      return e.event === 'ill'
+        ? `${instSys(e.instanceId) ?? 'Someone'} fell ill: little work for ${e.days} days.`
+        : e.event === 'injured'
+          ? `${instSys(e.instanceId) ?? 'Someone'} was injured at work: light duty for ${e.days} days.`
+          : `${instSys(e.instanceId) ?? 'Someone'} has recovered.`;
     case 'winter-water':
       return e.event === 'froze'
         ? `${instSys(e.instanceId) ?? 'A water tank'} froze: ${fmtNum(e.gal)} gal of raw water locked in ice.`
@@ -110,6 +118,7 @@ function instanceOf(e: GameEvent): string | undefined {
   switch (e.kind) {
     case 'livestock':
     case 'winter-water':
+    case 'person':
     case 'built':
     case 'imported':
     case 'hardship':

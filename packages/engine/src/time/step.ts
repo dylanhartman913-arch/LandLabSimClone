@@ -4,6 +4,7 @@ import { seedState } from './rng.ts';
 import { preserveFood } from './preservation.ts';
 import { wearInstance } from './maintenance.ts';
 import { settleTrades } from './trade.ts';
+import { advanceHousehold, householdSkill, laborFactor } from './household.ts';
 import { advanceGarden, coverShares, gardenRule } from './fertility.ts';
 import { toolCapacity, toolMultiplier, toolShare } from './tools.ts';
 import { advanceWinter, frozenCapacity, roomFor, statePools, storagePools, type StoragePool } from './storage.ts';
@@ -112,6 +113,9 @@ interface Day {
   thermalTargets: Map<string, string[]>;
   homes: Map<string, string | null>;
   livestockRng: number;
+  householdRng: number;
+  /** LL-36: household skill multipliers for today (1 when the gate is off). */
+  skill: { building: number; growing: number; gathering: number };
   rng: number;
   nextInstanceId: number;
   prev: GameState;
@@ -318,7 +322,8 @@ function nodesFor(d: Day, job: JobId, resource: string) {
     .map((n) => {
       const p = nodePosition(d.prev, n);
       const dist = Math.hypot(p.x - home.x, p.y - home.y);
-      const rate = n.resource === resource ? nodeYield(n, d.prev.yearWeather, d.prev.settings.weatherMode) : n.extra.find((e) => e.resource === resource)!.perHour;
+      // LL-36: practiced gatherers bring back more per hour.
+      const rate = (n.resource === resource ? nodeYield(n, d.prev.yearWeather, d.prev.settings.weatherMode) : n.extra.find((e) => e.resource === resource)!.perHour) * d.skill.gathering;
       const walk = walkPerTrip(dist);
       return { n, dist, rate, walk, eff: rate / (1 + walk) };
     })
@@ -342,7 +347,7 @@ function hoursFor(d: Day, job: JobId, resource: string, amount: number): number 
   for (const x of nodesFor(d, job, resource)) {
     if (left <= EPS) break;
     const primary = x.n.resource === resource;
-    const avail = primary ? stockAt(d, x.n.id) : (stockAt(d, x.n.id) / x.n.yieldPerHour) * x.rate;
+    const avail = primary ? stockAt(d, x.n.id) : (stockAt(d, x.n.id) / (x.n.yieldPerHour * d.skill.gathering)) * x.rate;
     const take = Math.min(left, avail);
     if (take <= EPS) continue;
     let eff = x.eff;
@@ -491,7 +496,7 @@ function gather(d: Day, job: JobId, hours: number, plan: GatherPlan | undefined)
       const mult = tool && share > 0 ? toolMultiplier(tool, share) : 1;
       const eff = x.eff * mult;
       // Working the node yields its main resource; by-products (food from wild greens) come along.
-      const primaryEff = primary ? eff : nodeYield(x.n, d.prev.yearWeather, d.prev.settings.weatherMode) / (1 + x.walk);
+      const primaryEff = primary ? eff : (nodeYield(x.n, d.prev.yearWeather, d.prev.settings.weatherMode) * d.skill.gathering) / (1 + x.walk);
       const stock = stockAt(d, x.n.id);
       if (stock <= EPS) continue;
       const h = Math.min(left, want / eff, stock / primaryEff);
@@ -534,7 +539,7 @@ function gather(d: Day, job: JobId, hours: number, plan: GatherPlan | undefined)
         });
       };
       land(x.n.resource, amount);
-      for (const e of x.n.extra) land(e.resource, (h / (1 + x.walk)) * e.perHour);
+      for (const e of x.n.extra) land(e.resource, (h / (1 + x.walk)) * e.perHour * d.skill.gathering);
       d.gatherUsed += h;
       d.byJob[job] = (d.byJob[job] ?? 0) + h;
     }
@@ -577,7 +582,8 @@ function laborPool(d: Day): void {
     if (!g.plan.isHuman) continue;
     for (const i of g.members) {
       const inst = d.instances[i]!;
-      pool += (g.plan.laborWeekly / 7) * (inst.person?.health ?? 1) * (inst.scale ?? 1);
+      const role = d.prev.settings.householdRoles && inst.person ? laborFactor(d.catalog, d.prev.settings, inst.person) : 1;
+      pool += (g.plan.laborWeekly / 7) * (inst.person?.health ?? 1) * (inst.scale ?? 1) * role;
     }
   }
   d.pool = pool;
@@ -598,7 +604,10 @@ function laborPool(d: Day): void {
     else upkeep += q.amount;
   }
   if (settings.employmentPriority) {
-    const adults = d.instances.filter((i) => i.person && !i.person.away && (i.scale ?? 1) >= 1).length;
+    // LL-36: children take no paid work; elders count at their labor share.
+    const adults = settings.householdRoles
+      ? d.instances.reduce((a, i) => a + (i.person && !i.person.away && (i.scale ?? 1) >= 1 && i.person.role !== 'child' ? (d.catalog.householdRoles?.roles[i.person.role ?? 'adult'].labor ?? 1) : 0), 0)
+      : d.instances.filter((i) => i.person && !i.person.away && (i.scale ?? 1) >= 1).length;
     demand.set('employment', Math.min(employment, (adults * 40) / 7));
   }
   demand.set('upkeep', upkeep);
@@ -659,11 +668,13 @@ function build(d: Day, cap: number, crews: boolean): number {
     if (!crews && (before.contractor || before.setupHoursNeeded - before.setupHoursDone <= EPS)) continue;
     if (!crews && cap <= EPS) break;
     const inst = touch(d, i);
+    // LL-36: practiced builders make more progress per hour (outside crews work at their own pace).
+    const skill = inst.contractor ? 1 : d.skill.building;
     const give = Math.min(
-      Math.max(0, inst.setupHoursNeeded - inst.setupHoursDone),
+      Math.max(0, inst.setupHoursNeeded - inst.setupHoursDone) / skill,
       inst.contractor ? CONTRACTOR_HOURS_PER_DAY : cap,
     );
-    inst.setupHoursDone += give;
+    inst.setupHoursDone += give * skill;
     if (inst.contractor) inst.contractor = { ...inst.contractor, worked: inst.contractor.worked + give };
     else { cap -= give; used += give; }
     if (inst.setupHoursNeeded - inst.setupHoursDone <= EPS) d.completed.push(i);
@@ -1359,6 +1370,8 @@ function updatePeople(d: Day): void {
 function samePersonState(a: PersonState, b: PersonState): boolean {
   if (a === b) return true;
   if (a.wellbeing !== b.wellbeing || a.severeFood !== b.severeFood || !!a.away !== !!b.away) return false;
+  // LL-36: a shared update would copy one person's role, skills or illness onto another.
+  if (a.role !== b.role || a.skills !== b.skills || a.condition !== b.condition) return false;
   for (const k in a.short) if (a.short[k as keyof PersonState['short']] !== b.short[k as keyof PersonState['short']]) return false;
   return true;
 }
@@ -1623,6 +1636,8 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     thermalTargets: new Map(),
     homes: prev.settings.shelterOccupancy ? shelterAssignments(catalog, prev) : new Map(),
     livestockRng: prev.livestockRng ?? seedState(prev.seed),
+    householdRng: prev.householdRng ?? seedState(prev.seed + 36),
+    skill: householdSkill(catalog, prev.settings, prev.instances),
     rng,
     nextInstanceId: prev.nextInstanceId,
     prev,
@@ -1743,7 +1758,29 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   const flags = emitEvents(d); // 10
   if (d.broke && !prev.flags.broke) d.events.push({ kind: 'purchases-stopped', absDay, cash: d.cash });
   if (d.broke) flags.broke = true;
+  // LL-36: practice, illness and injury after the day's work.
+  let household: ReturnType<typeof advanceHousehold> | null = null;
+  if (prev.settings.householdRoles) {
+    const toolHours: Record<string, number> = {};
+    for (const g of d.gathered)
+      for (const id of g.toolIds ?? []) {
+        const sys = d.instances.find((i) => i.id === id)?.systemId;
+        if (sys) toolHours[sys] = (toolHours[sys] ?? 0) + (g.toolHours ?? 0) / g.toolIds!.length;
+      }
+    const growingIds = catalog.householdRoles?.growingSystemIds ?? [];
+    household = advanceHousehold(catalog, prev, d.instances, {
+      absDay,
+      rng: d.householdRng,
+      building: d.constructionUsed,
+      growing: growingIds.reduce((a, id) => a + (d.laborBySystem[id] ?? 0), 0),
+      gathering: d.gatherUsed,
+      toolHours,
+    });
+    d.householdRng = household.rng;
+    d.events.push(...household.events);
+  }
   const ledger = buildLedger(d);
+  if (household?.record) ledger.household = household.record;
   if (prev.settings.shelterOccupancy) {
     ledger.shelters = d.groups
       .filter((g) => d.shelterIds.has(g.plan.system.id))
@@ -1782,6 +1819,7 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
     ...(prev.settings.livestockLifecycle || prev.livestockRng !== undefined
       ? { livestockRng: d.livestockRng }
       : {}),
+    ...(prev.settings.householdRoles || prev.householdRng !== undefined ? { householdRng: d.householdRng } : {}),
     nextInstanceId: d.nextInstanceId,
     calendar:
       nextDay >= 365

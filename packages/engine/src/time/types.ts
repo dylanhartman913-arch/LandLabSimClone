@@ -21,6 +21,8 @@ export interface GameSettings {
   toolGathering?: boolean;
   /** LL-35: gardens keep a fertility level that cropping lowers and compost, manure and cover crops raise. */
   soilFertility?: boolean;
+  /** LL-36: children and elders, skills from practice, illness and injury. */
+  householdRoles?: boolean;
   parcelAcres: number;
   startingCash: number;
   weatherMode: WeatherMode;
@@ -88,6 +90,12 @@ export interface PersonState {
   why: WellbeingTerm[];
   /** Gone to stay in town (wellbeing hit 0): consumes and makes nothing until they come back. */
   away?: { since: number };
+  /** LL-36: adult (default), child or elder. */
+  role?: 'adult' | 'child' | 'elder';
+  /** LL-36: hours of practice this person has had at each skill. */
+  skills?: { building: number; growing: number; gathering: number };
+  /** LL-36: ill or injured, with days left. */
+  condition?: { kind: 'ill' | 'injured'; daysLeft: number };
 }
 
 export interface InstanceInputRecord {
@@ -230,6 +238,8 @@ export interface DayLedger {
     coolingNeeded: number;
     coolingReceived: number;
   }[];
+  /** LL-36: practice hours today by skill, and today's injury risk from dangerous work. */
+  household?: { practice: { building: number; growing: number; gathering: number }; injuryRisk: number };
   /** LL-35 gardens: fertility after today, and what fed and drew it. */
   fertility?: {
     instanceId: string;
@@ -348,6 +358,8 @@ export interface GameState {
   rng: number;
   /** Independent opt-in risk stream keeps predator draws from changing weather. */
   livestockRng?: number;
+  /** LL-36: independent stream for illness and injury draws. */
+  householdRng?: number;
   site: Site;
   settings: GameSettings;
   calendar: { day: number; year: number; absDay: number };
@@ -396,6 +408,7 @@ export interface GameState {
 }
 
 export type GameEvent =
+  | { kind: 'person'; absDay: number; instanceId: string; event: 'ill' | 'injured' | 'recovered'; days: number }
   | { kind: 'winter-water'; absDay: number; instanceId: string; event: 'froze' | 'thawed'; gal: number }
   | {
       kind: 'livestock';

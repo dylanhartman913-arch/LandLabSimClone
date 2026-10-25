@@ -1,4 +1,58 @@
 {
+  "householdRoles": {
+    "roles": {
+      "adult": {
+        "needs": 1,
+        "labor": 1
+      },
+      "child": {
+        "needs": 0.7,
+        "labor": 0.25
+      },
+      "elder": {
+        "needs": 0.9,
+        "labor": 0.5
+      }
+    },
+    "skills": {
+      "building": {
+        "maxBonus": 0.5,
+        "halfHours": 150
+      },
+      "growing": {
+        "maxBonus": 0.25,
+        "halfHours": 100
+      },
+      "gathering": {
+        "maxBonus": 0.3,
+        "halfHours": 100
+      }
+    },
+    "growingSystemIds": [
+      "S078",
+      "S122",
+      "S124",
+      "S123",
+      "S033",
+      "S130",
+      "S132"
+    ],
+    "illness": {
+      "wellbeingBelow": 40,
+      "maxDailyChance": 0.02,
+      "days": 7,
+      "labor": 0
+    },
+    "injury": {
+      "constructionPerHour": 0.0005,
+      "toolPerHour": {
+        "S151": 0.002
+      },
+      "days": 14,
+      "labor": 0.3
+    },
+    "note": "LL-36 experimental game balance. A school-age child needs about 70% of an adult's food, water and supplies and does a quarter of an adult's work; an elder needs 90% and works half. Skills rise with each person's share of the hours practiced: building up to 50% faster DIY, growing up to 25% more harvest, gathering up to 30% more per hour, each half-learned after 150, 100 and 100 hours. Below 40 wellbeing a person may fall ill (up to 2% a day at 0), losing a week of work; building and chainsaw work carry a small chance of injury per hour (two weeks at 30% work)."
+  },
   "soilFertility": {
     "gardens": [
       {

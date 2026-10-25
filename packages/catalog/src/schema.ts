@@ -337,7 +337,20 @@ export const FertilityRuleSchema = z.object({
 });
 export type FertilityRule = z.infer<typeof FertilityRuleSchema>;
 
+const RoleSchema = z.object({ needs: z.number().positive().max(2), labor: z.number().min(0).max(1) });
+const SkillSchema = z.object({ maxBonus: z.number().min(0).max(1), halfHours: z.number().positive() });
+export const HouseholdRuleSchema = z.object({
+  roles: z.object({ adult: RoleSchema, child: RoleSchema, elder: RoleSchema }),
+  skills: z.object({ building: SkillSchema, growing: SkillSchema, gathering: SkillSchema }),
+  growingSystemIds: z.array(z.string()).min(1),
+  illness: z.object({ wellbeingBelow: z.number().positive().max(100), maxDailyChance: z.number().min(0).max(1), days: z.number().int().positive(), labor: z.number().min(0).max(1) }),
+  injury: z.object({ constructionPerHour: z.number().min(0).max(1), toolPerHour: z.record(z.string(), z.number().min(0).max(1)), days: z.number().int().positive(), labor: z.number().min(0).max(1) }),
+  note: z.string(),
+});
+export type HouseholdRule = z.infer<typeof HouseholdRuleSchema>;
+
 export const CatalogSchema = z.object({
+  householdRoles: HouseholdRuleSchema.optional(),
   soilFertility: FertilityRuleSchema.optional(),
   toolRules: z.array(ToolRuleSchema).optional(),
   winterStorage: WinterStorageRuleSchema.optional(),
@@ -364,6 +377,7 @@ export type Catalog = z.infer<typeof CatalogSchema>;
 export const OverridesSchema = z
   .object({
     version: z.literal(1),
+    householdRoles: HouseholdRuleSchema.optional(),
     soilFertility: FertilityRuleSchema.optional(),
     toolRules: z.array(ToolRuleSchema).optional(),
     winterStorage: WinterStorageRuleSchema.optional(),

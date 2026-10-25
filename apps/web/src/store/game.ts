@@ -195,7 +195,7 @@ export interface GameStore {
   setInstancePriority(instanceId: string, priority: number): void;
   setInstanceLink(instanceId: string, resource: string, providerId: string | null): void;
   /** Order from the market for the next trip (G12). Logged for replay; not undoable (it's a purchase). */
-  phase9Action(body: Extract<ActionBody, { kind: 'service' | 'sell' | 'preserve' | 'livestock' | 'assignShelter' | 'closeShelter' | 'winterize' }>): void;
+  phase9Action(body: Extract<ActionBody, { kind: 'service' | 'sell' | 'preserve' | 'livestock' | 'assignShelter' | 'closeShelter' | 'winterize' | 'role' }>): void;
   marketBuy(resource: string, amount: number): boolean;
   /** Keep a stock above a level by standing order (keepAbove 0 removes it). */
   marketStanding(resource: string, keepAbove: number, orderUpTo?: number): boolean;
@@ -1009,6 +1009,9 @@ function toastForEvent(e: GameEvent): void {
         : e.event === 'matured' ? 'Animals reached maturity.'
         : e.event === 'protected' ? 'Housing or guardian prevented a predator loss.' : 'Animals died of old age.',
         e.event === 'predator-warning' || e.event === 'predator-loss' ? 'warn' : 'info', e.instanceId);
+      break;
+    case 'person':
+      s.toast(e.event === 'ill' ? `Someone fell ill: little work for ${e.days} days.` : e.event === 'injured' ? `An injury at work: light duty for ${e.days} days.` : 'Recovered and back to full work.', e.event === 'recovered' ? 'info' : 'warn', e.instanceId);
       break;
     case 'winter-water': {
       const inst = s.game.instances.find((i) => i.id === e.instanceId);

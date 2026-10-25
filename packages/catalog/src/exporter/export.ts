@@ -828,6 +828,12 @@ export function exportCatalog(input: ExportInput): ExportResult {
       if (!rawFlows.some((f) => f.systemId === t.systemId && f.direction === 'out' && f.resource === 'Water storage'))
         problems.push(`Storage rule: tank ${t.systemId} provides no Water storage`);
   }
+  const house = overridesParsed.data.householdRoles;
+  if (house) {
+    for (const id of [...house.growingSystemIds, ...Object.keys(house.injury.toolPerHour)])
+      if (!rawSystems.some((s) => s.id === id)) problems.push(`Household rule: unknown system ${id}`);
+    if (house.roles.adult.needs !== 1 || house.roles.adult.labor !== 1) problems.push('Household rule: adults must keep the catalog Human Being (needs 1, labor 1)');
+  }
   const fert = overridesParsed.data.soilFertility;
   if (fert) {
     const ids = fert.gardens.map((g) => g.systemId);
@@ -859,6 +865,7 @@ export function exportCatalog(input: ExportInput): ExportResult {
 
   const source = { file: input.xlsxName, sha256: sha256(input.xlsx) };
   const catalog = CatalogSchema.parse({
+    householdRoles: overridesParsed.data.householdRoles,
     soilFertility: overridesParsed.data.soilFertility,
     toolRules: overridesParsed.data.toolRules,
     winterStorage: overridesParsed.data.winterStorage,
