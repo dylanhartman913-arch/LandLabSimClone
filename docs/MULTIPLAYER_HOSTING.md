@@ -1,6 +1,6 @@
 # MP-01: Hosted room skeleton
 
-Implemented locally; public HTTPS verification is pending hosting/repository access.
+Implemented and tested locally. GitHub origin is connected; publishing approval and hosting setup are pending.
 
 ## Build and run
 
@@ -25,16 +25,40 @@ production does not need a TypeScript runtime. The service binds `0.0.0.0:$PORT`
 
 ## Deploy
 
-The nested `LandLabSimClone/.git` is the app repository. No remote was configured
-when MP-01 was implemented. Connect the intended repository to the hosting account
-before deployment. No hosting resources or paid plans have been provisioned.
+The app repository is connected as `origin` to the public repository
+[dylanhartman913-arch/LandLabSimClone](https://github.com/dylanhartman913-arch/LandLabSimClone).
+The prepared local branch is `codex/mp-01-hosted-room`. It has not been pushed.
+No hosting resources or paid plans have been provisioned.
 
-`render.yaml` defines one Node web service using `npm ci && npm run build:hosted`,
-`npm start`, and health path `/healthz`. Review the selected paid compute plan and
-current price with the owner before provisioning. If the parent workspace is the
-remote repository, select `LandLabSimClone/render.yaml` as the Blueprint path and
-set `rootDir: LandLabSimClone` on its service. If the app repository itself is the
-remote, keep the Blueprint at its root and leave `rootDir` unset.
+The remote default branch is `claude/gifted-hypatia-x158zw`. Local development
+started with a separate source-snapshot history. The prepared branch preserves
+both histories with a merge whose tree keeps the tested local files. It changes
+480 files relative to that remote default: recent simulator work, MP-01, catalog
+and source data, tests, documentation, and screenshot evidence. No files are
+deleted relative to the remote default. Existing remote branches stay intact.
+The publication includes local commit history, not only the latest MP-01 changes.
+
+Commit `d4daff6` records 81 newly committed files/changes, including the latest
+household, decision-display, and onboarding fixes plus MP-01. Commit `b82d50f`
+connects that history to the remote baseline without changing the tested files.
+Thirteen recent evidence images were included. Another 1,284 untracked screenshot
+files remain local. The planning files in the parent workspace also remain local.
+
+Automatic approval review rejected the attempted push because this broader
+payload and public destination need explicit user approval. No push occurred.
+After approval, publish the prepared branch with:
+
+```sh
+git push --set-upstream origin codex/mp-01-hosted-room
+```
+
+For Render, connect this GitHub repository and select `codex/mp-01-hosted-room`.
+The repository root is the app root: leave Root Directory unset. The Blueprint
+path is `render.yaml`. It defines one Node web service using
+`npm ci && npm run build:hosted`, `npm start`, and health path `/healthz`.
+Review the selected paid compute plan and current price with the owner before
+provisioning. This room skeleton has no persistent disk yet; add durable storage
+with MP-03 before relying on it for judging.
 
 Provider reference: [Render Blueprint specification](https://render.com/docs/blueprint-spec).
 
