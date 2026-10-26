@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it } from 'vitest';
+import { catalog } from '@homestead/catalog';
 import { createRoomServer } from '../src/server.ts';
 
 const cleanups: (() => Promise<void>)[] = [];
@@ -110,5 +111,71 @@ describe('hosted room skeleton', () => {
     const full = await post('/api/rooms', { name: 'Sky' });
     expect(full.status).toBe(503);
     expect((await full.json()).error).toContain('capacity');
+  });
+});
+
+describe('shared simulation transport', () => {
+  it('authenticates streams and edits, broadcasts ordered state, and pauses when heartbeats stop', async () => {
+    let time = 100;
+    const { base, post } = await service({ now: () => time });
+    const a = await (await post('/api/rooms', { name: 'River' })).json();
+    const path = `/api/rooms/${a.room.id}`;
+    const b = await (await post(path + '/join', { name: 'Sky' })).json();
+    expect((await fetch(base + path + '/stream')).status).toBe(401);
+    expect((await post(path + '/commands', { requestId: 'no-token-request', commands: [] })).status).toBe(401);
+    const send = (token: string, suffix: string, data: unknown) => fetch(base + path + suffix, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    });
+    expect((await send(a.playerToken, '/control', { ready: true })).status).toBe(409);
+    const connect = async (token: string) => {
+      const response = await fetch(base + path + '/stream', { headers: { Authorization: `Bearer ${token}` } });
+      expect(response.status).toBe(200);
+      const reader = response.body!.pipeThrough(new TextDecoderStream()).getReader();
+      let buffer = '';
+      const next = async () => {
+        for (;;) {
+          const newline = buffer.indexOf('\n');
+          if (newline >= 0) {
+            const line = buffer.slice(0, newline); buffer = buffer.slice(newline + 1);
+            if (line) return JSON.parse(line);
+          } else {
+            const result = await reader.read();
+            if (result.done) throw new Error('Stream closed before state arrived.');
+            buffer += result.value;
+          }
+        }
+      };
+      return { next, close: () => reader.cancel() };
+    };
+    const first = await connect(a.playerToken);
+    const second = await connect(b.playerToken);
+    try {
+      expect((await fetch(base + path + '/stream', { headers: { Authorization: `Bearer ${a.playerToken}` } })).status).toBe(409);
+      expect((await send(a.playerToken, '/commands', { requestId: 'forged-request-0001', commands: [{ kind: 'settings', settings: { cash: 1e9 } }] })).status).toBe(422);
+      const system = catalog.systems.find((s) => s.name === 'Rain Barrel (55 gal)')!;
+      const competing = await Promise.all([a, b].map((p, i) => send(p.playerToken, '/commands', {
+        requestId: `competing-request-000${i}`, commands: [{ kind: 'place', systemId: system.id, x: 25, y: 25, mode: 'buy' }],
+      })));
+      expect(competing.map((r) => r.status).sort()).toEqual([200, 422]);
+      expect((await competing.find((r) => r.status === 422)!.json()).error).toContain('overlaps');
+      const readyA = await (await send(a.playerToken, '/control', { ready: true })).json();
+      expect(readyA.running).toBe(false);
+      const readyB = await (await send(b.playerToken, '/control', { ready: true })).json();
+      expect(readyB.running).toBe(true);
+      const stateA = async (revision: number) => { let s; do { s = await first.next(); } while (s.revision < revision); return s; };
+      const stateB = async (revision: number) => { let s; do { s = await second.next(); } while (s.revision < revision); return s; };
+      expect(await stateA(readyB.revision)).toEqual(await stateB(readyB.revision));
+      time += 8000;
+      expect((await send(a.playerToken, '/heartbeat', {})).status).toBe(204);
+      let disconnected;
+      do { disconnected = await first.next(); } while (disconnected.players[1].connected);
+      expect(disconnected.running).toBe(false);
+      expect(disconnected.players.map((p: { ready: boolean }) => p.ready)).toEqual([false, false]);
+      expect(disconnected.pauseReason).toContain('lost connection');
+      expect((await send(a.playerToken, '/control', { ready: true })).status).toBe(422);
+    } finally {
+      await first.close();
+      await second.close();
+    }
   });
 });

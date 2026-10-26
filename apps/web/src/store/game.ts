@@ -86,6 +86,8 @@ export interface Toast {
 
 export interface GameStore {
   catalog: Catalog;
+  /** Multiplayer intentions leave this browser without applying local engine mutations. */
+  multiplayer: null | { send(commands: unknown[]): void; control(ready: boolean): void };
   game: GameState;
   /** How this game began and every edit since: the replayable save. */
   init: GameInit;
@@ -319,6 +321,7 @@ export const useGame = create<GameStore>()((set, get) => {
 
   return {
     catalog: bundledCatalog,
+    multiplayer: null,
     game: initial.game,
     init: DEFAULT_INIT,
     actions: initial.actions,
@@ -365,6 +368,10 @@ export const useGame = create<GameStore>()((set, get) => {
     kbCursor: null,
 
     skipTutorial() {
+      if (get().multiplayer) {
+        get().toast('The shared tutorial remains active for both players.', 'warn');
+        return;
+      }
       const g = get().game;
       if (g.tutorial && !get().readOnly) {
         // The quest line lives in the game (G16): skipping is a logged action.
@@ -385,6 +392,13 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     loadGame(init, actions, game, opts = {}) {
+      if (get().multiplayer) {
+        get().toast(
+          'Room games cannot be replaced by local saves or scenarios.',
+          'warn',
+        );
+        return;
+      }
       // Preserve the historic log, then record the policy transition at the continuation day.
       const upgrades: Partial<GameSettings> = {};
       if (!game.settings.householdCorrectness) upgrades.householdCorrectness = true;
@@ -424,6 +438,7 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     tick(days = 1) {
+      if (get().multiplayer) return;
       const st = get();
       let game = st.game;
       const newEvents: GameEvent[] = [];
@@ -484,6 +499,10 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     setSpeed(speed) {
+      if (get().multiplayer) {
+        get().multiplayer!.control(speed !== 0);
+        return;
+      }
       set((s) => ({ speed, lastSpeed: speed === 0 ? s.lastSpeed : speed }));
     },
 
@@ -509,6 +528,11 @@ export const useGame = create<GameStore>()((set, get) => {
       const py = snapTo(y, prefs.snap);
       const check = canPlace(catalog, game, tool.systemId, px, py);
       if (!check.ok) return { ok: false, reason: check.reason };
+      if (get().multiplayer) {
+        get().multiplayer!.send([{ kind: 'place', systemId: tool.systemId, x: px, y: py, mode: tool.mode }]);
+        if (!keepTool) set({ tool: { kind: 'select' } });
+        return { ok: true };
+      }
       const id = `i${game.nextInstanceId}`;
       const r = apply(game, { kind: 'place', systemId: tool.systemId, x: px, y: py, mode: tool.mode, id });
       const inst = r.game.instances.find((i) => i.id === id)!;
@@ -549,6 +573,12 @@ export const useGame = create<GameStore>()((set, get) => {
         }
         moves.push({ id, from: { x: inst.x, y: inst.y }, to });
       }
+      if (get().multiplayer) {
+        get().multiplayer!.send([
+          { kind: 'moveMany', moves: moves.map((m) => ({ id: m.id, ...m.to })) },
+        ]);
+        return true;
+      }
       const r = apply(game, { kind: 'moveMany', moves: moves.map((m) => ({ id: m.id, ...m.to })) });
       commit(r.game, [r.action], { kind: 'move', moves });
       return true;
@@ -557,6 +587,11 @@ export const useGame = create<GameStore>()((set, get) => {
     deleteSelection() {
       const { selection, game } = get();
       if (!selection.length || !guard()) return;
+      if (get().multiplayer) {
+        get().multiplayer!.send(selection.map((id) => ({ kind: 'remove', id })));
+        set({ selection: [] });
+        return;
+      }
       let s = game;
       const logged: Action[] = [];
       const removed: Extract<Command, { kind: 'remove' }>['removed'] = [];
@@ -591,6 +626,10 @@ export const useGame = create<GameStore>()((set, get) => {
     paste(x, y) {
       const { clipboard, game, catalog, prefs } = get();
       if (!clipboard.length || !guard()) return;
+      if (get().multiplayer) {
+        get().multiplayer!.send(clipboard.map((c) => ({ kind: 'place', systemId: c.systemId, x: snapTo(x + c.dx, prefs.snap), y: snapTo(y + c.dy, prefs.snap), mode: c.buildMode })));
+        return;
+      }
       let s = game;
       const placed: Instance[] = [];
       const logged: Action[] = [];
@@ -612,6 +651,10 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     undo() {
+      if (get().multiplayer) {
+        get().toast('Undo and redo are unavailable in shared games.', 'warn');
+        return;
+      }
       const { undoStack, game } = get();
       const cmd = undoStack.at(-1);
       if (!cmd || !guard()) return;
@@ -636,6 +679,10 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     redo() {
+      if (get().multiplayer) {
+        get().toast('Undo and redo are unavailable in shared games.', 'warn');
+        return;
+      }
       const { redoStack, game } = get();
       const cmd = redoStack.at(-1);
       if (!cmd || !guard()) return;
@@ -659,12 +706,20 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     hireConstruction(id) {
+      if (get().multiplayer) {
+        get().multiplayer!.send([{ kind: 'hireConstruction', id }]);
+        return;
+      }
       if (!guard()) return;
       const r = apply(get().game, { kind: 'hireConstruction', id });
       set((s) => ({ game: r.game, actions: [...s.actions, r.action], undoStack: [], redoStack: [] }));
     },
 
     bookRecoveryRoute(actions) {
+      if (get().multiplayer) {
+        get().multiplayer!.send([{ kind: 'recoveryRoute' }]);
+        return;
+      }
       if (!guard()) return;
       let game = get().game;
       const logged: Action[] = [];
@@ -683,6 +738,29 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     setGameSettings(settings) {
+      if (get().multiplayer) {
+        const allowed = ['work', 'autoGather', 'constructionShare', 'emergencyConstruction'];
+        if (Object.keys(settings).some((key) => !allowed.includes(key))) {
+          get().toast('The scenario and gameplay rules are fixed for this room.', 'warn'); return;
+        }
+        const current = get().game.settings;
+        const commands: unknown[] = [];
+        for (const [job, value] of Object.entries(settings.work?.priorities ?? {}))
+          if (value !== current.work?.priorities?.[job as keyof NonNullable<typeof current.work.priorities>]) commands.push({ kind: 'workPriority', job, value });
+        if (settings.work?.caps) {
+          const jobs = new Set([...Object.keys(current.work?.caps ?? {}), ...Object.keys(settings.work.caps)]);
+          for (const job of jobs) {
+            const key = job as keyof typeof settings.work.caps;
+            if (settings.work.caps[key] !== current.work?.caps?.[key]) commands.push({ kind: 'workCap', job, value: settings.work.caps[key] ?? null });
+          }
+        }
+        for (const [resource, value] of Object.entries(settings.autoGather ?? {}))
+          if (value !== current.autoGather?.[resource as keyof NonNullable<typeof current.autoGather>]) commands.push({ kind: 'autoGather', resource, value });
+        for (const kind of ['constructionShare', 'emergencyConstruction'] as const)
+          if (settings[kind] !== undefined && settings[kind] !== current[kind]) commands.push({ kind, value: settings[kind] });
+        if (commands.length) get().multiplayer!.send(commands);
+        return;
+      }
       const { game } = get();
       if (!guard()) return;
       const from: Record<string, unknown> = {};
@@ -847,10 +925,21 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     setPanel(panel) {
+      if (get().multiplayer && (panel === 'saves' || panel === 'settings')) {
+        get().toast(
+          'Local saves and gameplay settings are unavailable in shared rooms. Use Work for shared work controls.',
+          'warn',
+        );
+        return;
+      }
       set({ panel, why: null, ...(panel ? { checklistOpen: false } : {}), ...(panel === 'report' ? { unreadReports: 0 } : {}) });
       const g = get().game;
       // A quest can ask the player to look at something ("read your weekly bills").
       if (panel && g.tutorial && !g.tutorial.ui.includes(panel) && !get().readOnly) {
+        if (get().multiplayer) {
+          get().multiplayer!.send([{ kind: 'ui', panel }]);
+          return;
+        }
         const r = apply(g, { kind: 'ui', panel });
         set((s) => ({ game: r.game, actions: [...s.actions, r.action] }));
       }
@@ -861,6 +950,10 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     setInstancePriority(instanceId, priority) {
+      if (get().multiplayer) {
+        get().multiplayer!.send([{ kind: 'priority', id: instanceId, priority }]);
+        return;
+      }
       const { game } = get();
       const inst = game.instances.find((i) => i.id === instanceId);
       if (!inst || inst.priority === priority || !guard()) return;
@@ -869,12 +962,20 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     phase9Action(body) {
+      if (get().multiplayer) {
+        get().multiplayer!.send([body]);
+        return;
+      }
       if (!guard()) return;
       const r = apply(get().game, body);
       set((s) => ({ game: r.game, actions: [...s.actions, r.action], undoStack: [], redoStack: [] }));
     },
 
     marketBuy(resource, amount) {
+      if (get().multiplayer) {
+        get().multiplayer!.send([{ kind: 'buy', resource, amount }]);
+        return true;
+      }
       if (!guard()) return false;
       try {
         const r = apply(get().game, { kind: 'buy', resource, amount });
@@ -888,6 +989,17 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     marketStanding(resource, keepAbove, orderUpTo) {
+      if (get().multiplayer) {
+        get().multiplayer!.send([
+          {
+            kind: 'standing',
+            resource,
+            keepAbove,
+            ...(orderUpTo === undefined ? {} : { orderUpTo }),
+          },
+        ]);
+        return true;
+      }
       if (!guard()) return false;
       try {
         const body = orderUpTo === undefined
@@ -904,6 +1016,12 @@ export const useGame = create<GameStore>()((set, get) => {
     },
 
     setInstanceLink(instanceId, resource, providerId) {
+      if (get().multiplayer) {
+        get().multiplayer!.send([
+          { kind: 'link', id: instanceId, resource, providerId },
+        ]);
+        return;
+      }
       const { game } = get();
       const inst = game.instances.find((i) => i.id === instanceId);
       if (!inst || !guard()) return;
@@ -916,6 +1034,7 @@ export const useGame = create<GameStore>()((set, get) => {
     wizardOpen: false,
 
     setWizard(open) {
+      if (get().multiplayer) return;
       set({ wizardOpen: open, panel: null, why: null });
     },
 

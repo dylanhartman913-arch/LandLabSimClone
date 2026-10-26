@@ -1,6 +1,6 @@
-# MP-01: Hosted room skeleton
+# Multiplayer hosting
 
-MP-01 is deployed and verified at https://terra-homestead.onrender.com/. The multiplayer branch is published on GitHub and the service uses the free compute plan.
+The MP-01 baseline is deployed and verified at https://terra-homestead.onrender.com/. The multiplayer branch is published on GitHub and the service uses the free compute plan.
 
 ## Build and run
 
@@ -37,7 +37,7 @@ most $20 total for two months if necessary.
 - Dashboard: https://dashboard.render.com/web/srv-dbfsj7gu01pc73ado4j0
 - Service: `srv-dbfsj7gu01pc73ado4j0`, Oregon, free, one instance
 - Initial deploy: `dep-dbfsj7ou01pc73ado5lg`
-- Deployed source: `a7fa38178db337ad0960550696c1ee16cee1bb48`
+- Initial deployed source: `a7fa38178db337ad0960550696c1ee16cee1bb48`
 - Service owner: the user's Render workspace **My Workspace**
 - Storage: memory only; no persistent volume or database
 
@@ -113,7 +113,7 @@ The public browser test ran on one computer. Physical devices on different
 networks, durable saves/reconnect, and developer-computer-off play remain later
 release checks; no submission or competition readiness is claimed.
 
-## Current boundary
+## MP-01 boundary (historical)
 
 This ticket creates rooms and claims seats; it does not run a shared simulation.
 The existing game remains single-player. Multiplayer explicitly stays in a lobby.
@@ -142,4 +142,4 @@ Local verification on October 26, 2026:
 - Typecheck, lint, and frontend/server production builds passed.
 - Lobby screenshot inspected for layout/readability.
 
-MP-01 public HTTPS room-skeleton acceptance is verified. Shared simulation starts with MP-02; persistence and seat recovery remain MP-03.
+MP-01 public HTTPS room-skeleton acceptance is verified. MP-02 adds shared simulation; see [MP-02 implementation and verification](MP-02.md). Persistence and refresh seat recovery remain MP-03.

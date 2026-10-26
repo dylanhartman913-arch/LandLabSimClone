@@ -8,6 +8,7 @@ export function useAutosave() {
   const readOnly = useGame((s) => s.readOnly);
   useEffect(() => {
     if (days < 7 || readOnly) return;
+    if (useGame.getState().multiplayer) return;
     useGame.setState({ daysSinceAutosave: 0 });
     void writeAutosave();
   }, [days, readOnly]);

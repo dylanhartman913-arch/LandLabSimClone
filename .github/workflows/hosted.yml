@@ -1,4 +1,4 @@
-name: Hosted multiplayer skeleton
+name: Hosted multiplayer
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   hosted:
-    name: Room service and browser invitation flow
+    name: Shared simulation and two-player browser flow
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -21,13 +21,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Room HTTP integration tests
-        run: npx vitest run apps/server/test/rooms.test.ts
+      - name: Room authority, HTTP and browser-store tests
+        run: npx vitest run apps/server/test apps/web/src/store/multiplayer.test.ts
       - name: Build frontend and bundled room service
         run: npm run build:hosted
       - name: Install browser
         run: npx playwright install --with-deps chromium
-      - name: Create, invite, join, full and invalid rooms
+      - name: Invite, join and play in two browsers
         run: npm run test:multiplayer
         env:
           CI: 'true'

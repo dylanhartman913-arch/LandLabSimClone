@@ -24,6 +24,7 @@ export function Hud() {
   const panel = useGame((s) => s.panel);
   const reportCount = useGame((s) => s.reports.length);
   const unread = useGame((s) => s.unreadReports);
+  const multiplayer = useGame((s) => s.multiplayer);
   const readOnly = useGame((s) => s.readOnly);
   const planOpen = usePlan((s) => s.open);
   const st = useGame.getState();
@@ -172,6 +173,7 @@ export function Hud() {
         <button
           className="btn ghost"
           onClick={() => st.setPanel(panel === 'saves' ? null : 'saves')}
+          disabled={!!multiplayer}
           data-testid="open-saves"
         >
           Save
@@ -180,6 +182,7 @@ export function Hud() {
           className="btn ghost"
           onClick={() => st.setPanel(panel === 'settings' ? null : 'settings')}
           aria-label="Settings"
+          disabled={!!multiplayer}
           data-testid="open-settings"
         >
           ⚙
@@ -192,13 +195,14 @@ export function Hud() {
         {SPEEDS.map((x) => (
           <button
             key={x.s}
+            disabled={!!multiplayer && x.s > 1}
             className={`btn speed-btn ${speed === x.s ? 'on' : ''}`}
             aria-pressed={speed === x.s}
             onClick={() => setSpeed(x.s)}
             title={`${x.label} (${x.key})`}
             data-testid={`speed-${x.s}`}
           >
-            {x.s === 0 ? '❚❚' : x.label}
+            {x.s === 0 ? '❚❚' : multiplayer && x.s === 1 ? 'Ready' : x.label}
           </button>
         ))}
       </div>

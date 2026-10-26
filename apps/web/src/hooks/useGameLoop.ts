@@ -5,7 +5,7 @@ import { useGame } from '../store/game.ts';
 export function useGameLoop() {
   const speed = useGame((s) => s.speed);
   useEffect(() => {
-    if (speed === 0) return;
+    if (speed === 0 || useGame.getState().multiplayer) return;
     const id = window.setInterval(() => useGame.getState().tick(1), 1000 / speed);
     return () => window.clearInterval(id);
   }, [speed]);

@@ -11,6 +11,7 @@ export function useStartup() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const st = useGame.getState();
+    if (useGame.getState().multiplayer) return;
     const design = params.get('design');
     if (design) {
       try {

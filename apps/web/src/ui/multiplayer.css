@@ -38,3 +38,11 @@
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
+.shared-session { height: 100dvh; display: flex; flex-direction: column; }
+.shared-session .app { flex: 1; min-height: 0; height: auto; }
+.shared-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.shared-bar button { padding: 6px 10px; }
+.shared-bar details { position: relative; }
+.shared-bar details[open] { max-width: 600px; }
+.shared-bar input { width: 100%; }
+.shared-bar [role='alert'] { color: var(--bad-text); }

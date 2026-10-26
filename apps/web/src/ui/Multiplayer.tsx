@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './multiplayer.css';
+import { SharedGame } from './SharedGame.tsx';
 
 interface Room {
   id: string;
@@ -44,6 +45,8 @@ export function Multiplayer() {
   const roomId = new URLSearchParams(location.search).get('room');
   const [room, setRoom] = useState<Room | null>(null);
   const [joined, setJoined] = useState(false);
+  const [token, setToken] = useState('');
+  const [playing, setPlaying] = useState(false);
   const [name, setName] = useState('');
   const [invite, setInvite] = useState('');
   const [error, setError] = useState('');
@@ -85,6 +88,8 @@ export function Multiplayer() {
         name,
       );
       setRoom(data.room);
+      if (!data.playerToken) throw new RoomError('The server did not return a player credential.');
+      setToken(data.playerToken);
       setJoined(true);
       setConnected(true);
       const url = new URL(data.invitePath ?? `/?room=${data.room.id}`, location.origin);
@@ -97,13 +102,13 @@ export function Multiplayer() {
       setBusy(false);
     }
   };
+  if (playing && room && token) return <SharedGame roomId={room.id} token={token} invite={invite} />;
   return (
     <main className="multiplayer">
       <h1>Build a homestead together</h1>
       <p>Invite one teammate to share your land, budget, and household.</p>
       <p>
-        <strong>Multiplayer preview:</strong> room invitations are available. Shared gameplay is still being
-        built.
+        <strong>Shared homestead:</strong> build, buy supplies and manage work together. The server runs one shared clock and budget.
       </p>
       {error && <p role="alert">{error}</p>}
       {room && (
@@ -145,6 +150,7 @@ export function Multiplayer() {
             Invite link <input readOnly value={invite} onFocus={(event) => event.target.select()} />
           </label>
           <p>Copy this link and send it to your teammate. Exactly two guest seats are available.</p>
+          <button onClick={() => setPlaying(true)}>Enter shared homestead</button>
         </section>
       )}
       <p>

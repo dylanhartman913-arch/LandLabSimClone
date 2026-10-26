@@ -4,6 +4,7 @@ import { readFileSync, statSync } from 'node:fs';
 import { extname, resolve, sep } from 'node:path';
 import { catalog } from '@homestead/catalog';
 import { ENGINE_VERSION } from '@homestead/engine';
+import { Simulation, CommandError, type Player } from './simulation.ts';
 
 class RequestError extends Error {
   constructor(
@@ -13,14 +14,12 @@ class RequestError extends Error {
     super(message);
   }
 }
-interface Seat {
-  name: string;
-  token: string;
-}
+type Seat = Player;
 interface Room {
   id: string;
   expiresAt: number;
   players: Seat[];
+  simulation: Simulation;
 }
 interface Options {
   webRoot: string;
@@ -50,7 +49,7 @@ async function body(req: IncomingMessage): Promise<Record<string, unknown>> {
   try {
     for await (const chunk of req) {
       size += chunk.length;
-      if (size > 2048) throw new RequestError(413, 'Request is too large.');
+      if (size > (req.url?.endsWith('/commands') ? 32_768 : 2048)) throw new RequestError(413, 'Request is too large.');
       chunks.push(Buffer.from(chunk));
     }
   } catch (error) {
@@ -104,7 +103,7 @@ export function createRoomServer(options: Options) {
   const roomFor = (id: string) => {
     const room = rooms.get(id);
     if (!idPattern.test(id) || !room || room.expiresAt <= now()) {
-      if (room) rooms.delete(id);
+      if (room) { for (const p of room.players) p.connection?.close(); rooms.delete(id); }
       throw new RequestError(
         404,
         'This invitation is unknown or has expired. Ask your teammate for a new invite.',
@@ -133,14 +132,15 @@ export function createRoomServer(options: Options) {
         if (req.method === 'POST' && path === '/api/rooms') {
           const data = await body(req);
           const name = displayName(data.name);
-          for (const [id, room] of rooms) if (room.expiresAt <= now()) rooms.delete(id);
+          for (const [id, room] of rooms) if (room.expiresAt <= now()) { for (const p of room.players) p.connection?.close(); rooms.delete(id); }
           if (rooms.size >= (options.maxRooms ?? 100))
             throw new RequestError(503, 'The service is at room capacity. Please try again later.');
-          const player = { name, token: opaqueId() };
+          const player: Seat = { name, token: opaqueId(), ready: false, windowAt: now(), requests: 0, outcomes: new Map() };
           const room = {
             id: opaqueId(),
             expiresAt: now() + (options.roomTtlMs ?? 7 * 24 * 60 * 60 * 1000),
             players: [player],
+            simulation: new Simulation([player]),
           };
           rooms.set(room.id, room);
           return json(res, 201, {
@@ -148,6 +148,58 @@ export function createRoomServer(options: Options) {
             playerToken: player.token,
             invitePath: `/?room=${room.id}`,
           });
+        }
+        const gameMatch = /^\/api\/rooms\/([^/]+)\/(stream|commands|control|heartbeat|history)$/.exec(path);
+        if (gameMatch) {
+          const room = roomFor(gameMatch[1]!);
+          const token = req.headers.authorization?.replace(/^Bearer /, '');
+          const player = room.players.find((p) => p.token === token);
+          if (!player) throw new RequestError(401, 'A player credential is required.');
+          const simulation = room.simulation;
+          if (req.method === 'GET' && gameMatch[2] === 'history') return json(res, 200, { ledgers: simulation.game.ledgers });
+          if (req.method === 'GET' && gameMatch[2] === 'stream') {
+            if (player.connection) throw new RequestError(409, 'This player already has a connected game.');
+            res.writeHead(200, { 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' });
+            const connection = {
+              send: (snapshot: ReturnType<Simulation['snapshot']>) => {
+                if (res.writableLength > 2_000_000) { res.destroy(); return; }
+                res.write(JSON.stringify(snapshot) + '\n');
+              },
+              close: () => res.end(),
+            };
+            player.connection = connection;
+            player.lastSeen = now();
+            simulation.revision++;
+            connection.send(simulation.snapshot());
+            simulation.publish();
+            const heartbeat = setInterval(() => { if (res.writableLength > 2_000_000) res.destroy(); else res.write('\n'); }, 5000);
+            res.on('close', () => {
+              clearInterval(heartbeat);
+              if (player.connection !== connection) return;
+              delete player.connection;
+              simulation.pause(`${player.name} disconnected. Both players must choose Ready again.`);
+              simulation.revision++;
+              simulation.publish();
+            });
+            return;
+          }
+          if (req.method !== 'POST') throw new RequestError(405, 'Method not allowed.');
+          const data = await body(req);
+          // Body reads may yield; re-check expiry and membership before the synchronous commit.
+          roomFor(room.id);
+          if (!player.connection) throw new RequestError(409, 'Connect to the shared game before editing.');
+          if (now() - player.windowAt >= 1000) { player.windowAt = now(); player.requests = 0; }
+          if (++player.requests > 20) throw new RequestError(429, 'Too many edits. Wait a moment and try again.');
+          if (gameMatch[2] === 'heartbeat') {
+            if (Object.keys(data).length) throw new RequestError(400, 'Invalid heartbeat.');
+            player.lastSeen = now();
+            res.writeHead(204, { 'Cache-Control': 'no-store' });
+            res.end();
+            return;
+          }
+          if (gameMatch[2] === 'control') simulation.control(player, data);
+          else simulation.execute(player, data);
+          return json(res, 200, simulation.snapshot(false));
         }
         const match = /^\/api\/rooms\/([^/]+)(\/join)?$/.exec(path);
         if (match) {
@@ -160,8 +212,11 @@ export function createRoomServer(options: Options) {
             const name = displayName(data.name);
             if (current.players.length >= 2)
               throw new RequestError(409, 'Room full. This homestead already has two players.');
-            const player = { name, token: opaqueId() };
+            const player: Seat = { name, token: opaqueId(), ready: false, windowAt: now(), requests: 0, outcomes: new Map() };
             current.players.push(player);
+            current.simulation.players.push(player);
+            current.simulation.revision++;
+            current.simulation.publish();
             return json(res, 200, { room: publicRoom(current), playerToken: player.token });
           }
         }
@@ -199,6 +254,7 @@ export function createRoomServer(options: Options) {
       });
       res.end(req.method === 'HEAD' ? undefined : content);
     } catch (error) {
+      if (error instanceof CommandError) return json(res, 422, { error: error.message });
       if (!(error instanceof RequestError)) throw error;
       json(res, error.status, { error: error.message });
     }
@@ -208,6 +264,28 @@ export function createRoomServer(options: Options) {
   const server = createServer((req, res) => {
     void handle(req, res);
   });
+  const clock = setInterval(() => {
+    for (const [id, room] of rooms) {
+      if (room.expiresAt <= now()) {
+        for (const p of room.players) p.connection?.close();
+        rooms.delete(id);
+      } else {
+        for (const p of room.players) {
+          if (p.connection && now() - (p.lastSeen ?? 0) > 7000) {
+            const connection = p.connection;
+            delete p.connection;
+            connection.close();
+            room.simulation.pause(`${p.name} lost connection. Both players must choose Ready again.`);
+            room.simulation.revision++;
+            room.simulation.publish();
+          }
+        }
+        room.simulation.tick();
+      }
+    }
+  }, 1000);
+  clock.unref();
+  server.on('close', () => clearInterval(clock));
   server.requestTimeout = 10_000;
   server.headersTimeout = 10_000;
   return server;
