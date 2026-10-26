@@ -1,6 +1,6 @@
 # Multiplayer hosting
 
-The MP-01 baseline is deployed and verified at https://terra-homestead.onrender.com/. The multiplayer branch is published on GitHub and the service uses the free compute plan.
+MP-02 shared gameplay is deployed at https://terra-homestead.onrender.com/. See [MP-02 release and verification](MP-02.md) for the current source/deploy IDs. The MP-01 baseline details below remain as setup history; the service still uses the free compute plan.
 
 ## Build and run
 

@@ -54,6 +54,7 @@ test('both browsers share building, purchases, work, readiness and alerts while 
     await b.getByRole('button', { name: 'Enter shared homestead' }).click();
     for (const page of [a, b]) {
       await expect(page.getByTestId('hud')).toBeVisible();
+      await expect(page.getByTestId('map')).toHaveAttribute('data-ready', 'true');
       await expect(page.getByTestId('shared-status')).toContainText('Connected');
       await expect(page.getByTestId('open-saves')).toBeDisabled();
       await expect(page.getByTestId('speed-3')).toBeDisabled();
@@ -78,10 +79,11 @@ test('both browsers share building, purchases, work, readiness and alerts while 
     expect(await a.getByTestId('hud-cash').textContent()).toBe(await b.getByTestId('hud-cash').textContent());
     await b.getByTestId('open-work').click();
     await b.getByTestId('prio-construction-5').click();
+    await expect(b.getByTestId('prio-construction-5')).toHaveAttribute('aria-checked', 'true');
+    await b.getByRole('button', { name: 'Close work', exact: true }).click();
     await a.getByTestId('open-work').click();
     await expect(a.getByTestId('prio-construction-5')).toHaveAttribute('aria-checked', 'true');
     await a.getByRole('button', { name: 'Close work', exact: true }).click();
-    await b.getByRole('button', { name: 'Close work', exact: true }).click();
     const cameraB = await b.evaluate(() => window.__homestead!.store.getState().camera);
     await a.evaluate(() => {
       const s = window.__homestead!.store.getState();
@@ -97,14 +99,23 @@ test('both browsers share building, purchases, work, readiness and alerts while 
     expect(await b.evaluate(() => window.__homestead!.store.getState().game.calendar.absDay)).toBe(0);
     await b.getByRole('button', { name: 'Ready to run', exact: true }).click();
     await expect.poll(() => b.evaluate(() => window.__homestead!.store.getState().game.calendar.absDay)).toBeGreaterThan(0);
-    await a.getByRole('button', { name: 'Pause together', exact: true }).click();
-    await expect(b.getByTestId('shared-pause')).toContainText('River paused');
+    const pauseTogether = async () => {
+      const committed = a.waitForResponse((response) => response.url().endsWith('/control') && response.request().method() === 'POST' && response.request().postDataJSON().ready === false);
+      await a.getByRole('button', { name: 'Pause together', exact: true }).click();
+      const response = await committed;
+      expect(response.ok()).toBe(true);
+      const paused = await response.json() as { revision: number };
+      for (const page of [a, b]) {
+        await expect(page.getByTestId('shared-status')).toContainText(`Revision ${paused.revision} · Paused`);
+        await expect(page.getByTestId('shared-pause')).toContainText('River paused');
+      }
+    };
+    await pauseTogether();
     const day = await a.evaluate(() => window.__homestead!.store.getState().game.calendar.absDay);
     await a.getByRole('button', { name: 'Ready to run', exact: true }).click();
     await b.getByRole('button', { name: 'Ready to run', exact: true }).click();
     await expect.poll(() => b.evaluate(() => window.__homestead!.store.getState().game.calendar.absDay)).toBeGreaterThan(day);
-    await a.getByRole('button', { name: 'Pause together', exact: true }).click();
-    await expect(b.getByTestId('shared-pause')).toContainText('River paused');
+    await pauseTogether();
     expect(await b.evaluate(() => window.__homestead!.store.getState().game.ledgers.length)).toBeGreaterThan(1);
     const gameA = await a.evaluate(() => JSON.stringify(window.__homestead!.store.getState().game));
     await expect.poll(() => b.evaluate(() => JSON.stringify(window.__homestead!.store.getState().game))).toBe(gameA);
