@@ -1,6 +1,6 @@
 # MP-01: Hosted room skeleton
 
-Implemented and tested locally. GitHub origin is connected and the public push is approved. Git CLI authentication and hosting connection are pending.
+Implemented and tested locally. The multiplayer branch is published on GitHub. Hosting connection and public HTTPS verification are pending.
 
 ## Build and run
 
@@ -27,7 +27,8 @@ production does not need a TypeScript runtime. The service binds `0.0.0.0:$PORT`
 
 The app repository is connected as `origin` to the public repository
 [dylanhartman913-arch/LandLabSimClone](https://github.com/dylanhartman913-arch/LandLabSimClone).
-The prepared local branch is `codex/mp-01-hosted-room`. It has not been pushed.
+The published branch is [`codex/mp-01-hosted-room`](https://github.com/dylanhartman913-arch/LandLabSimClone/tree/codex/mp-01-hosted-room).
+The initial push was verified at `e3ae1975aa5f215094c27db3c3734eb0bdcc33f9` on October 26, 2026.
 No hosting resources or paid plans have been provisioned. The owner prefers
 free hosting and authorized at most $20 total for two months if necessary.
 
@@ -45,13 +46,12 @@ connects that history to the remote baseline without changing the tested files.
 Thirteen recent evidence images were included. Another 1,284 untracked screenshot
 files remain local. The planning files in the parent workspace also remain local.
 
-The owner approved this public branch and payload on October 26, 2026. The
-approved push then failed because local Git has no GitHub credentials. Complete
-the official GitHub CLI browser sign-in before retrying. No push has occurred.
-Publish the prepared branch with:
+The owner approved this public branch and payload on October 26, 2026. GitHub
+CLI sign-in completed, and the branch now tracks
+`origin/codex/mp-01-hosted-room`. To publish later changes after committing:
 
 ```sh
-git push --set-upstream origin codex/mp-01-hosted-room
+git push
 ```
 
 For Render, connect this GitHub repository and select `codex/mp-01-hosted-room`.
