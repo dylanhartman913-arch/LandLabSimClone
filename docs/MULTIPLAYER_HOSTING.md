@@ -1,6 +1,6 @@
 # MP-01: Hosted room skeleton
 
-Implemented and tested locally. The multiplayer branch is published on GitHub. Hosting connection and public HTTPS verification are pending.
+MP-01 is deployed and verified at https://terra-homestead.onrender.com/. The multiplayer branch is published on GitHub and the service uses the free compute plan.
 
 ## Build and run
 
@@ -29,8 +29,17 @@ The app repository is connected as `origin` to the public repository
 [dylanhartman913-arch/LandLabSimClone](https://github.com/dylanhartman913-arch/LandLabSimClone).
 The published branch is [`codex/mp-01-hosted-room`](https://github.com/dylanhartman913-arch/LandLabSimClone/tree/codex/mp-01-hosted-room).
 The initial push was verified at `e3ae1975aa5f215094c27db3c3734eb0bdcc33f9` on October 26, 2026.
-No hosting resources or paid plans have been provisioned. The owner prefers
-free hosting and authorized at most $20 total for two months if necessary.
+One free web service is provisioned in the confirmed workspace **My Workspace**.
+No paid resources were created. The owner prefers free hosting and authorized at
+most $20 total for two months if necessary.
+
+- Public URL: https://terra-homestead.onrender.com/
+- Dashboard: https://dashboard.render.com/web/srv-dbfsj7gu01pc73ado4j0
+- Service: `srv-dbfsj7gu01pc73ado4j0`, Oregon, free, one instance
+- Initial deploy: `dep-dbfsj7ou01pc73ado5lg`
+- Deployed source: `a7fa38178db337ad0960550696c1ee16cee1bb48`
+- Service owner: the user's Render workspace **My Workspace**
+- Storage: memory only; no persistent volume or database
 
 The remote default branch is `claude/gifted-hypatia-x158zw`. Local development
 started with a separate source-snapshot history. The prepared branch preserves
@@ -60,8 +69,17 @@ path is `render.yaml`. It defines one Node web service using
 `npm ci && npm run build:hosted`, `npm start`, and health path `/healthz`.
 The Blueprint pins both the GitHub repository and multiplayer branch. The
 `Hosted multiplayer skeleton` GitHub workflow verifies the bundled service and
-three-browser invitation flow on branch pushes and pull requests. Automatic
-Render deployments wait for passing CI checks.
+three-browser invitation flow on branch pushes and pull requests. The published
+source passed that workflow: [CI run 40391560187](https://github.com/dylanhartman913-arch/LandLabSimClone/actions/runs/40391560187).
+
+The service was created through the Render integration, rather than by applying
+the Blueprint. Deployments are manual (`autoDeployTrigger: off`) so publishing
+notes or source does not interrupt preview rooms. Check CI before triggering a
+new deploy. The integration did not expose HTTP health-check configuration; the
+live service uses Render's default TCP health check. `/healthz` remains the
+application readiness endpoint; the checked-in Blueprint specifies that path
+for a later Blueprint/Dashboard sync. Do not claim it is configured on the
+provider until verified from the service settings.
 
 The Blueprint uses the free compute plan for the MP-01 preview. Render free
 services sleep after 15 minutes idle and cannot attach a persistent disk; room
@@ -74,13 +92,26 @@ before provisioning. Do not enable automatic paid upgrades.
 Provider references: [Render Blueprint specification](https://render.com/docs/blueprint-spec),
 [free-service limits](https://render.com/docs/free).
 
-After deployment, record the actual HTTPS URL here and verify:
+Public verification on October 26, 2026:
 
-- Root loads in a fresh browser without credentials.
-- `/healthz` returns 200 with `ready: true`.
-- Create a room, open its invitation from another device/network, join the second seat.
-- Third visitor sees Room full; an invalid invite gives a readable error.
-- Frontend assets load from the same origin as room API requests.
+- Render deployment `dep-dbfsj7ou01pc73ado5lg` reached **live**.
+- HTTPS root returned 200 and served the game HTML without credentials.
+- `/healthz` returned 200, `ready: true`, engine `0.28.0`, and catalog source
+  SHA-256 `58afce59d8ab902837582b5370dc5be3bfdabfe5e046cd330df2adcce508f480`.
+- The existing invitation browser test passed against the public URL in **7.4s**:
+  three isolated browser contexts exercised create/invite/join, both lobbies
+  updating, a full-room refusal, and an invalid-link message.
+- Typecheck, lint, and `git diff --check` passed after adding remote-test support.
+
+Repeat the hosted browser flow without starting a local server:
+
+```sh
+MP_BASE_URL=https://terra-homestead.onrender.com npm run test:multiplayer
+```
+
+The public browser test ran on one computer. Physical devices on different
+networks, durable saves/reconnect, and developer-computer-off play remain later
+release checks; no submission or competition readiness is claimed.
 
 ## Current boundary
 
@@ -111,4 +142,4 @@ Local verification on October 26, 2026:
 - Typecheck, lint, and frontend/server production builds passed.
 - Lobby screenshot inspected for layout/readability.
 
-Public HTTPS acceptance remains unverified until the service is deployed.
+MP-01 public HTTPS room-skeleton acceptance is verified. Shared simulation starts with MP-02; persistence and seat recovery remain MP-03.

@@ -7,7 +7,7 @@ services:
     runtime: node
     plan: free
     numInstances: 1
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: off
     buildCommand: npm ci && npm run build:hosted
     startCommand: npm start
     healthCheckPath: /healthz
