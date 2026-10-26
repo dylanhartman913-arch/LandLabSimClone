@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Browser, type Page } from '@playwright/test';
 
 test('two browsers create and join; full and invalid invitations explain failures', async ({
   browser,
@@ -37,7 +37,7 @@ test('two browsers create and join; full and invalid invitations explain failure
   }
 });
 
-test('both browsers share building, purchases, work, readiness and alerts while views stay local', async ({ browser }, testInfo) => {
+async function withSharedHomestead(browser: Browser, play: (a: Page, b: Page) => Promise<void>) {
   const creator = await browser.newContext();
   const teammate = await browser.newContext();
   try {
@@ -59,14 +59,37 @@ test('both browsers share building, purchases, work, readiness and alerts while 
       await expect(page.getByTestId('open-saves')).toBeDisabled();
       await expect(page.getByTestId('speed-3')).toBeDisabled();
     }
-    // Use the same public store operations as the map, market and work controls.
-    const build = async (page: typeof a, x: number) => page.evaluate((px) => {
+    await play(a, b);
+  } finally {
+    await creator.close();
+    await teammate.close();
+  }
+}
+
+async function pauseTogether(a: Page, b: Page) {
+  const committed = a.waitForResponse((response) => response.url().endsWith('/control') && response.request().method() === 'POST' && response.request().postDataJSON().ready === false);
+  await a.getByRole('button', { name: 'Pause together', exact: true }).click();
+  const response = await committed;
+  expect(response.ok()).toBe(true);
+  const paused = await response.json() as { revision: number };
+  for (const page of [a, b]) {
+    await expect(page.getByTestId('shared-status')).toContainText(`Revision ${paused.revision} · Paused`);
+    await expect(page.getByTestId('shared-pause')).toContainText('River paused');
+  }
+}
+
+const state = (page: Page) => page.evaluate(() => JSON.stringify(window.__homestead!.store.getState().game));
+
+test('both players build, buy and change work while their camera and selection stay local', async ({ browser }, testInfo) => {
+  await withSharedHomestead(browser, async (a, b) => {
+    // Use the same public store operations as map placement; market and work use their UI controls.
+    const build = (page: Page, x: number) => page.evaluate((px) => {
       const s = window.__homestead!.store.getState();
       const id = s.catalog.systems.find((sys) => sys.name === 'Rain Barrel (55 gal)')!.id;
       s.startPlacing(id, 'buy');
       s.placeAt(px, 25);
     }, x);
-    const count = async (page: typeof a) => page.evaluate(() => window.__homestead!.store.getState().game.instances.length);
+    const count = (page: Page) => page.evaluate(() => window.__homestead!.store.getState().game.instances.length);
     const initial = await count(a);
     await build(a, 25);
     await expect.poll(() => count(b)).toBe(initial + 1);
@@ -95,36 +118,35 @@ test('both browsers share building, purchases, work, readiness and alerts while 
     expect(await b.evaluate(() => window.__homestead!.store.getState().selection)).toEqual([]);
     expect(await a.evaluate(() => window.__homestead!.store.getState().game.calendar.absDay)).toBe(0);
     await a.getByRole('button', { name: 'Ready to run', exact: true }).click();
+    await b.getByRole('button', { name: 'Ready to run', exact: true }).click();
+    await expect.poll(() => b.evaluate(() => window.__homestead!.store.getState().game.calendar.absDay)).toBeGreaterThan(0);
+    await pauseTogether(a, b);
+    expect(await b.evaluate(() => window.__homestead!.store.getState().game.market?.orders)).toEqual([]);
+    const gameA = await state(a);
+    await expect.poll(() => state(b)).toBe(gameA);
+    await a.screenshot({ path: testInfo.outputPath('shared-game.png') });
+  });
+});
+
+test('only the server advances time after both agree; pause, history and disconnects converge', async ({ browser }, testInfo) => {
+  await withSharedHomestead(browser, async (a, b) => {
+    await a.getByRole('button', { name: 'Ready to run', exact: true }).click();
     await expect(a.getByText('River: Ready', { exact: true })).toBeVisible();
     expect(await b.evaluate(() => window.__homestead!.store.getState().game.calendar.absDay)).toBe(0);
     await b.getByRole('button', { name: 'Ready to run', exact: true }).click();
     await expect.poll(() => b.evaluate(() => window.__homestead!.store.getState().game.calendar.absDay)).toBeGreaterThan(0);
-    const pauseTogether = async () => {
-      const committed = a.waitForResponse((response) => response.url().endsWith('/control') && response.request().method() === 'POST' && response.request().postDataJSON().ready === false);
-      await a.getByRole('button', { name: 'Pause together', exact: true }).click();
-      const response = await committed;
-      expect(response.ok()).toBe(true);
-      const paused = await response.json() as { revision: number };
-      for (const page of [a, b]) {
-        await expect(page.getByTestId('shared-status')).toContainText(`Revision ${paused.revision} · Paused`);
-        await expect(page.getByTestId('shared-pause')).toContainText('River paused');
-      }
-    };
-    await pauseTogether();
+    await pauseTogether(a, b);
     const day = await a.evaluate(() => window.__homestead!.store.getState().game.calendar.absDay);
     await a.getByRole('button', { name: 'Ready to run', exact: true }).click();
     await b.getByRole('button', { name: 'Ready to run', exact: true }).click();
     await expect.poll(() => b.evaluate(() => window.__homestead!.store.getState().game.calendar.absDay)).toBeGreaterThan(day);
-    await pauseTogether();
+    await pauseTogether(a, b);
     expect(await b.evaluate(() => window.__homestead!.store.getState().game.ledgers.length)).toBeGreaterThan(1);
-    const gameA = await a.evaluate(() => JSON.stringify(window.__homestead!.store.getState().game));
-    await expect.poll(() => b.evaluate(() => JSON.stringify(window.__homestead!.store.getState().game))).toBe(gameA);
-    await a.screenshot({ path: testInfo.outputPath('shared-game.png') });
+    const gameA = await state(a);
+    await expect.poll(() => state(b)).toBe(gameA);
+    await a.screenshot({ path: testInfo.outputPath('shared-clock.png') });
     await b.close();
     await expect(a.getByText('Sky: Disconnected', { exact: true })).toBeVisible();
     await expect(a.getByTestId('shared-pause')).toContainText('disconnected');
-  } finally {
-    await creator.close();
-    await teammate.close();
-  }
+  });
 });
