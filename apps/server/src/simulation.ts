@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { catalog, DEFAULT_SITE_ID } from '@homestead/catalog';
 import {
   applyAction,
@@ -17,6 +18,21 @@ import { z } from 'zod';
 import type { SharedSnapshot } from './protocol.ts';
 
 export class CommandError extends Error {}
+export class AppliedRequest extends CommandError {
+  constructor(
+    readonly requestId: string,
+    readonly revision: number,
+  ) {
+    super('This request was already applied.');
+  }
+}
+export interface CommandOutcome {
+  revision: number;
+  fingerprint: string;
+  commands: unknown[];
+}
+export const requestFingerprint = (commands: unknown[]) =>
+  createHash('sha256').update(JSON.stringify(commands)).digest('hex');
 const text = z.string().min(1).max(120);
 const number = z.number().finite().min(0).max(1_000_000);
 const position = z.number().finite().min(0).max(10_000);
@@ -114,7 +130,7 @@ export interface Player {
   lastSeen?: number;
   windowAt: number;
   requests: number;
-  outcomes: Map<string, number>;
+  outcomes: Map<string, CommandOutcome>;
 }
 export class Simulation {
   game = startGame(catalog, ROOM_INIT);
@@ -123,11 +139,16 @@ export class Simulation {
   reports: Report[] = [];
   running = false;
   pauseReason = 'Plan together, then both choose Ready to run.';
+  durable = false;
+  storageError: string | null = null;
+  beforePublish?: () => void;
   constructor(readonly players: Player[]) {}
   snapshot(includeRecentHistory = true): SharedSnapshot {
     // A fixed 90-day window supplies current charts and work totals; full history stays on the server.
     return {
       revision: this.revision,
+      storageError: this.storageError,
+      durable: this.durable,
       init: ROOM_INIT,
       game: { ...this.game, ledgers: this.game.ledgers.slice(includeRecentHistory ? -90 : -1) },
       events: this.events.slice(-100),
@@ -138,6 +159,10 @@ export class Simulation {
     };
   }
   publish() {
+    this.beforePublish?.();
+    this.broadcast();
+  }
+  broadcast() {
     const snapshot = this.snapshot(false);
     for (const p of this.players) p.connection?.send(snapshot);
   }
@@ -167,10 +192,15 @@ export class Simulation {
         'Unsupported command or invalid arguments. Cash, refunds and room settings are server controlled.',
       );
     const { requestId, commands } = parsed.data;
-    if (player.outcomes.has(requestId))
-      throw new CommandError(
-        'This request was already applied. Check the current homestead before trying another edit.',
-      );
+    const fingerprint = requestFingerprint(commands);
+    const previous = player.outcomes.get(requestId);
+    if (previous) {
+      if (previous.fingerprint !== fingerprint)
+        throw new CommandError('A request ID cannot be reused for different commands.');
+      throw new AppliedRequest(requestId, previous.revision);
+    }
+    if (player.outcomes.size >= 10_000)
+      throw new CommandError('This seat has reached its retained command limit. Create a new homestead.');
     let game = this.game;
     for (const intent of commands) {
       if (intent.kind === 'recoveryRoute') {
@@ -277,8 +307,7 @@ export class Simulation {
     // No awaits: each batch and tick commits atomically in Node's ordered event queue.
     this.game = game;
     this.revision++;
-    player.outcomes.set(requestId, this.revision);
-    if (player.outcomes.size > 1000) player.outcomes.delete(player.outcomes.keys().next().value!);
+    player.outcomes.set(requestId, { revision: this.revision, fingerprint, commands });
     this.publish();
   }
   tick() {

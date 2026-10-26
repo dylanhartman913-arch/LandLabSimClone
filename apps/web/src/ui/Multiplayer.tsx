@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './multiplayer.css';
+import { readRoomSession, writeRoomSession, SessionError } from '../lib/roomSession.ts';
 import { SharedGame } from './SharedGame.tsx';
 
 interface Room {
@@ -35,6 +36,7 @@ async function request(path: string, name?: string, signal?: AbortSignal): Promi
   return response.json() as Promise<RoomResponse>;
 }
 function failure(error: unknown): string {
+  if (error instanceof SessionError) return error.message;
   if (error instanceof RoomError) return error.message;
   if (error instanceof TypeError)
     return 'Cannot reach the room service. Check your connection and try again.';
@@ -50,8 +52,23 @@ export function Multiplayer() {
   const [name, setName] = useState('');
   const [invite, setInvite] = useState('');
   const [error, setError] = useState('');
+  const [recoveryError, setRecoveryError] = useState('');
   const [busy, setBusy] = useState(false);
   const [connected, setConnected] = useState(false);
+  useEffect(() => {
+    if (!roomId || joined) return;
+    try {
+      const session = readRoomSession(roomId);
+      if (!session) return;
+      setToken(session.token);
+      setInvite(new URL(`/?room=${roomId}`, location.origin).href);
+      setRoom({ id: roomId, expiresAt: 0, players: [] });
+      setJoined(true);
+      setPlaying(true);
+    } catch (err) {
+      setRecoveryError(failure(err));
+    }
+  }, [roomId, joined]);
   useEffect(() => {
     if (!roomId) return;
     const controller = new AbortController();
@@ -89,6 +106,7 @@ export function Multiplayer() {
       );
       setRoom(data.room);
       if (!data.playerToken) throw new RoomError('The server did not return a player credential.');
+      writeRoomSession(data.room.id, { token: data.playerToken, pending: [] });
       setToken(data.playerToken);
       setJoined(true);
       setConnected(true);
@@ -97,7 +115,8 @@ export function Multiplayer() {
       // Keep the creator in the lobby while giving both browsers the same invitation route.
       history.replaceState(null, '', url);
     } catch (err) {
-      setError(failure(err));
+      if (err instanceof SessionError) setRecoveryError(err.message);
+      else setError(failure(err));
     } finally {
       setBusy(false);
     }
@@ -110,7 +129,7 @@ export function Multiplayer() {
       <p>
         <strong>Shared homestead:</strong> build, buy supplies and manage work together. The server runs one shared clock and budget.
       </p>
-      {error && <p role="alert">{error}</p>}
+      {(recoveryError || error) && <p role="alert">{recoveryError || error}</p>}
       {room && (
         <section aria-label="Room lobby">
           <h2>Your homestead lobby</h2>
@@ -139,7 +158,7 @@ export function Multiplayer() {
               autoComplete="nickname"
             />
           </label>
-          <button disabled={busy || (!!roomId && !connected)}>
+          <button disabled={busy || !!recoveryError || (!!roomId && !connected)}>
             {busy ? 'Connecting…' : roomId ? 'Join homestead' : 'Create homestead'}
           </button>
         </form>
@@ -154,8 +173,8 @@ export function Multiplayer() {
         </section>
       )}
       <p>
-        Preview rooms are kept in memory for up to seven days and expire when the service restarts. Rejoining
-        a claimed seat is coming with save and reconnect support.
+        Rooms last seven days. Keep this browser tab to reclaim your seat after refresh or a network loss.
+        Rejoining pauses the room; both players must choose Ready again.
       </p>
       <a href="./">Return to single-player</a>
     </main>

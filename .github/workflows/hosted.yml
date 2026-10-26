@@ -21,13 +21,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Room authority, HTTP and browser-store tests
+      - name: Room authority, persistence, HTTP and browser-store tests
         run: npx vitest run apps/server/test apps/web/src/store/multiplayer.test.ts
       - name: Build frontend and bundled room service
         run: npm run build:hosted
       - name: Install browser
         run: npx playwright install --with-deps chromium
-      - name: Invite, join and play in two browsers
+      - name: Invite, shared play and recovery in two browsers
         run: npm run test:multiplayer
         env:
           CI: 'true'

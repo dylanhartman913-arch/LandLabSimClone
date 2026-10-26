@@ -150,3 +150,123 @@ test('only the server advances time after both agree; pause, history and disconn
     await expect(a.getByTestId('shared-pause')).toContainText('disconnected');
   });
 });
+
+test('refresh reclaims the same seat and a network loss automatically recovers current state paused', async ({
+  browser,
+}) => {
+  await withSharedHomestead(browser, async (a, b) => {
+    const initial = await a.evaluate(() => window.__homestead!.store.getState().game.instances.length);
+    await a.reload();
+    await expect(a.getByTestId('map')).toHaveAttribute('data-ready', 'true');
+    await expect(a.getByTestId('shared-status')).toContainText('Connected');
+    await expect(a.getByText('River: Planning', { exact: true })).toBeVisible();
+    await expect(a.getByText('Sky: Planning', { exact: true })).toBeVisible();
+    await a.context().setOffline(true);
+    await expect(a.getByTestId('shared-status')).toContainText('Disconnected');
+    await expect(b.getByText('River: Disconnected', { exact: true })).toBeVisible();
+    await expect(b.getByTestId('shared-status')).toContainText('Paused');
+    await b.evaluate(() => {
+      const s = window.__homestead!.store.getState();
+      const id = s.catalog.systems.find((sys) => sys.name === 'Rain Barrel (55 gal)')!.id;
+      s.startPlacing(id, 'buy');
+      s.placeAt(25, 25);
+    });
+    await expect
+      .poll(() => b.evaluate(() => window.__homestead!.store.getState().game.instances.length))
+      .toBe(initial + 1);
+    await a.context().setOffline(false);
+    await expect(a.getByTestId('shared-status')).toContainText('Connected', { timeout: 20_000 });
+    await expect(a.getByTestId('shared-status')).toContainText('Paused');
+    await expect(a.getByText('River: Planning', { exact: true })).toBeVisible();
+    const current = await state(b);
+    await expect.poll(() => state(a)).toBe(current);
+    await expect(a.getByTestId('shared-save')).toBeVisible();
+  });
+});
+
+test('an accepted purchase with a dropped response survives refresh without a second charge', async ({
+  browser,
+}) => {
+  await withSharedHomestead(browser, async (a, b) => {
+    let purchasePosts = 0;
+    let committed: { revision: number; game: { cash: number } } | undefined;
+    await a.route('**/commands', async (route) => {
+      purchasePosts++;
+      const response = await route.fetch();
+      expect(response.ok()).toBe(true);
+      committed = await response.json();
+      await route.abort('failed'); // Commit reached the server; its HTTP acknowledgement never reached the browser.
+    });
+    await a.evaluate(() => window.__homestead!.store.getState().marketBuy('Food', 1000));
+    await expect.poll(() => committed?.revision).toBeGreaterThan(0);
+    await expect(a.getByRole('alert')).toContainText('Connection lost');
+    await a.reload();
+    await expect(a.getByTestId('map')).toHaveAttribute('data-ready', 'true');
+    await expect(a.getByTestId('shared-status')).toContainText('Connected');
+    await expect(a.getByRole('status').filter({ hasText: 'awaiting confirmation' })).toHaveCount(0);
+    expect(purchasePosts).toBe(1);
+    expect(await a.evaluate(() => window.__homestead!.store.getState().game.cash)).toBe(committed!.game.cash);
+    expect(await b.evaluate(() => window.__homestead!.store.getState().game.cash)).toBe(committed!.game.cash);
+    expect(await a.evaluate(() => window.__homestead!.store.getState().game.market?.orders)).toEqual([
+      expect.objectContaining({ resource: 'Food', amount: 1000 }),
+    ]);
+    expect(
+      await a.evaluate(() => {
+        const key = Object.keys(sessionStorage).find((k) => k.startsWith('terra-room-v1:'))!;
+        return JSON.parse(sessionStorage.getItem(key)!).pending;
+      }),
+    ).toEqual([]);
+  });
+});
+
+test('failed save responses stay visible and never display a successful save', async ({ browser }) => {
+  await withSharedHomestead(browser, async (a) => {
+    await a.route('**/commands', (route) =>
+      route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: 'Room storage failed (ENOSPC). No save was acknowledged. Contact the host owner.',
+        }),
+      }),
+    );
+    // Keep retry failures visible rather than letting the succeeding real stream clear the injected error.
+    await a.route('**/stream', (route) =>
+      route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: 'Room storage failed (ENOSPC). No save was acknowledged. Contact the host owner.',
+        }),
+      }),
+    );
+    const cash = await a.evaluate(() => window.__homestead!.store.getState().game.cash);
+    await a.evaluate(() => window.__homestead!.store.getState().marketBuy('Food', 1000));
+    await expect(a.getByRole('alert')).toContainText('No save was acknowledged');
+    await expect(a.getByTestId('shared-save')).toHaveCount(0);
+    expect(await a.evaluate(() => window.__homestead!.store.getState().game.cash)).toBe(cash);
+    await expect(a.getByRole('status').filter({ hasText: 'awaiting confirmation' })).toContainText('1 edit');
+  });
+});
+
+test('browser storage failures stop edits before transmission and explain the recovery risk', async ({
+  browser,
+}) => {
+  await withSharedHomestead(browser, async (a) => {
+    let posts = 0;
+    a.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().endsWith('/commands')) posts++;
+    });
+    const before = await state(a);
+    await a.evaluate(() => {
+      Storage.prototype.setItem = () => {
+        throw new DOMException('quota', 'QuotaExceededError');
+      };
+      window.__homestead!.store.getState().marketBuy('Food', 1000);
+    });
+    await expect(a.getByRole('alert')).toContainText('Browser session storage is unavailable');
+    await expect(a.getByTestId('shared-save')).toHaveCount(0);
+    expect(posts).toBe(0);
+    expect(await state(a)).toBe(before);
+  });
+});

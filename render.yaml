@@ -1,16 +1,22 @@
-# Free MP-01 preview. Review durable hosting before competition submission.
+# MP-03: single paid instance and persistent room files. See docs/MP-03.md for cost and retention.
 services:
   - type: web
     name: terra-homestead
     repo: https://github.com/dylanhartman913-arch/LandLabSimClone
     branch: codex/mp-01-hosted-room
     runtime: node
-    plan: free
+    plan: 0.5c-512mb
     numInstances: 1
     autoDeployTrigger: off
     buildCommand: npm ci && npm run build:hosted
     startCommand: npm start
     healthCheckPath: /healthz
+    disk:
+      name: terra-rooms
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
+      - key: ROOM_DATA_DIR
+        value: /var/data/rooms
       - key: NODE_VERSION
         value: "22"

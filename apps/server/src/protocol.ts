@@ -2,6 +2,8 @@ import type { GameInit, GameState, GameEvent, Report } from '@homestead/engine';
 
 export interface SharedSnapshot {
   revision: number;
+  durable: boolean;
+  storageError: string | null;
   init: GameInit;
   game: GameState;
   events: GameEvent[];
