@@ -28,7 +28,8 @@ production does not need a TypeScript runtime. The service binds `0.0.0.0:$PORT`
 The app repository is connected as `origin` to the public repository
 [dylanhartman913-arch/LandLabSimClone](https://github.com/dylanhartman913-arch/LandLabSimClone).
 The prepared local branch is `codex/mp-01-hosted-room`. It has not been pushed.
-No hosting resources or paid plans have been provisioned.
+No hosting resources or paid plans have been provisioned. The owner prefers
+free hosting and authorized at most $20 total for two months if necessary.
 
 The remote default branch is `claude/gifted-hypatia-x158zw`. Local development
 started with a separate source-snapshot history. The prepared branch preserves
@@ -62,11 +63,16 @@ The Blueprint pins both the GitHub repository and multiplayer branch. The
 three-browser invitation flow on branch pushes and pull requests. Automatic
 Render deployments wait for passing CI checks.
 
-Review the selected paid compute plan and current price with the owner before
-provisioning. This room skeleton has no persistent disk yet; add durable storage
-with MP-03 before relying on it for judging.
+The Blueprint uses the free compute plan for the MP-01 preview. Render free
+services sleep after 15 minutes idle and cannot attach a persistent disk; room
+seats currently disappear when the service restarts or spins down. This is a
+preview, not durable competition hosting. Add durable storage with MP-03 before
+relying on it for judging. Any paid fallback must fit the owner's $20 total
+two-month limit, including storage and other charges; verify actual pricing
+before provisioning. Do not enable automatic paid upgrades.
 
-Provider reference: [Render Blueprint specification](https://render.com/docs/blueprint-spec).
+Provider references: [Render Blueprint specification](https://render.com/docs/blueprint-spec),
+[free-service limits](https://render.com/docs/free).
 
 After deployment, record the actual HTTPS URL here and verify:
 
