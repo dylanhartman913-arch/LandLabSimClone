@@ -1,6 +1,6 @@
 # MP-01: Hosted room skeleton
 
-Implemented and tested locally. GitHub origin is connected; publishing approval and hosting setup are pending.
+Implemented and tested locally. GitHub origin is connected and the public push is approved. Git CLI authentication and hosting connection are pending.
 
 ## Build and run
 
@@ -33,7 +33,7 @@ No hosting resources or paid plans have been provisioned.
 The remote default branch is `claude/gifted-hypatia-x158zw`. Local development
 started with a separate source-snapshot history. The prepared branch preserves
 both histories with a merge whose tree keeps the tested local files. It changes
-480 files relative to that remote default: recent simulator work, MP-01, catalog
+approximately 480 files relative to that remote default: recent simulator work, MP-01, catalog
 and source data, tests, documentation, and screenshot evidence. No files are
 deleted relative to the remote default. Existing remote branches stay intact.
 The publication includes local commit history, not only the latest MP-01 changes.
@@ -44,9 +44,10 @@ connects that history to the remote baseline without changing the tested files.
 Thirteen recent evidence images were included. Another 1,284 untracked screenshot
 files remain local. The planning files in the parent workspace also remain local.
 
-Automatic approval review rejected the attempted push because this broader
-payload and public destination need explicit user approval. No push occurred.
-After approval, publish the prepared branch with:
+The owner approved this public branch and payload on October 26, 2026. The
+approved push then failed because local Git has no GitHub credentials. Complete
+the official GitHub CLI browser sign-in before retrying. No push has occurred.
+Publish the prepared branch with:
 
 ```sh
 git push --set-upstream origin codex/mp-01-hosted-room
@@ -56,6 +57,11 @@ For Render, connect this GitHub repository and select `codex/mp-01-hosted-room`.
 The repository root is the app root: leave Root Directory unset. The Blueprint
 path is `render.yaml`. It defines one Node web service using
 `npm ci && npm run build:hosted`, `npm start`, and health path `/healthz`.
+The Blueprint pins both the GitHub repository and multiplayer branch. The
+`Hosted multiplayer skeleton` GitHub workflow verifies the bundled service and
+three-browser invitation flow on branch pushes and pull requests. Automatic
+Render deployments wait for passing CI checks.
+
 Review the selected paid compute plan and current price with the owner before
 provisioning. This room skeleton has no persistent disk yet; add durable storage
 with MP-03 before relying on it for judging.

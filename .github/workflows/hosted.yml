@@ -1,0 +1,42 @@
+name: Hosted multiplayer skeleton
+
+on:
+  push:
+    branches: [codex/mp-01-hosted-room]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hosted:
+    name: Room service and browser invitation flow
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Room HTTP integration tests
+        run: npx vitest run apps/server/test/rooms.test.ts
+      - name: Build frontend and bundled room service
+        run: npm run build:hosted
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Create, invite, join, full and invalid rooms
+        run: npm run test:multiplayer
+        env:
+          CI: 'true'
+      - name: Browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hosted-room-failures
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
