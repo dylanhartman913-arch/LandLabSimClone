@@ -979,6 +979,8 @@ function dispatchBackstops(d: Day): void {
       debit(d, fee);
       d.spend.fees += fee;
     }
+    // Backstop Capital is billed on demand rather than by the normal input allocator.
+    record(g, 'Capital', fee, unpaid.has(g) ? 0 : fee);
     g.dispatched = {};
   }
   // Each backstop's own satisfaction (transport for the grocery run) from what it was granted.
@@ -1023,6 +1025,7 @@ function dispatchBackstops(d: Day): void {
       delivered += amount;
       g.dispatched![resource] = (g.dispatched![resource] ?? 0) + amount;
       debit(d, amount * price);
+      record(g, 'Capital', amount * price, amount * price);
       d.spend.backstop[resource] = (d.spend.backstop[resource] ?? 0) + amount * price;
     }
     if (delivered <= EPS) continue;
@@ -1839,6 +1842,26 @@ export function stepDay(prev: GameState, catalog: Catalog): StepResult {
   consume(d);
   if (prev.settings.reuseIdleLabor) reuseIdleLabor(d); // 6d
   produce(d);
+  // LL-56: retain identity and realized output before wear, fertility, health or cohort changes
+  // alter tomorrow's spatial group. This display-only record is outside the game digest.
+  for (const g of d.groups) {
+    const result = d.lastDay[g.key]!;
+    result.measurement = { absDay: d.absDay, instances: {} };
+    for (const index of g.members) {
+      const inst = d.instances[index]!;
+      const outputs: Record<string, number> = {};
+      for (const [resource, value] of Object.entries(result.outputs)) {
+        const multiplier = g.plan.backstop ? (inst.scale ?? 1) :
+          inst.systemId === catalog.waterInfrastructure?.springId ? (inst.scale ?? 1) :
+          g.plan.isHuman ? (inst.person?.health ?? 1) :
+            maturity(inst, g.plan, d.absDay) * (inst.animal ? (inst.scale ?? 1) : 1);
+        outputs[resource] = value * multiplier;
+        if (g.plan.isHuman && resource === 'Labor') outputs[resource] *= (inst.scale ?? 1) *
+          (prev.settings.householdRoles && inst.person ? laborFactor(catalog, prev.settings, inst.person) : 1);
+      }
+      result.measurement.instances[inst.id] = { systemId: inst.systemId, outputs };
+    }
+  }
   const csa = settleCsa(d);
   updatePeople(d); // 7
   if (prev.settings.wearAndRepair)

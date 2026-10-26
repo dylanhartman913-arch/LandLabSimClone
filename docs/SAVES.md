@@ -147,3 +147,22 @@ No new action kind. A start's `settings` and `mortgage` are read only when a gam
 ### Household kit scaling (0.26.0, follow-up)
 
 `Start.household.extra` blocks are read only when a game is created: a game with more people than its start's default gets the extra systems and stock then, and replaying its `GameInit` (household and children) rebuilds them. The default household gets none, so existing games and saves are unchanged.
+
+## Batch A household fixes (0.27.0)
+
+`GameSettings.householdCorrectness` is a saved compatibility flag. New app games and the CLI's new-game profile enable it. Continuing an older save records a settings action at the continuation day; read-only loads and historic action logs keep their old simulation behavior. Replaying without this flag retains the old occupancy calculation.
+
+With the flag and Shelter occupancy enabled, original starter households with multiple supplied homes get deterministic explicit assignments that minimize unused living space. Existing explicit assignments (including null or a deleted home) are preserved. Only original kit residents and homes participate; buying an extra home does not relocate residents. Assignments persist in ordinary `Instance.shelterId` fields. A single supplied home retains its existing default-assignment behavior. Closed and unfinished homes are excluded, and people in town retain their reservations.
+
+Role-adjusted occupancy uses the same role multipliers and scales as household need requests. Food stockpile and project-preview figures also exclude residents in town and respect the Household roles gate. The grocery warning change is a read-only view calculation: a low pantry triggers an empty-reserve allocator probe, checking actual delivery, operating inputs, capacity, access and a week of projected affordability. Historical cash runway remains an additional check; no probe stocks, cash, events or random state are committed.
+
+### Batch B decision fixes (0.27.1)
+
+Placed-card operating snapshots now retain instance IDs and realized output before end-of-day wear, fertility, health and cohort changes. This display metadata is outside the simulation digest. Older snapshots fall back to their existing group records until the next simulated day; replay and simulation rules are unchanged. Barter accepts absent or skipped onboarding, while active tutorials retain their completion gate and Selling and trade must still be enabled.
+
+
+## Engine 0.28.0 — tutorial instructions and forecast age (Batch C)
+
+New greenfield games set `tutorialInstructions: true` in their init and select the versioned `greenfield-instructions` quest line. This line checks the visible crop builds, supplies and work caps and resolves the food build list and cold-day threshold for its household/site. Original `greenfield` and `greenfield-seasons` definitions are retained; old saves keep their selected line and rewards, with no automatic conversion. Replay reconstructs the new line only when its init explicitly requests it. Export/import and JSON continuation are covered by the Batch C tests.
+
+`transitionForecast` now returns `asOfDay` display metadata. Forecast alerts use it to age a cached countdown; it is not stored in the simulation or included in a digest. Projection and alert rendering remain read-only.

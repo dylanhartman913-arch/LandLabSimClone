@@ -47,7 +47,7 @@ describe('LL-15: the novice who never set up supplies is warned well before the 
 
 describe('LL-48: the novice gate has teeth', () => {
   it('on the original quest line, a novice who ignores the alerts (the Oct 22 playtest) fails it; one who acts on them passes', () => {
-    const { tutorialSeasons: _, ...original } = NEW_GAME_SETTINGS;
+    const { tutorialSeasons: _, tutorialInstructions: _instructions, ...original } = NEW_GAME_SETTINGS;
     const ignoring = { ...NOVICE_GATE, settings: original, makeBot: () => noviceBot({ react: false }) };
     const [front] = runGates({ gates: [ignoring], sites: ['front-range'], seeds: [1] });
     expect(front!.pass).toBe(false);
@@ -68,7 +68,7 @@ describe('LL-18: summer has goals, and the whole line finishes in year 1', () =>
       const r = playBot(tutorialFollowerBot(), { start: 'greenfield', site, difficulty: 'real', seed: 2, days: 365, settings: NEW_GAME_SETTINGS });
       const start = r.ledgers[0]!.absDay;
       const done = r.state.tutorial!.done;
-      expect(r.state.tutorial!.line).toBe('greenfield-seasons');
+      expect(r.state.tutorial!.line).toBe('greenfield-instructions');
       expect(Object.keys(done)).toHaveLength(getQuestLine('greenfield-seasons').quests.length);
       const beforeCold = Object.entries(done).filter(([id]) => id !== 'gf-cold').map(([, d]) => d - start);
       expect(Math.max(...beforeCold)).toBeLessThan(done['gf-cold']! - start - 60);

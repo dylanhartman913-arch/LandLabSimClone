@@ -1,0 +1,451 @@
+{
+  "id": "greenfield-instructions",
+  "neighbor": "Ruth, on the next ridge over",
+  "quests": [
+    {
+      "id": "gf-water",
+      "title": "Fill the rain barrel and filter a day's water",
+      "reason": "Rain and the spring are free, but nobody should drink them raw: the barrel stores water, the filter makes it safe.",
+      "row": "Drinking water",
+      "goal": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "stock",
+            "resource": "Water",
+            "atLeast": 20
+          },
+          {
+            "kind": "made",
+            "system": "Drinking Water Filter",
+            "resource": "Drinking water",
+            "atLeast": 1.4
+          }
+        ]
+      },
+      "steps": [],
+      "show": {
+        "kind": "system",
+        "name": "Rain Barrel (55 gal)"
+      },
+      "reward": {
+        "line": "Ruth drops off two jugs of her well water and pays you to fill her stock tank from your spring.",
+        "cash": 200,
+        "stock": {
+          "Drinking water": 10
+        }
+      }
+    },
+    {
+      "id": "gf-firewood",
+      "title": "Gather a week of firewood from the deadfall",
+      "reason": "The stove and the firepit burn about 90 lbs a week. The deadfall is free, but someone has to walk out and haul it.",
+      "row": "Heated shelter",
+      "goal": {
+        "kind": "gathered",
+        "resource": "Woody biomass",
+        "atLeast": 90
+      },
+      "steps": [
+        {
+          "do": "workCap",
+          "job": "gather-wood",
+          "hours": 6
+        }
+      ],
+      "show": {
+        "kind": "node",
+        "type": "deadfall"
+      },
+      "reward": {
+        "line": "Ruth pays you for a few armloads of kindling and splits her seed potatoes with you.",
+        "cash": 300,
+        "stock": {
+          "Root crops": 25
+        }
+      }
+    },
+    {
+      "id": "gf-bed",
+      "title": "Build a raised bed and a potato patch",
+      "reason": "Build Raised Beds (24 sq ft) and a Potato Patch (400 sq ft). Finishing these systems establishes the crops; there is no separate planting action. Missing one-time construction materials, including Soil, are imported free, as the construction preview shows. Buy 250 lbs of Compost for recurring crop inputs; keep at least 200 lbs until both builds finish.",
+      "row": "Food",
+      "goal": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "have",
+            "system": "Raised Beds (24 sq ft)",
+            "count": 1
+          },
+          {
+            "kind": "have",
+            "system": "Potato Patch (400 sq ft)",
+            "count": 1
+          },
+          {
+            "kind": "stock",
+            "resource": "Compost",
+            "atLeast": 200
+          }
+        ]
+      },
+      "steps": [
+        {
+          "do": "buy",
+          "resource": "Compost",
+          "amount": 250
+        },
+        {
+          "do": "place",
+          "system": "Raised Beds (24 sq ft)",
+          "mode": "diy"
+        },
+        {
+          "do": "place",
+          "system": "Potato Patch (400 sq ft)",
+          "mode": "diy"
+        }
+      ],
+      "show": {
+        "kind": "system",
+        "name": "Raised Beds (24 sq ft)"
+      },
+      "reward": {
+        "line": "Ruth sends over a wheelbarrow of finished compost for next season.",
+        "cash": 300,
+        "stock": {
+          "Compost": 200
+        }
+      }
+    },
+    {
+      "id": "gf-compost",
+      "title": "Start a compost pile with leaf litter and kitchen scraps",
+      "reason": "Kitchen scraps under a cover of leaf litter or sawdust ferment into compost in a bucket: your first closed loop. The bucket and the toilet both use sawdust (Carbon), and the bag you arrived with lasts about two months: in Market, set Carbon to keep above 40 lbs. Top Carbon up to 120 lbs.",
+      "row": "Food",
+      "goal": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "made",
+            "system": "Bokashi Bucket",
+            "resource": "Compost",
+            "atLeast": 0.2
+          },
+          {
+            "kind": "standing",
+            "resource": "Carbon",
+            "keepAbove": 40,
+            "orderUpTo": 120
+          }
+        ]
+      },
+      "steps": [
+        {
+          "do": "place",
+          "system": "Bokashi Bucket",
+          "mode": "diy"
+        },
+        {
+          "do": "standing",
+          "resource": "Carbon",
+          "keepAbove": 40,
+          "orderUpTo": 120
+        }
+      ],
+      "show": {
+        "kind": "system",
+        "name": "Bokashi Bucket"
+      },
+      "reward": {
+        "line": "Ruth trades a sack of her chicken feed and some cash for a share of your first compost.",
+        "cash": 200,
+        "stock": {
+          "Chicken feed": 50
+        }
+      }
+    },
+    {
+      "id": "gf-autowater",
+      "title": "Configure a seven-day water gathering target",
+      "reason": "Set a target, then check Work for storage limits and gathering labor: this quest checks the setting, not seven days of safe water in stock. Fetching stops when storage is full. Your canned food runs out in early summer: in Market, set Food to keep above 14,000 kcal (about four days for two adults), topped up to 42,000.",
+      "row": "Drinking water",
+      "goal": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "setting",
+            "rule": "waterDays",
+            "atLeast": 7
+          },
+          {
+            "kind": "standing",
+            "resource": "Food",
+            "keepAbove": 14000,
+            "orderUpTo": 42000
+          }
+        ]
+      },
+      "steps": [
+        {
+          "do": "autoGather",
+          "waterDays": 7
+        },
+        {
+          "do": "standing",
+          "resource": "Food",
+          "keepAbove": 14000,
+          "orderUpTo": 42000
+        }
+      ],
+      "show": {
+        "kind": "panel",
+        "panel": "work"
+      },
+      "reward": {
+        "line": "Ruth brings two boxes of her canned beans and tomatoes.",
+        "cash": 0,
+        "stock": {
+          "Food": 80000
+        }
+      }
+    },
+    {
+      "id": "gf-hens",
+      "title": "Add a chicken coop and keep the hens fed",
+      "reason": "Twelve hens lay about 55 eggs a week, more with greens and scraps. They eat 18 lbs of Chicken feed a week and Ruth's sack lasts under three weeks: in Market, set Chicken feed to keep above 20 lbs. Top Chicken feed up to 60 lbs. In Work, set the Forage greens & berries weekly cap to 20 h/week for the hens and the table; this is a cap, not guaranteed labor.",
+      "row": "Food",
+      "goal": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "made",
+            "system": "Chicken Coop (12 hens)",
+            "resource": "Eggs",
+            "atLeast": 5
+          },
+          {
+            "kind": "standing",
+            "resource": "Chicken feed",
+            "keepAbove": 20,
+            "orderUpTo": 60
+          },
+          {
+            "kind": "workCap",
+            "job": "gather-food",
+            "hours": 20
+          }
+        ]
+      },
+      "steps": [
+        {
+          "do": "place",
+          "system": "Chicken Coop (12 hens)",
+          "mode": "diy"
+        },
+        {
+          "do": "standing",
+          "resource": "Chicken feed",
+          "keepAbove": 20,
+          "orderUpTo": 60
+        },
+        {
+          "do": "workCap",
+          "job": "gather-food",
+          "hours": 20
+        }
+      ],
+      "show": {
+        "kind": "system",
+        "name": "Chicken Coop (12 hens)"
+      },
+      "reward": {
+        "line": "Ruth's grandson helps finish the run, and Ruth buys your extra eggs for the church sale.",
+        "cash": 500
+      }
+    },
+    {
+      "id": "gf-supplies",
+      "title": "Keep supplies coming",
+      "reason": "What you arrived with runs out by summer. Standing orders in Market keep food, sawdust and feed topped up while cash lasts, and the Needs and bottlenecks list warns a week ahead when anything gets low. Check Market's Lasts column and your cash runway.",
+      "row": "Food",
+      "goal": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "standing",
+            "resource": "Food"
+          },
+          {
+            "kind": "standing",
+            "resource": "Carbon"
+          },
+          {
+            "kind": "standing",
+            "resource": "Chicken feed"
+          }
+        ]
+      },
+      "steps": [],
+      "show": {
+        "kind": "panel",
+        "panel": "market"
+      },
+      "reward": {
+        "line": "Ruth tells you which stores still deliver out this far.",
+        "cash": 0,
+        "stock": {}
+      }
+    },
+    {
+      "id": "gf-heater",
+      "title": "Build the heater before the cold",
+      "reason": "A tiny stove can't keep a canvas tent warm on a hard night, and building a mass heater takes about 60 hours of work. Build it within 10 ft of the tent this summer, keep four weeks of firewood gathered, and in Market set Woody biomass (firewood) to keep above 150 lbs as a backstop. Work shows the finish forecast against the first cold day. Top firewood up to 600 lbs.",
+      "row": "Heated shelter",
+      "goal": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "all",
+            "of": [
+              {
+                "kind": "have",
+                "system": "Rocket Mass Heater",
+                "count": 1
+              },
+              {
+                "kind": "setting",
+                "rule": "woodWeeks",
+                "atLeast": 4
+              }
+            ]
+          },
+          {
+            "kind": "standing",
+            "resource": "Woody biomass",
+            "keepAbove": 150,
+            "orderUpTo": 600
+          }
+        ]
+      },
+      "steps": [
+        {
+          "do": "place",
+          "system": "Rocket Mass Heater",
+          "mode": "diy"
+        },
+        {
+          "do": "autoGather",
+          "woodWeeks": 4
+        },
+        {
+          "do": "standing",
+          "resource": "Woody biomass",
+          "keepAbove": 150,
+          "orderUpTo": 600
+        }
+      ],
+      "show": {
+        "kind": "system",
+        "name": "Rocket Mass Heater"
+      },
+      "reward": {
+        "line": "Ruth's family brings a truckload of split oak and pays you to watch their place over the holidays.",
+        "cash": 600,
+        "stock": {
+          "Woody biomass": 600
+        }
+      }
+    },
+    {
+      "id": "gf-food",
+      "title": "Cover 25% of your food from the land for a month",
+      "reason": "This is what the stockpile was buying time for: food you grew, laid, or foraged, a quarter of what you eat. Build the Quail Hutch (10 quail) systems in the list below to help reach that share.",
+      "row": "Food",
+      "goal": {
+        "kind": "homegrown",
+        "share": 0.25,
+        "days": 30
+      },
+      "steps": [
+        {
+          "do": "place",
+          "system": "Quail Hutch (10 quail)",
+          "mode": "diy"
+        }
+      ],
+      "show": {
+        "kind": "system",
+        "name": "Quail Hutch (10 quail)"
+      },
+      "reward": {
+        "line": "Ruth throws you a harvest supper and sends the leftovers home.",
+        "cash": 500
+      }
+    },
+    {
+      "id": "gf-woodpile",
+      "title": "Put up a winter woodpile",
+      "reason": "A winter of fires burns far more than a summer of cooking. Stack 1,200 lbs of firewood before the cold: haul deadfall with the firewood job's weekly cap in Work while the land has it, and buy firewood in Market where it doesn't (600 lbs is about $60) (a single deadfall is soon picked clean). Wood put up now is labor and money you won't need in the snow. In Work, set the Gather firewood weekly cap to 10 h/week and buy 600 lbs of Woody biomass in Market.",
+      "row": "Heated shelter",
+      "goal": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "stock",
+            "resource": "Woody biomass",
+            "atLeast": 1200
+          },
+          {
+            "kind": "workCap",
+            "job": "gather-wood",
+            "hours": 10
+          }
+        ]
+      },
+      "steps": [
+        {
+          "do": "workCap",
+          "job": "gather-wood",
+          "hours": 10
+        },
+        {
+          "do": "buy",
+          "resource": "Woody biomass",
+          "amount": 600
+        }
+      ],
+      "show": {
+        "kind": "node",
+        "type": "deadfall"
+      },
+      "reward": {
+        "line": "Ruth lends you her splitting maul for the season.",
+        "cash": 0,
+        "stock": {}
+      }
+    },
+    {
+      "id": "gf-cold",
+      "title": "Get through the first cold snap warm",
+      "reason": "The first hard nights test the heater, the firewood and the tent together. This quest finishes on the first cold days, whenever they come; until then, use the Improve list and keep supplies coming. Keep everyone out of the cold for three cold days: the people bar shows who is short on heat.",
+      "row": "Heated shelter",
+      "goal": {
+        "kind": "staysWarm",
+        "hddAbove": 22,
+        "days": 3
+      },
+      "steps": [],
+      "show": {
+        "kind": "resource",
+        "name": "Heat"
+      },
+      "reward": {
+        "line": "Ruth's family checks on you after the first cold night and stays for supper.",
+        "cash": 0,
+        "stock": {}
+      }
+    }
+  ]
+}

@@ -15,6 +15,8 @@ export interface GameSettings {
   foodPreservation?: boolean;
   livestockLifecycle?: boolean;
   shelterOccupancy?: boolean;
+  /** v0.27: role-correct occupancy and one-time use of supplied starter homes. Absent in legacy replays. */
+  householdCorrectness?: boolean;
   /** LL-33: separate raw/drinking water pools, feed storage, and outdoor tanks that freeze. */
   storagePools?: boolean;
   /** LL-34: tools multiply gathering at the land's nodes instead of producing on their own. */
@@ -48,6 +50,8 @@ export interface GameSettings {
   serviceWarmUp?: boolean;
   /** v0.8 start: the seasonal tutorial line (summer goals, named supply orders, warmth by residents). Only read when a game starts. */
   tutorialSeasons?: boolean;
+  /** LL-58: visible, checked tutorial instructions; absent preserves legacy quest rules. */
+  tutorialInstructions?: boolean;
   /** v0.9: employment has its own labor priority below upkeep, capped at 40 h per adult/week. */
   employmentPriority?: boolean;
   /** v0.9 start: first-year greenfield cash support scales with the household. */
@@ -167,6 +171,11 @@ export interface Instance {
 
 /** Yesterday's result for one group (all active instances of a system at one priority). */
 export interface GroupDay {
+  /** Display-only snapshot taken before end-of-day wear, growth and health updates. */
+  measurement?: {
+    absDay: number;
+    instances: Record<string, { systemId: string; outputs: Record<string, number> }>;
+  };
   /** Production satisfaction (0-1). */
   sat: number;
   /** The input that limited satisfaction, if any. */

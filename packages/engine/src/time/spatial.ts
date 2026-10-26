@@ -391,7 +391,7 @@ export function computeSpatial(catalog: Catalog, state: GameState): Map<string, 
           (sum, i) =>
             sum +
             (plans.bySystem.get(i.systemId)!.inputs.find((f) => f.resource === 'Shelter')?.qty ?? 0) *
-              (i.scale ?? 1),
+              (i.scale ?? 1) * (state.settings.householdCorrectness ? roleNeeds(catalog, state.settings, i.person!) : 1),
           0,
         );
         const sh = active.find((i) => i.id === home);

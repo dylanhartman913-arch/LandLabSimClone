@@ -7,6 +7,10 @@ test('Phase 9 mechanics opt in, queue a sale and expose repair costs', async ({ 
   await page.getByLabel('Wear, repair and replacement', { exact: true }).check();
   await page.getByLabel('Selling and trade', { exact: true }).check();
   await page.getByLabel('Close settings', { exact: true }).click();
+  await page.evaluate(() => {
+    const st = window.__homestead!.store;
+    st.setState({ game: { ...st.getState().game, tutorial: { line: 'greenfield', current: 0, since: 0, done: {}, ui: [], skipped: false } } });
+  });
   await page.getByTestId('open-market').click();
   await expect(page.getByTestId('trade-controls')).toBeVisible();
   await expect(page.getByTestId('market')).toContainText('Expected replacement allowance');

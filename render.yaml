@@ -1,0 +1,14 @@
+# Apply from the LandLabSimClone repository. See docs/MULTIPLAYER_HOSTING.md
+# when deploying from its parent repository instead.
+services:
+  - type: web
+    name: terra-homestead
+    runtime: node
+    plan: 0.5c-512mb
+    numInstances: 1
+    buildCommand: npm ci && npm run build:hosted
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "22"

@@ -1,5 +1,6 @@
-import { getQuestLine, type Catalog, type QuestDef, type QuestGoal, type QuestLine } from '@homestead/catalog';
+import { getQuestLine, type Catalog, type QuestDef, type QuestGoal, type QuestLine, type QuestStep } from '@homestead/catalog';
 import { computeSpatial, instanceGroupKey } from './time/spatial.ts';
+import { climateTable } from './time/climate.ts';
 import { SURVIVAL } from './time/wellbeing.ts';
 import type { DayLedger, GameState } from './time/types.ts';
 
@@ -146,7 +147,13 @@ export function goalStatus(state: GameState, catalog: Catalog, goal: QuestGoal, 
     }
     case 'standing': {
       const o = state.market?.standing.find((x) => x.resource === goal.resource && x.keepAbove > 0);
-      return { done: !!o, progress: o ? 1 : 0, detail: o ? `standing order keeps ${goal.resource} above ${fmt(o.keepAbove)}` : `no standing order for ${goal.resource} yet (Market → Keep above)` };
+      const ok = !!o && o.keepAbove >= (goal.keepAbove ?? 0) && o.orderUpTo >= (goal.orderUpTo ?? 0);
+      return { done: ok, progress: ok ? 1 : 0, detail: `Market → ${goal.resource}: ${o ? `keep above ${fmt(o.keepAbove)}, top up to ${fmt(o.orderUpTo)}` : 'no standing order'}${goal.keepAbove ? ` (goal ${fmt(goal.keepAbove)} / ${fmt(goal.orderUpTo ?? goal.keepAbove)})` : ''}` };
+    }
+    case 'workCap': {
+      const cap = Object.entries(state.settings.work?.caps ?? {}).find(([job]) => job === goal.job)?.[1];
+      const ok = cap === goal.hours;
+      return { done: ok, progress: ok ? 1 : 0, detail: `${goal.job} weekly cap: ${cap ?? 'unset'} h/week (goal ${goal.hours})` };
     }
     case 'staysWarm': {
       let n = 0;
@@ -165,10 +172,31 @@ export function tutorialLine(state: GameState): QuestLine | null {
   return state.tutorial ? getQuestLine(state.tutorial.line) : null;
 }
 
+/** Local winter test for the corrected tutorial, without changing weather or survival rules. */
+export function tutorialColdThreshold(state: GameState): number {
+  return state.tutorial?.line === 'greenfield-instructions'
+    ? Math.min(22, Math.max(...climateTable(state.site).days.map((d) => d.hdd)) * 0.9)
+    : 22;
+}
+
 export function currentQuest(state: GameState): QuestDef | null {
   const t = state.tutorial;
   if (!t || t.skipped) return null;
-  return getQuestLine(t.line).quests[t.current] ?? null;
+  const q = getQuestLine(t.line).quests[t.current];
+  if (!q) return null;
+  if (t.line !== 'greenfield-instructions') return q;
+  if (q.id === 'gf-food') {
+    const pairs = Math.max(1, Math.ceil(state.instances.filter((i) => i.person).length / 2));
+    return { ...q, show: pairs > 1 ? { kind: 'system', name: 'Chicken Coop (12 hens)' } : q.show, reason: `${q.reason} For this household, follow the build list below; larger households need more food production because the site's forage supply does not grow with the household.`, steps: [
+      ...(pairs > 1 ? [{ do: 'place' as const, system: 'Chicken Coop (12 hens)', mode: 'diy' as const, count: pairs - 1, near: 'home', on: false }] : []),
+      ...q.steps.map((step) => step.do === 'place' ? { ...step, count: pairs === 1 ? 1 : pairs * 2 } : step),
+    ] };
+  }
+  if (q.id === 'gf-cold' && q.goal.kind === 'staysWarm') {
+    const threshold = tutorialColdThreshold(state);
+    return { ...q, reason: `Keep everyone warm for three days above ${threshold.toFixed(1)} HDD. This site's cold-day threshold is the lower of 22 HDD and 90% of its coldest average month's daily HDD. The people bar shows who is short on heat; until those days arrive, keep supplies coming.`, goal: { ...q.goal, hddAbove: threshold } };
+  }
+  return q;
 }
 
 export interface QuestView {
@@ -178,6 +206,21 @@ export interface QuestView {
   status: GoalStatus;
   neighbor: string;
   rewardText: string;
+}
+
+/** Exact actionable instructions shared by the visible checklist and the tutorial bot. */
+export function questStepText(step: QuestStep, catalog: Catalog): string {
+  const unit = (resource: string) => catalog.resources.find((r) => r.name === resource)!.unit;
+  switch (step.do) {
+    case 'place': return `Build ${step.count} × ${step.system} (${step.mode === 'diy' ? 'DIY' : 'buy'}), ${step.on ? 'on' : 'near'} ${step.near === 'home' ? 'the home' : step.near}.`;
+    case 'buy': return `Market: buy ${fmt(step.amount)} ${unit(step.resource)} ${step.resource}.`;
+    case 'standing': return `Market: keep ${step.resource} above ${fmt(step.keepAbove)} ${unit(step.resource)}, top up to ${fmt(step.orderUpTo)} ${unit(step.resource)}.`;
+    case 'workCap': return `Work: set ${step.job === 'gather-food' ? 'Forage greens & berries' : step.job === 'gather-wood' ? 'Gather firewood' : step.job} to ${step.hours === null ? 'unlimited' : `${fmt(step.hours)} h/week`} (weekly cap).`;
+    case 'autoGather': return `Work: set auto-gather targets: ${[step.waterDays !== undefined && `${step.waterDays} days of water`, step.woodWeeks !== undefined && `${step.woodWeeks} weeks of firewood`, step.foodWeeks !== undefined && `${step.foodWeeks} weeks of food`].filter(Boolean).join('; ')}.`;
+    case 'remove': return `Remove ${step.count ?? 'all'} ${step.system}.`;
+    case 'priority': return `Set ${step.system} priority to ${step.tier}.`;
+    case 'open': return `Open ${step.panel}.`;
+  }
 }
 
 /** The pinned quest card's content. */

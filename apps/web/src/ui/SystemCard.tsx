@@ -300,7 +300,14 @@ export function SystemCard() {
                   {ROLE_LABEL[i.role]}
                 </span>
               </span>
-              {i.stock ? (
+              {i.measured ? (
+                <span className="res-num measured-number">
+                  <WhyNum value={i.measured.used} title={`${i.view.resource} used yesterday`} /> /{' '}
+                  <WhyNum value={i.measured.requested} title={`${i.view.resource} requested yesterday`} /> {i.view.unit}{' '}
+                  {i.role === 'capacity' ? 'capacity used / requested yesterday' : 'used / requested yesterday'}
+                  <span className="muted small card-estimate">Catalog estimate: <WhyNum value={i.view.qty} title={`${i.view.resource} catalog estimate`} /> {i.view.unit} {i.view.periodLabel}</span>
+                </span>
+              ) : i.stock ? (
                 <span className="res-num" data-testid={`card-stock-${i.view.resource}`}>
                   <WhyNum value={i.stock.onHand} title={`${i.view.resource} on hand`} /> {i.view.unit} on hand ·{' '}
                   {i.stock.days ? (
@@ -362,9 +369,10 @@ export function SystemCard() {
               <span>
                 <ResourceLink name={o.view.resource} />
               </span>
-              <span className="res-num">
+              <span className={`res-num${o.nominal ? ' measured-number' : ''}`}>
                 <WhyNum value={o.produced} title={`${o.view.resource} produced`} unit={o.view.unit} />{' '}
-                {o.view.periodLabel}
+                {o.window}
+                {o.nominal && <span className="muted small card-estimate">Catalog estimate: <WhyNum value={o.nominal} title={`${o.view.resource} catalog estimate`} /> {o.view.unit} {o.view.periodLabel}</span>}
               </span>
             </div>
             {o.week && o.week.produced.value > 0 && (

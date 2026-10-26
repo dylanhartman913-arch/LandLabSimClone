@@ -1,4 +1,5 @@
 import { getQuestLine, type Catalog, type NeedKey } from '@homestead/catalog';
+import { occupancyView, shelterAssignments } from '../time/occupancy.ts';
 import { getSystem } from '../catalog-index.ts';
 import { MONTH_NAMES, monthOfDay } from '../time/calendar.ts';
 import { climateTable } from '../time/climate.ts';
@@ -125,6 +126,23 @@ export function rootCauseChain(
   resource: string,
 ): { steps: CauseStep[]; rootCause: string; chain: string } {
   const plans = getPlans(catalog, state.site);
+  if (resource === 'Shelter') {
+    const homes = state.instances.filter((i) => i.status === 'active' && !i.shelterClosed &&
+      plans.bySystem.get(i.systemId)!.outputs.some((o) => o.resource === 'Shelter' && o.isCapacity));
+    const shortageDays = ledgers.filter((l) => l.needs.Shelter.needed > l.needs.Shelter.delivered + 1e-9).length;
+    let rootCause = homes.length ? 'available shelter capacity was below household need' : 'no completed open shelter is currently available';
+    if (ledgers.some((l) => l.shelters)) {
+      const crowded = homes.some((i) => {
+        const v = occupancyView(state, catalog, i.id);
+        return v?.kind === 'shelter' && v.need.value > v.capacity.value + 1e-9;
+      });
+      const assigned = shelterAssignments(catalog, state);
+      const unassigned = state.instances.some((i) => i.person && !i.person.away && i.status === 'active' && !assigned.get(i.id));
+      rootCause = `occupancy left some residents without enough assigned living space${crowded ? '; a currently assigned home is overcrowded' : ''}${unassigned ? '; a current resident has no assigned open home' : ''}`;
+    }
+    const steps = [{ who: 'The household', systemId: null, resource }];
+    return { steps, rootCause, chain: `The household was short on Shelter on ${shortageDays} measured days because ${rootCause}.` };
+  }
   const table = climateTable(state.site);
   const active = state.instances.filter((i) => i.status === 'active');
   const steps: CauseStep[] = [];
@@ -252,7 +270,14 @@ export function buildReport(
   const survival = new Set(
     catalog.resources.filter((r) => ['Food', 'Drinking water', 'Shelter', 'Heated shelter', 'Sanitation'].includes(r.needsRow ?? '')).map((r) => r.name),
   );
-  const shortages: ShortageReport[] = sum.topShortages
+  const capacityShortages = sum.checklist.flatMap((row) => {
+    const resources = catalog.resources.filter((r) => r.needsRow === row.need);
+    if (!resources.length || !resources.every((r) => r.class === 'Capacity') || row.needed <= 0 || row.pct >= 1 - 1e-9) return [];
+    return [{ resource: resources[0]!.name, unmetShare: 1 - row.pct, unmet: row.needed - row.delivered }];
+  });
+  const candidates = [...sum.topShortages.filter((s) => !capacityShortages.some((c) => c.resource === s.resource)), ...capacityShortages]
+    .sort((a, b) => b.unmetShare - a.unmetShare || b.unmet - a.unmet || a.resource.localeCompare(b.resource));
+  const shortages: ShortageReport[] = candidates
     .filter((s) => s.resource !== 'Labor' || s.unmetShare > 0.05)
     .map((s, k) => ({ s, k }))
     .sort((a, b) => Number(survival.has(b.s.resource)) - Number(survival.has(a.s.resource)) || a.k - b.k)

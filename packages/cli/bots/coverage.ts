@@ -127,7 +127,7 @@ export interface Scenario {
   seeds: number[];
 }
 
-const { tutorialSeasons: _, ...ORIGINAL_LINE } = NEW_GAME_SETTINGS;
+const { tutorialSeasons: _, tutorialInstructions: _instructions, ...ORIGINAL_LINE } = NEW_GAME_SETTINGS;
 const greenfield = getStart('greenfield');
 
 /**

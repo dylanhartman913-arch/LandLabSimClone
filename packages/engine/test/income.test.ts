@@ -105,7 +105,7 @@ describe('LL-46 spinning and weaving', () => {
 
 describe('LL-46 labor barter with Ruth', () => {
   it('trades spare hours for goods at the barter rate, after the tutorial only', () => {
-    const s = farm({}, {}, { startingStocks: { ...supplies, Carbon: 0 } });
+    const s = { ...farm({}, {}, { startingStocks: { ...supplies, Carbon: 0 } }), tutorial: newTutorial('greenfield', 0) };
     expect(() => queueTrade(catalog, s, 'Labor', 4, 0, 'Carbon')).toThrow(/tutorial/);
     expect(() => queueTrade(catalog, finishTutorial(s), 'Labor', 4, 0)).toThrow(/Ruth/);
     const day = stepDay(queueTrade(catalog, finishTutorial(s), 'Labor', 4, 0, 'Carbon'), catalog);

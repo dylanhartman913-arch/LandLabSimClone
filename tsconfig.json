@@ -5,5 +5,5 @@
     "jsx": "react-jsx",
     "types": ["node"]
   },
-  "include": ["packages/*/src", "packages/*/test", "packages/*/bench", "packages/*/bots", "apps/web/src", "tests/e2e", "tests/unit", "*.config.ts"]
+  "include": ["packages/*/src", "packages/*/test", "packages/*/bench", "packages/*/bots", "apps/web/src", "tests/e2e", "tests/unit", "*.config.ts", "apps/server/src", "apps/server/test", "tests/multiplayer"]
 }

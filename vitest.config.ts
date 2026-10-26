@@ -10,7 +10,7 @@ export default defineConfig({
     testTimeout: 30_000,
     setupFiles: ['tests/unit/yield.ts'],
     projects: [
-      { extends: true, test: { name: 'unit', include: ['packages/*/test/**/*.test.ts', 'apps/web/src/**/*.test.ts'], exclude: [PERF, '**/node_modules/**'], sequence: { groupOrder: 0 } } },
+      { extends: true, test: { name: 'unit', include: ['packages/*/test/**/*.test.ts', 'apps/server/test/**/*.test.ts', 'apps/web/src/**/*.test.ts'], exclude: [PERF, '**/node_modules/**'], sequence: { groupOrder: 0 } } },
       { extends: true, test: { name: 'performance', include: [PERF], sequence: { groupOrder: 1 } } },
     ],
   },

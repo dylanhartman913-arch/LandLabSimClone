@@ -8,7 +8,8 @@
     "packages/catalog",
     "packages/engine",
     "packages/cli",
-    "apps/web"
+    "apps/web",
+    "apps/server"
   ],
   "scripts": {
     "dev": "npm run dev -w @homestead/web --",
@@ -25,7 +26,10 @@
     "catalog:audit": "tsx packages/cli/src/audit.ts",
     "sim": "tsx packages/cli/src/main.ts",
     "test:pacing": "tsx packages/cli/src/main.ts pacing",
-    "test:comparisons": "tsx packages/cli/src/main.ts compare --ci"
+    "test:comparisons": "tsx packages/cli/src/main.ts compare --ci",
+    "build:hosted": "npm run build && npm run build -w @homestead/server",
+    "start": "npm run start -w @homestead/server",
+    "test:multiplayer": "playwright test --config=playwright.multiplayer.config.ts"
   },
   "engines": {
     "node": ">=20"

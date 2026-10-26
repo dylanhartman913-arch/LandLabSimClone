@@ -1,5 +1,6 @@
 import type { Catalog } from '@homestead/catalog';
 import { explained } from '../provenance.ts';
+import { roleNeeds } from './household.ts';
 import { getPlans } from './plans.ts';
 import { conditionOutput } from './maintenance.ts';
 import type { GameState, Instance } from './types.ts';
@@ -28,6 +29,45 @@ export function shelterAssignments(catalog: Catalog, state: GameState): Map<stri
     result.set(i.id, home?.id ?? null);
   }
   return result;
+}
+
+/** Seed only undefined assignments, using the original kit, never subsequently purchased homes. */
+export function initializeStarterHomes(catalog: Catalog, state: GameState, starterIds: string[]): GameState {
+  const plans = getPlans(catalog, state.site);
+  const homes = state.instances.filter((i) => starterIds.includes(i.id) && i.status === 'active' && !i.shelterClosed &&
+    plans.bySystem.get(i.systemId)!.outputs.some((o) => o.resource === 'Shelter' && o.isCapacity));
+  // A single starter home already receives the household through the legacy default.
+  // Only enlarged kits need seeded assignments; preserve single-home replacement behavior.
+  if (homes.length < 2) return state;
+  const need = (i: Instance) => (plans.bySystem.get(i.systemId)!.inputs.find((f) => f.resource === 'Shelter')?.qty ?? 0) *
+    (i.scale ?? 1) * roleNeeds(catalog, state.settings, i.person!);
+  const capacity = (i: Instance) => plans.bySystem.get(i.systemId)!.outputs.find((o) => o.resource === 'Shelter')!.qty * (i.scale ?? 1) *
+    (state.settings.wearAndRepair ? conditionOutput(i, plans.bySystem.get(i.systemId)!.system) : 1);
+  const loads = new Map(homes.map((h) => [h.id, state.instances.filter((i) => i.person && i.status === 'active' && i.shelterId === h.id).reduce((n, i) => n + need(i), 0)]));
+  const people = state.instances.filter((i) => starterIds.includes(i.id) && i.person && i.status === 'active' && i.shelterId === undefined);
+  // Starter households are small (at most seven). Search all placements so indivisible
+  // residents waste as little room as possible; proportional greedy packing can strand children.
+  let bestLoss = Infinity;
+  let best: string[] = [];
+  const chosen: string[] = [];
+  const search = (k: number) => {
+    if (k === people.length) {
+      const loss = homes.reduce((sum, h) => sum + Math.max(0, loads.get(h.id)! - capacity(h)), 0);
+      if (loss < bestLoss - 1e-9) { bestLoss = loss; best = [...chosen]; }
+      return;
+    }
+    const amount = need(people[k]!);
+    for (const h of homes) {
+      loads.set(h.id, loads.get(h.id)! + amount);
+      chosen.push(h.id);
+      search(k + 1);
+      chosen.pop();
+      loads.set(h.id, loads.get(h.id)! - amount);
+    }
+  };
+  search(0);
+  const assignments = new Map(people.map((i, k) => [i.id, best[k]!]));
+  return { ...state, instances: state.instances.map((i) => assignments.has(i.id) ? { ...i, shelterId: assignments.get(i.id)! } : i) };
 }
 
 export function setShelter(
@@ -98,7 +138,7 @@ export function occupancyView(state: GameState, catalog: Catalog, id: string) {
       (getPlans(catalog, state.site)
         .bySystem.get(i.systemId)!
         .inputs.find((f) => f.resource === 'Shelter')?.qty ?? 0) *
-        (i.scale ?? 1),
+        (i.scale ?? 1) * roleNeeds(catalog, state.settings, i.person!),
     0,
   );
   const capacity =
@@ -118,7 +158,7 @@ export function occupancyView(state: GameState, catalog: Catalog, id: string) {
     ),
     need: explained(
       need,
-      'sum of assigned residents’ catalog Shelter requirements × household scales; people in town consume nothing',
+      'sum of assigned residents’ catalog Shelter requirements × active role needs × household scales; people in town consume nothing',
     ),
     upkeep: explained(
       inst.shelterClosed ? CLOSED_SHELTER_UPKEEP : 1,

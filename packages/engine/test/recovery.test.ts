@@ -434,7 +434,7 @@ describe('LL-15: food, safe water and cash warn before they run out', () => {
     expect(fc.firstHarm?.need).toBe('Food');
     expect(fc.departureDay).not.toBeNull();
     const alert = survivalAlerts(s, catalog, fc).find((a) => a.id === 'forecast')!;
-    expect(alert.title).toMatch(/^Forecast: residents leave for town in about \d+ days$/);
+    expect(alert.title).toMatch(/^Forecast: Food falls short in about \d+ days$/);
     expect(alert.detail).toContain('Food');
     expect(survivalAlerts(s, catalog).some((a) => a.id === 'forecast')).toBe(false);
   });

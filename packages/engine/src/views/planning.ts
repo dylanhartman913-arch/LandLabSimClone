@@ -87,6 +87,7 @@ export function transitionForecast(state: GameState, catalog: Catalog, days = 90
       }
   }
   return {
+    asOfDay: state.calendar.absDay,
     days,
     firstShortage,
     firstHarm,

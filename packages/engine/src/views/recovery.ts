@@ -19,6 +19,7 @@ import {
   SURVIVAL_NEEDS,
   type SurvivalNeed,
 } from '../time/wellbeing.ts';
+import { tutorialColdThreshold } from '../tutorial.ts';
 import { peopleView } from './people.ts';
 import type { transitionForecast } from './planning.ts';
 import { JOBS, jobPriority, type JobId } from '../time/gather.ts';
@@ -136,7 +137,7 @@ export function cashRunway(state: GameState, catalog?: Catalog) {
 export function survivalAlerts(
   state: GameState,
   catalog: Catalog,
-  forecast?: Pick<ReturnType<typeof transitionForecast>, 'firstHarm' | 'departureDay' | 'cashZeroDay' | 'days'>,
+  forecast?: Pick<ReturnType<typeof transitionForecast>, 'firstHarm' | 'departureDay' | 'cashZeroDay' | 'days'> & { asOfDay?: number },
 ): SurvivalAlert[] {
   const out: SurvivalAlert[] = riskView(state, catalog).map((r) => ({
     id: `risk:${r.id}`, title: r.title, detail: r.detail, resource: r.resource,
@@ -229,7 +230,23 @@ export function survivalAlerts(
     for (const r of plans.foodFamily)
       kcal += Math.max(0, (state.stocks[r] ?? 0) - (seed[r] ?? 0)) * (catalog.resources.find((x) => x.name === r)!.factorToNeed ?? 1);
     const days = net > 1e-9 ? kcal / net : Infinity;
-    if (days <= CONSUMABLE_WARN_DAYS && !ordered('Food'))
+    // Test the current grocery route with an empty meal reserve. An installed store alone
+    // says nothing about its transport, operating inputs, capacity or ability to pay.
+    // Use the allocator rather than duplicating its delivery/price rules in this view.
+    let groceriesCover = false;
+    if (days <= CONSUMABLE_WARN_DAYS && cash.days > CONSUMABLE_WARN_DAYS && state.cash > 0 &&
+      state.instances.some((i) => i.status === 'active' && plans.bySystem.get(i.systemId)!.backstop?.prices.Food !== undefined)) {
+      const stocks = { ...state.stocks };
+      for (const r of plans.foodFamily) stocks[r] = seed[r] ?? 0;
+      const probe = stepDay({ ...state, stocks, market: { ...state.market, orders: state.market?.orders ?? [], standing: (state.market?.standing ?? []).filter((o) => o.resource !== 'Food'), sales: state.market?.sales ?? [] } }, catalog);
+      const meals = probe.ledger.needs.Food;
+      // Past pantry use can hide tomorrow's grocery bill from historical cash runway.
+      const dailyBurn = Math.max(0, probe.ledger.cash.out - probe.ledger.cash.in);
+      const fundedDays = dailyBurn > 1e-9 ? state.cash / dailyBurn : Infinity;
+      groceriesCover = meals.needed > 0 && meals.delivered >= meals.needed - 1e-7 &&
+        meals.bought > 0 && probe.state.cash > 0 && fundedDays > CONSUMABLE_WARN_DAYS;
+    }
+    if (days <= CONSUMABLE_WARN_DAYS && !ordered('Food') && !groceriesCover)
       consumables.push({
         id: 'food-runway',
         title: `Food runs out in about ${Math.floor(days)} day${Math.floor(days) === 1 ? '' : 's'}`,
@@ -306,23 +323,23 @@ export function survivalAlerts(
   const other = consumables.filter((a) => a.survival === false).map(({ survival: _, ...a }) => a);
   const ahead: SurvivalAlert[] = [];
   if (forecast && home) {
-    const inDays = (n: number) => `in about ${n} day${n === 1 ? '' : 's'}`;
-    // Shortages already listed for today aren't news from the forecast.
+    const age = Math.max(0, state.calendar.absDay - (forecast.asOfDay ?? state.calendar.absDay));
+    const inDays = (n: number) => n === 0 ? 'today' : `in about ${n} day${n === 1 ? '' : 's'}`;
     const now = new Set(out.map((a) => a.resource));
     const events = [
-      forecast.departureDay !== null && { days: forecast.departureDay, text: `residents leave for town ${inDays(forecast.departureDay)}` },
-      forecast.firstHarm && !now.has(forecast.firstHarm.need) && { days: forecast.firstHarm.days, text: `${forecast.firstHarm.need} falls short ${inDays(forecast.firstHarm.days)}` },
-      forecast.cashZeroDay !== null && { days: forecast.cashZeroDay, text: `cash reaches $0 ${inDays(forecast.cashZeroDay)}` },
-    ].filter((e): e is { days: number; text: string } => !!e);
-    if (events.length) {
-      const head = forecast.departureDay !== null ? events[0]! : [...events].sort((a, b) => a.days - b.days)[0]!;
+      ...(forecast.departureDay !== null ? [{ days: forecast.departureDay - age, event: 'residents leave for town', resource: null }] : []),
+      ...(forecast.firstHarm && !now.has(forecast.firstHarm.need) ? [{ days: forecast.firstHarm.days - age, event: `${forecast.firstHarm.need} falls short`, resource: forecast.firstHarm.need }] : []),
+      ...(forecast.cashZeroDay !== null ? [{ days: forecast.cashZeroDay - age, event: 'cash reaches $0', resource: null }] : []),
+    ].filter((e) => e.days >= 0).sort((a, b) => a.days - b.days);
+    const head = events[0];
+    if (head) {
       ahead.push({
         id: 'forecast',
-        title: `Forecast: ${head.text}`,
-        resource: forecast.firstHarm ? (forecast.firstHarm.need === 'Heat' ? 'Heat' : forecast.firstHarm.need) : null,
+        title: `Forecast: ${head.event} ${inDays(head.days)}`,
+        resource: head.resource,
         work: true,
-        days: Math.min(...events.map((e) => e.days)),
-        detail: `If nothing changes over the next ${forecast.days} days: ${events.sort((a, b) => a.days - b.days).map((e) => e.text).join('; ')}. The projection keeps current stocks, orders, work and weather; it is not a promise. Plan → Next 90 days shows the details.`,
+        days: head.days,
+        detail: `Projection as of day ${forecast.asOfDay ?? state.calendar.absDay} (${age} day${age === 1 ? '' : 's'} old; refreshes weekly or after an action). If nothing changes through that ${forecast.days}-day projection: ${events.map((e) => `${e.event} ${inDays(e.days)}`).join('; ')}. Countdowns are adjusted for elapsed days, not recomputed predictions. The projection keeps the stocks, orders, work and weather from that day; it is not a promise. Plan → Next 90 days shows the details.`,
       });
     }
   }
@@ -387,11 +404,13 @@ function consumerConsequence(resource: string, plans: ReturnType<typeof getPlans
 /** Early warning independent of tutorial progress: seasonal climate, not a weather promise. */
 export function winterPreparation(state: GameState) {
   const climate = climateTable(state.site);
+  const threshold = tutorialColdThreshold(state);
+  const label = Number(threshold.toFixed(1));
   let days = 0;
-  while (days < 365 && climate.days[(state.calendar.day + days) % 365]!.hdd <= 22) days++;
+  while (days < 365 && climate.days[(state.calendar.day + days) % 365]!.hdd <= threshold) days++;
   return days === 365
-    ? 'No cold snap above 22 HDD in the average climate. Real weather can differ.'
-    : `First cold conditions above 22 HDD in the average climate: ${days === 0 ? 'now' : `about ${days} days away`}. Compare the construction finish forecast in Work today; finish heating within reach of the shelter, reduce heat loss, and secure recurring fuel before then. Real weather can arrive earlier.`;
+    ? `No cold snap above ${label} HDD in the average climate. Real weather can differ.`
+    : `First cold conditions above ${label} HDD in the average climate: ${days === 0 ? 'now' : `about ${days} days away`}. Compare the construction finish forecast in Work today; finish heating within reach of the shelter, reduce heat loss, and secure recurring fuel before then. Real weather can arrive earlier.`;
 }
 
 /** Needs rows a recovery project or standing order can restore. */

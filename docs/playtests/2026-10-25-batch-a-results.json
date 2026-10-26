@@ -1,0 +1,185 @@
+{
+  "engine": "0.27.0",
+  "daysPerRun": 365,
+  "settings": "NEW_GAME_SETTINGS + shelterOccupancy",
+  "policies": {
+    "greenfield": "noviceBot, four adults",
+    "farm": "idleBot, four adults and three children"
+  },
+  "runs": [
+    {
+      "site": "front-range",
+      "start": "greenfield",
+      "away": 0,
+      "cash": 15298.239552334026,
+      "shelterDay3": {
+        "provided": 448,
+        "potential": 448,
+        "needed": 800,
+        "delivered": 448.00000000000006,
+        "bought": 0
+      },
+      "minFood": 1,
+      "tutorial": 8
+    },
+    {
+      "site": "front-range",
+      "start": "farm",
+      "away": 0,
+      "cash": 61187.59186237848,
+      "shelterDay3": {
+        "provided": 1300,
+        "potential": 1300,
+        "needed": 1220,
+        "delivered": 1200,
+        "bought": 0
+      },
+      "minFood": 1
+    },
+    {
+      "site": "laramie-wy",
+      "start": "greenfield",
+      "away": 0,
+      "cash": 14378.232179759689,
+      "shelterDay3": {
+        "provided": 448,
+        "potential": 448,
+        "needed": 800,
+        "delivered": 448.00000000000006,
+        "bought": 0
+      },
+      "minFood": 1,
+      "tutorial": 8
+    },
+    {
+      "site": "laramie-wy",
+      "start": "farm",
+      "away": 0,
+      "cash": 60529.87481876861,
+      "shelterDay3": {
+        "provided": 1300,
+        "potential": 1300,
+        "needed": 1220,
+        "delivered": 1200,
+        "bought": 0
+      },
+      "minFood": 1
+    },
+    {
+      "site": "asheville-nc",
+      "start": "greenfield",
+      "away": 0,
+      "cash": 15603.323268645585,
+      "shelterDay3": {
+        "provided": 448,
+        "potential": 448,
+        "needed": 800,
+        "delivered": 448.00000000000006,
+        "bought": 0
+      },
+      "minFood": 1,
+      "tutorial": 8
+    },
+    {
+      "site": "asheville-nc",
+      "start": "farm",
+      "away": 0,
+      "cash": 61669.26783909015,
+      "shelterDay3": {
+        "provided": 1300,
+        "potential": 1300,
+        "needed": 1220,
+        "delivered": 1200,
+        "bought": 0
+      },
+      "minFood": 1
+    },
+    {
+      "site": "tucson-az",
+      "start": "greenfield",
+      "away": 0,
+      "cash": 14735.12708965544,
+      "shelterDay3": {
+        "provided": 448,
+        "potential": 448,
+        "needed": 800,
+        "delivered": 448.00000000000006,
+        "bought": 0
+      },
+      "minFood": 1,
+      "tutorial": 8
+    },
+    {
+      "site": "tucson-az",
+      "start": "farm",
+      "away": 0,
+      "cash": 61778.64933657603,
+      "shelterDay3": {
+        "provided": 1300,
+        "potential": 1300,
+        "needed": 1220,
+        "delivered": 1200,
+        "bought": 0
+      },
+      "minFood": 1
+    },
+    {
+      "site": "olympia-wa",
+      "start": "greenfield",
+      "away": 0,
+      "cash": 15902.32079470228,
+      "shelterDay3": {
+        "provided": 448,
+        "potential": 448,
+        "needed": 800,
+        "delivered": 448.00000000000006,
+        "bought": 0
+      },
+      "minFood": 1,
+      "tutorial": 8
+    },
+    {
+      "site": "olympia-wa",
+      "start": "farm",
+      "away": 0,
+      "cash": 61321.23302319098,
+      "shelterDay3": {
+        "provided": 1300,
+        "potential": 1300,
+        "needed": 1220,
+        "delivered": 1200,
+        "bought": 0
+      },
+      "minFood": 1
+    },
+    {
+      "site": "marquette-mi",
+      "start": "greenfield",
+      "away": 0,
+      "cash": 15414.40495521558,
+      "shelterDay3": {
+        "provided": 448,
+        "potential": 448,
+        "needed": 800,
+        "delivered": 448.00000000000006,
+        "bought": 0
+      },
+      "minFood": 1,
+      "tutorial": 8
+    },
+    {
+      "site": "marquette-mi",
+      "start": "farm",
+      "away": 0,
+      "cash": 60641.64511602698,
+      "shelterDay3": {
+        "provided": 1300,
+        "potential": 1300,
+        "needed": 1220,
+        "delivered": 1200,
+        "bought": 0
+      },
+      "minFood": 1
+    }
+  ]
+}

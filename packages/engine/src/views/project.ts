@@ -1,4 +1,5 @@
 import type { Catalog } from '@homestead/catalog';
+import { roleNeeds } from '../time/household.ts';
 import { getSystem } from '../catalog-index.ts';
 import { explained } from '../provenance.ts';
 import {
@@ -80,7 +81,7 @@ export function projectPreview(
         })
         .filter((r) => Math.abs(r.delta.value) > 1e-9)
     : [];
-  const household = state.instances.filter((i) => i.person).reduce((a, i) => a + (i.scale ?? 1), 0);
+  const household = state.instances.filter((i) => i.person && i.status === 'active' && !i.person.away).reduce((a, i) => a + (i.scale ?? 1) * roleNeeds(catalog, state.settings, i.person!), 0);
   const meals = new Set(catalog.resources.find((r) => r.name === 'Food')!.satisfiedBy);
   let kcalDay = 0;
   for (const f of plan.outputs)
@@ -97,7 +98,7 @@ export function projectPreview(
           ),
           perPerson: explained(
             household > 0 ? kcalDay / household : 0,
-            'annual-average nominal food kcal/day ÷ adult-equivalent household',
+            'annual-average nominal food kcal/day ÷ active, present adult-equivalent household (scale × active role needs)',
             { refs: { kcalDay, household } },
           ),
           share: explained(

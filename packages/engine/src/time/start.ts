@@ -27,6 +27,8 @@ export interface StartOptions {
   warmUp?: boolean;
   /** v0.8 (`settings.tutorialSeasons`): the start's seasonal quest line, when it has one (LL-18). */
   tutorialSeasons?: boolean;
+  /** LL-58: visible, checked tutorial instructions; absent preserves legacy quest rules. */
+  tutorialInstructions?: boolean;
   householdStart?: boolean;
 }
 
@@ -147,11 +149,12 @@ export function gameFromStart(catalog: Catalog, site: Site, start: Start, opts: 
   return {
     ...s,
     start: { id: start.id, difficulty, household: people, ...(children ? { children } : {}), headline: start.headline, tutorial: start.tutorial },
-    ...(start.tutorial ? { tutorial: newTutorial(tutorialLineFor(start.tutorial, opts.tutorialSeasons), s.calendar.absDay) } : {}),
+    ...(start.tutorial ? { tutorial: newTutorial(tutorialLineFor(start.tutorial, opts.tutorialSeasons, opts.tutorialInstructions), s.calendar.absDay) } : {}),
   };
 }
 
 /** The seasonal line (`<line>-seasons`) keeps teaching through summer; legacy games keep the original. */
-function tutorialLineFor(line: string, seasons?: boolean): string {
+function tutorialLineFor(line: string, seasons?: boolean, instructions?: boolean): string {
+  if (instructions && line === 'greenfield') return 'greenfield-instructions';
   return seasons && QUEST_LINES[`${line}-seasons`] ? `${line}-seasons` : line;
 }

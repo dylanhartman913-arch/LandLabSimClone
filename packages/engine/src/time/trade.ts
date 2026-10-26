@@ -5,7 +5,7 @@ import type { AccessDay, GameEvent, DayLedger, DaySpend, GameState, ResourceDay,
 
 export function ruthTrades(state: GameState): boolean {
   const t = state.tutorial;
-  return !!t && t.current >= getQuestLine(t.line).quests.length;
+  return !t || t.skipped || t.current >= getQuestLine(t.line).quests.length;
 }
 
 function tradable(catalog: Catalog, resource: string) {

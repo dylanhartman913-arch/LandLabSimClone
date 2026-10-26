@@ -1,4 +1,4 @@
-import { setShelter, closeShelter } from './time/occupancy.ts';
+import { setShelter, closeShelter, initializeStarterHomes } from './time/occupancy.ts';
 import { manageLivestock } from './time/livestock.ts';
 import { setHatch } from './time/husbandry.ts';
 import { setPreservation } from './time/preservation.ts';
@@ -128,6 +128,11 @@ export function applyAction(catalog: Catalog, s: GameState, a: Action): GameStat
       if (a.settings.finance && !s.settings.finance) next = activateFinance(catalog, next);
       if ('shelterOccupancy' in a.settings && !!a.settings.shelterOccupancy !== !!s.settings.shelterOccupancy)
         delete next.shelterThermal;
+      if (next.settings.householdCorrectness && next.settings.shelterOccupancy &&
+        (!s.settings.householdCorrectness || !s.settings.shelterOccupancy) && s.start) {
+        const kit = gameFromStart(catalog, s.site, getStart(s.start.id), { household: s.start.household, children: s.start.children });
+        next = initializeStarterHomes(catalog, next, kit.instances.map((i) => i.id));
+      }
       if (s.settings.storagePools && 'storagePools' in a.settings && !a.settings.storagePools) return releaseFrozen(next);
       return next;
     }
@@ -151,9 +156,12 @@ export function startGame(catalog: Catalog, init: GameInit): GameState {
       seed: init.seed,
       warmUp: init.settings.serviceWarmUp === true,
       tutorialSeasons: init.settings.tutorialSeasons === true,
+      tutorialInstructions: init.settings.tutorialInstructions === true,
       householdStart: init.settings.householdStart === true,
     });
-    return Object.keys(init.settings).length ? { ...g, settings: { ...g.settings, ...init.settings } } : g;
+    const next = Object.keys(init.settings).length ? { ...g, settings: { ...g.settings, ...init.settings } } : g;
+    return next.settings.householdCorrectness && next.settings.shelterOccupancy
+      ? initializeStarterHomes(catalog, next, g.instances.map((i) => i.id)) : next;
   }
   return initGame(catalog, getSite(init.siteId), init.settings, init.seed);
 }

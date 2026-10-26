@@ -27,22 +27,20 @@ export function noviceBot(o: { react?: boolean } = {}): Bot {
     shown,
     act(catalog, state, log) {
       const apply = (body: ActionBody): boolean => {
-        try {
-          const a = { ...body, at: state.calendar.absDay } as Action;
-          state = applyAction(catalog, state, a);
-          log.push(a);
-          return true;
-        } catch {
-          return false;
-        }
+        const a = { ...body, at: state.calendar.absDay } as Action;
+        state = applyAction(catalog, state, a);
+        log.push(a);
+        return true;
       };
       start ??= state.calendar.absDay;
       const q = currentQuest(state);
       if (q && !quests.has(q.id)) {
         quests.add(q.id);
         // A standing order counts as asked for only when the quest's text names its resource.
+        const failures: string[] = [];
         for (const step of q.steps)
-          if (step.do !== 'standing' || q.reason.toLowerCase().includes(step.resource.toLowerCase())) state = doStep(catalog, state, step, log, []);
+          if (state.tutorial?.line === 'greenfield-instructions' || step.do !== 'standing' || q.reason.toLowerCase().includes(step.resource.toLowerCase())) state = doStep(catalog, state, step, log, failures);
+        if (state.tutorial?.line === 'greenfield-instructions' && failures.length) throw new Error(`${q.id}: ${failures.join('; ')}`);
         if (q.goal.kind === 'ui') state = doStep(catalog, state, { do: 'open', panel: q.goal.panel }, log, []);
       }
       if ((state.calendar.absDay - start) % 7 === 0) forecast = transitionForecast(state, catalog);

@@ -191,7 +191,7 @@ function TradeControls() {
   const laborBarter = ruthTrades(game) && catalog.incomeTrade ? catalog.incomeTrade.laborBarterValuePerHour : null;
   return <div data-testid="trade-controls">
     <h3>Sell surplus or barter</h3>
-    <p className="small muted">Orders run after household use and before spoilage. The reserve stays home. Selling pays 50% of the reference retail price, or 80% with an operating Farm Stand. Each order needs half an hour of spare labor; selling uses a 10-mile trip or $25 collection. Ruth trades at 70% after the tutorial, without a trip.{laborBarter !== null && ` She also takes spare work: each hour buys ${fmtMoney(laborBarter)} of goods.`}</p>
+    <p className="small muted">Orders run after household use and before spoilage. The reserve stays home. Selling pays 50% of the reference retail price, or 80% with an operating Farm Stand. Each order needs half an hour of spare labor; selling uses a 10-mile trip or $25 collection. Ruth trades at 70% without a trip once any active tutorial is completed or skipped.{laborBarter !== null && ` She also takes spare work: each hour buys ${fmtMoney(laborBarter)} of goods.`}</p>
     <form className="form" onSubmit={(e) => {
       e.preventDefault();
       try {

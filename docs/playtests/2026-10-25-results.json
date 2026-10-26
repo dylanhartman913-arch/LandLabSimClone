@@ -1,0 +1,1499 @@
+{
+  "engine": "0.26.0",
+  "commit": "831e1a6",
+  "date": "2026-10-25",
+  "method": {
+    "ui": "Native browser controls; Front Range Standard greenfield through day 530 and Lake Superior Standard farm, four adults plus three children, through day 29.",
+    "greenfieldSweep": "Six sites, seed 1, Standard, four adults, 365 days each, default settings versus shelterOccupancy. Scripted quest steps and current survival alerts; no forecast or recovery-route booking. These are controlled runs, not claims about the existing novice bot.",
+    "farmSweep": "Six sites, seed 1, Standard, two adults plus two children, 365 days each, observe only.",
+    "fixtures": "Three-day starts and fixed summer/winter calendar fixtures inspect engine view models. Fixture days are not full-year gameplay."
+  },
+  "greenfieldSweep": [
+    {
+      "start": "greenfield",
+      "site": "front-range",
+      "occupancy": false,
+      "days": 365,
+      "away": 0,
+      "minWB": 75.15579286895301,
+      "cash": 15298,
+      "shelterDay3": 0.56,
+      "done": [
+        "gf-water",
+        "gf-firewood",
+        "gf-bed",
+        "gf-compost",
+        "gf-autowater",
+        "gf-hens",
+        "gf-supplies",
+        "gf-heater"
+      ],
+      "current": "Cover 25% of your food from the land for a month"
+    },
+    {
+      "start": "greenfield",
+      "site": "front-range",
+      "occupancy": true,
+      "days": 365,
+      "away": 4,
+      "minWB": 0,
+      "cash": 32391,
+      "shelterDay3": 0.28,
+      "done": [
+        "gf-water",
+        "gf-firewood",
+        "gf-bed",
+        "gf-compost",
+        "gf-autowater",
+        "gf-hens",
+        "gf-supplies",
+        "gf-heater"
+      ],
+      "current": "Cover 25% of your food from the land for a month"
+    },
+    {
+      "start": "greenfield",
+      "site": "laramie-wy",
+      "occupancy": false,
+      "days": 365,
+      "away": 0,
+      "minWB": 75.11044629816709,
+      "cash": 14378,
+      "shelterDay3": 0.56,
+      "done": [
+        "gf-water",
+        "gf-firewood",
+        "gf-bed",
+        "gf-compost",
+        "gf-autowater",
+        "gf-hens",
+        "gf-supplies",
+        "gf-heater"
+      ],
+      "current": "Cover 25% of your food from the land for a month"
+    },
+    {
+      "start": "greenfield",
+      "site": "laramie-wy",
+      "occupancy": true,
+      "days": 365,
+      "away": 4,
+      "minWB": 0,
+      "cash": 32391,
+      "shelterDay3": 0.28,
+      "done": [
+        "gf-water",
+        "gf-firewood",
+        "gf-bed",
+        "gf-compost",
+        "gf-autowater",
+        "gf-hens",
+        "gf-supplies",
+        "gf-heater"
+      ],
+      "current": "Cover 25% of your food from the land for a month"
+    },
+    {
+      "start": "greenfield",
+      "site": "asheville-nc",
+      "occupancy": false,
+      "days": 365,
+      "away": 0,
+      "minWB": 75.13873325815759,
+      "cash": 15603,
+      "shelterDay3": 0.56,
+      "done": [
+        "gf-water",
+        "gf-firewood",
+        "gf-bed",
+        "gf-compost",
+        "gf-autowater",
+        "gf-hens",
+        "gf-supplies",
+        "gf-heater"
+      ],
+      "current": "Cover 25% of your food from the land for a month"
+    },
+    {
+      "start": "greenfield",
+      "site": "asheville-nc",
+      "occupancy": true,
+      "days": 365,
+      "away": 4,
+      "minWB": 0,
+      "cash": 32391,
+      "shelterDay3": 0.28,
+      "done": [
+        "gf-water",
+        "gf-firewood",
+        "gf-bed",
+        "gf-compost",
+        "gf-autowater",
+        "gf-hens",
+        "gf-supplies",
+        "gf-heater"
+      ],
+      "current": "Cover 25% of your food from the land for a month"
+    },
+    {
+      "start": "greenfield",
+      "site": "tucson-az",
+      "occupancy": false,
+      "days": 365,
+      "away": 0,
+      "minWB": 75.1405674405749,
+      "cash": 14735,
+      "shelterDay3": 0.56,
+      "done": [
+        "gf-water",
+        "gf-firewood",
+        "gf-bed",
+        "gf-compost",
+        "gf-autowater",
+        "gf-hens",
+        "gf-supplies",
+        "gf-heater"
+      ],
+      "current": "Cover 25% of your food from the land for a month"
+    },
+    {
+      "start": "greenfield",
+      "site": "tucson-az",
+      "occupancy": true,
+      "days": 365,
+      "away": 4,
+      "minWB": 0,
+      "cash": 31851,
+      "shelterDay3": 0.28,
+      "done": [
+        "gf-water",
+        "gf-firewood",
+        "gf-bed",
+        "gf-compost",
+        "gf-autowater",
+        "gf-hens",
+        "gf-supplies"
+      ],
+      "current": "Build the heater before the cold"
+    },
+    {
+      "start": "greenfield",
+      "site": "olympia-wa",
+      "occupancy": false,
+      "days": 365,
+      "away": 0,
+      "minWB": 75.11702245461969,
+      "cash": 15902,
+      "shelterDay3": 0.56,
+      "done": [
+        "gf-water",
+        "gf-firewood",
+        "gf-bed",
+        "gf-compost",
+        "gf-autowater",
+        "gf-hens",
+        "gf-supplies",
+        "gf-heater"
+      ],
+      "current": "Cover 25% of your food from the land for a month"
+    },
+    {
+      "start": "greenfield",
+      "site": "olympia-wa",
+      "occupancy": true,
+      "days": 365,
+      "away": 4,
+      "minWB": 0,
+      "cash": 32391,
+      "shelterDay3": 0.28,
+      "done": [
+        "gf-water",
+        "gf-firewood",
+        "gf-bed",
+        "gf-compost",
+        "gf-autowater",
+        "gf-hens",
+        "gf-supplies",
+        "gf-heater"
+      ],
+      "current": "Cover 25% of your food from the land for a month"
+    },
+    {
+      "start": "greenfield",
+      "site": "marquette-mi",
+      "occupancy": false,
+      "days": 365,
+      "away": 0,
+      "minWB": 75.10115828648401,
+      "cash": 15414,
+      "shelterDay3": 0.56,
+      "done": [
+        "gf-water",
+        "gf-firewood",
+        "gf-bed",
+        "gf-compost",
+        "gf-autowater",
+        "gf-hens",
+        "gf-supplies",
+        "gf-heater"
+      ],
+      "current": "Cover 25% of your food from the land for a month"
+    },
+    {
+      "start": "greenfield",
+      "site": "marquette-mi",
+      "occupancy": true,
+      "days": 365,
+      "away": 4,
+      "minWB": 0,
+      "cash": 32391,
+      "shelterDay3": 0.28,
+      "done": [
+        "gf-water",
+        "gf-firewood",
+        "gf-bed",
+        "gf-compost",
+        "gf-autowater",
+        "gf-hens",
+        "gf-supplies",
+        "gf-heater"
+      ],
+      "current": "Cover 25% of your food from the land for a month"
+    }
+  ],
+  "integrationChecks": [
+    {
+      "probe": "backstop",
+      "site": "front-range",
+      "foodWarningDays": 357,
+      "firstWarning": {
+        "day": 8,
+        "title": "Food runs out in about 6 days"
+      },
+      "lastWarning": {
+        "day": 364,
+        "title": "Food runs out in about 0 days"
+      },
+      "lowestFoodShare": 1,
+      "endCash": 17041,
+      "away": 0
+    },
+    {
+      "probe": "backstop",
+      "site": "laramie-wy",
+      "foodWarningDays": 357,
+      "firstWarning": {
+        "day": 8,
+        "title": "Food runs out in about 6 days"
+      },
+      "lastWarning": {
+        "day": 364,
+        "title": "Food runs out in about 0 days"
+      },
+      "lowestFoodShare": 1,
+      "endCash": 16588,
+      "away": 0
+    },
+    {
+      "probe": "backstop",
+      "site": "asheville-nc",
+      "foodWarningDays": 357,
+      "firstWarning": {
+        "day": 8,
+        "title": "Food runs out in about 6 days"
+      },
+      "lastWarning": {
+        "day": 364,
+        "title": "Food runs out in about 0 days"
+      },
+      "lowestFoodShare": 1,
+      "endCash": 17363,
+      "away": 0
+    },
+    {
+      "probe": "backstop",
+      "site": "tucson-az",
+      "foodWarningDays": 357,
+      "firstWarning": {
+        "day": 8,
+        "title": "Food runs out in about 6 days"
+      },
+      "lastWarning": {
+        "day": 364,
+        "title": "Food runs out in about 0 days"
+      },
+      "lowestFoodShare": 1,
+      "endCash": 17393,
+      "away": 0
+    },
+    {
+      "probe": "backstop",
+      "site": "olympia-wa",
+      "foodWarningDays": 357,
+      "firstWarning": {
+        "day": 8,
+        "title": "Food runs out in about 6 days"
+      },
+      "lastWarning": {
+        "day": 364,
+        "title": "Food runs out in about 0 days"
+      },
+      "lowestFoodShare": 1,
+      "endCash": 17114,
+      "away": 0
+    },
+    {
+      "probe": "backstop",
+      "site": "marquette-mi",
+      "foodWarningDays": 357,
+      "firstWarning": {
+        "day": 8,
+        "title": "Food runs out in about 6 days"
+      },
+      "lastWarning": {
+        "day": 364,
+        "title": "Food runs out in about 0 days"
+      },
+      "lowestFoodShare": 1,
+      "endCash": 16666,
+      "away": 0
+    },
+    {
+      "probe": "barter",
+      "start": "farm",
+      "skipped": false,
+      "ruthAvailable": false
+    },
+    {
+      "probe": "barter",
+      "start": "farm",
+      "skipped": true,
+      "ruthAvailable": false
+    },
+    {
+      "probe": "barter",
+      "start": "cabin",
+      "skipped": false,
+      "ruthAvailable": false
+    },
+    {
+      "probe": "barter",
+      "start": "cabin",
+      "skipped": true,
+      "ruthAvailable": false
+    },
+    {
+      "probe": "barter",
+      "start": "greenfield",
+      "skipped": false,
+      "tutorial": {
+        "line": "greenfield-seasons",
+        "current": 0,
+        "since": 0,
+        "done": {},
+        "ui": [],
+        "skipped": false
+      },
+      "ruthAvailable": false
+    },
+    {
+      "probe": "barter",
+      "start": "greenfield",
+      "skipped": true,
+      "tutorial": {
+        "line": "greenfield-seasons",
+        "current": 0,
+        "since": 0,
+        "done": {},
+        "ui": [],
+        "skipped": true
+      },
+      "ruthAvailable": false
+    },
+    {
+      "probe": "role-consistency",
+      "actualFoodNeed": 6800,
+      "hudFood": {
+        "onHand": 43843.03230000001,
+        "dailyUse": 8000
+      },
+      "previewHouseholdFood": 0.06875,
+      "previewPerPersonFood": 137.5,
+      "previewDailyFood": 550
+    },
+    {
+      "probe": "child-occupancy",
+      "card": {
+        "kind": "shelter",
+        "closed": false,
+        "canClose": false,
+        "residents": [
+          {
+            "id": "i2",
+            "name": "Human Being (i2)"
+          },
+          {
+            "id": "i3",
+            "name": "Human Being (i3)"
+          },
+          {
+            "id": "i4",
+            "name": "Human Being (i4)"
+          },
+          {
+            "id": "i5",
+            "name": "Human Being (i5)"
+          },
+          {
+            "id": "i6",
+            "name": "Human Being (i6)"
+          }
+        ],
+        "capacity": {
+          "value": 700,
+          "explain": {
+            "formula": "completed open shelter capacity \u00d7 instance scale \u00d7 condition output factor; closed shelter supplies no living space",
+            "terms": []
+          }
+        },
+        "need": {
+          "value": 1000,
+          "explain": {
+            "formula": "sum of assigned residents\u2019 catalog Shelter requirements \u00d7 household scales; people in town consume nothing",
+            "terms": []
+          }
+        },
+        "upkeep": {
+          "value": 1,
+          "explain": {
+            "formula": "closed shelters retain 10% of recurring labor and capital upkeep; other recurring inputs stop",
+            "terms": []
+          }
+        },
+        "heatNeeded": {
+          "value": 81760,
+          "explain": {
+            "formula": "this shelter\u2019s actual heat request yesterday, including bedding and other spatial modifiers",
+            "terms": []
+          }
+        },
+        "heatReceived": {
+          "value": 0,
+          "explain": {
+            "formula": "heat delivered to this shelter yesterday; each source is split once among reachable occupied shelters",
+            "terms": []
+          }
+        }
+      },
+      "ledger": {
+        "provided": 910,
+        "potential": 910,
+        "needed": 820,
+        "delivered": 574,
+        "bought": 0
+      },
+      "residentShare": {
+        "shelter": 0.7,
+        "heat": 0,
+        "cooling": 1
+      }
+    },
+    {
+      "probe": "forecast-deadline",
+      "alert": {
+        "id": "forecast",
+        "title": "Forecast: residents leave for town in about 77 days",
+        "resource": "Food",
+        "work": true,
+        "days": 53,
+        "detail": "If nothing changes over the next 90 days: Food falls short in about 53 days; residents leave for town in about 77 days. The projection keeps current stocks, orders, work and weather; it is not a promise. Plan \u2192 Next 90 days shows the details.",
+        "group": "soon",
+        "weight": 1
+      }
+    }
+  ],
+  "viewModelProbes": [
+    {
+      "probe": "occupancy",
+      "start": "greenfield",
+      "on": false,
+      "coverage": {
+        "provided": 448,
+        "potential": 448,
+        "needed": 800,
+        "delivered": 448.00000000000006,
+        "bought": 0
+      },
+      "homes": [
+        {
+          "id": "i3"
+        },
+        {
+          "id": "i4"
+        },
+        {
+          "id": "i5"
+        },
+        {
+          "id": "i6"
+        }
+      ],
+      "shelters": [
+        {
+          "id": "i1",
+          "name": "Canvas Wall Tent + Stove Jack",
+          "view": null
+        },
+        {
+          "id": "i15",
+          "name": "Canvas Wall Tent + Stove Jack",
+          "view": null
+        }
+      ]
+    },
+    {
+      "probe": "occupancy",
+      "start": "greenfield",
+      "on": true,
+      "coverage": {
+        "provided": 448,
+        "potential": 448,
+        "needed": 800,
+        "delivered": 224.00000000000003,
+        "bought": 0
+      },
+      "residentShares": {
+        "shelter": 0.28,
+        "heat": 1,
+        "cooling": 1
+      },
+      "homes": [
+        {
+          "id": "i3",
+          "home": "i1"
+        },
+        {
+          "id": "i4",
+          "home": "i1"
+        },
+        {
+          "id": "i5",
+          "home": "i1"
+        },
+        {
+          "id": "i6",
+          "home": "i1"
+        }
+      ],
+      "shelters": [
+        {
+          "id": "i1",
+          "name": "Canvas Wall Tent + Stove Jack",
+          "view": {
+            "kind": "shelter",
+            "closed": false,
+            "canClose": false,
+            "residents": [
+              {
+                "id": "i3",
+                "name": "Human Being (i3)"
+              },
+              {
+                "id": "i4",
+                "name": "Human Being (i4)"
+              },
+              {
+                "id": "i5",
+                "name": "Human Being (i5)"
+              },
+              {
+                "id": "i6",
+                "name": "Human Being (i6)"
+              }
+            ],
+            "capacity": {
+              "value": 224,
+              "explain": {
+                "formula": "completed open shelter capacity \u00d7 instance scale \u00d7 condition output factor; closed shelter supplies no living space",
+                "terms": []
+              }
+            },
+            "need": {
+              "value": 800,
+              "explain": {
+                "formula": "sum of assigned residents\u2019 catalog Shelter requirements \u00d7 household scales; people in town consume nothing",
+                "terms": []
+              }
+            },
+            "upkeep": {
+              "value": 1,
+              "explain": {
+                "formula": "closed shelters retain 10% of recurring labor and capital upkeep; other recurring inputs stop",
+                "terms": []
+              }
+            },
+            "heatNeeded": {
+              "value": 24294.399999999998,
+              "explain": {
+                "formula": "this shelter\u2019s actual heat request yesterday, including bedding and other spatial modifiers",
+                "terms": []
+              }
+            },
+            "heatReceived": {
+              "value": 24294.399999999998,
+              "explain": {
+                "formula": "heat delivered to this shelter yesterday; each source is split once among reachable occupied shelters",
+                "terms": []
+              }
+            }
+          }
+        },
+        {
+          "id": "i15",
+          "name": "Canvas Wall Tent + Stove Jack",
+          "view": {
+            "kind": "shelter",
+            "closed": false,
+            "canClose": true,
+            "residents": [],
+            "capacity": {
+              "value": 224,
+              "explain": {
+                "formula": "completed open shelter capacity \u00d7 instance scale \u00d7 condition output factor; closed shelter supplies no living space",
+                "terms": []
+              }
+            },
+            "need": {
+              "value": 0,
+              "explain": {
+                "formula": "sum of assigned residents\u2019 catalog Shelter requirements \u00d7 household scales; people in town consume nothing",
+                "terms": []
+              }
+            },
+            "upkeep": {
+              "value": 1,
+              "explain": {
+                "formula": "closed shelters retain 10% of recurring labor and capital upkeep; other recurring inputs stop",
+                "terms": []
+              }
+            },
+            "heatNeeded": {
+              "value": 0,
+              "explain": {
+                "formula": "this shelter\u2019s actual heat request yesterday, including bedding and other spatial modifiers",
+                "terms": []
+              }
+            },
+            "heatReceived": {
+              "value": 0,
+              "explain": {
+                "formula": "heat delivered to this shelter yesterday; each source is split once among reachable occupied shelters",
+                "terms": []
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "probe": "occupancy",
+      "start": "cabin",
+      "on": false,
+      "coverage": {
+        "provided": 910,
+        "potential": 910,
+        "needed": 800,
+        "delivered": 800,
+        "bought": 0
+      },
+      "homes": [
+        {
+          "id": "i2"
+        },
+        {
+          "id": "i3"
+        },
+        {
+          "id": "i4"
+        },
+        {
+          "id": "i5"
+        }
+      ],
+      "shelters": [
+        {
+          "id": "i1",
+          "name": "Log Cabin Kit",
+          "view": null
+        },
+        {
+          "id": "i20",
+          "name": "Bell Tent",
+          "view": null
+        }
+      ]
+    },
+    {
+      "probe": "occupancy",
+      "start": "cabin",
+      "on": true,
+      "coverage": {
+        "provided": 910,
+        "potential": 910,
+        "needed": 800,
+        "delivered": 700,
+        "bought": 0
+      },
+      "residentShares": {
+        "shelter": 0.875,
+        "heat": 0.9027777777777776,
+        "cooling": 1
+      },
+      "homes": [
+        {
+          "id": "i2",
+          "home": "i1"
+        },
+        {
+          "id": "i3",
+          "home": "i1"
+        },
+        {
+          "id": "i4",
+          "home": "i1"
+        },
+        {
+          "id": "i5",
+          "home": "i1"
+        }
+      ],
+      "shelters": [
+        {
+          "id": "i1",
+          "name": "Log Cabin Kit",
+          "view": {
+            "kind": "shelter",
+            "closed": false,
+            "canClose": false,
+            "residents": [
+              {
+                "id": "i2",
+                "name": "Human Being (i2)"
+              },
+              {
+                "id": "i3",
+                "name": "Human Being (i3)"
+              },
+              {
+                "id": "i4",
+                "name": "Human Being (i4)"
+              },
+              {
+                "id": "i5",
+                "name": "Human Being (i5)"
+              }
+            ],
+            "capacity": {
+              "value": 700,
+              "explain": {
+                "formula": "completed open shelter capacity \u00d7 instance scale \u00d7 condition output factor; closed shelter supplies no living space",
+                "terms": []
+              }
+            },
+            "need": {
+              "value": 800,
+              "explain": {
+                "formula": "sum of assigned residents\u2019 catalog Shelter requirements \u00d7 household scales; people in town consume nothing",
+                "terms": []
+              }
+            },
+            "upkeep": {
+              "value": 1,
+              "explain": {
+                "formula": "closed shelters retain 10% of recurring labor and capital upkeep; other recurring inputs stop",
+                "terms": []
+              }
+            },
+            "heatNeeded": {
+              "value": 81760,
+              "explain": {
+                "formula": "this shelter\u2019s actual heat request yesterday, including bedding and other spatial modifiers",
+                "terms": []
+              }
+            },
+            "heatReceived": {
+              "value": 73811.1111111111,
+              "explain": {
+                "formula": "heat delivered to this shelter yesterday; each source is split once among reachable occupied shelters",
+                "terms": []
+              }
+            }
+          }
+        },
+        {
+          "id": "i20",
+          "name": "Bell Tent",
+          "view": {
+            "kind": "shelter",
+            "closed": false,
+            "canClose": true,
+            "residents": [],
+            "capacity": {
+              "value": 210,
+              "explain": {
+                "formula": "completed open shelter capacity \u00d7 instance scale \u00d7 condition output factor; closed shelter supplies no living space",
+                "terms": []
+              }
+            },
+            "need": {
+              "value": 0,
+              "explain": {
+                "formula": "sum of assigned residents\u2019 catalog Shelter requirements \u00d7 household scales; people in town consume nothing",
+                "terms": []
+              }
+            },
+            "upkeep": {
+              "value": 1,
+              "explain": {
+                "formula": "closed shelters retain 10% of recurring labor and capital upkeep; other recurring inputs stop",
+                "terms": []
+              }
+            },
+            "heatNeeded": {
+              "value": 0,
+              "explain": {
+                "formula": "this shelter\u2019s actual heat request yesterday, including bedding and other spatial modifiers",
+                "terms": []
+              }
+            },
+            "heatReceived": {
+              "value": 0,
+              "explain": {
+                "formula": "heat delivered to this shelter yesterday; each source is split once among reachable occupied shelters",
+                "terms": []
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "probe": "occupancy",
+      "start": "farm",
+      "on": false,
+      "coverage": {
+        "provided": 1300,
+        "potential": 1300,
+        "needed": 1220,
+        "delivered": 1220,
+        "bought": 0
+      },
+      "homes": [
+        {
+          "id": "i2"
+        },
+        {
+          "id": "i3"
+        },
+        {
+          "id": "i4"
+        },
+        {
+          "id": "i5"
+        },
+        {
+          "id": "i6"
+        },
+        {
+          "id": "i7"
+        },
+        {
+          "id": "i8"
+        }
+      ],
+      "shelters": [
+        {
+          "id": "i1",
+          "name": "A-Frame House",
+          "view": null
+        },
+        {
+          "id": "i39",
+          "name": "Tiny House on Wheels",
+          "view": null
+        },
+        {
+          "id": "i40",
+          "name": "Tiny House on Wheels",
+          "view": null
+        }
+      ]
+    },
+    {
+      "probe": "occupancy",
+      "start": "farm",
+      "on": true,
+      "coverage": {
+        "provided": 1300,
+        "potential": 1300,
+        "needed": 1220,
+        "delivered": 697.1428571428571,
+        "bought": 0
+      },
+      "residentShares": {
+        "shelter": 0.5714285714285714,
+        "heat": 1,
+        "cooling": 1
+      },
+      "homes": [
+        {
+          "id": "i2",
+          "home": "i1"
+        },
+        {
+          "id": "i3",
+          "home": "i1"
+        },
+        {
+          "id": "i4",
+          "home": "i1"
+        },
+        {
+          "id": "i5",
+          "home": "i1"
+        },
+        {
+          "id": "i6",
+          "home": "i1"
+        },
+        {
+          "id": "i7",
+          "home": "i1"
+        },
+        {
+          "id": "i8",
+          "home": "i1"
+        }
+      ],
+      "shelters": [
+        {
+          "id": "i1",
+          "name": "A-Frame House",
+          "view": {
+            "kind": "shelter",
+            "closed": false,
+            "canClose": false,
+            "residents": [
+              {
+                "id": "i2",
+                "name": "Human Being (i2)"
+              },
+              {
+                "id": "i3",
+                "name": "Human Being (i3)"
+              },
+              {
+                "id": "i4",
+                "name": "Human Being (i4)"
+              },
+              {
+                "id": "i5",
+                "name": "Human Being (i5)"
+              },
+              {
+                "id": "i6",
+                "name": "Human Being (i6)"
+              },
+              {
+                "id": "i7",
+                "name": "Human Being (i7)"
+              },
+              {
+                "id": "i8",
+                "name": "Human Being (i8)"
+              }
+            ],
+            "capacity": {
+              "value": 800,
+              "explain": {
+                "formula": "completed open shelter capacity \u00d7 instance scale \u00d7 condition output factor; closed shelter supplies no living space",
+                "terms": []
+              }
+            },
+            "need": {
+              "value": 1400,
+              "explain": {
+                "formula": "sum of assigned residents\u2019 catalog Shelter requirements \u00d7 household scales; people in town consume nothing",
+                "terms": []
+              }
+            },
+            "upkeep": {
+              "value": 1,
+              "explain": {
+                "formula": "closed shelters retain 10% of recurring labor and capital upkeep; other recurring inputs stop",
+                "terms": []
+              }
+            },
+            "heatNeeded": {
+              "value": 100114.2857142857,
+              "explain": {
+                "formula": "this shelter\u2019s actual heat request yesterday, including bedding and other spatial modifiers",
+                "terms": []
+              }
+            },
+            "heatReceived": {
+              "value": 100114.2857142857,
+              "explain": {
+                "formula": "heat delivered to this shelter yesterday; each source is split once among reachable occupied shelters",
+                "terms": []
+              }
+            }
+          }
+        },
+        {
+          "id": "i39",
+          "name": "Tiny House on Wheels",
+          "view": {
+            "kind": "shelter",
+            "closed": false,
+            "canClose": true,
+            "residents": [],
+            "capacity": {
+              "value": 250,
+              "explain": {
+                "formula": "completed open shelter capacity \u00d7 instance scale \u00d7 condition output factor; closed shelter supplies no living space",
+                "terms": []
+              }
+            },
+            "need": {
+              "value": 0,
+              "explain": {
+                "formula": "sum of assigned residents\u2019 catalog Shelter requirements \u00d7 household scales; people in town consume nothing",
+                "terms": []
+              }
+            },
+            "upkeep": {
+              "value": 1,
+              "explain": {
+                "formula": "closed shelters retain 10% of recurring labor and capital upkeep; other recurring inputs stop",
+                "terms": []
+              }
+            },
+            "heatNeeded": {
+              "value": 0,
+              "explain": {
+                "formula": "this shelter\u2019s actual heat request yesterday, including bedding and other spatial modifiers",
+                "terms": []
+              }
+            },
+            "heatReceived": {
+              "value": 0,
+              "explain": {
+                "formula": "heat delivered to this shelter yesterday; each source is split once among reachable occupied shelters",
+                "terms": []
+              }
+            }
+          }
+        },
+        {
+          "id": "i40",
+          "name": "Tiny House on Wheels",
+          "view": {
+            "kind": "shelter",
+            "closed": false,
+            "canClose": true,
+            "residents": [],
+            "capacity": {
+              "value": 250,
+              "explain": {
+                "formula": "completed open shelter capacity \u00d7 instance scale \u00d7 condition output factor; closed shelter supplies no living space",
+                "terms": []
+              }
+            },
+            "need": {
+              "value": 0,
+              "explain": {
+                "formula": "sum of assigned residents\u2019 catalog Shelter requirements \u00d7 household scales; people in town consume nothing",
+                "terms": []
+              }
+            },
+            "upkeep": {
+              "value": 1,
+              "explain": {
+                "formula": "closed shelters retain 10% of recurring labor and capital upkeep; other recurring inputs stop",
+                "terms": []
+              }
+            },
+            "heatNeeded": {
+              "value": 0,
+              "explain": {
+                "formula": "this shelter\u2019s actual heat request yesterday, including bedding and other spatial modifiers",
+                "terms": []
+              }
+            },
+            "heatReceived": {
+              "value": 0,
+              "explain": {
+                "formula": "heat delivered to this shelter yesterday; each source is split once among reachable occupied shelters",
+                "terms": []
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "probe": "hud-role",
+      "view": [
+        {
+          "key": "food",
+          "refs": {
+            "onHand": 88400,
+            "dailyUse": 8000
+          }
+        },
+        {
+          "key": "drinking-water",
+          "refs": {
+            "onHand": 31.57142857142857,
+            "dailyUse": 2.857142857142857
+          }
+        },
+        {
+          "key": "firewood",
+          "refs": {
+            "onHand": 0,
+            "dailyUse": 0
+          }
+        },
+        {
+          "key": "battery",
+          "refs": {
+            "onHand": 3.552713678800501e-15,
+            "dailyUse": 30.285714285714285
+          }
+        }
+      ],
+      "actual": {
+        "Water": {
+          "provided": 171.3674681023674,
+          "potential": 171.36746810236744,
+          "needed": 55.714285714285715,
+          "delivered": 0,
+          "bought": 0
+        },
+        "Drinking water": {
+          "provided": 0,
+          "potential": 4,
+          "needed": 2.428571428571429,
+          "delivered": 2.428571428571429,
+          "bought": 0
+        },
+        "Food": {
+          "provided": 0,
+          "potential": 2478.5714285714284,
+          "needed": 6800,
+          "delivered": 6800,
+          "bought": 0
+        },
+        "Shelter": {
+          "provided": 799.9999999999998,
+          "potential": 800,
+          "needed": 680,
+          "delivered": 680,
+          "bought": 0
+        },
+        "Sanitation": {
+          "provided": 7.437499999999999,
+          "potential": 10,
+          "needed": 8.5,
+          "delivered": 7.437499999999998,
+          "bought": 7.437499999999999
+        },
+        "Electricity": {
+          "provided": 28.485714285714284,
+          "potential": 28.485714285714284,
+          "needed": 28.485714285714284,
+          "delivered": 28.485714285714284,
+          "bought": 28.485714285714284
+        },
+        "Transportation": {
+          "provided": 21.428571428571427,
+          "potential": 21.428571428571427,
+          "needed": 21.428571428571427,
+          "delivered": 21.428571428571427,
+          "bought": 0
+        },
+        "Cooking fuel": {
+          "provided": 2.4285714285714284,
+          "potential": 2.428571428571429,
+          "needed": 2.428571428571429,
+          "delivered": 2.428571428571429,
+          "bought": 1.4285714285714286
+        },
+        "Heated shelter": {
+          "provided": 100114.28571428568,
+          "potential": 100114.2857142857,
+          "needed": 100114.2857142857,
+          "delivered": 100114.2857142857,
+          "bought": 54923.80952380951
+        },
+        "Cooled shelter": {
+          "provided": 0,
+          "potential": 0,
+          "needed": 0,
+          "delivered": 0,
+          "bought": 0
+        },
+        "Est. Required Labor": {
+          "provided": 15.625,
+          "potential": 28.571428571428573,
+          "needed": 7.949999999999999,
+          "delivered": 7.949999999999999,
+          "bought": 0
+        }
+      }
+    },
+    {
+      "probe": "live-card",
+      "day": 180,
+      "name": "Rocket Mass Heater",
+      "weather": {
+        "hdd": 2.3333333333333335,
+        "cdd": 5.666666666666667,
+        "psh": 6.619019681049656,
+        "precipIn": 0.06375838926174497,
+        "windCf": 0.13183946488294318,
+        "growing": true,
+        "tags": []
+      },
+      "outputs": [
+        {
+          "resource": "Heat",
+          "card": 290000,
+          "period": "Weekly",
+          "actualDay": 5880.555555555555
+        }
+      ]
+    },
+    {
+      "probe": "live-card",
+      "day": 180,
+      "name": "500W Photovoltaic Panels",
+      "weather": {
+        "hdd": 2.3333333333333335,
+        "cdd": 5.666666666666667,
+        "psh": 6.619019681049656,
+        "precipIn": 0.06375838926174497,
+        "windCf": 0.13183946488294318,
+        "growing": true,
+        "tags": []
+      },
+      "outputs": [
+        {
+          "resource": "Electricity",
+          "card": 14,
+          "period": "Weekly",
+          "actualDay": 2.6476078724198624
+        }
+      ]
+    },
+    {
+      "probe": "live-card",
+      "day": 180,
+      "name": "500W Photovoltaic Panels",
+      "weather": {
+        "hdd": 2.3333333333333335,
+        "cdd": 5.666666666666667,
+        "psh": 6.619019681049656,
+        "precipIn": 0.06375838926174497,
+        "windCf": 0.13183946488294318,
+        "growing": true,
+        "tags": []
+      },
+      "outputs": [
+        {
+          "resource": "Electricity",
+          "card": 14,
+          "period": "Weekly",
+          "actualDay": 2.6476078724198624
+        }
+      ]
+    },
+    {
+      "probe": "live-card",
+      "day": 180,
+      "name": "Raised Beds (24 sq ft)",
+      "weather": {
+        "hdd": 2.3333333333333335,
+        "cdd": 5.666666666666667,
+        "psh": 6.619019681049656,
+        "precipIn": 0.06375838926174497,
+        "windCf": 0.13183946488294318,
+        "growing": true,
+        "tags": []
+      },
+      "outputs": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "card": 11.054249999999998,
+          "period": "Per season",
+          "actualDay": 0.07197804427715142
+        }
+      ]
+    },
+    {
+      "probe": "live-card",
+      "day": 180,
+      "name": "Raised Beds (24 sq ft)",
+      "weather": {
+        "hdd": 2.3333333333333335,
+        "cdd": 5.666666666666667,
+        "psh": 6.619019681049656,
+        "precipIn": 0.06375838926174497,
+        "windCf": 0.13183946488294318,
+        "growing": true,
+        "tags": []
+      },
+      "outputs": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "card": 11.054249999999998,
+          "period": "Per season",
+          "actualDay": 0.07197804427715142
+        }
+      ]
+    },
+    {
+      "probe": "live-card",
+      "day": 0,
+      "name": "Rocket Mass Heater",
+      "weather": {
+        "hdd": 34.193548387096776,
+        "cdd": 0,
+        "psh": 3.5041868899674653,
+        "precipIn": 0.012989824637367397,
+        "windCf": 0.1684615384615385,
+        "growing": false,
+        "tags": []
+      },
+      "outputs": [
+        {
+          "resource": "Heat",
+          "card": 290000,
+          "period": "Weekly",
+          "actualDay": 86175.88325652841
+        }
+      ]
+    },
+    {
+      "probe": "live-card",
+      "day": 0,
+      "name": "500W Photovoltaic Panels",
+      "weather": {
+        "hdd": 34.193548387096776,
+        "cdd": 0,
+        "psh": 3.5041868899674653,
+        "precipIn": 0.012989824637367397,
+        "windCf": 0.1684615384615385,
+        "growing": false,
+        "tags": []
+      },
+      "outputs": [
+        {
+          "resource": "Electricity",
+          "card": 14,
+          "period": "Weekly",
+          "actualDay": 1.4016747559869862
+        }
+      ]
+    },
+    {
+      "probe": "live-card",
+      "day": 0,
+      "name": "500W Photovoltaic Panels",
+      "weather": {
+        "hdd": 34.193548387096776,
+        "cdd": 0,
+        "psh": 3.5041868899674653,
+        "precipIn": 0.012989824637367397,
+        "windCf": 0.1684615384615385,
+        "growing": false,
+        "tags": []
+      },
+      "outputs": [
+        {
+          "resource": "Electricity",
+          "card": 14,
+          "period": "Weekly",
+          "actualDay": 1.4016747559869862
+        }
+      ]
+    },
+    {
+      "probe": "live-card",
+      "day": 0,
+      "name": "Raised Beds (24 sq ft)",
+      "weather": {
+        "hdd": 34.193548387096776,
+        "cdd": 0,
+        "psh": 3.5041868899674653,
+        "precipIn": 0.012989824637367397,
+        "windCf": 0.1684615384615385,
+        "growing": false,
+        "tags": []
+      },
+      "outputs": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "card": 11.054249999999998,
+          "period": "Per season",
+          "actualDay": 0
+        }
+      ]
+    },
+    {
+      "probe": "live-card",
+      "day": 0,
+      "name": "Raised Beds (24 sq ft)",
+      "weather": {
+        "hdd": 34.193548387096776,
+        "cdd": 0,
+        "psh": 3.5041868899674653,
+        "precipIn": 0.012989824637367397,
+        "windCf": 0.1684615384615385,
+        "growing": false,
+        "tags": []
+      },
+      "outputs": [
+        {
+          "resource": "Vegetables fruit fiber herbs",
+          "card": 11.054249999999998,
+          "period": "Per season",
+          "actualDay": 0
+        }
+      ]
+    },
+    {
+      "probe": "report",
+      "shortages": [
+        {
+          "resource": "Sanitation",
+          "share": 0.5
+        },
+        {
+          "resource": "Food",
+          "share": 0.07944803634560234
+        },
+        {
+          "resource": "Cooling",
+          "share": 1
+        }
+      ],
+      "shelter": [
+        0.56,
+        0.56
+      ]
+    }
+  ]
+}

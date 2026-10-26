@@ -804,7 +804,8 @@ export const QuestGoalSchema: z.ZodType<QuestGoal, z.ZodTypeDef, unknown> = z.la
     z.object({ kind: z.literal('lacks'), system: z.string() }).strict(),
     z.object({ kind: z.literal('days'), atLeast: z.number().int().min(1) }).strict(),
     z.object({ kind: z.literal('ui'), panel: z.string(), label: z.string() }).strict(),
-    z.object({ kind: z.literal('standing'), resource: z.string() }).strict(),
+    z.object({ kind: z.literal('standing'), resource: z.string(), keepAbove: z.number().positive().optional(), orderUpTo: z.number().positive().optional() }).strict(),
+    z.object({ kind: z.literal('workCap'), job: z.string(), hours: z.number().nonnegative() }).strict(),
     z.object({ kind: z.literal('staysWarm'), hddAbove: z.number(), days: z.number().int().min(1) }).strict(),
   ]),
 );
@@ -821,7 +822,8 @@ export type QuestGoal =
   | { kind: 'lacks'; system: string }
   | { kind: 'days'; atLeast: number }
   | { kind: 'ui'; panel: string; label: string }
-  | { kind: 'standing'; resource: string }
+  | { kind: 'standing'; resource: string; keepAbove?: number; orderUpTo?: number }
+  | { kind: 'workCap'; job: string; hours: number }
   | { kind: 'staysWarm'; hddAbove: number; days: number };
 
 /**

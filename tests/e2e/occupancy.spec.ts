@@ -42,3 +42,23 @@ test('assign residents, close an empty shelter, and reopen it without moving the
   expect(actions.some((a) => a.kind === 'assignShelter' && a.id === ids.person && a.shelterId === ids.spare)).toBe(true);
   expect(actions.filter((a) => a.kind === 'closeShelter')).toHaveLength(2);
 });
+
+test('LL-52: enabling occupancy uses both four-adult starter tents and survives a save reload', async ({ page }) => {
+  await openApp(page);
+  await page.evaluate(() => window.__homestead!.store.getState().setWizard(true));
+  await page.getByTestId('start-greenfield').click();
+  await page.getByTestId('start-household').fill('4');
+  await page.getByTestId('start-begin').click();
+  await page.getByTestId('open-settings').click();
+  await page.getByLabel('Shelter occupancy', { exact: true }).check();
+  await page.getByLabel('Close settings', { exact: true }).click();
+  const assignments = await page.evaluate(() => {
+    const st = window.__homestead!.store.getState();
+    const homes = st.game.instances.filter((i) => i.person).map((i) => i.shelterId);
+    st.loadGame(st.init, st.actions, JSON.parse(JSON.stringify(st.game)));
+    return { homes, loaded: window.__homestead!.store.getState().game.instances.filter((i) => i.person).map((i) => i.shelterId) };
+  });
+  expect(assignments.homes.every(Boolean)).toBe(true);
+  expect(new Set(assignments.homes).size).toBe(2);
+  expect(assignments.loaded).toEqual(assignments.homes);
+});

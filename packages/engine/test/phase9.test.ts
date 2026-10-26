@@ -208,13 +208,13 @@ describe('LL-29 surplus sales and Ruth barter', () => {
     expect(stepDay(queueTrade(catalog, unfed, 'Honey', 10), catalog).ledger.trades![0]!.revenue).toBe(40);
   });
 
-  it('barter unlocks only on completing the tutorial; no cash is created', () => {
-    const s = trading();
+  it('an active tutorial gates barter until completion; no cash is created', () => {
+    const s = { ...trading(), tutorial: newTutorial('greenfield', 0) };
     expect(() => queueTrade(catalog, s, 'Honey', 10, 0, 'Carbon')).toThrow(/tutorial/);
     expect(() =>
       queueTrade(
         catalog,
-        { ...s, tutorial: { ...newTutorial('greenfield', 0), skipped: true } },
+        { ...s, tutorial: { ...newTutorial('greenfield', 0), current: 1 } },
         'Honey',
         10,
         0,

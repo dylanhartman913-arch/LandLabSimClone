@@ -1,5 +1,6 @@
 import type { Catalog } from '@homestead/catalog';
 import { explained, type Explained } from '../provenance.ts';
+import { roleNeeds } from '../time/household.ts';
 import { plantingReserve } from '../time/food.ts';
 import { climateTable } from '../time/climate.ts';
 import { dailyAmount, getPlans } from '../time/plans.ts';
@@ -34,7 +35,7 @@ export function stockpileView(state: GameState, catalog: Catalog): StockpileItem
     for (const i of state.instances) {
       if (i.status !== 'active' || i.person?.away) continue;
       for (const f of plans.bySystem.get(i.systemId)!.inputs) {
-        if (f.resource === resource && !f.isCapacity) a += (f.weekly / 7) * (i.scale ?? 1);
+        if (f.resource === resource && !f.isCapacity) a += (f.weekly / 7) * (i.scale ?? 1) * (i.person ? roleNeeds(catalog, state.settings, i.person) : 1);
       }
     }
     return a;
@@ -91,7 +92,7 @@ export function stockpileView(state: GameState, catalog: Catalog): StockpileItem
       key,
       label,
       resource,
-      days: explained(days, `${label.toLowerCase()} on hand ÷ daily use`, {
+      days: explained(days, `${label.toLowerCase()} on hand ÷ daily use (active, present systems × scale × active household role needs)`, {
         refs: { onHand: stock, dailyUse: daily },
         notes: [
           `${Math.round(stock).toLocaleString('en-US')} ${unit} on hand; the household and its systems use ${daily.toFixed(1)} ${unitName} a day.`,

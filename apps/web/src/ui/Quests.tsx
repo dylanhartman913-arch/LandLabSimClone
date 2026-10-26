@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ALERT_GROUPS, MILESTONES, QUESTS, questView, shortageHints, survivalAlerts, transitionForecast, winterPreparation, type SurvivalAlert } from '@homestead/engine';
+import { ALERT_GROUPS, MILESTONES, QUESTS, questView, questStepText, shortageHints, survivalAlerts, transitionForecast, winterPreparation, type SurvivalAlert } from '@homestead/engine';
 import type { QuestShow } from '@homestead/catalog';
 import { fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
@@ -69,12 +69,13 @@ export function HintCard() {
   const readOnly = useGame((s) => s.readOnly);
   const placing = useGame((s) => s.tool.kind === 'place');
   const actionCount = useGame((s) => s.actions.length);
+  const init = useGame((s) => s.init);
   const [open, setOpen] = useState(true);
   // The 90-day projection is a full simulation: refresh it weekly, and whenever the player acts.
-  const forecast = useRef<{ key: string; value: ReturnType<typeof transitionForecast> } | null>(null);
+  const forecast = useRef<{ key: string; init: typeof init; value: ReturnType<typeof transitionForecast> } | null>(null);
   if (readOnly) return null;
   const key = `${Math.floor(game.calendar.absDay / 7)}:${actionCount}`;
-  if (forecast.current?.key !== key) forecast.current = { key, value: transitionForecast(game, catalog) };
+  if (forecast.current?.key !== key || forecast.current.init !== init || game.calendar.absDay < forecast.current.value.asOfDay) forecast.current = { key, init, value: transitionForecast(game, catalog) };
   const alerts = survivalAlerts(game, catalog, forecast.current.value);
   const hints =
     game.ledgers.length < 7
@@ -232,6 +233,14 @@ function TutorialCard() {
         {quest.title}
       </h2>
       <p className="small">{quest.reason}</p>
+      {game.tutorial?.line === 'greenfield-instructions' && quest.steps.length > 0 && (
+        <ol className="small" data-testid="quest-steps">
+          {quest.steps.map((step, index) => <li key={index}>
+            {questStepText(step, catalog)}{' '}
+            {step.do === 'place' && <button className="link" onClick={() => showMe({ kind: 'system', name: step.system })}>Show {step.system}</button>}
+          </li>)}
+        </ol>
+      )}
       {(v.index === 0 || quest.row === 'Heated shelter') && (
         <p className="small muted" data-testid="quest-season">
           {v.index === 0 ? 'Stabilize safe water and storage, food access and recurring consumables before adding more systems. ' : ''}

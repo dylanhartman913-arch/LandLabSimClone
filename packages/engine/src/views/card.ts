@@ -1,3 +1,4 @@
+import { weeklyFactor } from '../periods.ts';
 import { toolRule } from '../time/tools.ts';
 import type { Catalog, InputRole } from '@homestead/catalog';
 import { getSystem, indexCatalog } from '../catalog-index.ts';
@@ -22,7 +23,9 @@ export interface CardInput {
   supplied: Explained;
   /** supplied ÷ needed (0-1). */
   share: Explained;
-  /** Catalog preview of a stored supply (LL-19): stock on hand and how long it lasts with this system added. */
+  /** Actual daily use (or capacity level) recorded for this instance. */
+  measured?: { requested: Explained; used: Explained };
+  /** Catalog preview: stock on hand and how long it lasts with this system added. */
   stock?: { onHand: Explained; days: Explained | null };
 }
 
@@ -30,6 +33,9 @@ export interface CardOutput {
   view: FlowView;
   /** Produced per the flow's own period (live for an instance, nominal in the catalog). */
   produced: Explained;
+  /** Catalog estimate, distinct from measured operation. */
+  nominal?: Explained;
+  window: string;
   /** Where this resource went across the design last week. */
   week: ResourceWeek | null;
 }
@@ -80,7 +86,12 @@ export function systemCard(
   const flows = systemFlows(catalog, systemId, state.site.assumptions);
   const week = new Map(resourceWeek(state, catalog).map((r) => [r.resource, r]));
   const inst = instanceId ? state.instances.find((i) => i.id === instanceId) : undefined;
-  const group = inst?.status === 'active' ? state.lastDay[instanceGroupKey(catalog, state, inst)] : undefined;
+  const hasSnapshots = Object.values(state.lastDay).some((g) => g.measurement);
+  const group = inst?.status === 'active'
+    ? hasSnapshots
+      ? Object.values(state.lastDay).find((g) => g.measurement?.instances[inst.id]?.systemId === inst.systemId)
+      : state.lastDay[instanceGroupKey(catalog, state, inst)]
+    : undefined;
   const plansAll = getPlans(catalog, state.site);
   const plan = plansAll.bySystem.get(systemId)!;
   const idx = indexCatalog(catalog);
@@ -186,6 +197,12 @@ export function systemCard(
     return {
       view: v,
       role,
+      ...(inst && group && v.flow.period !== 'One-time' ? {
+        measured: {
+          requested: explained(group.inputs[v.resource]?.requested ?? 0, 'this instance yesterday: allocator request (capacity is a level, other inputs are daily use)'),
+          used: explained(group.inputs[v.resource]?.received ?? 0, 'this instance yesterday: actual input used, after curtailment; not the supply offered'),
+        },
+      } : {}),
       needed: state.settings.transportAccess && v.resource === 'Transportation' && v.flow.period !== 'One-time'
         ? explained(0, 'flat weekly Transportation input removed; actual trip access is recorded separately', { notes: ['Work commutes, market errands and town journeys use measured mileage or paid travel. Annual catalog forecasts omit trip fares.'] })
         : explained(
@@ -268,8 +285,25 @@ export function systemCard(
       refs.lifecycleOutput = factor;
       refs.cohortScale = inst.scale ?? 1;
     }
+    if (inst && v.flow.period !== 'Capacity' && v.flow.period !== 'One-time') {
+      const factor = weeklyFactor(catalog, v.flow.period, state.site.assumptions);
+      // Group outputs already include season, weather, spatial effects, satisfaction and boosts.
+      // Maturity/health are deliberately excluded from the per-unit record by the allocator.
+      const measuredDay = state.ledgers.at(-1)?.absDay ?? state.calendar.absDay;
+      const multiplier = plan.backstop || inst.systemId === catalog.waterInfrastructure?.springId ? 1 :
+        plan.isHuman ? (inst.person?.health ?? 1) :
+          maturity(inst, plan, measuredDay) * (inst.animal ? (inst.scale ?? 1) : 1);
+      const daily = group?.measurement?.instances[inst.id]?.outputs[v.resource] ?? (group ? (group.outputs[v.resource] ?? 0) * multiplier : 0);
+      produced = factor > 0 ? daily * 7 / factor : 0;
+      formula = 'measured instance daily output (season, weather, satisfaction, boosts, maturity and health included) × 7 ÷ catalog weekly factor';
+      refs = { measuredDaily: daily, weeklyFactor: factor, measuredAbsDay: group?.measurement?.absDay ?? measuredDay };
+    }
     return {
       view: v,
+      window: inst && v.flow.period !== 'Capacity' && v.flow.period !== 'One-time'
+        ? group ? `${v.periodLabel} equivalent of yesterday` : 'not measured yet' : v.periodLabel,
+      ...(inst && v.flow.period !== 'Capacity' && v.flow.period !== 'One-time'
+        ? { nominal: explained(v.qty.value, `${v.qty.explain.formula} (catalog estimate for one system at full supply and maturity)`, { ...v.qty.explain }) } : {}),
       produced: explained(produced, formula, {
         refs,
         ...(v.qty.explain.assumptions ? { assumptions: v.qty.explain.assumptions } : {}),
@@ -355,6 +389,6 @@ export function systemCard(
         ? 'Under construction: no operating output. Recurring needs begin after completion.'
         : !group
           ? 'Completed: awaiting the first operating day. Capacity is available; recurring output has not been measured.'
-          : 'Operating measurement: yesterday’s supply share applied to catalog rates below. Capacity is available space, not weekly production. Design totals below cover the last 7 days.',
+          : 'Operating measurement: actual input use and output from the last simulated day. Output equivalents express that one day in the catalog period; they are not a forecast. Catalog estimates are shown separately. Capacity is available space, not production. Design totals cover the last 7 days.',
   };
 }

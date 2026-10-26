@@ -31,7 +31,7 @@ export function NewGame() {
     const init: GameInit = {
       siteId,
       seed: Math.floor(Math.random() * 2 ** 31), // UI-side: the seed is then saved with the game
-      settings: { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, employmentPriority: true, siteCrewRates: true, cashFloor: true, serviceWarmUp: true, tutorialSeasons: true, householdStart: true },
+      settings: { householdCorrectness: true, safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, employmentPriority: true, siteCrewRates: true, cashFloor: true, serviceWarmUp: true, tutorialSeasons: true, tutorialInstructions: true, householdStart: true },
       start: { id: startId, difficulty, household, ...(children ? { children } : {}) },
     };
     try {

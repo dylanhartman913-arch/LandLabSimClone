@@ -240,7 +240,7 @@ let planKey = 1;
 export const DEFAULT_INIT: GameInit = {
   siteId: DEFAULT_SITE_ID,
   seed: 2026,
-  settings: { safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, employmentPriority: true, siteCrewRates: true, cashFloor: true, startDay: 90, startingStocks: { Food: 240_000, 'Drinking water': 40 } },
+  settings: { householdCorrectness: true, safeRecovery: true, reuseIdleLabor: true, survivalShelterReturn: true, safeWaterFirst: true, employmentPriority: true, siteCrewRates: true, cashFloor: true, startDay: 90, startingStocks: { Food: 240_000, 'Drinking water': 40 } },
 };
 
 /** The default starting layout as actions (so it is part of the replayable log). */
@@ -387,6 +387,7 @@ export const useGame = create<GameStore>()((set, get) => {
     loadGame(init, actions, game, opts = {}) {
       // Preserve the historic log, then record the policy transition at the continuation day.
       const upgrades: Partial<GameSettings> = {};
+      if (!game.settings.householdCorrectness) upgrades.householdCorrectness = true;
       if (!game.settings.safeRecovery) upgrades.safeRecovery = true;
       if (!game.settings.reuseIdleLabor) upgrades.reuseIdleLabor = true;
       if (!game.settings.survivalShelterReturn) upgrades.survivalShelterReturn = true;
