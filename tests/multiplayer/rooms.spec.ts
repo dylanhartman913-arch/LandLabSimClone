@@ -298,6 +298,9 @@ test('shared instructions and primary controls work on laptop and touch tablet l
     await b.getByTestId('choose-buy').tap();
     await b.getByTestId('add-buy').tap();
     await b.getByTestId('drawer-toggle').tap();
+    // Finish the drawer animation and its ResizeObserver update before converting map coordinates.
+    await expect(b.getByTestId('drawer')).toHaveCSS('height', '44px');
+    await expect.poll(() => b.evaluate(() => Math.abs(window.__homestead!.store.getState().viewport.height - document.querySelector('[data-testid=map]')!.getBoundingClientRect().height))).toBeLessThan(1);
     const before = await b.evaluate(() => window.__homestead!.store.getState().game.instances.length);
     const point = await b.evaluate(() => window.__homestead!.worldToClient(25, 25));
     await b.touchscreen.tap(point.x, point.y);
