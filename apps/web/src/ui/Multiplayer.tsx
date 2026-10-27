@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import './multiplayer.css';
 import { readRoomSession, writeRoomSession, SessionError } from '../lib/roomSession.ts';
+import { RoomRules } from './RoomRules.tsx';
 import { SharedGame } from './SharedGame.tsx';
 
 interface Room {
@@ -176,6 +177,7 @@ export function Multiplayer() {
         Rooms last seven days. Keep this browser tab to reclaim your seat after refresh or a network loss.
         Rejoining pauses the room; both players must choose Ready again.
       </p>
+      <details className="room-help"><summary>How to play together</summary><RoomRules /></details>
       <a href="./">Return to single-player</a>
     </main>
   );

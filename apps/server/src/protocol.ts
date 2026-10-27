@@ -1,7 +1,8 @@
-import type { GameInit, GameState, GameEvent, Report } from '@homestead/engine';
+import type { GameInit, GameState, GameEvent, Report, QuestView } from '@homestead/engine';
 
 export interface SharedSnapshot {
   revision: number;
+  tutorial: { completed: number; total: number; quest: QuestView | null };
   durable: boolean;
   storageError: string | null;
   init: GameInit;

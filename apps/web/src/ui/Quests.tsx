@@ -1,18 +1,19 @@
 import { useRef, useState } from 'react';
-import { ALERT_GROUPS, MILESTONES, QUESTS, questView, questStepText, shortageHints, survivalAlerts, transitionForecast, winterPreparation, type SurvivalAlert } from '@homestead/engine';
+import { ALERT_GROUPS, MILESTONES, QUESTS, questView, questStepText, shortageHints, survivalAlerts, transitionForecast, winterPreparation, type QuestView, type SurvivalAlert } from '@homestead/engine';
 import type { QuestShow } from '@homestead/catalog';
 import { fmtMoney, fmtNum, fmtPct } from '../lib/format.ts';
 import { useGame } from '../store/game.ts';
 import { usePlan } from '../store/plan.ts';
 
 /** The current tutorial quest, pinned top-right: one at a time, skippable. */
-export function QuestCard() {
+export function QuestCard({ sharedQuest }: { sharedQuest?: QuestView | null }) {
   const game = useGame((s) => s.game);
   const catalog = useGame((s) => s.catalog);
   const progress = useGame((s) => s.progress);
   const readOnly = useGame((s) => s.readOnly);
-  if (progress.tutorialSkipped || readOnly) return null;
-  if (game.tutorial) return <TutorialCard />;
+  const multiplayer = useGame((s) => s.multiplayer);
+  if ((!multiplayer && progress.tutorialSkipped) || readOnly) return null;
+  if (game.tutorial) return <TutorialCard sharedQuest={sharedQuest} />;
   // A start without a quest line (LL-51's cabin and farm) has no tutorial; the old line is for custom games.
   const q = game.start ? undefined : QUESTS.find((x) => progress.quests[x.id] === undefined);
   const done = QUESTS.filter((x) => progress.quests[x.id] !== undefined).length;
@@ -213,10 +214,11 @@ export function showMe(show: QuestShow): void {
 }
 
 /** The pinned quest card for a start's quest line (G16): goal, progress, show me, and the row it moves. */
-function TutorialCard() {
+function TutorialCard({ sharedQuest }: { sharedQuest?: QuestView | null }) {
   const game = useGame((s) => s.game);
   const catalog = useGame((s) => s.catalog);
-  const v = questView(game, catalog);
+  const multiplayer = useGame((s) => s.multiplayer);
+  const v = sharedQuest === undefined ? questView(game, catalog) : sharedQuest;
   if (!v) return null;
   const { quest, status } = v;
   return (
@@ -225,9 +227,11 @@ function TutorialCard() {
         <span className="muted small">
           Quest {v.index + 1} of {v.count} · moves <strong>{quest.row}</strong>
         </span>
-        <button className="btn ghost small" onClick={() => useGame.getState().skipTutorial()} data-testid="skip-tutorial">
-          Skip tutorial
-        </button>
+        {!multiplayer && (
+          <button className="btn ghost small" onClick={() => useGame.getState().skipTutorial()} data-testid="skip-tutorial">
+            Skip tutorial
+          </button>
+        )}
       </div>
       <h2 className="quest-title" data-testid="quest-title">
         {quest.title}

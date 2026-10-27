@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { DayLedger } from '@homestead/engine';
 import type { SharedSnapshot } from '../../../server/src/protocol.ts';
 import { readRoomSession, writeRoomSession, SessionError, type PendingRequest } from '../lib/roomSession.ts';
+import { RoomRules } from './RoomRules.tsx';
 import { App } from '../App.tsx';
 import { useGame } from '../store/game.ts';
 
@@ -303,12 +304,8 @@ export function SharedGame({ roomId, token, invite }: { roomId: string; token: s
           <label>
             Invite link <input readOnly value={invite} onFocus={(e) => e.target.select()} />
           </label>
-          <p>
-            Standard · Front Range · two simulated residents. Share costs and labor. Either can pause; both
-            must be ready to resume. Survival alerts, construction and harvest pause everyone. Room progress
-            is saved before edits are confirmed. Keep this tab to recover your seat after refresh. Reconnects
-            pause everyone.
-          </p>
+          <p>Standard · Front Range · two simulated residents.</p>
+          <RoomRules />
         </details>
         {!snapshot?.running && <span data-testid="shared-pause">{snapshot?.pauseReason}</span>}
         {snapshot?.durable && !snapshot.storageError && connected && (
@@ -318,7 +315,14 @@ export function SharedGame({ roomId, token, invite }: { roomId: string; token: s
         {error && <span role="alert">{error}</span>}
         {!connected && <button onClick={() => setAttempt((n) => n + 1)}>Reconnect</button>}
       </section>
-      {snapshot ? <App /> : <p>Connecting to the authoritative homestead…</p>}
+      {snapshot && <details className="shared-objective" data-testid="shared-objective">
+        <summary>{snapshot.tutorial.total > 0 && snapshot.tutorial.completed >= snapshot.tutorial.total
+          ? 'Tutorial complete together! Continue your shared sandbox.'
+          : `Shared goal: complete the tutorial · ${snapshot.tutorial.completed}/${snapshot.tutorial.total} quests complete`}</summary>
+        {snapshot.tutorial.quest && <p>Next: {snapshot.tutorial.quest.quest.title} · {snapshot.tutorial.quest.status.detail}</p>}
+        <p>Both players share these milestones and rewards. Open the quest card for instructions and Show me.</p>
+      </details>}
+      {snapshot ? <App sharedQuest={snapshot.tutorial.quest} /> : <p>Connecting to the authoritative homestead…</p>}
     </div>
   );
 }

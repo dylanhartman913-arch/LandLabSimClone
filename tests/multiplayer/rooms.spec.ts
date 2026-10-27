@@ -37,9 +37,9 @@ test('two browsers create and join; full and invalid invitations explain failure
   }
 });
 
-async function withSharedHomestead(browser: Browser, play: (a: Page, b: Page) => Promise<void>) {
+async function withSharedHomestead(browser: Browser, play: (a: Page, b: Page) => Promise<void>, tablet = false) {
   const creator = await browser.newContext();
-  const teammate = await browser.newContext();
+  const teammate = await browser.newContext(tablet ? { hasTouch: true, viewport: { width: 768, height: 1024 } } : {});
   try {
     const a = await creator.newPage();
     const b = await teammate.newPage();
@@ -268,5 +268,75 @@ test('browser storage failures stop edits before transmission and explain the re
     await expect(a.getByTestId('shared-save')).toHaveCount(0);
     expect(posts).toBe(0);
     expect(await state(a)).toBe(before);
+  });
+});
+
+
+test('shared instructions and primary controls work on laptop and touch tablet layouts', async ({ browser }, testInfo) => {
+  await withSharedHomestead(browser, async (a, b) => {
+    await a.setViewportSize({ width: 1366, height: 768 });
+    for (const page of [a, b]) {
+      await expect(page.getByTestId('shared-objective')).toContainText('0/11 quests complete');
+      await expect(page.getByTestId('skip-tutorial')).toHaveCount(0);
+      await page.getByText('Invite & room rules', { exact: true }).click();
+      await expect(page.getByText('Both can manage everything.', { exact: false })).toBeVisible();
+      await page.getByText('Your first 10–15 minutes', { exact: true }).click();
+      await expect(page.getByText('The full tutorial includes crop growth', { exact: false })).toBeVisible();
+      await page.getByText('Invite & room rules', { exact: true }).click();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+    await b.getByTestId('open-market').tap();
+    await b.getByTestId('buy-amount-Food').fill('1000');
+    await b.getByTestId('buy-Food').tap();
+    await expect.poll(() => a.evaluate(() => window.__homestead!.store.getState().game.market?.orders.length)).toBe(1);
+    await b.getByRole('button', { name: 'Close market', exact: true }).tap();
+    await b.getByTestId('open-work').tap();
+    await b.getByTestId('prio-construction-5').tap();
+    await b.getByRole('button', { name: 'Close work', exact: true }).tap();
+    await b.getByTestId('system-search').fill('Rain Barrel');
+    await b.getByRole('button').filter({ hasText: 'Rain Barrel (55 gal)' }).tap();
+    await b.getByTestId('choose-buy').tap();
+    await b.getByTestId('add-buy').tap();
+    await b.getByTestId('drawer-toggle').tap();
+    const before = await b.evaluate(() => window.__homestead!.store.getState().game.instances.length);
+    const point = await b.evaluate(() => window.__homestead!.worldToClient(25, 25));
+    await b.touchscreen.tap(point.x, point.y);
+    await expect.poll(() => a.evaluate(() => window.__homestead!.store.getState().game.instances.length)).toBe(before + 1);
+    await a.getByRole('button', { name: 'Ready to run', exact: true }).click();
+    await b.getByRole('button', { name: 'Ready to run', exact: true }).tap();
+    await expect.poll(() => b.evaluate(() => window.__homestead!.store.getState().game.calendar.absDay)).toBeGreaterThan(0);
+    await pauseTogether(a, b);
+    for (const page of [a, b]) {
+      await expect(page.getByTestId('shared-objective')).toContainText('1/11 quests complete');
+      await expect(page.getByTestId('quest-title')).toHaveText('Gather a week of firewood from the deadfall');
+    }
+    await b.screenshot({ path: testInfo.outputPath('mp04-tablet.png') });
+    await a.screenshot({ path: testInfo.outputPath('mp04-laptop.png') });
+  }, true);
+});
+
+test('both browsers display tutorial completion and keep sandbox controls available', async ({ browser }) => {
+  await withSharedHomestead(browser, async (a, b) => {
+    for (const page of [a, b]) {
+      // A completed-room response fixture checks presentation without waiting through a season.
+      // Server tests separately verify authoritative progress with retained history.
+      await page.route('**/control', async (route) => {
+        const response = await route.fetch();
+        expect(response.ok()).toBe(true);
+        const update = await response.json();
+        update.revision += 1000;
+        update.game.tutorial.current = update.tutorial.total;
+        update.tutorial.completed = update.tutorial.total;
+        update.tutorial.quest = null;
+        await route.fulfill({ response, json: update });
+      });
+      await page.getByRole('button', { name: 'Pause together', exact: true }).click();
+      await expect(page.getByTestId('shared-objective')).toContainText('Tutorial complete together!');
+      await expect(page.getByTestId('quest')).toHaveCount(0);
+      await page.getByTestId('open-market').click();
+      await page.getByTestId('buy-amount-Food').fill('1000');
+      await expect(page.getByTestId('buy-Food')).toBeEnabled();
+      await page.getByRole('button', { name: 'Close market', exact: true }).click();
+    }
   });
 });

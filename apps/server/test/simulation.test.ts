@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { catalog } from '@homestead/catalog';
+import { catalog, getQuestLine } from '@homestead/catalog';
 import cabin from '../../../designs/offgrid-cabin-family.json';
-import { gameDigest, costFor, gameFromDesign, stepDays, type DesignFile } from '@homestead/engine';
+import { gameDigest, questView, costFor, gameFromDesign, stepDays, type DesignFile } from '@homestead/engine';
 import { Simulation, CommandError, type Player } from '../src/simulation.ts';
 
 const player = (name: string): Player => ({
@@ -28,6 +28,25 @@ const system = catalog.systems.find((s) => s.name === 'Rain Barrel (55 gal)')!;
 const place = (x = 25, y = 25) => ({ kind: 'place', systemId: system.id, x, y, mode: 'buy' });
 
 describe('shared room authority', () => {
+  it('broadcasts shared quest measurements from full history and preserves completed milestones', () => {
+    const { simulation: s } = setup();
+    const line = getQuestLine(s.game.tutorial!.line);
+    s.game = stepDays(s.game, catalog, 120).state;
+    s.game.tutorial = { ...s.game.tutorial!, current: 1, since: 0 };
+    s.game.ledgers[0] = { ...s.game.ledgers[0]!, gathered: [{ resource: 'Woody biomass', amount: 90, hours: 1, nodeId: 'deadfall', job: 'gather-wood', nodeType: 'deadfall', walkHours: 0 }] };
+    const expected = questView(s.game, catalog)!;
+    expect(expected.status.done).toBe(true);
+    const update = s.snapshot(false);
+    expect(update.game.ledgers).toHaveLength(1);
+    expect(update.tutorial.quest).toEqual(expected);
+    expect(questView(update.game, catalog)!.status.done).toBe(false);
+    expect(update.tutorial).toMatchObject({ completed: 1, total: line.quests.length });
+    s.game.tutorial.current = line.quests.length;
+    expect(s.snapshot().tutorial).toEqual({ completed: line.quests.length, total: line.quests.length, quest: null });
+    // Continued room commands do not reset the shared completion state.
+    s.control(s.players[0]!, { ready: true });
+    expect(s.snapshot().tutorial.completed).toBe(line.quests.length);
+  });
   it('orders competing purchases using current cash and broadcasts identical revisions', () => {
     const { a, b, simulation: s, execute, received } = setup();
     const cost = costFor(catalog, system.id, 'buy');

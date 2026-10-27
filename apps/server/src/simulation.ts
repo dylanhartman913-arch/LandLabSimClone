@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { catalog, DEFAULT_SITE_ID } from '@homestead/catalog';
+import { catalog, DEFAULT_SITE_ID, getQuestLine } from '@homestead/catalog';
 import {
   applyAction,
   startGame,
@@ -9,6 +9,7 @@ import {
   displayDate,
   canPlace,
   recoveryRoute,
+  questView,
   type ActionBody,
   type GameInit,
   type GameEvent,
@@ -147,6 +148,11 @@ export class Simulation {
     // A fixed 90-day window supplies current charts and work totals; full history stays on the server.
     return {
       revision: this.revision,
+      tutorial: {
+        completed: this.game.tutorial?.current ?? 0,
+        total: this.game.tutorial ? getQuestLine(this.game.tutorial.line).quests.length : 0,
+        quest: questView(this.game, catalog),
+      },
       storageError: this.storageError,
       durable: this.durable,
       init: ROOM_INIT,

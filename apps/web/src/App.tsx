@@ -1,3 +1,4 @@
+import type { QuestView } from '@homestead/engine';
 import { useAutosave } from './hooks/useAutosave.ts';
 import { useGameLoop } from './hooks/useGameLoop.ts';
 import { useStartup } from './hooks/useStartup.ts';
@@ -42,7 +43,7 @@ const PANEL_NAMES: Record<string, string> = {
 
 const st = () => useGame.getState();
 
-export function App() {
+export function App({ sharedQuest }: { sharedQuest?: QuestView | null } = {}) {
   useKeyboard();
   useGameLoop();
   useAutosave();
@@ -98,7 +99,7 @@ export function App() {
           </EB>
           <div className="side-stack">
             <EB name="The quest card" inline>
-              <QuestCard />
+              <QuestCard sharedQuest={sharedQuest} />
               <HintCard />
             </EB>
             <EB name="The build plan" inline>
