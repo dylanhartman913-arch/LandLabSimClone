@@ -1,8 +1,9 @@
 # Multiplayer hosting
 
-MP-03 adds durable room files and refresh/reconnect recovery. See [MP-03 deployment
-and verification](MP-03.md) for the current rollout status and storage configuration.
-The MP-01 baseline details below are retained as setup history.
+MP-03 is live at https://terra-homestead.onrender.com/?multiplayer with durable room
+files and refresh/reconnect recovery. See [MP-03 deployment and verification](MP-03.md)
+for source/deploy IDs and the public restart evidence. The MP-01 baseline details
+below are retained as setup history.
 
 ## Build and run
 
@@ -25,7 +26,24 @@ Startup fails if the frontend build is missing. The server build bundles engine
 and catalog TypeScript/JSON dependencies using the existing esbuild dependency;
 production does not need a TypeScript runtime. The service binds `0.0.0.0:$PORT`.
 
-## Deploy
+## Current production configuration
+
+The existing service in My Workspace now uses one paid `0.5c-512mb` instance
+($7/month) and a 1 GB persistent disk ($0.25/month). The disk mounts at `/var/data`;
+`ROOM_DATA_DIR=/var/data/rooms`. Render's actual HTTP health-check path is `/healthz`.
+Automatic deployment remains off, and the source branch remains
+`codex/mp-01-hosted-room`. The workspace's extra build-minute spend limit is $0.
+Baseline hosting is $7.25/month before taxes and usage overages; review the owner's
+$20 total/two-month limit before December 26, 2026. The Blueprint records the
+intended configuration; this service's settings were applied through the connector
+and Dashboard, not a Blueprint sync. Keep them consistent before any future sync.
+
+New MP-03 rooms survive service restarts and can reclaim a seat on refresh in the
+same browser tab. Keep the tab: closing it or clearing site data loses its guest
+credential. Old MP-02 memory-only rooms were not migrated. Physical-device and
+competition submission checks are still required.
+
+## MP-01 deployment setup history
 
 The app repository is connected as `origin` to the public repository
 [dylanhartman913-arch/LandLabSimClone](https://github.com/dylanhartman913-arch/LandLabSimClone).
